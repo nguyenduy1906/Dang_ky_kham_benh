@@ -1,0 +1,49 @@
+# ─── Python ───────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# ─── Virtual Environment ──────────────────────
+venv/
+env/
+.venv/
+.env/
+ENV/
+
+# ─── Flask / Instance ─────────────────────────
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# ─── Environment Variables ────────────────────
+.env
+.env.local
+.env.production
+
+# ─── Uploads ──────────────────────────────────
+app/static/images/uploads/
+
+# ─── IDE / Editor ─────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ─── OS Files ─────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Logs ─────────────────────────────────────
+*.log
+logs/
+
+# ─── Distribution / Build ─────────────────────
+dist/
+build/
+*.egg-info/

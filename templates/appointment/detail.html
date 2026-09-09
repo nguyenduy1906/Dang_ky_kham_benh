@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Chi tiết lịch hẹn #{{ appointment.id }}{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2rem 1rem; max-width: 700px;">
+  <a href="javascript:history.back()" class="btn btn-outline-sm" style="margin-bottom:1rem;">← Quay lại</a>
+
+  <div class="card">
+    <div class="detail-header">
+      <h1>Lịch hẹn #{{ appointment.id }}</h1>
+      {% set label, color = appointment.status_label() %}
+      <span class="badge badge-{{ color }} badge-lg">{{ label }}</span>
+    </div>
+
+    <div class="detail-grid">
+      <div class="detail-section">
+        <h3>🧑‍💼 Bệnh nhân</h3>
+        <p><strong>Họ tên:</strong> {{ appointment.patient.full_name }}</p>
+        <p><strong>Điện thoại:</strong> {{ appointment.patient.phone or 'Chưa cập nhật' }}</p>
+        <p><strong>Email:</strong> {{ appointment.patient.email }}</p>
+      </div>
+
+      <div class="detail-section">
+        <h3>👨‍⚕️ Bác sĩ</h3>
+        <p><strong>Họ tên:</strong> BS. {{ appointment.doctor.user.full_name }}</p>
+        <p><strong>Chuyên khoa:</strong> {{ appointment.doctor.specialty }}</p>
+        <p><strong>Kinh nghiệm:</strong> {{ appointment.doctor.experience_years }} năm</p>
+      </div>
+
+      <div class="detail-section">
+        <h3>📅 Thông tin lịch hẹn</h3>
+        <p><strong>Ngày khám:</strong> {{ appointment.appointment_date.strftime('%d/%m/%Y') }}</p>
+        <p><strong>Giờ khám:</strong> {{ appointment.appointment_time.strftime('%H:%M') }}</p>
+        <p><strong>Đặt lúc:</strong> {{ appointment.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+      </div>
+
+      {% if appointment.reason %}
+      <div class="detail-section detail-full">
+        <h3>📝 Lý do khám</h3>
+        <p>{{ appointment.reason }}</p>
+      </div>
+      {% endif %}
+
+      {% if appointment.notes %}
+      <div class="detail-section detail-full">
+        <h3>🩺 Ghi chú bác sĩ</h3>
+        <p>{{ appointment.notes }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Actions -->
+    {% if current_user.is_doctor() and appointment.status in ('pending', 'confirmed') %}
+    <hr />
+    <form method="POST" action="{{ url_for('doctor.update_appointment', appt_id=appointment.id) }}">
+      <div class="form-group">
+        <label>Ghi chú bác sĩ</label>
+        <textarea name="notes" rows="3" placeholder="Nhập ghi chú sau khám...">{{ appointment.notes or '' }}</textarea>
+      </div>
+      <div style="display:flex;gap:.5rem;">
+        {% if appointment.status == 'pending' %}
+          <button name="status" value="confirmed" class="btn btn-success">✓ Xác nhận</button>
+        {% endif %}
+        <button name="status" value="completed" class="btn btn-info">✔ Hoàn thành</button>
+        <button name="status" value="cancelled" class="btn btn-danger" onclick="return confirm('Hủy lịch hẹn này?')">✗ Hủy</button>
+      </div>
+    </form>
+    {% endif %}
+
+    {% if current_user.is_patient() and appointment.status in ('pending', 'confirmed') %}
+    <hr />
+    <form method="POST" action="{{ url_for('patient.cancel_appointment', appt_id=appointment.id) }}"
+          onsubmit="return confirm('Bạn có chắc muốn hủy lịch hẹn này không?')">
+      <button type="submit" class="btn btn-danger">Hủy lịch hẹn</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

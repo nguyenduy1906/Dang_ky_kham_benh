@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Đặt lịch khám{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2rem 1rem;">
+  <h1 class="page-title">📅 Đặt lịch khám</h1>
+
+  <!-- ─── Step 1: Chọn bác sĩ ─────────────────────────────────── -->
+  <div class="book-card">
+    <h2>Bước 1: Chọn bác sĩ</h2>
+
+    <!-- Filter chuyên khoa -->
+    <form method="GET" class="filter-form">
+      <div class="form-row-inline">
+        <div class="form-group">
+          <label>Chuyên khoa</label>
+          <select name="specialty" onchange="this.form.submit()">
+            <option value="">— Tất cả chuyên khoa —</option>
+            {% for s in specialties %}
+              <option value="{{ s }}" {% if specialty == s %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </form>
+
+    <!-- Danh sách bác sĩ -->
+    <div class="doctors-grid" style="margin-top:1rem;">
+      {% for doctor in doctors %}
+      <a href="{{ url_for('appointment.book', doctor_id=doctor.id, specialty=specialty) }}"
+         class="doctor-card-select {% if selected_doctor and selected_doctor.id == doctor.id %}selected{% endif %}">
+        <div class="doctor-avatar-sm">
+          {% if doctor.avatar_url %}
+            <img src="{{ doctor.avatar_url }}" alt="{{ doctor.user.full_name }}" />
+          {% else %}
+            <div class="avatar-placeholder-sm">👨‍⚕️</div>
+          {% endif %}
+        </div>
+        <div>
+          <strong>BS. {{ doctor.user.full_name }}</strong>
+          <span class="specialty-badge">{{ doctor.specialty }}</span>
+          <span>{{ doctor.experience_years }} năm kinh nghiệm</span>
+          {% if doctor.consultation_fee %}
+            <span class="fee">{{ '{:,.0f}'.format(doctor.consultation_fee) }} đ</span>
+          {% endif %}
+        </div>
+      </a>
+      {% else %}
+        <p>Không tìm thấy bác sĩ nào.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ─── Step 2: Chọn lịch & điền thông tin ───────────────────── -->
+  {% if selected_doctor %}
+  <div class="book-card" id="bookForm">
+    <h2>Bước 2: Chọn lịch & điền thông tin</h2>
+    <div class="selected-doctor-summary">
+      <strong>BS. {{ selected_doctor.user.full_name }}</strong> —
+      {{ selected_doctor.specialty }}
+    </div>
+
+    <form method="POST" action="{{ url_for('appointment.book') }}">
+      <input type="hidden" name="doctor_id" value="{{ selected_doctor.id }}" />
+
+      <div class="form-row-2">
+        <div class="form-group">
+          <label>Ngày khám <span class="required">*</span></label>
+          <input type="date" name="appointment_date" required
+                 min="{{ today_str }}" />
+        </div>
+        <div class="form-group">
+          <label>Giờ khám <span class="required">*</span></label>
+          <input type="time" name="appointment_time" required />
+        </div>
+      </div>
+
+      {% if schedules %}
+      <div class="form-group">
+        <label>Chọn ca làm việc (tùy chọn)</label>
+        <select name="schedule_id">
+          <option value="">— Tự chọn giờ —</option>
+          {% for s in schedules %}
+            <option value="{{ s.id }}">
+              {{ s.work_date.strftime('%d/%m/%Y') }} | {{ s.start_time.strftime('%H:%M') }} - {{ s.end_time.strftime('%H:%M') }}
+              (Còn {{ s.max_patients - s.booked_count() }} slot)
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+
+      <div class="form-group">
+        <label>Lý do khám</label>
+        <textarea name="reason" rows="3" placeholder="Mô tả triệu chứng hoặc lý do khám..."></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg">Xác nhận đặt lịch</button>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const todayStr = new Date().toISOString().split('T')[0];
+  document.querySelectorAll('input[type="date"]').forEach(el => el.min = todayStr);
+  {% if selected_doctor %}
+    document.getElementById('bookForm')?.scrollIntoView({ behavior: 'smooth' });
+  {% endif %}
+</script>
+{% endblock %}

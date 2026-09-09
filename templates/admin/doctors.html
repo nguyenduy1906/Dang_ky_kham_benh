@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Quản lý Bác sĩ{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout container">
+  <aside class="sidebar">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">⚙️</div>
+      <div>
+        <strong>{{ current_user.full_name }}</strong>
+        <span class="role-badge badge-admin">Quản trị</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link">📊 Tổng quan</a>
+      <a href="{{ url_for('admin.doctors') }}" class="sidebar-link active">👨‍⚕️ Bác sĩ</a>
+      <a href="{{ url_for('admin.patients') }}" class="sidebar-link">👥 Bệnh nhân</a>
+      <a href="{{ url_for('auth.logout') }}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+    </nav>
+  </aside>
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1>Quản lý Bác sĩ</h1>
+      <a href="{{ url_for('admin.add_doctor') }}" class="btn btn-primary">+ Thêm bác sĩ</a>
+    </div>
+
+    {% if doctors %}
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Họ tên</th>
+              <th>Email</th>
+              <th>Chuyên khoa</th>
+              <th>Kinh nghiệm</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for doctor in doctors %}
+            <tr class="{% if not doctor.user.is_active %}row-disabled{% endif %}">
+              <td>{{ doctor.id }}</td>
+              <td>BS. {{ doctor.user.full_name }}</td>
+              <td>{{ doctor.user.email }}</td>
+              <td><span class="specialty-badge">{{ doctor.specialty }}</span></td>
+              <td>{{ doctor.experience_years }} năm</td>
+              <td>
+                {% if doctor.user.is_active %}
+                  <span class="badge badge-success">Hoạt động</span>
+                {% else %}
+                  <span class="badge badge-danger">Đã khóa</span>
+                {% endif %}
+              </td>
+              <td>
+                <form method="POST" action="{{ url_for('admin.toggle_doctor', user_id=doctor.user_id) }}"
+                      onsubmit="return confirm('Thay đổi trạng thái tài khoản này?')">
+                  <button type="submit" class="btn btn-outline-sm">
+                    {% if doctor.user.is_active %}Khóa{% else %}Mở khóa{% endif %}
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <p>Chưa có bác sĩ nào. <a href="{{ url_for('admin.add_doctor') }}">Thêm ngay</a></p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

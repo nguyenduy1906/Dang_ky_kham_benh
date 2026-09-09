@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Lịch sử khám bệnh{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout container">
+  <aside class="sidebar">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">👤</div>
+      <div>
+        <strong>{{ current_user.full_name }}</strong>
+        <span class="role-badge badge-patient">Bệnh nhân</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('patient.dashboard') }}" class="sidebar-link">🏠 Tổng quan</a>
+      <a href="{{ url_for('appointment.book') }}" class="sidebar-link">📅 Đặt lịch khám</a>
+      <a href="{{ url_for('patient.appointments') }}" class="sidebar-link active">📋 Lịch sử khám</a>
+      <a href="{{ url_for('patient.profile') }}" class="sidebar-link">👤 Hồ sơ cá nhân</a>
+      <a href="{{ url_for('auth.logout') }}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+    </nav>
+  </aside>
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1>Lịch sử khám bệnh</h1>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="tab-filter">
+      {% for val, label in [('all','Tất cả'),('pending','Chờ xác nhận'),('confirmed','Đã xác nhận'),('completed','Hoàn thành'),('cancelled','Đã hủy')] %}
+        <a href="{{ url_for('patient.appointments', status=val) }}"
+           class="tab-btn {% if status_filter == val %}active{% endif %}">{{ label }}</a>
+      {% endfor %}
+    </div>
+
+    {% if appointments %}
+      <div class="appointments-list">
+        {% for appt in appointments %}
+        <div class="appt-card">
+          <div class="appt-date">
+            <span class="appt-day">{{ appt.appointment_date.strftime('%d') }}</span>
+            <span class="appt-month">{{ appt.appointment_date.strftime('%m/%Y') }}</span>
+          </div>
+          <div class="appt-info">
+            <strong>BS. {{ appt.doctor.user.full_name }}</strong>
+            <span>{{ appt.doctor.specialty }}</span>
+            <span>⏰ {{ appt.appointment_time.strftime('%H:%M') }}</span>
+            {% if appt.reason %}<span class="appt-reason">{{ appt.reason[:60] }}{% if appt.reason|length > 60 %}...{% endif %}</span>{% endif %}
+          </div>
+          <div class="appt-status">
+            {% set label, color = appt.status_label() %}
+            <span class="badge badge-{{ color }}">{{ label }}</span>
+          </div>
+          <div class="appt-actions">
+            <a href="{{ url_for('appointment.detail', appt_id=appt.id) }}" class="btn btn-outline-sm">Chi tiết</a>
+            {% if appt.status in ('pending', 'confirmed') %}
+            <form method="POST" action="{{ url_for('patient.cancel_appointment', appt_id=appt.id) }}" style="display:inline;" onsubmit="return confirm('Bạn có chắc muốn hủy lịch hẹn này?')">
+              <button type="submit" class="btn btn-danger-sm">Hủy</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>Không có lịch hẹn nào.</p>
+        <a href="{{ url_for('appointment.book') }}" class="btn btn-primary">Đặt lịch ngay</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Trang Chủ - PhòngKhámOnline{% endblock %}
+
+{% block content %}
+
+<!-- ─── Hero ─────────────────────────────────────────────────────── -->
+<section class="hero">
+  <div class="container hero-inner">
+    <div class="hero-text">
+      <h1>Đặt lịch khám bệnh<br><span class="hero-accent">nhanh chóng & dễ dàng</span></h1>
+      <p>Kết nối với các bác sĩ chuyên khoa hàng đầu. Đặt lịch trong vài giây, theo dõi lịch hẹn mọi lúc mọi nơi.</p>
+      <div class="hero-actions">
+        <a href="{{ url_for('appointment.book') }}" class="btn btn-primary btn-lg">
+          📅 Đặt lịch ngay
+        </a>
+        {% if not current_user.is_authenticated %}
+          <a href="{{ url_for('auth.register') }}" class="btn btn-outline btn-lg">
+            Tạo tài khoản miễn phí
+          </a>
+        {% endif %}
+      </div>
+    </div>
+    <div class="hero-img">
+      <div class="hero-card">
+        <div class="hero-stat">
+          <span class="stat-number">50+</span>
+          <span class="stat-label">Bác sĩ chuyên khoa</span>
+        </div>
+        <div class="hero-stat">
+          <span class="stat-number">10k+</span>
+          <span class="stat-label">Bệnh nhân tin tưởng</span>
+        </div>
+        <div class="hero-stat">
+          <span class="stat-number">15+</span>
+          <span class="stat-label">Chuyên khoa</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Features ─────────────────────────────────────────────────── -->
+<section class="features section">
+  <div class="container">
+    <h2 class="section-title">Tại sao chọn chúng tôi?</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Đặt lịch nhanh</h3>
+        <p>Chỉ cần 3 bước đơn giản để đặt lịch khám với bác sĩ bạn muốn.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👨‍⚕️</div>
+        <h3>Bác sĩ uy tín</h3>
+        <p>Đội ngũ bác sĩ chuyên khoa giàu kinh nghiệm, được kiểm duyệt kỹ lưỡng.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔔</div>
+        <h3>Theo dõi lịch hẹn</h3>
+        <p>Xem trạng thái, hủy hoặc đổi lịch dễ dàng trên dashboard cá nhân.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>Bảo mật thông tin</h3>
+        <p>Thông tin sức khỏe của bạn được bảo mật tuyệt đối theo chuẩn y tế.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Doctors ───────────────────────────────────────────────────── -->
+{% if doctors %}
+<section class="doctors-section section section-alt">
+  <div class="container">
+    <h2 class="section-title">Bác sĩ nổi bật</h2>
+    <div class="doctors-grid">
+      {% for doctor in doctors %}
+      <div class="doctor-card">
+        <div class="doctor-avatar">
+          {% if doctor.avatar_url %}
+            <img src="{{ doctor.avatar_url }}" alt="{{ doctor.user.full_name }}" />
+          {% else %}
+            <div class="avatar-placeholder">👨‍⚕️</div>
+          {% endif %}
+        </div>
+        <div class="doctor-info">
+          <h3>BS. {{ doctor.user.full_name }}</h3>
+          <span class="specialty-badge">{{ doctor.specialty }}</span>
+          <p class="experience">{{ doctor.experience_years }} năm kinh nghiệm</p>
+          {% if doctor.bio %}
+            <p class="bio">{{ doctor.bio[:100] }}{% if doctor.bio|length > 100 %}...{% endif %}</p>
+          {% endif %}
+          <a href="{{ url_for('appointment.book', doctor_id=doctor.id) }}" class="btn btn-primary btn-sm">
+            Đặt lịch
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center" style="margin-top:2rem;">
+      <a href="{{ url_for('appointment.book') }}" class="btn btn-outline">Xem tất cả bác sĩ →</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ─── CTA ───────────────────────────────────────────────────────── -->
+<section class="cta-section section">
+  <div class="container text-center">
+    <h2>Sẵn sàng chăm sóc sức khỏe?</h2>
+    <p>Đăng ký ngay hôm nay và đặt lịch với bác sĩ phù hợp nhất.</p>
+    {% if not current_user.is_authenticated %}
+      <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Bắt đầu ngay</a>
+    {% else %}
+      <a href="{{ url_for('appointment.book') }}" class="btn btn-primary btn-lg">Đặt lịch khám</a>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

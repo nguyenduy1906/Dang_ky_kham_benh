@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Lịch làm việc{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout container">
+  <aside class="sidebar">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">👨‍⚕️</div>
+      <div>
+        <strong>BS. {{ current_user.full_name }}</strong>
+        <span class="role-badge badge-doctor">Bác sĩ</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('doctor.dashboard') }}" class="sidebar-link">🏠 Tổng quan</a>
+      <a href="{{ url_for('doctor.schedule') }}" class="sidebar-link active">📅 Lịch làm việc</a>
+      <a href="{{ url_for('doctor.patients') }}" class="sidebar-link">👥 Bệnh nhân</a>
+      <a href="{{ url_for('auth.logout') }}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+    </nav>
+  </aside>
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1>Lịch làm việc</h1>
+    </div>
+
+    <!-- Add schedule form -->
+    <div class="card" style="margin-bottom:2rem;">
+      <h2>Thêm ca làm việc mới</h2>
+      <form method="POST" class="form-inline-grid">
+        <div class="form-group">
+          <label>Ngày làm việc</label>
+          <input type="date" name="work_date" required
+                 min="{{ today.strftime('%Y-%m-%d') if today else '' }}" />
+        </div>
+        <div class="form-group">
+          <label>Giờ bắt đầu</label>
+          <input type="time" name="start_time" required />
+        </div>
+        <div class="form-group">
+          <label>Giờ kết thúc</label>
+          <input type="time" name="end_time" required />
+        </div>
+        <div class="form-group">
+          <label>Số bệnh nhân tối đa</label>
+          <input type="number" name="max_patients" value="10" min="1" max="50" required />
+        </div>
+        <div class="form-group form-group-submit">
+          <button type="submit" class="btn btn-primary">Thêm ca</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Schedule list -->
+    <section class="dashboard-section">
+      <h2>Lịch sắp tới</h2>
+      {% if schedules %}
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Ngày</th>
+                <th>Giờ bắt đầu</th>
+                <th>Giờ kết thúc</th>
+                <th>Tối đa</th>
+                <th>Đã đặt</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in schedules %}
+              <tr>
+                <td>{{ s.work_date.strftime('%d/%m/%Y') }}</td>
+                <td>{{ s.start_time.strftime('%H:%M') }}</td>
+                <td>{{ s.end_time.strftime('%H:%M') }}</td>
+                <td>{{ s.max_patients }}</td>
+                <td>{{ s.booked_count() }}</td>
+                <td>
+                  {% if s.has_slots() %}
+                    <span class="badge badge-success">Còn slot</span>
+                  {% else %}
+                    <span class="badge badge-danger">Hết slot</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <form method="POST" action="{{ url_for('doctor.delete_schedule', sid=s.id) }}"
+                        onsubmit="return confirm('Xóa ca làm việc này?')">
+                    <button type="submit" class="btn btn-danger-sm">Xóa</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <p>Chưa có lịch làm việc nào. Hãy thêm ca mới!</p>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Bác Sĩ{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout container">
+  <aside class="sidebar">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">👨‍⚕️</div>
+      <div>
+        <strong>BS. {{ current_user.full_name }}</strong>
+        <span class="role-badge badge-doctor">Bác sĩ</span>
+        <span class="specialty-small">{{ doctor.specialty }}</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('doctor.dashboard') }}" class="sidebar-link active">🏠 Tổng quan</a>
+      <a href="{{ url_for('doctor.schedule') }}" class="sidebar-link">📅 Lịch làm việc</a>
+      <a href="{{ url_for('doctor.patients') }}" class="sidebar-link">👥 Bệnh nhân</a>
+      <a href="{{ url_for('auth.logout') }}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+    </nav>
+  </aside>
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1>Xin chào, BS. {{ current_user.full_name.split()[-1] }}! 👋</h1>
+      <span class="date-badge">{{ today.strftime('%d/%m/%Y') }}</span>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-value">{{ total }}</div>
+        <div class="stat-label">Tổng lịch hẹn</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value">{{ completed }}</div>
+        <div class="stat-label">Đã hoàn thành</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-value">{{ today_appointments|length }}</div>
+        <div class="stat-label">Lịch hôm nay</div>
+      </div>
+    </div>
+
+    <!-- Today appointments -->
+    <section class="dashboard-section">
+      <h2>Lịch khám hôm nay</h2>
+      {% if today_appointments %}
+        <div class="appointments-list">
+          {% for appt in today_appointments %}
+          <div class="appt-card">
+            <div class="appt-date">
+              <span class="appt-day">{{ appt.appointment_time.strftime('%H:%M') }}</span>
+              <span class="appt-month">Hôm nay</span>
+            </div>
+            <div class="appt-info">
+              <strong>{{ appt.patient.full_name }}</strong>
+              <span>📞 {{ appt.patient.phone or 'Chưa cập nhật' }}</span>
+              {% if appt.reason %}<span class="appt-reason">{{ appt.reason }}</span>{% endif %}
+            </div>
+            <div class="appt-status">
+              {% set label, color = appt.status_label() %}
+              <span class="badge badge-{{ color }}">{{ label }}</span>
+            </div>
+            <div class="appt-actions">
+              <!-- Form cập nhật trạng thái nhanh -->
+              <form method="POST" action="{{ url_for('doctor.update_appointment', appt_id=appt.id) }}" style="display:flex;gap:.4rem;">
+                {% if appt.status == 'pending' %}
+                  <button name="status" value="confirmed" class="btn btn-success-sm">✓ Xác nhận</button>
+                {% endif %}
+                {% if appt.status in ('pending', 'confirmed') %}
+                  <button name="status" value="completed" class="btn btn-info-sm">✔ Hoàn thành</button>
+                  <button name="status" value="cancelled" class="btn btn-danger-sm" onclick="return confirm('Hủy lịch hẹn này?')">✗ Hủy</button>
+                {% endif %}
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">🎉</div>
+          <p>Không có lịch khám nào hôm nay.</p>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

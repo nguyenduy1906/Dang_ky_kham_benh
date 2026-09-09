@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout container">
+  <aside class="sidebar">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">⚙️</div>
+      <div>
+        <strong>{{ current_user.full_name }}</strong>
+        <span class="role-badge badge-admin">Quản trị</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link active">📊 Tổng quan</a>
+      <a href="{{ url_for('admin.doctors') }}" class="sidebar-link">👨‍⚕️ Bác sĩ</a>
+      <a href="{{ url_for('admin.patients') }}" class="sidebar-link">👥 Bệnh nhân</a>
+      <a href="{{ url_for('auth.logout') }}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+    </nav>
+  </aside>
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1>📊 Tổng quan hệ thống</h1>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value">{{ total_patients }}</div>
+        <div class="stat-label">Bệnh nhân</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">👨‍⚕️</div>
+        <div class="stat-value">{{ total_doctors }}</div>
+        <div class="stat-label">Bác sĩ</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📋</div>
+        <div class="stat-value">{{ total_appts }}</div>
+        <div class="stat-label">Tổng lịch hẹn</div>
+      </div>
+      <div class="stat-card stat-warning">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-value">{{ pending_appts }}</div>
+        <div class="stat-label">Chờ xác nhận</div>
+      </div>
+    </div>
+
+    <!-- Recent appointments -->
+    <section class="dashboard-section">
+      <h2>Lịch hẹn gần đây</h2>
+      {% if recent_appts %}
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Bệnh nhân</th>
+                <th>Bác sĩ</th>
+                <th>Ngày khám</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for appt in recent_appts %}
+              <tr>
+                <td>{{ appt.id }}</td>
+                <td>{{ appt.patient.full_name }}</td>
+                <td>BS. {{ appt.doctor.user.full_name }}</td>
+                <td>{{ appt.appointment_date.strftime('%d/%m/%Y') }}</td>
+                <td>
+                  {% set label, color = appt.status_label() %}
+                  <span class="badge badge-{{ color }}">{{ label }}</span>
+                </td>
+                <td>
+                  <a href="{{ url_for('appointment.detail', appt_id=appt.id) }}" class="btn btn-outline-sm">Xem</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state"><p>Chưa có lịch hẹn nào.</p></div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

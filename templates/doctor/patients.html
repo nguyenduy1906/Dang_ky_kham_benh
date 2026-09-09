@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Danh sách bệnh nhân{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout container">
+  <aside class="sidebar">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">👨‍⚕️</div>
+      <div>
+        <strong>BS. {{ current_user.full_name }}</strong>
+        <span class="role-badge badge-doctor">Bác sĩ</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('doctor.dashboard') }}" class="sidebar-link">🏠 Tổng quan</a>
+      <a href="{{ url_for('doctor.schedule') }}" class="sidebar-link">📅 Lịch làm việc</a>
+      <a href="{{ url_for('doctor.patients') }}" class="sidebar-link active">👥 Bệnh nhân</a>
+      <a href="{{ url_for('auth.logout') }}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+    </nav>
+  </aside>
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1>Danh sách bệnh nhân</h1>
+    </div>
+
+    {% if appointments %}
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Bệnh nhân</th>
+              <th>Điện thoại</th>
+              <th>Ngày khám</th>
+              <th>Giờ khám</th>
+              <th>Lý do</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for appt in appointments %}
+            <tr>
+              <td><strong>{{ appt.patient.full_name }}</strong></td>
+              <td>{{ appt.patient.phone or '—' }}</td>
+              <td>{{ appt.appointment_date.strftime('%d/%m/%Y') }}</td>
+              <td>{{ appt.appointment_time.strftime('%H:%M') }}</td>
+              <td>{{ appt.reason[:40] if appt.reason else '—' }}</td>
+              <td>
+                {% set label, color = appt.status_label() %}
+                <span class="badge badge-{{ color }}">{{ label }}</span>
+              </td>
+              <td>
+                <a href="{{ url_for('appointment.detail', appt_id=appt.id) }}" class="btn btn-outline-sm">Chi tiết</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">👥</div>
+        <p>Chưa có bệnh nhân nào.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

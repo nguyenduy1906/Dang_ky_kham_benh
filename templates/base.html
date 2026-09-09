@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Phòng Khám Đa Khoa{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- ─── Navbar ─────────────────────────────────────────────────── -->
+  <nav class="navbar">
+    <div class="container nav-inner">
+      <a href="{{ url_for('index') }}" class="brand">
+        <span class="brand-icon">🏥</span> PhòngKhám<span class="brand-accent">Online</span>
+      </a>
+
+      <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu">☰</button>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="{{ url_for('index') }}">Trang chủ</a></li>
+        <li><a href="{{ url_for('appointment.book') }}">Đặt lịch</a></li>
+
+        {% if current_user.is_authenticated %}
+          {% if current_user.is_patient() %}
+            <li><a href="{{ url_for('patient.dashboard') }}">Dashboard</a></li>
+          {% elif current_user.is_doctor() %}
+            <li><a href="{{ url_for('doctor.dashboard') }}">Dashboard</a></li>
+          {% elif current_user.is_admin() %}
+            <li><a href="{{ url_for('admin.dashboard') }}">Quản trị</a></li>
+          {% endif %}
+          <li class="nav-user">
+            <span class="user-greeting">Xin chào, {{ current_user.full_name.split()[0] }}!</span>
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-sm">Đăng xuất</a>
+          </li>
+        {% else %}
+          <li><a href="{{ url_for('auth.login') }}" class="btn btn-outline-sm">Đăng nhập</a></li>
+          <li><a href="{{ url_for('auth.register') }}" class="btn btn-primary-sm">Đăng ký</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ─── Flash Messages ─────────────────────────────────────────── -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-container container">
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            {{ message }}
+            <button class="alert-close" onclick="this.parentElement.remove()">×</button>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- ─── Main Content ───────────────────────────────────────────── -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ─── Footer ────────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <span class="brand-icon">🏥</span> PhòngKhámOnline
+        <p>Chăm sóc sức khỏe của bạn là ưu tiên hàng đầu của chúng tôi.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Liên kết nhanh</h4>
+        <ul>
+          <li><a href="{{ url_for('index') }}">Trang chủ</a></li>
+          <li><a href="{{ url_for('appointment.book') }}">Đặt lịch khám</a></li>
+          <li><a href="{{ url_for('auth.login') }}">Đăng nhập</a></li>
+        </ul>
+      </div>
+      <div class="footer-contact">
+        <h4>Liên hệ</h4>
+        <p>📍 123 Đường Sức Khỏe, TP.HCM</p>
+        <p>📞 (028) 1234-5678</p>
+        <p>✉️ info@phongkham.vn</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 PhòngKhámOnline. Bảo lưu mọi quyền.</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

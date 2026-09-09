@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Quản lý Bệnh nhân{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}" />
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout container">
+  <aside class="sidebar">
+    <div class="sidebar-user">
+      <div class="sidebar-avatar">⚙️</div>
+      <div>
+        <strong>{{ current_user.full_name }}</strong>
+        <span class="role-badge badge-admin">Quản trị</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('admin.dashboard') }}" class="sidebar-link">📊 Tổng quan</a>
+      <a href="{{ url_for('admin.doctors') }}" class="sidebar-link">👨‍⚕️ Bác sĩ</a>
+      <a href="{{ url_for('admin.patients') }}" class="sidebar-link active">👥 Bệnh nhân</a>
+      <a href="{{ url_for('auth.logout') }}" class="sidebar-link sidebar-logout">🚪 Đăng xuất</a>
+    </nav>
+  </aside>
+
+  <div class="dashboard-main">
+    <div class="dashboard-header">
+      <h1>Quản lý Bệnh nhân</h1>
+      <span class="count-badge">{{ patients|length }} bệnh nhân</span>
+    </div>
+
+    {% if patients %}
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Họ tên</th>
+              <th>Email</th>
+              <th>Điện thoại</th>
+              <th>Ngày đăng ký</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for patient in patients %}
+            <tr>
+              <td>{{ patient.id }}</td>
+              <td>{{ patient.full_name }}</td>
+              <td>{{ patient.email }}</td>
+              <td>{{ patient.phone or '—' }}</td>
+              <td>{{ patient.created_at.strftime('%d/%m/%Y') }}</td>
+              <td>
+                {% if patient.is_active %}
+                  <span class="badge badge-success">Hoạt động</span>
+                {% else %}
+                  <span class="badge badge-danger">Đã khóa</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <p>Chưa có bệnh nhân nào đăng ký.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
