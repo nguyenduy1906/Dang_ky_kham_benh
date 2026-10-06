@@ -1,76 +1,43 @@
 # Đăng ký và đặt lịch khám bệnh
 
 Backend Flask + Gunicorn và PostgreSQL 17 chạy bằng Docker Compose.
-Hiện dự án có cấu trúc database 18 bảng, seed 5 vai trò và endpoint `/health`;
-chưa có giao diện hoặc API nghiệp vụ đăng ký, đăng nhập và đặt lịch hoàn chỉnh.
+Hiện có 18 bảng, dữ liệu mẫu và endpoint `/health`; chưa có giao diện hoặc API
+nghiệp vụ hoàn chỉnh.
 
-## Chạy nhanh
+## Chạy dự án
 
-Mở Docker Desktop với Linux containers, sau đó chạy từ thư mục gốc dự án:
+Mở Docker Desktop. Từ thư mục gốc, chạy:
 
 ```powershell
 docker compose up --build -d
-docker compose ps
 ```
 
-Cần có `compose.yaml` tại thư mục gốc trước khi chạy. File này chứa cấu hình
-riêng và đang được `.gitignore` bỏ qua; khi clone trên máy mới, tạo file theo
-mẫu trong [hướng dẫn chạy dự án](docs/HUONG_DAN_CHAY_DU_AN.md).
+Cần có `compose.yaml` ở gốc và `backend/.env` chứa POSTGRES_PASSWORD và
+DB_PASSWORD giống nhau. Hai file cấu hình thực tế này được Git bỏ qua.
+Xem các bước chuẩn bị và nhập dữ liệu tại
+[Hướng dẫn chạy dự án](docs/HUONG_DAN_CHAY_DU_AN.md).
 
 - Backend: http://localhost:5000/health
-- PostgreSQL trên Windows: `127.0.0.1:5433`
-- Database: `medical`; tài khoản: `medical`.
-- Backend kết nối nội bộ Docker bằng `db:5432`.
+- PostgreSQL: `127.0.0.1:5433`; database và tài khoản: `medical`.
 
-## Cấu trúc
+## Các file chính
 
-```text
-backend/
-  app/
-    core/          # Cấu hình PostgreSQL
-    db/            # Kết nối, khởi tạo và seed
-    routes/        # Các endpoint HTTP
-    models/
-    schemas/
-    services/
-    main.py        # Tạo ứng dụng Flask
-  tests/           # Kiểm thử PostgreSQL
-  uploads/
-  Dockerfile       # Build image và tự init/seed/chạy Gunicorn
-  requirements.txt
-database/
-  postgres_schema.sql
-  erd.html
-frontend/
-  static/
-  templates/
-docs/
-  HUONG_DAN_CHAY_DU_AN.md
-compose.yaml       # Cấu hình chạy cục bộ, không đưa lên Git
-```
+| File | Chức năng |
+|---|---|
+| `compose.yaml` | Chạy backend và PostgreSQL |
+| `backend/.env` | Mật khẩu database, không đưa lên Git |
+| `backend/.env.example` | Mẫu cấu hình |
+| `backend/Dockerfile` | Build image, tạo bảng, seed vai trò và chạy backend |
+| `backend/app/main.py` | Tạo ứng dụng Flask |
+| `database/init_db.sql` | Tạo cấu trúc database |
+| `database/sample_data.sql` | Nạp dữ liệu mẫu thủ công, xóa dữ liệu cũ trước khi nạp |
+| `database/erd.html` | Sơ đồ database |
 
-## Các lệnh thường dùng
+## Dừng và xem log
 
 ```powershell
-docker compose up -d          # Chạy với image đã có
-docker compose stop           # Dừng, giữ dữ liệu
+docker compose stop
 docker compose logs -f backend
-# Sau khi sửa code hoặc YAML:
-docker compose up --build -d
 ```
 
-Chi tiết thiết lập trên máy mới, kết nối pgAdmin, tạo admin, kiểm thử và xử lý
-lỗi nằm trong [docs/HUONG_DAN_CHAY_DU_AN.md](docs/HUONG_DAN_CHAY_DU_AN.md).
-
-## Lưu ý dữ liệu và cấu hình
-
-Database lưu trong volume `medical-booking_postgres_data`. `docker compose down`
-giữ volume; **`docker compose down -v` xóa dữ liệu database**.
-
-Cấu hình kết nối hiện được điền trực tiếp trong `compose.yaml`. `backend/.env`
-không được Compose tự đọc trong cấu hình hiện tại; không có cơ chế `include`.
-Mật khẩu thật, file upload và bản sao lưu không đưa lên Git.
-
-Backend tự tạo bảng và seed vai trò mỗi khi khởi động, không tự tạo admin hoặc
-bệnh nhân. Sửa cấu trúc bảng đã tồn tại cần migration/`ALTER TABLE`; khởi động
-lại không tự thêm hoặc sửa cột.
+Dữ liệu lưu trong volume. **Không chạy `docker compose down -v` nếu muốn giữ dữ liệu.**

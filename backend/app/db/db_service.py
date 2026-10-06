@@ -7,7 +7,7 @@ from backend.app.db.database import get_db_connection
 def init_database():
     with get_db_connection() as db:
         db.execute('SELECT pg_advisory_xact_lock(78124001)')
-        db.execute((DATABASE_DIR / 'postgres_schema.sql').read_text(encoding='utf-8'))
+        db.execute((DATABASE_DIR / 'init_db.sql').read_text(encoding='utf-8'))
 
 
 ROLES = (
