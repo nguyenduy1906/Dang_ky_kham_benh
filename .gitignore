@@ -1,49 +1,19 @@
-# ─── Python ───────────────────────────────────
+.env
+.env.*
+!.env.example
+.venv/
 __pycache__/
 *.py[cod]
-*$py.class
-*.pyo
-*.pyd
-.Python
+database/*.db
+database/*.db-*
+BackEnd/db/*.db
+BackEnd/db/*.db-*
+BackEnd/db/*.sqlite
+BackEnd/db/*.sqlite3
 
-# ─── Virtual Environment ──────────────────────
-venv/
-env/
-.venv/
-.env/
-ENV/
-
-# ─── Flask / Instance ─────────────────────────
-instance/
-*.db
-*.sqlite
-*.sqlite3
-
-# ─── Environment Variables ────────────────────
-.env
-.env.local
-.env.production
-
-# ─── Uploads ──────────────────────────────────
-app/static/images/uploads/
-
-# ─── IDE / Editor ─────────────────────────────
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# ─── OS Files ─────────────────────────────────
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# ─── Logs ─────────────────────────────────────
-*.log
-logs/
-
-# ─── Distribution / Build ─────────────────────
-dist/
-build/
-*.egg-info/
+backend/data/*.db
+backend/data/*.db-*
+backend/data/*.sqlite
+backend/data/*.sqlite3
+backend/uploads/*
+!backend/uploads/.gitkeep
