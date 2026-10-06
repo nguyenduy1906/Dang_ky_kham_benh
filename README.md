@@ -20,9 +20,13 @@ Xem các bước chuẩn bị và nhập dữ liệu tại
 [Hướng dẫn chạy dự án](docs/HUONG_DAN_CHAY_DU_AN.md).
 
 - Backend: http://localhost:5000/health
+- Tài liệu và thử API (Swagger): http://localhost:5000/docs/
 - PostgreSQL: `127.0.0.1:5433`; database và tài khoản: `medical`.
 
 ## Các file chính
+
+Danh sách API, phân công và vị trí viết code:
+[Kế hoạch backend](docs/DANH_SACH_API_VA_PHAN_CONG_BACKEND.md).
 
 | File | Chức năng |
 |---|---|

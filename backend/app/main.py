@@ -1,5 +1,6 @@
 """Create the Flask backend after database initialization and seed."""
 from flask import Flask
+from flasgger import Swagger
 from backend.app.db.database import get_db_connection
 from backend.app.routes import health_routes
 
@@ -12,6 +13,12 @@ def create_app():
             raise RuntimeError('Run python -m backend.app.db.seed_db first')
     app = Flask(__name__)
     app.register_blueprint(health_routes)
+    app.config['SWAGGER'] = {'title': 'Medical Booking API', 'uiversion': 3}
+    Swagger(app, config={'specs_route': '/docs/'}, merge=True, template={
+        'swagger': '2.0',
+        'info': {'title': 'Medical Booking API', 'version': '1.0.0',
+                 'description': 'Tài liệu API của dự án đăng ký và đặt lịch khám bệnh.'},
+    })
     return app
 
 

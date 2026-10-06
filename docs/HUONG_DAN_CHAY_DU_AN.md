@@ -45,6 +45,11 @@ Mở http://localhost:5000/health. Kết quả đúng:
 
 Trang `/` chưa có giao diện.
 
+Xem và thử API tại http://localhost:5000/docs/. Mở GET `/health`, chọn
+Try it out → Execute để gọi API. Khi thêm route mới, viết mô tả YAML trong
+docstring của hàm (tham khảo `backend/app/routes/__init__.py`) rồi đăng ký
+Blueprint trong `app/main.py`; Flasgger sẽ đưa API có mô tả vào Swagger.
+
 ## 3. Nạp dữ liệu mẫu (khi cần)
 
 Chạy trong PowerShell từ thư mục gốc:
