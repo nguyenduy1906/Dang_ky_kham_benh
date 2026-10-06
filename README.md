@@ -12,8 +12,10 @@ Mở Docker Desktop. Từ thư mục gốc, chạy:
 docker compose up --build -d
 ```
 
-Cần có `compose.yaml` ở gốc và `backend/.env` chứa POSTGRES_PASSWORD và
-DB_PASSWORD giống nhau. Hai file cấu hình thực tế này được Git bỏ qua.
+Cấu hình `compose.yaml` và mẫu `backend/.env.example` được chia sẻ cùng mã nguồn.
+Sau khi clone, chạy `Copy-Item backend/.env.example backend/.env`, rồi thay
+`CHANGE_ME` ở cả hai dòng bằng cùng một mật khẩu bạn chọn.
+Chỉ `backend/.env` chứa mật khẩu thật được Git bỏ qua.
 Xem các bước chuẩn bị và nhập dữ liệu tại
 [Hướng dẫn chạy dự án](docs/HUONG_DAN_CHAY_DU_AN.md).
 
