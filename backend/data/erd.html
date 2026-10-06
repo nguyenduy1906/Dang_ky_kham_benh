@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ERD v2 - Hệ thống đặt lịch khám bệnh</title>
+
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true, theme: "default", securityLevel: "loose" });
+  </script>
+
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f7fa; margin: 0; padding: 30px; }
+    h1 { text-align: center; margin-bottom: 30px; }
+    .diagram-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: auto; }
+    .mermaid { min-width: 1700px; }
+  </style>
+</head>
+
+<body>
+  <h1>ERD v2 - Hệ thống đặt lịch khám chữa bệnh</h1>
+
+  <div class="diagram-container">
+    <pre class="mermaid">
+erDiagram
+
+    %% ===== 1. TÀI KHOẢN & PHÂN QUYỀN =====
+
+    ROLE {
+        bigint role_id PK
+        string role_name UK "USER, DOCTOR, RECEPTIONIST, NURSE, ADMIN"
+        string description
+        boolean requires_approval
+    }
+
+    USERS {
+        bigint user_id PK
+        bigint role_id FK
+        string full_name
+        string phone UK
+        string email UK
+        string password_hash "nullable"
+        enum approval_status "PENDING, APPROVED, REJECTED"
+        enum account_status "ACTIVE, LOCKED"
+        boolean email_verified
+        datetime deleted_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    AUTH_TOKEN {
+        bigint token_id PK
+        bigint user_id FK
+        enum token_type "RESET_PASSWORD, VERIFY_EMAIL, OTP"
+        string token_hash
+        datetime expires_at
+        datetime used_at
+        datetime created_at
+    }
+
+    %% ===== 2. HỒ SƠ BỆNH NHÂN (tách khỏi tài khoản) =====
+
+    PATIENT {
+        bigint patient_id PK
+        bigint user_id FK "chủ tài khoản, NULL nếu walk-in chưa có TK"
+        string full_name
+        date dob
+        enum gender
+        string id_card
+        string address
+        string phone
+        string health_insurance
+        enum relationship "SELF, PARENT, CHILD, SPOUSE, OTHER"
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% ===== 3. BÁC SĨ, KHOA, PHÒNG =====
+
+    DEPARTMENT {
+        bigint department_id PK
+        string name
+        string description
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+
+    DOCTOR_PROFILE {
+        bigint doctor_profile_id PK
+        bigint user_id FK "UNIQUE"
+        bigint department_id FK
+        string academic_degree
+        string specialization
+        int experience_years
+        string introduction
+        decimal consultation_fee
+        string avatar_url
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+
+    ROOM {
+        bigint room_id PK
+        bigint department_id FK
+        string room_name
+        string description
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% ===== 4. LỊCH LÀM VIỆC =====
+    %% UNIQUE (doctor_profile_id, work_date, start_time)
+    %% UNIQUE (room_id, work_date, start_time)
+
+    WORK_SCHEDULE {
+        bigint schedule_id PK
+        bigint doctor_profile_id FK
+        bigint room_id FK
+        date work_date
+        time start_time
+        time end_time
+        int max_quota
+        int booked_count "cập nhật trong transaction"
+        enum schedule_status "OPEN, FULL, CLOSED, UNAVAILABLE"
+        string unavailable_reason
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% ===== 5. LƯỢT KHÁM (gộp online + walk-in) =====
+    %% UNIQUE (schedule_id, queue_number)
+    %% department suy ra từ doctor_profile
+
+    VISIT {
+        bigint visit_id PK
+        enum visit_type "ONLINE, WALK_IN"
+        bigint patient_id FK
+        bigint doctor_profile_id FK
+        bigint schedule_id FK "NULL nếu walk-in không theo ca"
+        bigint room_id FK
+        bigint created_by_id FK "NULL nếu bệnh nhân tự đặt online; lễ tân nếu walk-in"
+        string symptoms
+        enum visit_status "HOLDING, CONFIRMED, CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW, EXPIRED"
+        int queue_number
+        datetime estimated_exam_at
+        string qr_code
+        datetime hold_expires_at "chỉ online"
+        datetime checked_in_at
+        bigint cancelled_by_id FK
+        string cancel_reason
+        datetime cancelled_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    VISIT_STATUS_LOG {
+        bigint log_id PK
+        bigint visit_id FK
+        enum old_status
+        enum new_status
+        bigint changed_by_id FK
+        string note
+        datetime changed_at
+    }
+
+    VISIT_TRANSFER_LOG {
+        bigint log_id PK
+        bigint visit_id FK
+        bigint old_doctor_id FK
+        bigint new_doctor_id FK
+        bigint transferred_by_id FK
+        string reason
+        datetime transferred_at
+    }
+
+    %% ===== 6. THANH TOÁN =====
+
+    PAYMENT {
+        bigint payment_id PK
+        bigint visit_id FK
+        enum payment_type "DEPOSIT, EXAM_FEE, REFUND"
+        decimal amount
+        enum payment_method "CASH, BANK, EWALLET, CARD"
+        enum transaction_status "PENDING, SUCCESS, FAILED, REFUNDED"
+        string transaction_code UK
+        datetime paid_at
+        datetime refunded_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% ===== 7. HỒ SƠ KHÁM BỆNH =====
+
+    MEDICAL_RECORD {
+        bigint record_id PK
+        bigint visit_id FK "UNIQUE"
+        string diagnosis
+        string treatment
+        string doctor_notes
+        datetime examined_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    PRESCRIPTION_ITEM {
+        bigint item_id PK
+        bigint record_id FK
+        string medication_name
+        string dosage
+        int quantity
+        string instructions
+    }
+
+    %% ===== 8. ĐÁNH GIÁ =====
+
+    REVIEW {
+        bigint review_id PK
+        bigint record_id FK "UNIQUE"
+        int rating "1-5"
+        string comment
+        datetime created_at
+        datetime updated_at
+    }
+
+    %% ===== 9. THÔNG BÁO, TIN TỨC, CẤU HÌNH =====
+
+    NOTIFICATION {
+        bigint notification_id PK
+        bigint user_id FK
+        enum notification_type
+        string title
+        string content
+        string reference_type "VISIT, PAYMENT, ARTICLE..."
+        bigint reference_id
+        boolean is_read
+        datetime created_at
+    }
+
+    ARTICLE {
+        bigint article_id PK
+        bigint author_id FK
+        string title
+        string slug UK
+        string category
+        string thumbnail_url
+        string content
+        boolean is_active
+        datetime published_at
+        datetime created_at
+        datetime updated_at
+    }
+
+    SYSTEM_CONFIGURATION {
+        string config_key PK
+        string config_value
+        string description
+        datetime updated_at
+    }
+
+    %% ===== QUAN HỆ =====
+
+    ROLE ||--o{ USERS : "phan_quyen"
+    USERS ||--o{ AUTH_TOKEN : "co_token"
+    USERS ||--o| DOCTOR_PROFILE : "co_ho_so_bac_si"
+    USERS |o--o{ PATIENT : "so_huu_ho_so"
+
+    DEPARTMENT ||--o{ DOCTOR_PROFILE : "co_bac_si"
+    DEPARTMENT ||--o{ ROOM : "co_phong_kham"
+
+    DOCTOR_PROFILE ||--o{ WORK_SCHEDULE : "co_lich_lam_viec"
+    ROOM ||--o{ WORK_SCHEDULE : "duoc_xep_lich"
+
+    PATIENT ||--o{ VISIT : "co_luot_kham"
+    DOCTOR_PROFILE ||--o{ VISIT : "phu_trach_kham"
+    WORK_SCHEDULE |o--o{ VISIT : "thuoc_ca_kham"
+    ROOM |o--o{ VISIT : "kham_tai_phong"
+    USERS |o--o{ VISIT : "tao_boi"
+    USERS |o--o{ VISIT : "huy_boi"
+
+    VISIT ||--o{ VISIT_STATUS_LOG : "lich_su_trang_thai"
+    USERS ||--o{ VISIT_STATUS_LOG : "thay_doi_boi"
+
+    VISIT ||--o{ VISIT_TRANSFER_LOG : "lich_su_chuyen_bac_si"
+    DOCTOR_PROFILE ||--o{ VISIT_TRANSFER_LOG : "bac_si_cu"
+    DOCTOR_PROFILE ||--o{ VISIT_TRANSFER_LOG : "bac_si_moi"
+    USERS ||--o{ VISIT_TRANSFER_LOG : "nguoi_chuyen"
+
+    VISIT ||--o{ PAYMENT : "co_giao_dich"
+
+    VISIT ||--o| MEDICAL_RECORD : "tao_ho_so_kham"
+    MEDICAL_RECORD ||--o{ PRESCRIPTION_ITEM : "co_thuoc"
+    MEDICAL_RECORD ||--o| REVIEW : "co_danh_gia"
+
+    USERS ||--o{ NOTIFICATION : "nhan_thong_bao"
+    USERS ||--o{ ARTICLE : "dang_bai"
+    </pre>
+  </div>
+</body>
+</html>
