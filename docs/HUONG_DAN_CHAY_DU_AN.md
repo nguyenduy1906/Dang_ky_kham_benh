@@ -5,8 +5,8 @@ Mở Docker Desktop trước khi chạy.
 
 ## 1. Chuẩn bị cấu hình (chỉ lần đầu)
 
-Cần có `compose.yaml` ở thư mục gốc. File cấu hình cục bộ này đang được Git bỏ qua;
-nếu tải dự án từ Git, lấy file cấu hình từ người quản lý dự án, không kèm mật khẩu.
+Sau khi clone code, `compose.yaml` ở thư mục gốc đã có sẵn trong repository.
+File này không chứa mật khẩu thật; Docker đọc mật khẩu từ `backend/.env`.
 
 Tạo file `.env` trong thư mục `backend`, hoặc dùng:
 

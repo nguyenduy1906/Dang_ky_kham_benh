@@ -9,11 +9,6 @@ secrets/
 *.p12
 *.pfx
 
-# Current Compose configuration contains real database passwords.
-/compose.yaml
-/docker-compose.yml
-/docker-compose.yaml
-
 # Python environments and generated caches.
 .venv/
 .venv*/
