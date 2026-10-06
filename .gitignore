@@ -1,19 +1,48 @@
+# Local environment settings and secrets (at any directory level).
 .env
 .env.*
 !.env.example
+!.env.*.example
+secrets/
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Current Compose configuration contains real database passwords.
+/compose.yaml
+/docker-compose.yml
+/docker-compose.yaml
+
+# Python environments and generated caches.
 .venv/
+.venv*/
+venv/
 __pycache__/
 *.py[cod]
-database/*.db
-database/*.db-*
-BackEnd/db/*.db
-BackEnd/db/*.db-*
-BackEnd/db/*.sqlite
-BackEnd/db/*.sqlite3
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
 
-backend/data/*.db
-backend/data/*.db-*
-backend/data/*.sqlite
-backend/data/*.sqlite3
-backend/uploads/*
-!backend/uploads/.gitkeep
+# Uploaded files, database storage, backups, and runtime logs.
+/backend/uploads/*
+!/backend/uploads/.gitkeep
+/database/pgdata/
+/database/backups/
+/backups/
+*.dump
+*.backup
+*.log
+/logs/
+
+# Frontend dependencies and generated output.
+node_modules/
+/frontend/dist/
+/frontend/build/
+
+# Operating-system temporary files.
+.DS_Store
+Thumbs.db
