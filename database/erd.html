@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ERD v2 - Hệ thống đặt lịch khám bệnh</title>
+  <title>ERD v3 - Hệ thống đặt lịch khám bệnh</title>
 
   <script type="module">
     import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
@@ -19,7 +19,7 @@
 </head>
 
 <body>
-  <h1>ERD v2 - Hệ thống đặt lịch khám chữa bệnh</h1>
+  <h1>ERD v3 - Hệ thống đặt lịch khám chữa bệnh</h1>
 
   <div class="diagram-container">
     <pre class="mermaid">
@@ -28,88 +28,89 @@ erDiagram
     %% ===== 1. TÀI KHOẢN & PHÂN QUYỀN =====
 
     ROLE {
-        bigint role_id PK
-        string role_name UK "USER, DOCTOR, RECEPTIONIST, NURSE, ADMIN"
-        string description
-        boolean requires_approval
+        integer role_id PK "NOT NULL"
+        text role_name UK "NOT NULL; USER, DOCTOR, RECEPTIONIST, NURSE, ADMIN"
+        text description
+        integer requires_approval "NOT NULL; 0 hoặc 1"
     }
 
     USERS {
-        bigint user_id PK
-        bigint role_id FK
-        string full_name
-        string phone UK
-        string email UK
-        string password_hash "nullable"
-        enum approval_status "PENDING, APPROVED, REJECTED"
-        enum account_status "ACTIVE, LOCKED"
-        boolean email_verified
-        datetime deleted_at
-        datetime created_at
-        datetime updated_at
+        integer user_id PK "NOT NULL"
+        integer role_id FK "NOT NULL"
+        text full_name "NOT NULL"
+        text phone UK
+        text email UK
+        text password_hash "NOT NULL; hash mật khẩu, không rỗng"
+        text approval_status "NOT NULL; PENDING, APPROVED, REJECTED"
+        text account_status "NOT NULL; ACTIVE, LOCKED"
+        integer email_verified "NOT NULL; 0 hoặc 1"
+        timestamptz deleted_at
+        timestamptz created_at "NOT NULL"
+        timestamptz updated_at "NOT NULL"
     }
 
     AUTH_TOKEN {
-        bigint token_id PK
-        bigint user_id FK
-        enum token_type "RESET_PASSWORD, VERIFY_EMAIL, OTP"
-        string token_hash
-        datetime expires_at
-        datetime used_at
-        datetime created_at
+        integer token_id PK "NOT NULL"
+        integer user_id FK "NOT NULL"
+        text token_type "NOT NULL; RESET_PASSWORD, VERIFY_EMAIL, OTP"
+        text token_hash "NOT NULL"
+        timestamptz expires_at "NOT NULL"
+        timestamptz used_at
+        timestamptz created_at "NOT NULL"
     }
 
     %% ===== 2. HỒ SƠ BỆNH NHÂN (tách khỏi tài khoản) =====
 
     PATIENT {
-        bigint patient_id PK
-        bigint user_id FK "chủ tài khoản, NULL nếu walk-in chưa có TK"
-        string full_name
+        integer patient_id PK "NOT NULL"
+        integer user_id FK "chủ tài khoản, NULL nếu walk-in chưa có TK"
+        text full_name "NOT NULL"
         date dob
-        enum gender
-        string id_card
-        string address
-        string phone
-        string health_insurance
-        enum relationship "SELF, PARENT, CHILD, SPOUSE, OTHER"
-        datetime created_at
-        datetime updated_at
+        text gender
+        text id_card
+        text address
+        text phone
+        timestamptz archived_at "NULL khi còn sử dụng"
+        text health_insurance
+        text relationship "SELF, PARENT, CHILD, SPOUSE, OTHER"
+        timestamptz created_at "NOT NULL"
+        timestamptz updated_at "NOT NULL"
     }
 
     %% ===== 3. BÁC SĨ, KHOA, PHÒNG =====
 
     DEPARTMENT {
-        bigint department_id PK
-        string name
-        string description
-        boolean is_active
-        datetime created_at
-        datetime updated_at
+        integer department_id PK "NOT NULL"
+        text name "NOT NULL"
+        text description
+        integer is_active "NOT NULL; 0 hoặc 1"
+        timestamptz created_at "NOT NULL"
+        timestamptz updated_at "NOT NULL"
     }
 
     DOCTOR_PROFILE {
-        bigint doctor_profile_id PK
-        bigint user_id FK "UNIQUE"
-        bigint department_id FK
-        string academic_degree
-        string specialization
-        int experience_years
-        string introduction
-        decimal consultation_fee
-        string avatar_url
-        boolean is_active
-        datetime created_at
-        datetime updated_at
+        integer doctor_profile_id PK "NOT NULL"
+        integer user_id FK "NOT NULL; UNIQUE"
+        integer department_id FK "NOT NULL"
+        text academic_degree
+        text specialization
+        integer experience_years "NOT NULL"
+        text introduction
+        bigint consultation_fee "NOT NULL"
+        text avatar_url
+        integer is_active "NOT NULL; 0 hoặc 1"
+        timestamptz created_at "NOT NULL"
+        timestamptz updated_at "NOT NULL"
     }
 
     ROOM {
-        bigint room_id PK
-        bigint department_id FK
-        string room_name
-        string description
-        boolean is_active
-        datetime created_at
-        datetime updated_at
+        integer room_id PK "NOT NULL"
+        integer department_id FK "NOT NULL"
+        text room_name "NOT NULL"
+        text description
+        integer is_active "NOT NULL; 0 hoặc 1"
+        timestamptz created_at "NOT NULL"
+        timestamptz updated_at "NOT NULL"
     }
 
     %% ===== 4. LỊCH LÀM VIỆC =====
@@ -117,18 +118,18 @@ erDiagram
     %% UNIQUE (room_id, work_date, start_time)
 
     WORK_SCHEDULE {
-        bigint schedule_id PK
-        bigint doctor_profile_id FK
-        bigint room_id FK
-        date work_date
-        time start_time
-        time end_time
-        int max_quota
-        int booked_count "cập nhật trong transaction"
-        enum schedule_status "OPEN, FULL, CLOSED, UNAVAILABLE"
-        string unavailable_reason
-        datetime created_at
-        datetime updated_at
+        integer schedule_id PK "NOT NULL"
+        integer doctor_profile_id FK "NOT NULL"
+        integer room_id FK "NOT NULL"
+        date work_date "NOT NULL"
+        time start_time "NOT NULL"
+        time end_time "NOT NULL"
+        integer max_quota "NOT NULL"
+        integer booked_count "NOT NULL; cập nhật trong transaction"
+        text schedule_status "NOT NULL; OPEN, FULL, CLOSED, UNAVAILABLE"
+        text unavailable_reason
+        timestamptz created_at "NOT NULL"
+        timestamptz updated_at "NOT NULL"
     }
 
     %% ===== 5. LƯỢT KHÁM (gộp online + walk-in) =====
@@ -136,129 +137,163 @@ erDiagram
     %% department suy ra từ doctor_profile
 
     VISIT {
-        bigint visit_id PK
-        enum visit_type "ONLINE, WALK_IN"
-        bigint patient_id FK
-        bigint doctor_profile_id FK
-        bigint schedule_id FK "NULL nếu walk-in không theo ca"
-        bigint room_id FK
-        bigint created_by_id FK "NULL nếu bệnh nhân tự đặt online; lễ tân nếu walk-in"
-        string symptoms
-        enum visit_status "HOLDING, CONFIRMED, CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW, EXPIRED"
-        int queue_number
-        datetime estimated_exam_at
-        string qr_code
-        datetime hold_expires_at "chỉ online"
-        datetime checked_in_at
-        bigint cancelled_by_id FK
-        string cancel_reason
-        datetime cancelled_at
-        datetime created_at
-        datetime updated_at
+        integer visit_id PK "NOT NULL"
+        text visit_type "NOT NULL; ONLINE, WALK_IN"
+        integer patient_id FK "NOT NULL"
+        integer doctor_profile_id FK "NOT NULL"
+        integer schedule_id FK "NULL nếu walk-in không theo ca"
+        integer room_id FK
+        integer created_by_id FK "người tạo lượt khám, có thể NULL"
+        bigint consultation_fee_snapshot "VND; NULL với dữ liệu cũ chưa rõ giá"
+        bigint deposit_amount_snapshot "VND; NULL với dữ liệu cũ chưa rõ giá"
+        text symptoms
+        text visit_status "NOT NULL; HOLDING, CONFIRMED, CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW, EXPIRED"
+        integer queue_number
+        timestamptz estimated_exam_at
+        text qr_code
+        timestamptz hold_expires_at "chỉ online"
+        timestamptz checked_in_at
+        integer cancelled_by_id FK
+        text cancel_reason
+        timestamptz cancelled_at
+        timestamptz created_at "NOT NULL"
+        timestamptz updated_at "NOT NULL"
     }
 
     VISIT_STATUS_LOG {
-        bigint log_id PK
-        bigint visit_id FK
-        enum old_status
-        enum new_status
-        bigint changed_by_id FK
-        string note
-        datetime changed_at
+        integer log_id PK "NOT NULL"
+        integer visit_id FK "NOT NULL"
+        text old_status
+        text new_status "NOT NULL"
+        integer changed_by_id FK "NOT NULL"
+        text note
+        timestamptz changed_at "NOT NULL"
     }
 
     VISIT_TRANSFER_LOG {
-        bigint log_id PK
-        bigint visit_id FK
-        bigint old_doctor_id FK
-        bigint new_doctor_id FK
-        bigint transferred_by_id FK
-        string reason
-        datetime transferred_at
+        integer log_id PK "NOT NULL"
+        integer visit_id FK "NOT NULL"
+        integer old_doctor_id FK "NOT NULL"
+        integer new_doctor_id FK "NOT NULL"
+        integer transferred_by_id FK "NOT NULL"
+        text reason
+        timestamptz transferred_at "NOT NULL"
     }
 
     %% ===== 6. THANH TOÁN =====
 
     PAYMENT {
-        bigint payment_id PK
-        bigint visit_id FK
-        enum payment_type "DEPOSIT, EXAM_FEE, REFUND"
-        decimal amount
-        enum payment_method "CASH, BANK, EWALLET, CARD"
-        enum transaction_status "PENDING, SUCCESS, FAILED, REFUNDED"
-        string transaction_code UK
-        datetime paid_at
-        datetime refunded_at
-        datetime created_at
-        datetime updated_at
+        integer payment_id PK "NOT NULL"
+        integer visit_id FK "NOT NULL"
+        text payment_type "NOT NULL; DEPOSIT, EXAM_FEE, REFUND"
+        bigint amount "NOT NULL"
+        text payment_method "NOT NULL; CASH, BANK, EWALLET, CARD"
+        text transaction_status "NOT NULL; PENDING, SUCCESS, FAILED, REFUNDED"
+        text transaction_code UK
+        timestamptz paid_at
+        timestamptz refunded_at
+        timestamptz created_at "NOT NULL"
+        timestamptz updated_at "NOT NULL"
     }
 
     %% ===== 7. HỒ SƠ KHÁM BỆNH =====
 
     MEDICAL_RECORD {
-        bigint record_id PK
-        bigint visit_id FK "UNIQUE"
-        string diagnosis
-        string treatment
-        string doctor_notes
-        datetime examined_at
-        datetime created_at
-        datetime updated_at
+        integer record_id PK "NOT NULL"
+        integer visit_id FK "NOT NULL; UNIQUE"
+        text diagnosis
+        text treatment
+        text doctor_notes
+        timestamptz examined_at
+        timestamptz created_at "NOT NULL"
+        timestamptz updated_at "NOT NULL"
     }
 
     PRESCRIPTION_ITEM {
-        bigint item_id PK
-        bigint record_id FK
-        string medication_name
-        string dosage
-        int quantity
-        string instructions
+        integer item_id PK "NOT NULL"
+        integer record_id FK "NOT NULL"
+        text medication_name "NOT NULL"
+        text dosage
+        integer quantity "NOT NULL"
+        text instructions
     }
 
     %% ===== 8. ĐÁNH GIÁ =====
 
     REVIEW {
-        bigint review_id PK
-        bigint record_id FK "UNIQUE"
-        int rating "1-5"
-        string comment
-        datetime created_at
-        datetime updated_at
+        integer review_id PK "NOT NULL"
+        integer record_id FK "NOT NULL; UNIQUE"
+        integer rating "NOT NULL; 1-5"
+        text comment
+        timestamptz created_at "NOT NULL"
+        timestamptz updated_at "NOT NULL"
     }
 
     %% ===== 9. THÔNG BÁO, TIN TỨC, CẤU HÌNH =====
 
     NOTIFICATION {
-        bigint notification_id PK
-        bigint user_id FK
-        enum notification_type
-        string title
-        string content
-        string reference_type "VISIT, PAYMENT, ARTICLE..."
-        bigint reference_id
-        boolean is_read
-        datetime created_at
+        integer notification_id PK "NOT NULL"
+        integer user_id FK "NOT NULL"
+        text notification_type "NOT NULL"
+        text title "NOT NULL"
+        text content "NOT NULL"
+        text reference_type "VISIT, PAYMENT, ARTICLE..."
+        integer reference_id
+        integer is_read "NOT NULL; 0 hoặc 1"
+        timestamptz created_at "NOT NULL"
     }
 
     ARTICLE {
-        bigint article_id PK
-        bigint author_id FK
-        string title
-        string slug UK
-        string category
-        string thumbnail_url
-        string content
-        boolean is_active
-        datetime published_at
-        datetime created_at
-        datetime updated_at
+        integer article_id PK "NOT NULL"
+        integer author_id FK "NOT NULL"
+        text title "NOT NULL"
+        text slug UK "NOT NULL"
+        text category
+        text thumbnail_url
+        text content "NOT NULL"
+        integer is_active "NOT NULL; 0 hoặc 1"
+        timestamptz published_at
+        timestamptz created_at "NOT NULL"
+        timestamptz updated_at "NOT NULL"
     }
 
+    ROLE_REQUEST {
+        integer request_id PK "NOT NULL"
+        integer user_id FK "NOT NULL"
+        integer requested_role_id FK "NOT NULL"
+        text reason
+        text request_status "NOT NULL; PENDING, APPROVED, REJECTED"
+        integer reviewed_by_id FK
+        timestamptz reviewed_at
+        text review_note
+        timestamptz created_at "NOT NULL"
+        timestamptz updated_at "NOT NULL"
+    }
+
+    NURSE_ASSIGNMENT {
+        integer assignment_id PK "NOT NULL"
+        integer nurse_id FK "NOT NULL"
+        integer schedule_id FK "NOT NULL"
+        integer assigned_by_id FK "NOT NULL"
+        timestamptz assigned_at "NOT NULL"
+        timestamptz revoked_at
+        integer revoked_by_id FK
+        text note
+    }
+
+    USERS ||--o{ ROLE_REQUEST : "gui_yeu_cau"
+    ROLE ||--o{ ROLE_REQUEST : "vai_tro_duoc_yeu_cau"
+    USERS |o--o{ ROLE_REQUEST : "duyet_yeu_cau"
+    USERS ||--o{ NURSE_ASSIGNMENT : "dieu_duong"
+    USERS ||--o{ NURSE_ASSIGNMENT : "phan_cong"
+    USERS |o--o{ NURSE_ASSIGNMENT : "thu_hoi"
+    WORK_SCHEDULE ||--o{ NURSE_ASSIGNMENT : "ca_duoc_giao"
+
     SYSTEM_CONFIGURATION {
-        string config_key PK
-        string config_value
-        string description
-        datetime updated_at
+        text config_key PK "NOT NULL"
+        text config_value "NOT NULL"
+        text description
+        timestamptz updated_at "NOT NULL"
     }
 
     %% ===== QUAN HỆ =====

@@ -15,9 +15,9 @@ Các đường dẫn nghiệp vụ dưới đây dùng tiền tố /api/v1.
 | ID BIGINT | INTEGER identity | Chốt giữ INTEGER hoặc migrate; không đổi chỉ trong init_db.sql |
 | APPOINTMENT_TRANSFER_LOG | visit_transfer_log | Đề xuất thống nhất visit_transfer_log |
 | REVIEW liên kết visit_id | review.record_id | Đề xuất giữ record_id, suy ra visit qua medical_record; API có thể đặt dưới visits |
-| Soft delete nhiều thực thể | Chỉ users có deleted_at; một số danh mục có is_active | Chốt archive bệnh nhân, lịch sử không xóa vật lý; migration nếu cần cột archive |
-| Y tá cập nhật thông tin theo quyền | Chưa có danh sách trường/quyền hoặc bảng phân công | Chốt phạm vi và trường được sửa trước khi viết endpoint cập nhật |
-| Yêu cầu vai trò mới | users chỉ có role_id và approval_status | Cần cách lưu requested_role_id/lịch sử yêu cầu; không đổi role hiện tại chỉ để lưu yêu cầu |
+| Soft delete nhiều thực thể | users có deleted_at, patient có archived_at; một số danh mục có is_active | Chốt archive bệnh nhân, lịch sử không xóa vật lý; migration nếu cần cột archive |
+| Y tá cập nhật thông tin theo quyền | Có nurse_assignment theo ca; chưa chốt danh sách trường được sửa | Chốt phạm vi và trường được sửa trước khi viết endpoint cập nhật |
+| Yêu cầu vai trò mới | Có role_request lưu yêu cầu và kết quả duyệt riêng | Dùng requested_role_id trong role_request; chỉ đổi role hiện tại khi duyệt |
 
 Chốt thêm: walk-in có gắn ca không; walk-in có thu EXAM_FEE không; cổng thanh toán;
 đặt cọc cố định hay phần trăm; no-show tính từ đầu ca hay estimated_exam_at và thời gian
@@ -316,11 +316,11 @@ Phần dùng chung:
 | Dữ liệu mẫu | database/sample_data.sql; không đưa nghiệp vụ vào file này |
 | Hết hạn giữ chỗ, no-show, nhắc lịch | backend/app/jobs/visit_jobs.py (thư mục/file mới), gọi visit_service/notification_service |
 | Retry/đối soát payment | backend/app/jobs/payment_jobs.py (tạo mới) |
-| Entry point worker/scheduler | backend/app/jobs/worker.py (tạo mới); service riêng trong compose.yaml |
+| Entry point worker/scheduler | backend/app/jobs/worker.py (tạo mới); service riêng trong docker-compose.yml |
 | Kết nối cổng thanh toán | backend/app/integrations/payment_gateway.py (thư mục/file mới) |
 | Kết nối dịch vụ email | backend/app/integrations/email_provider.py (tạo mới) |
 | Hàm xử lý thời gian/tên file dùng chung | backend/app/utils/ (dùng tên utils, không phải utlis) |
-| File upload thực tế | backend/uploads/; cấu hình volume trong compose.yaml |
+| File upload thực tế | backend/uploads/; cấu hình volume trong docker-compose.yml |
 | Thư viện mới | backend/requirements.txt; thống nhất người phụ trách tích hợp |
 | Test từng module | backend/tests/test_<module>.py |
 | Test toàn bộ luồng online/walk-in | backend/tests/test_visit_flow.py |
@@ -330,3 +330,8 @@ Models hiện dùng psycopg/SQL trực tiếp, không bắt buộc ORM. Khi mộ
 bước phải cùng transaction, các model nhận cùng connection do service quản lý;
 không mở/commit connection riêng cho từng câu lệnh khiến cập nhật bị tách rời.
 Các tên file là đề xuất phân công, không phải file đã được tạo hoặc chức năng đã xong.
+
+Schema đã bổ sung role_request, patient.archived_at, nurse_assignment theo ca và
+visit.consultation_fee_snapshot/deposit_amount_snapshot. Xem mục 6 trong
+HUONG_DAN_CHAY_DU_AN.md để chạy migration và áp dụng quy ước. Thanh toán/email
+trong đồ án là mô phỏng, không yêu cầu tích hợp ngân hàng hoặc nhà cung cấp email.

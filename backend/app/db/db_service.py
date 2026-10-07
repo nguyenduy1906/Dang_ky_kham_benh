@@ -1,4 +1,5 @@
 """PostgreSQL schema initialization and idempotent seed services."""
+import secrets
 from werkzeug.security import generate_password_hash
 from backend.app.core.config import DATABASE_DIR
 from backend.app.db.database import get_db_connection
@@ -47,9 +48,10 @@ def seed_database(*, demo=False, admin_email=None, admin_password=None, admin_na
             author = db.execute('SELECT user_id FROM users WHERE email=%s', (email,)).fetchone()
             if author is None:
                 role = db.execute('SELECT role_id FROM role WHERE role_name=%s', ('USER',)).fetchone()
-                cursor = db.execute('''INSERT INTO users(role_id,full_name,email,account_status,approval_status)
-                    VALUES (%s,%s,%s,%s,%s) RETURNING user_id''',
-                    (role['role_id'],'Tác giả DEMO',email,'LOCKED','APPROVED'))
+                cursor = db.execute('''INSERT INTO users(role_id,full_name,email,password_hash,account_status,approval_status)
+                    VALUES (%s,%s,%s,%s,%s,%s) RETURNING user_id''',
+                    (role['role_id'],'Tác giả DEMO',email,
+                     generate_password_hash(secrets.token_urlsafe(48)),'LOCKED','APPROVED'))
                 author_id = cursor.fetchone()['user_id']
             else:
                 author_id = author['user_id']
