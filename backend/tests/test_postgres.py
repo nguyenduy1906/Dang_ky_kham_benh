@@ -95,11 +95,16 @@ class PostgresTests(unittest.TestCase):
         with get_db_connection() as db:
             patient_id = db.execute("INSERT INTO patient(full_name) VALUES ('Preserved') RETURNING patient_id").fetchone()['patient_id']
             db.execute('ALTER TABLE patient DROP COLUMN archived_at')
-            db.execute('ALTER TABLE visit DROP COLUMN consultation_fee_snapshot CASCADE')
-            db.execute('ALTER TABLE visit DROP COLUMN deposit_amount_snapshot CASCADE')
+            db.execute('ALTER TABLE encounter DROP COLUMN consultation_fee_snapshot CASCADE')
+            db.execute('ALTER TABLE encounter DROP COLUMN deposit_amount_snapshot CASCADE')
             db.execute('DROP TABLE nurse_assignment, role_request')
+            db.execute('ALTER TABLE encounter RENAME TO visit')
             db.execute(migration)
             db.execute(migration)
+            rename = (Path(__file__).resolve().parents[2] / 'database/migrations/003_rename_visit_to_encounter.sql').read_text(encoding='utf-8')
+            rename = rename.replace('BEGIN;', '', 1).replace('COMMIT;', '', 1)
+            db.execute(rename)
+            db.execute(rename)
             patient = db.execute('SELECT full_name, archived_at FROM patient WHERE patient_id=%s', (patient_id,)).fetchone()
             self.assertEqual(patient['full_name'], 'Preserved')
             self.assertIsNone(patient['archived_at'])

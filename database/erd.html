@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ERD v3 - Hệ thống đặt lịch khám bệnh</title>
+  <title>ERD Hệ thống đặt lịch khám bệnh</title>
 
   <script type="module">
     import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
@@ -19,7 +19,7 @@
 </head>
 
 <body>
-  <h1>ERD v3 - Hệ thống đặt lịch khám chữa bệnh</h1>
+  <h1>ERD Hệ thống đặt lịch khám chữa bệnh</h1>
 
   <div class="diagram-container">
     <pre class="mermaid">
@@ -136,9 +136,9 @@ erDiagram
     %% UNIQUE (schedule_id, queue_number)
     %% department suy ra từ doctor_profile
 
-    VISIT {
-        integer visit_id PK "NOT NULL"
-        text visit_type "NOT NULL; ONLINE, WALK_IN"
+    ENCOUNTER {
+        integer encounter_id PK "NOT NULL"
+        text encounter_type "NOT NULL; ONLINE, WALK_IN"
         integer patient_id FK "NOT NULL"
         integer doctor_profile_id FK "NOT NULL"
         integer schedule_id FK "NULL nếu walk-in không theo ca"
@@ -147,7 +147,7 @@ erDiagram
         bigint consultation_fee_snapshot "VND; NULL với dữ liệu cũ chưa rõ giá"
         bigint deposit_amount_snapshot "VND; NULL với dữ liệu cũ chưa rõ giá"
         text symptoms
-        text visit_status "NOT NULL; HOLDING, CONFIRMED, CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW, EXPIRED"
+        text encounter_status "NOT NULL; HOLDING, CONFIRMED, CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW, EXPIRED"
         integer queue_number
         timestamptz estimated_exam_at
         text qr_code
@@ -160,9 +160,9 @@ erDiagram
         timestamptz updated_at "NOT NULL"
     }
 
-    VISIT_STATUS_LOG {
+    ENCOUNTER_STATUS_LOG {
         integer log_id PK "NOT NULL"
-        integer visit_id FK "NOT NULL"
+        integer encounter_id FK "NOT NULL"
         text old_status
         text new_status "NOT NULL"
         integer changed_by_id FK "NOT NULL"
@@ -170,9 +170,9 @@ erDiagram
         timestamptz changed_at "NOT NULL"
     }
 
-    VISIT_TRANSFER_LOG {
+    ENCOUNTER_TRANSFER_LOG {
         integer log_id PK "NOT NULL"
-        integer visit_id FK "NOT NULL"
+        integer encounter_id FK "NOT NULL"
         integer old_doctor_id FK "NOT NULL"
         integer new_doctor_id FK "NOT NULL"
         integer transferred_by_id FK "NOT NULL"
@@ -184,7 +184,7 @@ erDiagram
 
     PAYMENT {
         integer payment_id PK "NOT NULL"
-        integer visit_id FK "NOT NULL"
+        integer encounter_id FK "NOT NULL"
         text payment_type "NOT NULL; DEPOSIT, EXAM_FEE, REFUND"
         bigint amount "NOT NULL"
         text payment_method "NOT NULL; CASH, BANK, EWALLET, CARD"
@@ -200,7 +200,7 @@ erDiagram
 
     MEDICAL_RECORD {
         integer record_id PK "NOT NULL"
-        integer visit_id FK "NOT NULL; UNIQUE"
+        integer encounter_id FK "NOT NULL; UNIQUE"
         text diagnosis
         text treatment
         text doctor_notes
@@ -237,7 +237,7 @@ erDiagram
         text notification_type "NOT NULL"
         text title "NOT NULL"
         text content "NOT NULL"
-        text reference_type "VISIT, PAYMENT, ARTICLE..."
+        text reference_type "ENCOUNTER, PAYMENT, ARTICLE..."
         integer reference_id
         integer is_read "NOT NULL; 0 hoặc 1"
         timestamptz created_at "NOT NULL"
@@ -309,24 +309,24 @@ erDiagram
     DOCTOR_PROFILE ||--o{ WORK_SCHEDULE : "co_lich_lam_viec"
     ROOM ||--o{ WORK_SCHEDULE : "duoc_xep_lich"
 
-    PATIENT ||--o{ VISIT : "co_luot_kham"
-    DOCTOR_PROFILE ||--o{ VISIT : "phu_trach_kham"
-    WORK_SCHEDULE |o--o{ VISIT : "thuoc_ca_kham"
-    ROOM |o--o{ VISIT : "kham_tai_phong"
-    USERS |o--o{ VISIT : "tao_boi"
-    USERS |o--o{ VISIT : "huy_boi"
+    PATIENT ||--o{ ENCOUNTER : "co_luot_kham"
+    DOCTOR_PROFILE ||--o{ ENCOUNTER : "phu_trach_kham"
+    WORK_SCHEDULE |o--o{ ENCOUNTER : "thuoc_ca_kham"
+    ROOM |o--o{ ENCOUNTER : "kham_tai_phong"
+    USERS |o--o{ ENCOUNTER : "tao_boi"
+    USERS |o--o{ ENCOUNTER : "huy_boi"
 
-    VISIT ||--o{ VISIT_STATUS_LOG : "lich_su_trang_thai"
-    USERS ||--o{ VISIT_STATUS_LOG : "thay_doi_boi"
+    ENCOUNTER ||--o{ ENCOUNTER_STATUS_LOG : "lich_su_trang_thai"
+    USERS ||--o{ ENCOUNTER_STATUS_LOG : "thay_doi_boi"
 
-    VISIT ||--o{ VISIT_TRANSFER_LOG : "lich_su_chuyen_bac_si"
-    DOCTOR_PROFILE ||--o{ VISIT_TRANSFER_LOG : "bac_si_cu"
-    DOCTOR_PROFILE ||--o{ VISIT_TRANSFER_LOG : "bac_si_moi"
-    USERS ||--o{ VISIT_TRANSFER_LOG : "nguoi_chuyen"
+    ENCOUNTER ||--o{ ENCOUNTER_TRANSFER_LOG : "lich_su_chuyen_bac_si"
+    DOCTOR_PROFILE ||--o{ ENCOUNTER_TRANSFER_LOG : "bac_si_cu"
+    DOCTOR_PROFILE ||--o{ ENCOUNTER_TRANSFER_LOG : "bac_si_moi"
+    USERS ||--o{ ENCOUNTER_TRANSFER_LOG : "nguoi_chuyen"
 
-    VISIT ||--o{ PAYMENT : "co_giao_dich"
+    ENCOUNTER ||--o{ PAYMENT : "co_giao_dich"
 
-    VISIT ||--o| MEDICAL_RECORD : "tao_ho_so_kham"
+    ENCOUNTER ||--o| MEDICAL_RECORD : "tao_ho_so_kham"
     MEDICAL_RECORD ||--o{ PRESCRIPTION_ITEM : "co_thuoc"
     MEDICAL_RECORD ||--o| REVIEW : "co_danh_gia"
 

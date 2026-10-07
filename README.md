@@ -48,4 +48,4 @@ docker compose logs -f backend
 
 Dữ liệu lưu trong volume. **Không chạy `docker compose down -v` nếu muốn giữ dữ liệu.**
 
-Báo cáo nghiệp vụ: [docs/BAO_CAO_NGHIEP_VU.md](docs/BAO_CAO_NGHIEP_VU.md).
+Phạm vi nghiệp vụ và phân công theo 5 gói: [Kế hoạch backend](docs/DANH_SACH_API_VA_PHAN_CONG_BACKEND.md).

@@ -11,9 +11,9 @@ TRUNCATE TABLE
     prescription_item,
     medical_record,
     payment,
-    visit_transfer_log,
-    visit_status_log,
-    visit,
+    encounter_transfer_log,
+    encounter_status_log,
+    encounter,
     work_schedule,
     room,
     doctor_profile,
@@ -146,26 +146,26 @@ VALUES
 (9, 9, 9, '2026-09-28', '08:00', '11:30', 12, 1, 'OPEN', NULL, '2026-09-10 10:40:00+07', '2026-09-10 10:40:00+07'),
 (10, 10, 10, '2026-09-29', '13:30', '17:00', 9, 1, 'OPEN', NULL, '2026-09-10 10:45:00+07', '2026-09-10 10:45:00+07');
 
--- 9. VISIT
-INSERT INTO visit
-(visit_id, visit_type, patient_id, doctor_profile_id, schedule_id, room_id, created_by_id, consultation_fee_snapshot, deposit_amount_snapshot, symptoms,
- visit_status, queue_number, estimated_exam_at, qr_code, hold_expires_at, checked_in_at,
+-- 9. ENCOUNTER
+INSERT INTO encounter
+(encounter_id, encounter_type, patient_id, doctor_profile_id, schedule_id, room_id, created_by_id, consultation_fee_snapshot, deposit_amount_snapshot, symptoms,
+ encounter_status, queue_number, estimated_exam_at, qr_code, hold_expires_at, checked_in_at,
  cancelled_by_id, cancel_reason, cancelled_at, created_at, updated_at)
 VALUES
-(1, 'ONLINE', 1, 1, 1, 1, 4, 250000, 75000, 'Đau đầu, mệt mỏi kéo dài', 'COMPLETED', 1, '2026-09-20 08:15:00+07', 'QR-VISIT-001', NULL, '2026-09-20 08:05:00+07', NULL, NULL, NULL, '2026-09-19 20:00:00+07', '2026-09-20 09:00:00+07'),
+(1, 'ONLINE', 1, 1, 1, 1, 4, 250000, 75000, 'Đau đầu, mệt mỏi kéo dài', 'COMPLETED', 1, '2026-09-20 08:15:00+07', 'QR-ENCOUNTER-001', NULL, '2026-09-20 08:05:00+07', NULL, NULL, NULL, '2026-09-19 20:00:00+07', '2026-09-20 09:00:00+07'),
 (2, 'WALK_IN', 2, 2, 2, 2, 2, 350000, 0, 'Đau ngực nhẹ khi vận động', 'COMPLETED', 2, '2026-09-21 09:00:00+07', NULL, NULL, '2026-09-21 08:40:00+07', NULL, NULL, NULL, '2026-09-21 08:30:00+07', '2026-09-21 10:00:00+07'),
-(3, 'ONLINE', 3, 3, 3, 3, 4, 280000, 84000, 'Ngứa và nổi mẩn đỏ ở cánh tay', 'COMPLETED', 1, '2026-09-22 14:00:00+07', 'QR-VISIT-003', NULL, '2026-09-22 13:45:00+07', NULL, NULL, NULL, '2026-09-21 19:00:00+07', '2026-09-22 14:40:00+07'),
+(3, 'ONLINE', 3, 3, 3, 3, 4, 280000, 84000, 'Ngứa và nổi mẩn đỏ ở cánh tay', 'COMPLETED', 1, '2026-09-22 14:00:00+07', 'QR-ENCOUNTER-003', NULL, '2026-09-22 13:45:00+07', NULL, NULL, NULL, '2026-09-21 19:00:00+07', '2026-09-22 14:40:00+07'),
 (4, 'WALK_IN', 4, 4, 4, 4, 2, 300000, 0, 'Trẻ sốt và ho trong hai ngày', 'COMPLETED', 3, '2026-09-23 09:20:00+07', NULL, NULL, '2026-09-23 08:55:00+07', NULL, NULL, NULL, '2026-09-23 08:50:00+07', '2026-09-23 10:10:00+07'),
-(5, 'ONLINE', 5, 5, 5, 5, 5, 380000, 114000, 'Đau bụng dưới và rối loạn chu kỳ', 'COMPLETED', 1, '2026-09-24 14:10:00+07', 'QR-VISIT-005', NULL, '2026-09-24 13:50:00+07', NULL, NULL, NULL, '2026-09-23 21:10:00+07', '2026-09-24 15:00:00+07'),
+(5, 'ONLINE', 5, 5, 5, 5, 5, 380000, 114000, 'Đau bụng dưới và rối loạn chu kỳ', 'COMPLETED', 1, '2026-09-24 14:10:00+07', 'QR-ENCOUNTER-005', NULL, '2026-09-24 13:50:00+07', NULL, NULL, NULL, '2026-09-23 21:10:00+07', '2026-09-24 15:00:00+07'),
 (6, 'WALK_IN', 6, 6, 6, 6, 2, 270000, 0, 'Đau họng, nghẹt mũi', 'COMPLETED', 4, '2026-09-25 09:30:00+07', NULL, NULL, '2026-09-25 09:05:00+07', NULL, NULL, NULL, '2026-09-25 09:00:00+07', '2026-09-25 10:15:00+07'),
-(7, 'ONLINE', 7, 7, 7, 7, 4, 260000, 78000, 'Mờ mắt khi đọc gần', 'COMPLETED', 1, '2026-09-26 08:45:00+07', 'QR-VISIT-007', NULL, '2026-09-26 08:25:00+07', NULL, NULL, NULL, '2026-09-25 20:00:00+07', '2026-09-26 09:30:00+07'),
+(7, 'ONLINE', 7, 7, 7, 7, 4, 260000, 78000, 'Mờ mắt khi đọc gần', 'COMPLETED', 1, '2026-09-26 08:45:00+07', 'QR-ENCOUNTER-007', NULL, '2026-09-26 08:25:00+07', NULL, NULL, NULL, '2026-09-25 20:00:00+07', '2026-09-26 09:30:00+07'),
 (8, 'WALK_IN', 8, 8, 8, 8, 2, 320000, 0, 'Đau răng hàm dưới bên phải', 'COMPLETED', 5, '2026-09-27 15:00:00+07', NULL, NULL, '2026-09-27 14:35:00+07', NULL, NULL, NULL, '2026-09-27 14:30:00+07', '2026-09-27 15:50:00+07'),
-(9, 'ONLINE', 9, 9, 9, 9, 5, 360000, 108000, 'Đau khớp gối khi đi lại', 'COMPLETED', 1, '2026-09-28 09:10:00+07', 'QR-VISIT-009', NULL, '2026-09-28 08:50:00+07', NULL, NULL, NULL, '2026-09-27 18:30:00+07', '2026-09-28 10:00:00+07'),
+(9, 'ONLINE', 9, 9, 9, 9, 5, 360000, 108000, 'Đau khớp gối khi đi lại', 'COMPLETED', 1, '2026-09-28 09:10:00+07', 'QR-ENCOUNTER-009', NULL, '2026-09-28 08:50:00+07', NULL, NULL, NULL, '2026-09-27 18:30:00+07', '2026-09-28 10:00:00+07'),
 (10, 'WALK_IN', 10, 10, 10, 10, 2, 400000, 0, 'Đau đầu kèm mất ngủ', 'COMPLETED', 6, '2026-09-29 14:30:00+07', NULL, NULL, '2026-09-29 14:05:00+07', NULL, NULL, NULL, '2026-09-29 14:00:00+07', '2026-09-29 15:20:00+07');
 
--- 10. VISIT_STATUS_LOG
-INSERT INTO visit_status_log
-(log_id, visit_id, old_status, new_status, changed_by_id, note, changed_at)
+-- 10. ENCOUNTER_STATUS_LOG
+INSERT INTO encounter_status_log
+(log_id, encounter_id, old_status, new_status, changed_by_id, note, changed_at)
 VALUES
 (1, 1, 'IN_PROGRESS', 'COMPLETED', 6, 'Hoàn tất khám nội tổng quát', '2026-09-20 09:00:00+07'),
 (2, 2, 'IN_PROGRESS', 'COMPLETED', 7, 'Hoàn tất khám tim mạch', '2026-09-21 10:00:00+07'),
@@ -178,10 +178,10 @@ VALUES
 (9, 9, 'IN_PROGRESS', 'COMPLETED', 14, 'Hoàn tất khám cơ xương khớp', '2026-09-28 10:00:00+07'),
 (10, 10, 'IN_PROGRESS', 'COMPLETED', 15, 'Hoàn tất khám thần kinh', '2026-09-29 15:20:00+07');
 
--- 11. VISIT_TRANSFER_LOG
+-- 11. ENCOUNTER_TRANSFER_LOG
 -- Dữ liệu lịch sử chuyển bác sĩ để kiểm thử chức năng audit.
-INSERT INTO visit_transfer_log
-(log_id, visit_id, old_doctor_id, new_doctor_id, transferred_by_id, reason, transferred_at)
+INSERT INTO encounter_transfer_log
+(log_id, encounter_id, old_doctor_id, new_doctor_id, transferred_by_id, reason, transferred_at)
 VALUES
 (1, 1, 2, 1, 2, 'Điều chỉnh về đúng chuyên khoa Nội tổng quát', '2026-09-19 20:10:00+07'),
 (2, 2, 1, 2, 2, 'Triệu chứng liên quan tim mạch', '2026-09-21 08:35:00+07'),
@@ -196,7 +196,7 @@ VALUES
 
 -- 12. PAYMENT
 INSERT INTO payment
-(payment_id, visit_id, payment_type, amount, payment_method, transaction_status, transaction_code, paid_at, refunded_at, created_at, updated_at)
+(payment_id, encounter_id, payment_type, amount, payment_method, transaction_status, transaction_code, paid_at, refunded_at, created_at, updated_at)
 VALUES
 (1, 1, 'EXAM_FEE', 175000, 'EWALLET', 'SUCCESS', 'TXN20260920001', '2026-09-20 17:10:00+07', NULL, '2026-09-20 17:10:00+07', '2026-09-20 17:10:00+07'),
 (2, 2, 'EXAM_FEE', 350000, 'CASH', 'SUCCESS', 'TXN20260921002', '2026-09-21 10:05:00+07', NULL, '2026-09-21 10:00:00+07', '2026-09-21 10:05:00+07'),
@@ -211,7 +211,7 @@ VALUES
 
 -- Thanh toán cọc giả lập 30%; EXAM_FEE phía trên là phần còn lại.
 INSERT INTO payment
-(payment_id, visit_id, payment_type, amount, payment_method, transaction_status, transaction_code, paid_at, refunded_at, created_at, updated_at)
+(payment_id, encounter_id, payment_type, amount, payment_method, transaction_status, transaction_code, paid_at, refunded_at, created_at, updated_at)
 VALUES
 (11, 1, 'DEPOSIT', 75000, 'EWALLET', 'SUCCESS', 'DEMO-DEPOSIT-001', '2026-09-19 20:02:00+07', NULL, '2026-09-19 20:02:00+07', '2026-09-19 20:02:00+07'),
 (12, 3, 'DEPOSIT', 84000, 'EWALLET', 'SUCCESS', 'DEMO-DEPOSIT-003', '2026-09-21 19:02:00+07', NULL, '2026-09-21 19:02:00+07', '2026-09-21 19:02:00+07'),
@@ -221,7 +221,7 @@ VALUES
 
 -- 13. MEDICAL_RECORD
 INSERT INTO medical_record
-(record_id, visit_id, diagnosis, treatment, doctor_notes, examined_at, created_at, updated_at)
+(record_id, encounter_id, diagnosis, treatment, doctor_notes, examined_at, created_at, updated_at)
 VALUES
 (1, 1, 'Suy nhược nhẹ do thiếu ngủ', 'Nghỉ ngơi, uống đủ nước và theo dõi', 'Tái khám nếu đau đầu kéo dài trên 7 ngày.', '2026-09-20 08:45:00+07', '2026-09-20 08:50:00+07', '2026-09-20 08:50:00+07'),
 (2, 2, 'Theo dõi tăng huyết áp', 'Điều chỉnh sinh hoạt và theo dõi huyết áp', 'Đo huyết áp tại nhà trong 7 ngày.', '2026-09-21 09:40:00+07', '2026-09-21 09:45:00+07', '2026-09-21 09:45:00+07'),
@@ -268,14 +268,14 @@ VALUES
 INSERT INTO notification
 (notification_id, user_id, notification_type, title, content, reference_type, reference_id, is_read, created_at)
 VALUES
-(1, 4, 'APPOINTMENT', 'Đặt lịch thành công', 'Lịch khám #1 của bạn đã được xác nhận.', 'VISIT', 1, 1, '2026-09-19 20:03:00+07'),
-(2, 5, 'APPOINTMENT', 'Check-in thành công', 'Bạn đã check-in cho lượt khám #2.', 'VISIT', 2, 1, '2026-09-21 08:41:00+07'),
+(1, 4, 'APPOINTMENT', 'Đặt lịch thành công', 'Lịch khám #1 của bạn đã được xác nhận.', 'ENCOUNTER', 1, 1, '2026-09-19 20:03:00+07'),
+(2, 5, 'APPOINTMENT', 'Check-in thành công', 'Bạn đã check-in cho lượt khám #2.', 'ENCOUNTER', 2, 1, '2026-09-21 08:41:00+07'),
 (3, 6, 'SCHEDULE', 'Lịch khám mới', 'Bạn có một lượt khám trong lịch làm việc ngày 20/09/2026.', 'SCHEDULE', 1, 1, '2026-09-19 20:05:00+07'),
-(4, 7, 'SCHEDULE', 'Lượt khám mới', 'Có bệnh nhân được tiếp nhận vào phòng Tim mạch.', 'VISIT', 2, 0, '2026-09-21 08:42:00+07'),
+(4, 7, 'SCHEDULE', 'Lượt khám mới', 'Có bệnh nhân được tiếp nhận vào phòng Tim mạch.', 'ENCOUNTER', 2, 0, '2026-09-21 08:42:00+07'),
 (5, 8, 'REVIEW', 'Có đánh giá mới', 'Bệnh nhân đã đánh giá lượt khám Da liễu.', 'REVIEW', 3, 0, '2026-09-22 20:01:00+07'),
 (6, 9, 'REVIEW', 'Có đánh giá mới', 'Bệnh nhân đã đánh giá lượt khám Nhi.', 'REVIEW', 4, 0, '2026-09-23 20:01:00+07'),
 (7, 10, 'PAYMENT', 'Thanh toán thành công', 'Thanh toán cho lượt khám #5 đã thành công.', 'PAYMENT', 5, 1, '2026-09-23 21:13:00+07'),
-(8, 11, 'SCHEDULE', 'Lịch khám hoàn tất', 'Lượt khám #6 đã được hoàn tất.', 'VISIT', 6, 1, '2026-09-25 10:16:00+07'),
+(8, 11, 'SCHEDULE', 'Lịch khám hoàn tất', 'Lượt khám #6 đã được hoàn tất.', 'ENCOUNTER', 6, 1, '2026-09-25 10:16:00+07'),
 (9, 12, 'REVIEW', 'Có đánh giá mới', 'Bệnh nhân đã gửi đánh giá cho lượt khám Mắt.', 'REVIEW', 7, 0, '2026-09-26 20:01:00+07'),
 (10, 15, 'SYSTEM', 'Cập nhật hệ thống', 'Hệ thống đã cập nhật cấu hình nhắc lịch khám.', NULL, NULL, 0, '2026-10-01 09:00:00+07');
 
@@ -344,9 +344,9 @@ SELECT setval(pg_get_serial_sequence('department', 'department_id'), (SELECT MAX
 SELECT setval(pg_get_serial_sequence('doctor_profile', 'doctor_profile_id'), (SELECT MAX(doctor_profile_id) FROM doctor_profile), true);
 SELECT setval(pg_get_serial_sequence('room', 'room_id'), (SELECT MAX(room_id) FROM room), true);
 SELECT setval(pg_get_serial_sequence('work_schedule', 'schedule_id'), (SELECT MAX(schedule_id) FROM work_schedule), true);
-SELECT setval(pg_get_serial_sequence('visit', 'visit_id'), (SELECT MAX(visit_id) FROM visit), true);
-SELECT setval(pg_get_serial_sequence('visit_status_log', 'log_id'), (SELECT MAX(log_id) FROM visit_status_log), true);
-SELECT setval(pg_get_serial_sequence('visit_transfer_log', 'log_id'), (SELECT MAX(log_id) FROM visit_transfer_log), true);
+SELECT setval(pg_get_serial_sequence('encounter', 'encounter_id'), (SELECT MAX(encounter_id) FROM encounter), true);
+SELECT setval(pg_get_serial_sequence('encounter_status_log', 'log_id'), (SELECT MAX(log_id) FROM encounter_status_log), true);
+SELECT setval(pg_get_serial_sequence('encounter_transfer_log', 'log_id'), (SELECT MAX(log_id) FROM encounter_transfer_log), true);
 SELECT setval(pg_get_serial_sequence('payment', 'payment_id'), (SELECT MAX(payment_id) FROM payment), true);
 SELECT setval(pg_get_serial_sequence('medical_record', 'record_id'), (SELECT MAX(record_id) FROM medical_record), true);
 SELECT setval(pg_get_serial_sequence('prescription_item', 'item_id'), (SELECT MAX(item_id) FROM prescription_item), true);
@@ -368,9 +368,9 @@ UNION ALL SELECT 'department', COUNT(*) FROM department
 UNION ALL SELECT 'doctor_profile', COUNT(*) FROM doctor_profile
 UNION ALL SELECT 'room', COUNT(*) FROM room
 UNION ALL SELECT 'work_schedule', COUNT(*) FROM work_schedule
-UNION ALL SELECT 'visit', COUNT(*) FROM visit
-UNION ALL SELECT 'visit_status_log', COUNT(*) FROM visit_status_log
-UNION ALL SELECT 'visit_transfer_log', COUNT(*) FROM visit_transfer_log
+UNION ALL SELECT 'encounter', COUNT(*) FROM encounter
+UNION ALL SELECT 'encounter_status_log', COUNT(*) FROM encounter_status_log
+UNION ALL SELECT 'encounter_transfer_log', COUNT(*) FROM encounter_transfer_log
 UNION ALL SELECT 'payment', COUNT(*) FROM payment
 UNION ALL SELECT 'medical_record', COUNT(*) FROM medical_record
 UNION ALL SELECT 'prescription_item', COUNT(*) FROM prescription_item
