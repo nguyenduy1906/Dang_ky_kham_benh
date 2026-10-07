@@ -1,4 +1,6 @@
--- PostgreSQL schema matching the 20 ERD entities.
+-- Schema PostgreSQL cuối cùng cho khởi tạo mới (20 bảng).
+-- Mọi thay đổi cấu trúc được cập nhật trực tiếp trong file này.
+-- IF NOT EXISTS chỉ cho phép khởi động lại cùng schema; không nâng cấp database cũ.
 
 -- 1. ROLE (Vai trò)
 CREATE TABLE IF NOT EXISTS role (
@@ -123,7 +125,7 @@ CREATE TABLE IF NOT EXISTS encounter (
     encounter_type           text NOT NULL CHECK (encounter_type IN ('ONLINE','WALK_IN')),
     patient_id           INTEGER NOT NULL REFERENCES patient(patient_id),
     doctor_profile_id    INTEGER NOT NULL REFERENCES doctor_profile(doctor_profile_id),
-    schedule_id          INTEGER REFERENCES work_schedule(schedule_id),
+    schedule_id          INTEGER NOT NULL REFERENCES work_schedule(schedule_id),
     room_id              INTEGER REFERENCES room(room_id),
     created_by_id        INTEGER REFERENCES users(user_id),
     consultation_fee_snapshot BIGINT CHECK (consultation_fee_snapshot >= 0),
@@ -144,7 +146,6 @@ CREATE TABLE IF NOT EXISTS encounter (
     CONSTRAINT encounter_snapshot_pair CHECK ((consultation_fee_snapshot IS NULL) = (deposit_amount_snapshot IS NULL)),
     CONSTRAINT encounter_deposit_limit CHECK (deposit_amount_snapshot <= consultation_fee_snapshot),
     CONSTRAINT encounter_schedule_queue_unique UNIQUE (schedule_id, queue_number),
-    CONSTRAINT encounter_online_schedule CHECK (encounter_type <> 'ONLINE' OR schedule_id IS NOT NULL),
     CONSTRAINT encounter_hold_online_only CHECK (hold_expires_at IS NULL OR encounter_type = 'ONLINE'),
     CONSTRAINT encounter_holding_expiry CHECK (
         encounter_status <> 'HOLDING' OR (encounter_type = 'ONLINE' AND hold_expires_at IS NOT NULL)

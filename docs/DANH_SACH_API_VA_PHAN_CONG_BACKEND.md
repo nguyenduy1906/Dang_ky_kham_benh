@@ -49,7 +49,7 @@ Các đường dẫn này nằm trong backend/app/.
 
 **Phần dùng chung do gói 1 tích hợp:** core/security.py, core/errors.py,
 core/constants.py, đăng ký Blueprint/error handler/Swagger trong main.py,
-requirements.txt và quy trình chạy migration. Thống nhất session hoặc JWT trước
+requirements.txt và quy trình khởi tạo database. Thống nhất session hoặc JWT trước
 khi viết login; thiết kế logout/thu hồi phiên theo lựa chọn, không để mỗi người tự làm.
 
 **Nghiệm thu:** đăng ký không nâng quyền; mật khẩu hash; tài khoản khóa/xóa không
@@ -105,8 +105,9 @@ jobs/encounter_jobs.py. Tất cả nằm trong backend/app/.
 **Luồng online:** HOLDING → thanh toán cọc giả lập → CONFIRMED → CHECKED_IN
 → IN_PROGRESS → COMPLETED. HOLDING quá hạn → EXPIRED, trả chỗ đúng một lần.
 
-**Luồng trực tiếp đề xuất:** lễ tân chọn/tạo patient, chọn ca còn chỗ, tạo WALK_IN
-với CHECKED_IN và cấp số thứ tự → IN_PROGRESS → COMPLETED. Không giữ chỗ chờ cọc.
+**Luồng trực tiếp:** bệnh nhân không tự chọn ca; lễ tân/hệ thống chọn ca còn chỗ,
+tạo WALK_IN với CHECKED_IN và số sau các lịch online đã dành trong ca
+→ IN_PROGRESS → COMPLETED. Ca hiện tại đầy/đóng thì xếp người mới vào ca sau. Không giữ chỗ chờ cọc.
 Người đã đặt online đến check-in vẫn dùng encounter cũ, không tạo WALK_IN mới.
 
 **Nghiệm thu:** hai người đặt chỗ cuối chỉ một người thành công; giữ/hủy/hết hạn
@@ -173,7 +174,7 @@ không công khai bệnh án trong review. Thống kê tiền không đếm trù
 | main.py, requirements.txt, core/security.py, core/errors.py | Gói 1 tích hợp thay đổi của cả nhóm |
 | core/constants.py: trạng thái và quyền | Gói 1 phối hợp gói 3; thống nhất một bộ |
 | db/database.py: connection/transaction | Gói 1; các model nhận cùng connection trong nghiệp vụ nhiều bước |
-| database/init_db.sql, migrations/, sample_data.sql, erd.html | Một người tích hợp database (đề xuất gói 1); các gói gửi thay đổi cần thiết |
+| database/init_db.sql, sample_data.sql, erd.html | Một người tích hợp database (đề xuất gói 1); các gói gửi thay đổi cần thiết |
 | encounter_service.py và quota/log | Gói 3, duy nhất một đầu mối |
 | Dockerfile, docker-compose.yml, hướng dẫn chạy | Gói 1 tích hợp; gói 2 gửi yêu cầu volume avatar |
 | Kiểm thử từng module | Người phụ trách gói đó |
@@ -187,7 +188,7 @@ không công khai bệnh án trong review. Thống kê tiền không đếm trù
 - Không commit connection riêng cho mỗi query trong nghiệp vụ nhiều bước.
 - Models dùng psycopg/SQL trực tiếp; không bắt buộc ORM hoặc tạo tầng chỉ chuyển tiếp.
 - Mỗi người đăng ký Blueprint qua gói 1, không dồn toàn bộ API vào main.py.
-- Sau đổi SQL, cập nhật ERD và mẫu cùng migration cho database cũ.
+- Sau đổi SQL, cập nhật schema cuối cùng, ERD và dữ liệu mẫu; kiểm tra trên database tạo mới.
 
 ## 4. Thứ tự triển khai và đầu ra bàn giao
 
@@ -198,7 +199,7 @@ không công khai bệnh án trong review. Thống kê tiền không đếm trù
 5. Hoàn thiện báo cáo, tin tức, avatar, nhắc lịch và kiểm thử tích hợp.
 
 Mỗi gói bàn giao: code trong file phụ trách, mô tả Swagger request/response/quyền,
-kiểm thử nghiệp vụ, ví dụ gọi API và migration nếu có thay đổi schema.
+kiểm thử nghiệp vụ, ví dụ gọi API và hướng dẫn tạo lại database nếu có thay đổi schema.
 Không coi module hoàn thành chỉ vì CRUD chạy được.
 
 Ca tích hợp bắt buộc: tranh chấp chỗ cuối; thanh toán mô phỏng lặp/muộn; hủy lặp;
@@ -211,10 +212,12 @@ job chạy lặp không trả quota hoặc gửi thông báo nhiều lần.
 - Mức cọc: dữ liệu mẫu dùng 30%, chưa coi là chính sách bắt buộc của hệ thống.
 - Hủy trước bao lâu được hoàn cọc; no-show có mất cọc không.
 - Check-in sớm/trễ và thời điểm tính no-show.
-- Walk-in có bắt buộc ca không: đề xuất có để dùng chung hàng chờ/quota/phân công;
-  schema hiện vẫn cho phép schedule_id NULL, chưa có migration bắt buộc ca.
+- Walk-in đã chốt được hệ thống gắn ca. Online dành số khi xác nhận, check-in giữ
+  số đó. Cần chốt việc chuyển người đang chờ sang ca sau và nhận online muộn.
+  Schema bắt buộc schedule_id NOT NULL; API mới phải gắn ca theo luồng đã chốt.
 - Y tá được sửa những trường/thao tác nào; chưa cho sửa chẩn đoán và đơn thuốc.
-- Có cho sửa bệnh án sau COMPLETED không; đề xuất chỉ sửa trong khi khám.
+- Bệnh án được bổ sung/sửa sau hoàn tất theo yêu cầu người dùng; cần chốt cách
+  mở lại lượt khám hoặc tạo lượt mới và lưu lịch sử thay đổi.
 - Chuyển bác sĩ khác giá: đề xuất giữ giá đã chốt cho phạm vi đồ án.
 - Job tự động dùng danh tính hệ thống thế nào: changed_by_id hiện bắt buộc users;
   chưa có tài khoản hệ thống trong dữ liệu mẫu. Không giả danh người thao tác.

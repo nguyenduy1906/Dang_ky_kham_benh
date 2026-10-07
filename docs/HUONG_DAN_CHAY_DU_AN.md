@@ -22,7 +22,7 @@ PostgreSQL; phải đổi mật khẩu tài khoản database tương ứng trư�
 ## 2. Tạo mới hoặc đặt lại toàn bộ dữ liệu đồ án
 
 **down -v xóa volume PostgreSQL và toàn bộ dữ liệu cũ.** Bỏ qua lệnh đó nếu đang
-khởi tạo lần đầu hoặc muốn giữ dữ liệu. Không cần migration cho database mới.
+khởi tạo lần đầu hoặc muốn giữ dữ liệu. Schema cuối cùng nằm trong init_db.sql.
 
 ```powershell
 docker compose down -v
@@ -42,32 +42,14 @@ volume. File chạy trong transaction; nếu có lỗi, không tiếp tục các
 Có 15 tài khoản mẫu, mật khẩu chung Demo-password-123!, lưu bằng hash hợp lệ.
 Thanh toán, mã QR và thông báo trong file chỉ là dữ liệu giả lập cho đồ án.
 
-## 3. Nâng cấp database cũ và giữ dữ liệu
+## 3. Quy trình khi thay đổi cấu trúc database
 
-Chỉ dùng mục này nếu database cũ còn bảng visit. Không chạy migration 001
-trên database đã đổi tên sang encounter. Nếu không cần giữ dữ liệu, dùng mục 2.
-
-```powershell
-docker compose up -d db
-docker compose ps
-```
-
-Đợi db healthy. Chạy lần lượt, chỉ tiếp tục khi lệnh trước thành công:
-
-```powershell
-Get-Content -Raw -Encoding UTF8 database/migrations/001_extend_booking_schema.sql | docker compose exec -T db psql -U medical -d medical -v ON_ERROR_STOP=1
-Get-Content -Raw -Encoding UTF8 database/migrations/002_require_password_hash.sql | docker compose exec -T db psql -U medical -d medical -v ON_ERROR_STOP=1
-Get-Content -Raw -Encoding UTF8 database/migrations/003_rename_visit_to_encounter.sql | docker compose exec -T db psql -U medical -d medical -v ON_ERROR_STOP=1
-docker compose up --build -d
-```
-
-- 001 thêm role_request, nurse_assignment, archived_at và giá đã chốt.
-- 002 bắt buộc password_hash; tài khoản có hash thiếu/rỗng/demo_hash_* cũ được
-  khóa và gán hash ngẫu nhiên không công bố. Cần đặt lại mật khẩu trước khi mở khóa.
-- 003 đổi visit thành encounter, các cột/bảng log/constraint/index/sequence/trigger
-  liên quan; giữ nguyên ID và mã QR đã cấp. Thông báo dùng reference_type ENCOUNTER.
-- 001 giữ tên cũ để phục vụ lịch sử nâng cấp. 003 có thể chạy lại an toàn.
-- Giá lịch sử chưa biết để NULL, không suy ra từ giá hiện tại của bác sĩ.
+Dự án sử dụng một schema cuối cùng trong database/init_db.sql, không lưu các
+file cập nhật database riêng. Khi sửa cấu trúc, cập nhật đồng bộ init_db.sql,
+sample_data.sql và erd.html; sau đó tạo lại database theo mục 2.
+Không dùng init_db.sql để nâng cấp database cũ: CREATE TABLE IF NOT EXISTS
+không sửa cấu trúc bảng đã tồn tại. Việc khởi động lại backend trên cùng phiên
+bản schema vẫn giữ dữ liệu.
 
 ## 4. Kiểm tra kết quả
 
@@ -130,5 +112,5 @@ Lệnh này cần database hoạt động và tài khoản có quyền tạo sch
 - Giá và cọc trên encounter được server chốt khi tạo. Walk-in không cọc ghi 0.
   Tổng tiền thu = tiền cọc + phần phí còn lại; không cộng hai lần toàn bộ giá khám.
 - ONLINE và WALK_IN dùng chung bảng nhưng có endpoint/luồng riêng. Quy ước đề xuất
-  cho đồ án: walk-in chọn ca trước khi tiếp nhận. Schema hiện vẫn cho phép ca NULL;
-  backend cần kiểm tra quy tắc này nếu nhóm chốt áp dụng.
+  cho đồ án: lễ tân/hệ thống gắn ca cho walk-in trước khi tiếp nhận.
+  encounter.schedule_id bắt buộc cho cả ONLINE và WALK_IN.
