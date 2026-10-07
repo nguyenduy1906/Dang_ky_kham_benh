@@ -41,3 +41,7 @@ node_modules/
 # Operating-system temporary files.
 .DS_Store
 Thumbs.db
+
+# Local business reports.
+/docs/BAO_CAO_NGHIEP_VU.md
+/docs/TONG_HOP_PHAN_TICH_NGHIEP_VU.txt

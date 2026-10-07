@@ -7,7 +7,7 @@ from pathlib import Path
 from unittest.mock import patch
 import psycopg
 from psycopg import sql
-from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.security import check_password_hash
 from backend.app.core.config import postgres_options
 from backend.app.db.database import get_db_connection
 from backend.app.db.db_service import init_database, seed_database
@@ -88,35 +88,22 @@ class PostgresTests(unittest.TestCase):
                     with db.transaction():
                         db.execute(query)
 
-    def test_extension_migration_preserves_data_and_repeats(self):
-        migration = (Path(__file__).resolve().parents[2] / 'database/migrations/001_extend_booking_schema.sql').read_text(encoding='utf-8')
-        # The connection context owns the transaction in tests.
-        migration = migration.replace('BEGIN;', '', 1).replace('COMMIT;', '', 1)
+    def test_final_schema_and_sample_data(self):
+        sample = (Path(__file__).resolve().parents[2] / 'database/sample_data.sql').read_text(encoding='utf-8')
+        sample = sample.replace('BEGIN;', '', 1).replace('COMMIT;', '', 1)
         with get_db_connection() as db:
-            patient_id = db.execute("INSERT INTO patient(full_name) VALUES ('Preserved') RETURNING patient_id").fetchone()['patient_id']
-            db.execute('ALTER TABLE patient DROP COLUMN archived_at')
-            db.execute('ALTER TABLE encounter DROP COLUMN consultation_fee_snapshot CASCADE')
-            db.execute('ALTER TABLE encounter DROP COLUMN deposit_amount_snapshot CASCADE')
-            db.execute('DROP TABLE nurse_assignment, role_request')
-            db.execute('ALTER TABLE encounter RENAME TO visit')
-            db.execute(migration)
-            db.execute(migration)
-            rename = (Path(__file__).resolve().parents[2] / 'database/migrations/003_rename_visit_to_encounter.sql').read_text(encoding='utf-8')
-            rename = rename.replace('BEGIN;', '', 1).replace('COMMIT;', '', 1)
-            db.execute(rename)
-            db.execute(rename)
-            patient = db.execute('SELECT full_name, archived_at FROM patient WHERE patient_id=%s', (patient_id,)).fetchone()
-            self.assertEqual(patient['full_name'], 'Preserved')
-            self.assertIsNone(patient['archived_at'])
-            user_id = db.execute("INSERT INTO users(role_id,full_name,password_hash) SELECT role_id,'Applicant',%s FROM role WHERE role_name='USER' RETURNING user_id", (generate_password_hash('Test-password-123456'),)).fetchone()['user_id']
-            role_id = db.execute("SELECT role_id FROM role WHERE role_name='NURSE'").fetchone()['role_id']
-            db.execute('INSERT INTO role_request(user_id,requested_role_id) VALUES (%s,%s)', (user_id, role_id))
-            with self.assertRaises(psycopg.IntegrityError):
-                with db.transaction():
-                    db.execute('INSERT INTO role_request(user_id,requested_role_id) VALUES (%s,%s)', (user_id, role_id))
-            with self.assertRaises(psycopg.IntegrityError):
-                with db.transaction():
-                    db.execute("UPDATE role_request SET request_status='APPROVED'")
+            db.execute(sample)
+            db.execute(sample)
+            self.assertEqual(db.execute('SELECT count(*) AS n FROM users').fetchone()['n'], 15)
+            self.assertEqual(db.execute('SELECT count(*) AS n FROM encounter').fetchone()['n'], 10)
+            self.assertEqual(db.execute("SELECT count(*) AS n FROM encounter WHERE schedule_id IS NULL").fetchone()['n'], 0)
+            for row in db.execute('SELECT password_hash FROM users'):
+                self.assertTrue(check_password_hash(row['password_hash'], 'Demo-password-123!'))
+            for kind in ('ONLINE', 'WALK_IN'):
+                with self.subTest(kind=kind), self.assertRaises(psycopg.IntegrityError):
+                    with db.transaction():
+                        db.execute('UPDATE encounter SET schedule_id=NULL WHERE encounter_type=%s', (kind,))
+            self.assertGreater(db.execute("INSERT INTO patient(full_name) VALUES ('New patient') RETURNING patient_id").fetchone()['patient_id'], 10)
 
     def test_failed_transaction_rolls_back(self):
         with self.assertRaises(ValueError):

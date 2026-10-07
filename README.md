@@ -49,3 +49,11 @@ docker compose logs -f backend
 Dữ liệu lưu trong volume. **Không chạy `docker compose down -v` nếu muốn giữ dữ liệu.**
 
 Phạm vi nghiệp vụ và phân công theo 5 gói: [Kế hoạch backend](docs/DANH_SACH_API_VA_PHAN_CONG_BACKEND.md).
+
+
+## Quy ước database cuối cùng
+
+`database/init_db.sql` chứa toàn bộ schema hiện tại; `sample_data.sql` chứa dữ liệu
+mẫu và `erd.html` mô tả schema. Dự án không sử dụng các file migration. Khi sửa
+cấu trúc, cập nhật đồng bộ ba file và tạo lại database theo hướng dẫn chạy.
+Khởi động lại backend không tự cập nhật cấu trúc bảng đã tồn tại.

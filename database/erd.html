@@ -141,7 +141,7 @@ erDiagram
         text encounter_type "NOT NULL; ONLINE, WALK_IN"
         integer patient_id FK "NOT NULL"
         integer doctor_profile_id FK "NOT NULL"
-        integer schedule_id FK "NULL nếu walk-in không theo ca"
+        integer schedule_id FK "NOT NULL; online và walk-in đều có ca"
         integer room_id FK
         integer created_by_id FK "người tạo lượt khám, có thể NULL"
         bigint consultation_fee_snapshot "VND; NULL với dữ liệu cũ chưa rõ giá"
