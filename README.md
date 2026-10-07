@@ -1,7 +1,7 @@
 # Đăng ký và đặt lịch khám bệnh
 
 Backend Flask + Gunicorn và PostgreSQL 17 chạy bằng Docker Compose.
-Hiện có 18 bảng, dữ liệu mẫu và endpoint `/health`; chưa có giao diện hoặc API
+Hiện có 20 bảng, dữ liệu mẫu và endpoint `/health`; chưa có giao diện hoặc API
 nghiệp vụ hoàn chỉnh.
 
 ## Chạy dự án
@@ -12,7 +12,7 @@ Mở Docker Desktop. Từ thư mục gốc, chạy:
 docker compose up --build -d
 ```
 
-Cấu hình `compose.yaml` và mẫu `backend/.env.example` được chia sẻ cùng mã nguồn.
+Cấu hình `docker-compose.yml` và mẫu `backend/.env.example` được chia sẻ cùng mã nguồn.
 Sau khi clone, chạy `Copy-Item backend/.env.example backend/.env`, rồi thay
 `CHANGE_ME` ở cả hai dòng bằng cùng một mật khẩu bạn chọn.
 Chỉ `backend/.env` chứa mật khẩu thật được Git bỏ qua.
@@ -30,7 +30,7 @@ Danh sách API, phân công và vị trí viết code:
 
 | File | Chức năng |
 |---|---|
-| `compose.yaml` | Chạy backend và PostgreSQL |
+| `docker-compose.yml` | Chạy backend và PostgreSQL |
 | `backend/.env` | Mật khẩu database, không đưa lên Git |
 | `backend/.env.example` | Mẫu cấu hình |
 | `backend/Dockerfile` | Build image, tạo bảng, seed vai trò và chạy backend |
@@ -47,3 +47,5 @@ docker compose logs -f backend
 ```
 
 Dữ liệu lưu trong volume. **Không chạy `docker compose down -v` nếu muốn giữ dữ liệu.**
+
+Phạm vi nghiệp vụ và phân công theo 5 gói: [Kế hoạch backend](docs/DANH_SACH_API_VA_PHAN_CONG_BACKEND.md).

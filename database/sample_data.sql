@@ -1,16 +1,19 @@
+-- Dữ liệu giả lập cho schema 20 bảng. File này xóa toàn bộ dữ liệu cũ.
 BEGIN;
 
 -- Xóa dữ liệu cũ để có thể chạy lại file seed nhiều lần.
 TRUNCATE TABLE
+    nurse_assignment,
+    role_request,
     article,
     notification,
     review,
     prescription_item,
     medical_record,
     payment,
-    visit_transfer_log,
-    visit_status_log,
-    visit,
+    encounter_transfer_log,
+    encounter_status_log,
+    encounter,
     work_schedule,
     room,
     doctor_profile,
@@ -31,26 +34,27 @@ INSERT INTO role (role_id, role_name, description, requires_approval) VALUES
 (4, 'NURSE', 'Điều dưỡng hỗ trợ hàng chờ và quy trình khám', 1),
 (5, 'ADMIN', 'Quản trị toàn bộ hệ thống', 1);
 
+-- Mật khẩu chung cho tài khoản mẫu: Demo-password-123! (chỉ dùng cho đồ án).
 -- 2. USERS
 -- 15 tài khoản: 10 bác sĩ + admin + lễ tân + điều dưỡng + 2 bệnh nhân có tài khoản.
 INSERT INTO users
 (user_id, role_id, full_name, phone, email, password_hash, approval_status, account_status, email_verified, created_at, updated_at)
 VALUES
-(1, 5, 'Nguyễn Minh Quản', '0901000001', 'admin@medicare.vn', 'demo_hash_admin', 'APPROVED', 'ACTIVE', 1, '2026-09-01 08:00:00+07', '2026-09-01 08:00:00+07'),
-(2, 3, 'Trần Thu Hà', '0901000002', 'reception@medicare.vn', 'demo_hash_reception', 'APPROVED', 'ACTIVE', 1, '2026-09-01 08:05:00+07', '2026-09-01 08:05:00+07'),
-(3, 4, 'Lê Ngọc Anh', '0901000003', 'nurse@medicare.vn', 'demo_hash_nurse', 'APPROVED', 'ACTIVE', 1, '2026-09-01 08:10:00+07', '2026-09-01 08:10:00+07'),
-(4, 1, 'Phạm Văn Nam', '0901000004', 'nam.pham@example.com', 'demo_hash_user_1', 'APPROVED', 'ACTIVE', 1, '2026-09-02 09:00:00+07', '2026-09-02 09:00:00+07'),
-(5, 1, 'Nguyễn Thị Lan', '0901000005', 'lan.nguyen@example.com', 'demo_hash_user_2', 'APPROVED', 'ACTIVE', 1, '2026-09-02 09:10:00+07', '2026-09-02 09:10:00+07'),
-(6, 2, 'BS. Nguyễn Hoàng Minh', '0902000001', 'minh.nguyen@medicare.vn', 'demo_hash_doctor_1', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:00:00+07', '2026-09-03 08:00:00+07'),
-(7, 2, 'BS. Trần Quốc Bảo', '0902000002', 'bao.tran@medicare.vn', 'demo_hash_doctor_2', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:10:00+07', '2026-09-03 08:10:00+07'),
-(8, 2, 'BS. Lê Thu Trang', '0902000003', 'trang.le@medicare.vn', 'demo_hash_doctor_3', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:20:00+07', '2026-09-03 08:20:00+07'),
-(9, 2, 'BS. Phạm Đức Long', '0902000004', 'long.pham@medicare.vn', 'demo_hash_doctor_4', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:30:00+07', '2026-09-03 08:30:00+07'),
-(10, 2, 'BS. Vũ Minh Anh', '0902000005', 'anh.vu@medicare.vn', 'demo_hash_doctor_5', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:40:00+07', '2026-09-03 08:40:00+07'),
-(11, 2, 'BS. Đỗ Hải Yến', '0902000006', 'yen.do@medicare.vn', 'demo_hash_doctor_6', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:50:00+07', '2026-09-03 08:50:00+07'),
-(12, 2, 'BS. Bùi Thanh Tùng', '0902000007', 'tung.bui@medicare.vn', 'demo_hash_doctor_7', 'APPROVED', 'ACTIVE', 1, '2026-09-03 09:00:00+07', '2026-09-03 09:00:00+07'),
-(13, 2, 'BS. Hoàng Mai Linh', '0902000008', 'linh.hoang@medicare.vn', 'demo_hash_doctor_8', 'APPROVED', 'ACTIVE', 1, '2026-09-03 09:10:00+07', '2026-09-03 09:10:00+07'),
-(14, 2, 'BS. Đặng Quang Huy', '0902000009', 'huy.dang@medicare.vn', 'demo_hash_doctor_9', 'APPROVED', 'ACTIVE', 1, '2026-09-03 09:20:00+07', '2026-09-03 09:20:00+07'),
-(15, 2, 'BS. Nguyễn Khánh Vy', '0902000010', 'vy.nguyen@medicare.vn', 'demo_hash_doctor_10', 'APPROVED', 'ACTIVE', 1, '2026-09-03 09:30:00+07', '2026-09-03 09:30:00+07');
+(1, 5, 'Nguyễn Minh Quản', '0901000001', 'admin@medicare.vn', 'scrypt:32768:8:1$TzRov4OpXM52fqr0$a70f4d0f1d0d73b064c6972d5850cd739ad026c748471e2c1f727d63b27ec1928dec31a0e076f1dc01969da38e0fbec1dc177c255d6ba46bfd45cc0d648ae4d8', 'APPROVED', 'ACTIVE', 1, '2026-09-01 08:00:00+07', '2026-09-01 08:00:00+07'),
+(2, 3, 'Trần Thu Hà', '0901000002', 'reception@medicare.vn', 'scrypt:32768:8:1$rCIoTb7k0koEXBB6$e3f96c6914f72363c7cc8dcf3a700ecf03c10df7fbc8f93c2c970085bca32fa072684e4f70cf5d103b95553d776578379e63390910a943ba1ab6ac842b15f4d7', 'APPROVED', 'ACTIVE', 1, '2026-09-01 08:05:00+07', '2026-09-01 08:05:00+07'),
+(3, 4, 'Lê Ngọc Anh', '0901000003', 'nurse@medicare.vn', 'scrypt:32768:8:1$PKouPS3tXLxRHk4F$1d36ff3047c161c50fc2c8f823ae2736af641a7b1c653e9b9e1ab2e9b317a4e599776927ad496c71a54bff6ae681f4e154295f7a3099f825009b3ed5d02f56fa', 'APPROVED', 'ACTIVE', 1, '2026-09-01 08:10:00+07', '2026-09-01 08:10:00+07'),
+(4, 1, 'Phạm Văn Nam', '0901000004', 'nam.pham@example.com', 'scrypt:32768:8:1$dA7ACycDcrJ2gQT9$961504856822478f1c6c2a29c5a202019ab4acc62cb37b71854c37462f8c7ab834df9f6e1dfe17ec05ebc795f3910509591199496eb76413fc37d3debfb82ca1', 'APPROVED', 'ACTIVE', 1, '2026-09-02 09:00:00+07', '2026-09-02 09:00:00+07'),
+(5, 1, 'Nguyễn Thị Lan', '0901000005', 'lan.nguyen@example.com', 'scrypt:32768:8:1$evvg3IgeAKdPiXFR$3c58c93448385e3a0cce1a8f5f0114deac12e3f4db28858fac8e4ca0d61abac6e70ed146f320d17c8ce2b20a9a3a441338f4730c6388c470b723f0d46da95320', 'APPROVED', 'ACTIVE', 1, '2026-09-02 09:10:00+07', '2026-09-02 09:10:00+07'),
+(6, 2, 'BS. Nguyễn Hoàng Minh', '0902000001', 'minh.nguyen@medicare.vn', 'scrypt:32768:8:1$ibleQCTB6h7UCjph$244e57008cd614a2e7245a16867978cbd0c40fffcdfaad7bdcd63f7aa6c5315a89f7a2de251adc0d18fae48db7393af9cf17684105ec348189a89980033c76b3', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:00:00+07', '2026-09-03 08:00:00+07'),
+(7, 2, 'BS. Trần Quốc Bảo', '0902000002', 'bao.tran@medicare.vn', 'scrypt:32768:8:1$PtqCEuifB515upSH$693151d573a3ac2fc75b5d776964ba1aba030663e247775930d0a677207f8f1988ad16ba6292cc6ea61da7734d4761c026ea671aeb684c08f2697efcb7ebb606', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:10:00+07', '2026-09-03 08:10:00+07'),
+(8, 2, 'BS. Lê Thu Trang', '0902000003', 'trang.le@medicare.vn', 'scrypt:32768:8:1$IeZHr9LZzEdGHTx0$25f6c1dd29cbc87252f09b65a719ffb4ad112c78a2402654bb17dfea84372f92ba32c7560292fe97adf8081f4b61479ed584438eb76b4f18fc6367f531a75f39', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:20:00+07', '2026-09-03 08:20:00+07'),
+(9, 2, 'BS. Phạm Đức Long', '0902000004', 'long.pham@medicare.vn', 'scrypt:32768:8:1$vkXSgjOpRBfi5gHu$4b7e7fa46bfda750384c65243d2502cffd91e4e4c08299d0a3c32d67b6d365f961aef0f04128319b279581368caf822737e622e6e1edadc852a4a3761e7f6509', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:30:00+07', '2026-09-03 08:30:00+07'),
+(10, 2, 'BS. Vũ Minh Anh', '0902000005', 'anh.vu@medicare.vn', 'scrypt:32768:8:1$rjGq1poyGzaRdOEo$bd9595c712ec6806eaf958c259e373cab4d6c1e3373157c78a3cf8f93ac08132806ae4e3c52ae195bbaf08cf3cc797e93bc066aba435300a7e245d1b3bf5f5f3', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:40:00+07', '2026-09-03 08:40:00+07'),
+(11, 2, 'BS. Đỗ Hải Yến', '0902000006', 'yen.do@medicare.vn', 'scrypt:32768:8:1$K3VaBPDtqxfLUDEJ$11fa8db189497c5c8cc8384d6e4f2d9a7c779702077f4e6527f09d0abb1275f83788a4ed52048f47f285fe47a360668cfd6e5cdf648fb7b4fa9887a3d849b271', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:50:00+07', '2026-09-03 08:50:00+07'),
+(12, 2, 'BS. Bùi Thanh Tùng', '0902000007', 'tung.bui@medicare.vn', 'scrypt:32768:8:1$pfPLHhaanfw5hEiB$bdb69d563ccacc2288c21ee9fa50fcd512b6cc2978bdf51912d6c266819599873e6d518a91b03a0977aa8087b169c8bb5a079efd7c998ed9b7093822893a7b6e', 'APPROVED', 'ACTIVE', 1, '2026-09-03 09:00:00+07', '2026-09-03 09:00:00+07'),
+(13, 2, 'BS. Hoàng Mai Linh', '0902000008', 'linh.hoang@medicare.vn', 'scrypt:32768:8:1$Zp8Shp3hVOcOwWQi$08fff47ed2bcad535d9c8ced364b009858fe7d3fb49c4241eb281add318163d0da3a3f74cf84d230cfe2abf06607b085e3f8187c272f658d3fac15b0920773c2', 'APPROVED', 'ACTIVE', 1, '2026-09-03 09:10:00+07', '2026-09-03 09:10:00+07'),
+(14, 2, 'BS. Đặng Quang Huy', '0902000009', 'huy.dang@medicare.vn', 'scrypt:32768:8:1$9R5HR8gfrOdfjx0o$3ca055c33d74c9f24af8fe322bee9d1517880505c21b88008dd38a0f4f3be8f6764c4414ca749c2fdbfb0ee027094280a9cbf6afb9cc8d2d88ec746f60626772', 'APPROVED', 'ACTIVE', 1, '2026-09-03 09:20:00+07', '2026-09-03 09:20:00+07'),
+(15, 2, 'BS. Nguyễn Khánh Vy', '0902000010', 'vy.nguyen@medicare.vn', 'scrypt:32768:8:1$V0xG66wTlekKb7Bm$c816147853ffde1d07d4d92e38186c20d5451a70d28968714b02d613db7e6d7ea2e58e396a7761c76769b0ce73b242cf8dd9d30c9dd56fb679048978a34f6154', 'APPROVED', 'ACTIVE', 1, '2026-09-03 09:30:00+07', '2026-09-03 09:30:00+07');
 
 -- 3. AUTH_TOKEN
 INSERT INTO auth_token
@@ -69,18 +73,18 @@ VALUES
 
 -- 4. PATIENT
 INSERT INTO patient
-(patient_id, user_id, full_name, dob, gender, id_card, address, phone, health_insurance, relationship, created_at, updated_at)
+(patient_id, user_id, full_name, dob, gender, id_card, address, phone, health_insurance, relationship, created_at, updated_at, archived_at)
 VALUES
-(1, 4, 'Phạm Văn Nam', '1998-05-12', 'Nam', '001098000001', 'Cầu Giấy, Hà Nội', '0911000001', 'HN401000001', 'SELF', '2026-09-10 08:00:00+07', '2026-09-10 08:00:00+07'),
-(2, 5, 'Nguyễn Thị Lan', '2001-11-20', 'Nữ', '001201000002', 'Đống Đa, Hà Nội', '0911000002', 'HN401000002', 'SELF', '2026-09-10 08:10:00+07', '2026-09-10 08:10:00+07'),
-(3, NULL, 'Trần Văn Hùng', '1985-03-08', 'Nam', '001085000003', 'Thanh Xuân, Hà Nội', '0911000003', 'HN401000003', 'OTHER', '2026-09-10 08:20:00+07', '2026-09-10 08:20:00+07'),
-(4, NULL, 'Lê Thị Hương', '1992-07-17', 'Nữ', '001192000004', 'Hoàng Mai, Hà Nội', '0911000004', 'HN401000004', 'OTHER', '2026-09-10 08:30:00+07', '2026-09-10 08:30:00+07'),
-(5, NULL, 'Vũ Đức Anh', '1976-01-25', 'Nam', '001076000005', 'Long Biên, Hà Nội', '0911000005', 'HN401000005', 'OTHER', '2026-09-10 08:40:00+07', '2026-09-10 08:40:00+07'),
-(6, NULL, 'Đỗ Minh Châu', '2015-09-03', 'Nữ', NULL, 'Nam Từ Liêm, Hà Nội', '0911000006', 'TE401000006', 'CHILD', '2026-09-10 08:50:00+07', '2026-09-10 08:50:00+07'),
-(7, NULL, 'Bùi Thị Mai', '1968-12-02', 'Nữ', '001168000007', 'Ba Đình, Hà Nội', '0911000007', 'HN401000007', 'PARENT', '2026-09-10 09:00:00+07', '2026-09-10 09:00:00+07'),
-(8, NULL, 'Hoàng Quốc Việt', '1989-06-14', 'Nam', '001089000008', 'Hai Bà Trưng, Hà Nội', '0911000008', 'HN401000008', 'SPOUSE', '2026-09-10 09:10:00+07', '2026-09-10 09:10:00+07'),
-(9, NULL, 'Đặng Thu Phương', '1996-10-29', 'Nữ', '001196000009', 'Hà Đông, Hà Nội', '0911000009', 'HN401000009', 'OTHER', '2026-09-10 09:20:00+07', '2026-09-10 09:20:00+07'),
-(10, NULL, 'Nguyễn Gia Bảo', '2008-04-11', 'Nam', '001208000010', 'Tây Hồ, Hà Nội', '0911000010', 'HS401000010', 'CHILD', '2026-09-10 09:30:00+07', '2026-09-10 09:30:00+07');
+(1, 4, 'Phạm Văn Nam', '1998-05-12', 'Nam', '001098000001', 'Cầu Giấy, Hà Nội', '0911000001', 'HN401000001', 'SELF', '2026-09-10 08:00:00+07', '2026-09-10 08:00:00+07', NULL),
+(2, 5, 'Nguyễn Thị Lan', '2001-11-20', 'Nữ', '001201000002', 'Đống Đa, Hà Nội', '0911000002', 'HN401000002', 'SELF', '2026-09-10 08:10:00+07', '2026-09-10 08:10:00+07', NULL),
+(3, NULL, 'Trần Văn Hùng', '1985-03-08', 'Nam', '001085000003', 'Thanh Xuân, Hà Nội', '0911000003', 'HN401000003', 'OTHER', '2026-09-10 08:20:00+07', '2026-09-10 08:20:00+07', NULL),
+(4, NULL, 'Lê Thị Hương', '1992-07-17', 'Nữ', '001192000004', 'Hoàng Mai, Hà Nội', '0911000004', 'HN401000004', 'OTHER', '2026-09-10 08:30:00+07', '2026-09-10 08:30:00+07', NULL),
+(5, NULL, 'Vũ Đức Anh', '1976-01-25', 'Nam', '001076000005', 'Long Biên, Hà Nội', '0911000005', 'HN401000005', 'OTHER', '2026-09-10 08:40:00+07', '2026-09-10 08:40:00+07', NULL),
+(6, NULL, 'Đỗ Minh Châu', '2015-09-03', 'Nữ', NULL, 'Nam Từ Liêm, Hà Nội', '0911000006', 'TE401000006', 'CHILD', '2026-09-10 08:50:00+07', '2026-09-10 08:50:00+07', NULL),
+(7, NULL, 'Bùi Thị Mai', '1968-12-02', 'Nữ', '001168000007', 'Ba Đình, Hà Nội', '0911000007', 'HN401000007', 'PARENT', '2026-09-10 09:00:00+07', '2026-09-10 09:00:00+07', NULL),
+(8, NULL, 'Hoàng Quốc Việt', '1989-06-14', 'Nam', '001089000008', 'Hai Bà Trưng, Hà Nội', '0911000008', 'HN401000008', 'SPOUSE', '2026-09-10 09:10:00+07', '2026-09-10 09:10:00+07', NULL),
+(9, NULL, 'Đặng Thu Phương', '1996-10-29', 'Nữ', '001196000009', 'Hà Đông, Hà Nội', '0911000009', 'HN401000009', 'OTHER', '2026-09-10 09:20:00+07', '2026-09-10 09:20:00+07', NULL),
+(10, NULL, 'Nguyễn Gia Bảo', '2008-04-11', 'Nam', '001208000010', 'Tây Hồ, Hà Nội', '0911000010', 'HS401000010', 'CHILD', '2026-09-10 09:30:00+07', '2026-09-10 09:30:00+07', '2026-10-01 09:00:00+07');
 
 -- 5. DEPARTMENT
 INSERT INTO department
@@ -142,26 +146,26 @@ VALUES
 (9, 9, 9, '2026-09-28', '08:00', '11:30', 12, 1, 'OPEN', NULL, '2026-09-10 10:40:00+07', '2026-09-10 10:40:00+07'),
 (10, 10, 10, '2026-09-29', '13:30', '17:00', 9, 1, 'OPEN', NULL, '2026-09-10 10:45:00+07', '2026-09-10 10:45:00+07');
 
--- 9. VISIT
-INSERT INTO visit
-(visit_id, visit_type, patient_id, doctor_profile_id, schedule_id, room_id, created_by_id, symptoms,
- visit_status, queue_number, estimated_exam_at, qr_code, hold_expires_at, checked_in_at,
+-- 9. ENCOUNTER
+INSERT INTO encounter
+(encounter_id, encounter_type, patient_id, doctor_profile_id, schedule_id, room_id, created_by_id, consultation_fee_snapshot, deposit_amount_snapshot, symptoms,
+ encounter_status, queue_number, estimated_exam_at, qr_code, hold_expires_at, checked_in_at,
  cancelled_by_id, cancel_reason, cancelled_at, created_at, updated_at)
 VALUES
-(1, 'ONLINE', 1, 1, 1, 1, 4, 'Đau đầu, mệt mỏi kéo dài', 'COMPLETED', 1, '2026-09-20 08:15:00+07', 'QR-VISIT-001', NULL, '2026-09-20 08:05:00+07', NULL, NULL, NULL, '2026-09-19 20:00:00+07', '2026-09-20 09:00:00+07'),
-(2, 'WALK_IN', 2, 2, NULL, 2, 2, 'Đau ngực nhẹ khi vận động', 'COMPLETED', 2, '2026-09-21 09:00:00+07', NULL, NULL, '2026-09-21 08:40:00+07', NULL, NULL, NULL, '2026-09-21 08:30:00+07', '2026-09-21 10:00:00+07'),
-(3, 'ONLINE', 3, 3, 3, 3, 4, 'Ngứa và nổi mẩn đỏ ở cánh tay', 'COMPLETED', 1, '2026-09-22 14:00:00+07', 'QR-VISIT-003', NULL, '2026-09-22 13:45:00+07', NULL, NULL, NULL, '2026-09-21 19:00:00+07', '2026-09-22 14:40:00+07'),
-(4, 'WALK_IN', 4, 4, NULL, 4, 2, 'Trẻ sốt và ho trong hai ngày', 'COMPLETED', 3, '2026-09-23 09:20:00+07', NULL, NULL, '2026-09-23 08:55:00+07', NULL, NULL, NULL, '2026-09-23 08:50:00+07', '2026-09-23 10:10:00+07'),
-(5, 'ONLINE', 5, 5, 5, 5, 5, 'Đau bụng dưới và rối loạn chu kỳ', 'COMPLETED', 1, '2026-09-24 14:10:00+07', 'QR-VISIT-005', NULL, '2026-09-24 13:50:00+07', NULL, NULL, NULL, '2026-09-23 21:10:00+07', '2026-09-24 15:00:00+07'),
-(6, 'WALK_IN', 6, 6, NULL, 6, 2, 'Đau họng, nghẹt mũi', 'COMPLETED', 4, '2026-09-25 09:30:00+07', NULL, NULL, '2026-09-25 09:05:00+07', NULL, NULL, NULL, '2026-09-25 09:00:00+07', '2026-09-25 10:15:00+07'),
-(7, 'ONLINE', 7, 7, 7, 7, 4, 'Mờ mắt khi đọc gần', 'COMPLETED', 1, '2026-09-26 08:45:00+07', 'QR-VISIT-007', NULL, '2026-09-26 08:25:00+07', NULL, NULL, NULL, '2026-09-25 20:00:00+07', '2026-09-26 09:30:00+07'),
-(8, 'WALK_IN', 8, 8, NULL, 8, 2, 'Đau răng hàm dưới bên phải', 'COMPLETED', 5, '2026-09-27 15:00:00+07', NULL, NULL, '2026-09-27 14:35:00+07', NULL, NULL, NULL, '2026-09-27 14:30:00+07', '2026-09-27 15:50:00+07'),
-(9, 'ONLINE', 9, 9, 9, 9, 5, 'Đau khớp gối khi đi lại', 'COMPLETED', 1, '2026-09-28 09:10:00+07', 'QR-VISIT-009', NULL, '2026-09-28 08:50:00+07', NULL, NULL, NULL, '2026-09-27 18:30:00+07', '2026-09-28 10:00:00+07'),
-(10, 'WALK_IN', 10, 10, NULL, 10, 3, 'Đau đầu kèm mất ngủ', 'COMPLETED', 6, '2026-09-29 14:30:00+07', NULL, NULL, '2026-09-29 14:05:00+07', NULL, NULL, NULL, '2026-09-29 14:00:00+07', '2026-09-29 15:20:00+07');
+(1, 'ONLINE', 1, 1, 1, 1, 4, 250000, 75000, 'Đau đầu, mệt mỏi kéo dài', 'COMPLETED', 1, '2026-09-20 08:15:00+07', 'QR-ENCOUNTER-001', NULL, '2026-09-20 08:05:00+07', NULL, NULL, NULL, '2026-09-19 20:00:00+07', '2026-09-20 09:00:00+07'),
+(2, 'WALK_IN', 2, 2, 2, 2, 2, 350000, 0, 'Đau ngực nhẹ khi vận động', 'COMPLETED', 2, '2026-09-21 09:00:00+07', NULL, NULL, '2026-09-21 08:40:00+07', NULL, NULL, NULL, '2026-09-21 08:30:00+07', '2026-09-21 10:00:00+07'),
+(3, 'ONLINE', 3, 3, 3, 3, 4, 280000, 84000, 'Ngứa và nổi mẩn đỏ ở cánh tay', 'COMPLETED', 1, '2026-09-22 14:00:00+07', 'QR-ENCOUNTER-003', NULL, '2026-09-22 13:45:00+07', NULL, NULL, NULL, '2026-09-21 19:00:00+07', '2026-09-22 14:40:00+07'),
+(4, 'WALK_IN', 4, 4, 4, 4, 2, 300000, 0, 'Trẻ sốt và ho trong hai ngày', 'COMPLETED', 3, '2026-09-23 09:20:00+07', NULL, NULL, '2026-09-23 08:55:00+07', NULL, NULL, NULL, '2026-09-23 08:50:00+07', '2026-09-23 10:10:00+07'),
+(5, 'ONLINE', 5, 5, 5, 5, 5, 380000, 114000, 'Đau bụng dưới và rối loạn chu kỳ', 'COMPLETED', 1, '2026-09-24 14:10:00+07', 'QR-ENCOUNTER-005', NULL, '2026-09-24 13:50:00+07', NULL, NULL, NULL, '2026-09-23 21:10:00+07', '2026-09-24 15:00:00+07'),
+(6, 'WALK_IN', 6, 6, 6, 6, 2, 270000, 0, 'Đau họng, nghẹt mũi', 'COMPLETED', 4, '2026-09-25 09:30:00+07', NULL, NULL, '2026-09-25 09:05:00+07', NULL, NULL, NULL, '2026-09-25 09:00:00+07', '2026-09-25 10:15:00+07'),
+(7, 'ONLINE', 7, 7, 7, 7, 4, 260000, 78000, 'Mờ mắt khi đọc gần', 'COMPLETED', 1, '2026-09-26 08:45:00+07', 'QR-ENCOUNTER-007', NULL, '2026-09-26 08:25:00+07', NULL, NULL, NULL, '2026-09-25 20:00:00+07', '2026-09-26 09:30:00+07'),
+(8, 'WALK_IN', 8, 8, 8, 8, 2, 320000, 0, 'Đau răng hàm dưới bên phải', 'COMPLETED', 5, '2026-09-27 15:00:00+07', NULL, NULL, '2026-09-27 14:35:00+07', NULL, NULL, NULL, '2026-09-27 14:30:00+07', '2026-09-27 15:50:00+07'),
+(9, 'ONLINE', 9, 9, 9, 9, 5, 360000, 108000, 'Đau khớp gối khi đi lại', 'COMPLETED', 1, '2026-09-28 09:10:00+07', 'QR-ENCOUNTER-009', NULL, '2026-09-28 08:50:00+07', NULL, NULL, NULL, '2026-09-27 18:30:00+07', '2026-09-28 10:00:00+07'),
+(10, 'WALK_IN', 10, 10, 10, 10, 2, 400000, 0, 'Đau đầu kèm mất ngủ', 'COMPLETED', 6, '2026-09-29 14:30:00+07', NULL, NULL, '2026-09-29 14:05:00+07', NULL, NULL, NULL, '2026-09-29 14:00:00+07', '2026-09-29 15:20:00+07');
 
--- 10. VISIT_STATUS_LOG
-INSERT INTO visit_status_log
-(log_id, visit_id, old_status, new_status, changed_by_id, note, changed_at)
+-- 10. ENCOUNTER_STATUS_LOG
+INSERT INTO encounter_status_log
+(log_id, encounter_id, old_status, new_status, changed_by_id, note, changed_at)
 VALUES
 (1, 1, 'IN_PROGRESS', 'COMPLETED', 6, 'Hoàn tất khám nội tổng quát', '2026-09-20 09:00:00+07'),
 (2, 2, 'IN_PROGRESS', 'COMPLETED', 7, 'Hoàn tất khám tim mạch', '2026-09-21 10:00:00+07'),
@@ -174,10 +178,10 @@ VALUES
 (9, 9, 'IN_PROGRESS', 'COMPLETED', 14, 'Hoàn tất khám cơ xương khớp', '2026-09-28 10:00:00+07'),
 (10, 10, 'IN_PROGRESS', 'COMPLETED', 15, 'Hoàn tất khám thần kinh', '2026-09-29 15:20:00+07');
 
--- 11. VISIT_TRANSFER_LOG
+-- 11. ENCOUNTER_TRANSFER_LOG
 -- Dữ liệu lịch sử chuyển bác sĩ để kiểm thử chức năng audit.
-INSERT INTO visit_transfer_log
-(log_id, visit_id, old_doctor_id, new_doctor_id, transferred_by_id, reason, transferred_at)
+INSERT INTO encounter_transfer_log
+(log_id, encounter_id, old_doctor_id, new_doctor_id, transferred_by_id, reason, transferred_at)
 VALUES
 (1, 1, 2, 1, 2, 'Điều chỉnh về đúng chuyên khoa Nội tổng quát', '2026-09-19 20:10:00+07'),
 (2, 2, 1, 2, 2, 'Triệu chứng liên quan tim mạch', '2026-09-21 08:35:00+07'),
@@ -192,22 +196,32 @@ VALUES
 
 -- 12. PAYMENT
 INSERT INTO payment
-(payment_id, visit_id, payment_type, amount, payment_method, transaction_status, transaction_code, paid_at, refunded_at, created_at, updated_at)
+(payment_id, encounter_id, payment_type, amount, payment_method, transaction_status, transaction_code, paid_at, refunded_at, created_at, updated_at)
 VALUES
-(1, 1, 'EXAM_FEE', 250000, 'EWALLET', 'SUCCESS', 'TXN20260920001', '2026-09-19 20:02:00+07', NULL, '2026-09-19 20:01:00+07', '2026-09-19 20:02:00+07'),
+(1, 1, 'EXAM_FEE', 175000, 'EWALLET', 'SUCCESS', 'TXN20260920001', '2026-09-20 17:10:00+07', NULL, '2026-09-20 17:10:00+07', '2026-09-20 17:10:00+07'),
 (2, 2, 'EXAM_FEE', 350000, 'CASH', 'SUCCESS', 'TXN20260921002', '2026-09-21 10:05:00+07', NULL, '2026-09-21 10:00:00+07', '2026-09-21 10:05:00+07'),
-(3, 3, 'EXAM_FEE', 280000, 'BANK', 'SUCCESS', 'TXN20260922003', '2026-09-21 19:02:00+07', NULL, '2026-09-21 19:01:00+07', '2026-09-21 19:02:00+07'),
+(3, 3, 'EXAM_FEE', 196000, 'BANK', 'SUCCESS', 'TXN20260922003', '2026-09-22 17:10:00+07', NULL, '2026-09-22 17:10:00+07', '2026-09-22 17:10:00+07'),
 (4, 4, 'EXAM_FEE', 300000, 'CASH', 'SUCCESS', 'TXN20260923004', '2026-09-23 10:15:00+07', NULL, '2026-09-23 10:10:00+07', '2026-09-23 10:15:00+07'),
-(5, 5, 'EXAM_FEE', 380000, 'CARD', 'SUCCESS', 'TXN20260924005', '2026-09-23 21:12:00+07', NULL, '2026-09-23 21:11:00+07', '2026-09-23 21:12:00+07'),
+(5, 5, 'EXAM_FEE', 266000, 'CARD', 'SUCCESS', 'TXN20260924005', '2026-09-24 17:10:00+07', NULL, '2026-09-24 17:10:00+07', '2026-09-24 17:10:00+07'),
 (6, 6, 'EXAM_FEE', 270000, 'CASH', 'SUCCESS', 'TXN20260925006', '2026-09-25 10:20:00+07', NULL, '2026-09-25 10:15:00+07', '2026-09-25 10:20:00+07'),
-(7, 7, 'EXAM_FEE', 260000, 'EWALLET', 'SUCCESS', 'TXN20260926007', '2026-09-25 20:02:00+07', NULL, '2026-09-25 20:01:00+07', '2026-09-25 20:02:00+07'),
+(7, 7, 'EXAM_FEE', 182000, 'EWALLET', 'SUCCESS', 'TXN20260926007', '2026-09-26 17:10:00+07', NULL, '2026-09-26 17:10:00+07', '2026-09-26 17:10:00+07'),
 (8, 8, 'EXAM_FEE', 320000, 'BANK', 'SUCCESS', 'TXN20260927008', '2026-09-27 15:55:00+07', NULL, '2026-09-27 15:50:00+07', '2026-09-27 15:55:00+07'),
-(9, 9, 'EXAM_FEE', 360000, 'CARD', 'SUCCESS', 'TXN20260928009', '2026-09-27 18:32:00+07', NULL, '2026-09-27 18:31:00+07', '2026-09-27 18:32:00+07'),
+(9, 9, 'EXAM_FEE', 252000, 'CARD', 'SUCCESS', 'TXN20260928009', '2026-09-28 17:10:00+07', NULL, '2026-09-28 17:10:00+07', '2026-09-28 17:10:00+07'),
 (10, 10, 'EXAM_FEE', 400000, 'CASH', 'SUCCESS', 'TXN20260929010', '2026-09-29 15:25:00+07', NULL, '2026-09-29 15:20:00+07', '2026-09-29 15:25:00+07');
+
+-- Thanh toán cọc giả lập 30%; EXAM_FEE phía trên là phần còn lại.
+INSERT INTO payment
+(payment_id, encounter_id, payment_type, amount, payment_method, transaction_status, transaction_code, paid_at, refunded_at, created_at, updated_at)
+VALUES
+(11, 1, 'DEPOSIT', 75000, 'EWALLET', 'SUCCESS', 'DEMO-DEPOSIT-001', '2026-09-19 20:02:00+07', NULL, '2026-09-19 20:02:00+07', '2026-09-19 20:02:00+07'),
+(12, 3, 'DEPOSIT', 84000, 'EWALLET', 'SUCCESS', 'DEMO-DEPOSIT-003', '2026-09-21 19:02:00+07', NULL, '2026-09-21 19:02:00+07', '2026-09-21 19:02:00+07'),
+(13, 5, 'DEPOSIT', 114000, 'EWALLET', 'SUCCESS', 'DEMO-DEPOSIT-005', '2026-09-23 21:12:00+07', NULL, '2026-09-23 21:12:00+07', '2026-09-23 21:12:00+07'),
+(14, 7, 'DEPOSIT', 78000, 'EWALLET', 'SUCCESS', 'DEMO-DEPOSIT-007', '2026-09-25 20:02:00+07', NULL, '2026-09-25 20:02:00+07', '2026-09-25 20:02:00+07'),
+(15, 9, 'DEPOSIT', 108000, 'EWALLET', 'SUCCESS', 'DEMO-DEPOSIT-009', '2026-09-27 18:32:00+07', NULL, '2026-09-27 18:32:00+07', '2026-09-27 18:32:00+07');
 
 -- 13. MEDICAL_RECORD
 INSERT INTO medical_record
-(record_id, visit_id, diagnosis, treatment, doctor_notes, examined_at, created_at, updated_at)
+(record_id, encounter_id, diagnosis, treatment, doctor_notes, examined_at, created_at, updated_at)
 VALUES
 (1, 1, 'Suy nhược nhẹ do thiếu ngủ', 'Nghỉ ngơi, uống đủ nước và theo dõi', 'Tái khám nếu đau đầu kéo dài trên 7 ngày.', '2026-09-20 08:45:00+07', '2026-09-20 08:50:00+07', '2026-09-20 08:50:00+07'),
 (2, 2, 'Theo dõi tăng huyết áp', 'Điều chỉnh sinh hoạt và theo dõi huyết áp', 'Đo huyết áp tại nhà trong 7 ngày.', '2026-09-21 09:40:00+07', '2026-09-21 09:45:00+07', '2026-09-21 09:45:00+07'),
@@ -254,14 +268,14 @@ VALUES
 INSERT INTO notification
 (notification_id, user_id, notification_type, title, content, reference_type, reference_id, is_read, created_at)
 VALUES
-(1, 4, 'APPOINTMENT', 'Đặt lịch thành công', 'Lịch khám #1 của bạn đã được xác nhận.', 'VISIT', 1, 1, '2026-09-19 20:03:00+07'),
-(2, 5, 'APPOINTMENT', 'Check-in thành công', 'Bạn đã check-in cho lượt khám #2.', 'VISIT', 2, 1, '2026-09-21 08:41:00+07'),
+(1, 4, 'APPOINTMENT', 'Đặt lịch thành công', 'Lịch khám #1 của bạn đã được xác nhận.', 'ENCOUNTER', 1, 1, '2026-09-19 20:03:00+07'),
+(2, 5, 'APPOINTMENT', 'Check-in thành công', 'Bạn đã check-in cho lượt khám #2.', 'ENCOUNTER', 2, 1, '2026-09-21 08:41:00+07'),
 (3, 6, 'SCHEDULE', 'Lịch khám mới', 'Bạn có một lượt khám trong lịch làm việc ngày 20/09/2026.', 'SCHEDULE', 1, 1, '2026-09-19 20:05:00+07'),
-(4, 7, 'SCHEDULE', 'Lượt khám mới', 'Có bệnh nhân được tiếp nhận vào phòng Tim mạch.', 'VISIT', 2, 0, '2026-09-21 08:42:00+07'),
+(4, 7, 'SCHEDULE', 'Lượt khám mới', 'Có bệnh nhân được tiếp nhận vào phòng Tim mạch.', 'ENCOUNTER', 2, 0, '2026-09-21 08:42:00+07'),
 (5, 8, 'REVIEW', 'Có đánh giá mới', 'Bệnh nhân đã đánh giá lượt khám Da liễu.', 'REVIEW', 3, 0, '2026-09-22 20:01:00+07'),
 (6, 9, 'REVIEW', 'Có đánh giá mới', 'Bệnh nhân đã đánh giá lượt khám Nhi.', 'REVIEW', 4, 0, '2026-09-23 20:01:00+07'),
 (7, 10, 'PAYMENT', 'Thanh toán thành công', 'Thanh toán cho lượt khám #5 đã thành công.', 'PAYMENT', 5, 1, '2026-09-23 21:13:00+07'),
-(8, 11, 'SCHEDULE', 'Lịch khám hoàn tất', 'Lượt khám #6 đã được hoàn tất.', 'VISIT', 6, 1, '2026-09-25 10:16:00+07'),
+(8, 11, 'SCHEDULE', 'Lịch khám hoàn tất', 'Lượt khám #6 đã được hoàn tất.', 'ENCOUNTER', 6, 1, '2026-09-25 10:16:00+07'),
 (9, 12, 'REVIEW', 'Có đánh giá mới', 'Bệnh nhân đã gửi đánh giá cho lượt khám Mắt.', 'REVIEW', 7, 0, '2026-09-26 20:01:00+07'),
 (10, 15, 'SYSTEM', 'Cập nhật hệ thống', 'Hệ thống đã cập nhật cấu hình nhắc lịch khám.', NULL, NULL, 0, '2026-10-01 09:00:00+07');
 
@@ -295,6 +309,32 @@ VALUES
 ('SUPPORT_PHONE', '19001234', 'Số điện thoại hỗ trợ khách hàng', '2026-10-01 08:00:00+07'),
 ('ALLOW_WALK_IN', 'true', 'Cho phép lễ tân tạo lượt khám trực tiếp', '2026-10-01 08:00:00+07');
 
+-- 19. ROLE_REQUEST (Yêu cầu đổi vai trò)
+-- Yêu cầu 1 đã duyệt: users #3 hiện có vai trò NURSE. Yêu cầu chờ/từ chối không đổi role.
+INSERT INTO role_request
+(request_id, user_id, requested_role_id, reason, request_status, reviewed_by_id, reviewed_at, review_note, created_at, updated_at)
+VALUES
+(1, 3, 4, 'Đăng ký làm điều dưỡng tại phòng khám', 'APPROVED', 1, '2026-09-01 08:10:00+07', 'Đã xác nhận hồ sơ điều dưỡng', '2026-09-01 08:00:00+07', '2026-09-01 08:10:00+07'),
+(2, 4, 3, 'Đăng ký hỗ trợ công việc lễ tân', 'PENDING', NULL, NULL, NULL, '2026-10-02 09:00:00+07', '2026-10-02 09:00:00+07'),
+(3, 5, 2, 'Đăng ký vai trò bác sĩ', 'REJECTED', 1, '2026-10-03 10:00:00+07', 'Chưa có hồ sơ chuyên môn phù hợp', '2026-10-02 10:00:00+07', '2026-10-03 10:00:00+07');
+
+-- 20. NURSE_ASSIGNMENT (Phân công điều dưỡng theo ca)
+-- Ca diễn ra ở các ngày khác nhau; điều dưỡng #3 được admin #1 phân công.
+INSERT INTO nurse_assignment
+(assignment_id, nurse_id, schedule_id, assigned_by_id, assigned_at, revoked_at, revoked_by_id, note)
+VALUES
+(1, 3, 1, 1, '2026-09-11 08:00:00+07', NULL, NULL, 'Hỗ trợ tiếp nhận và chăm sóc trong ca 1'),
+(2, 3, 2, 1, '2026-09-11 08:00:00+07', NULL, NULL, 'Hỗ trợ tiếp nhận và chăm sóc trong ca 2'),
+(3, 3, 3, 1, '2026-09-11 08:00:00+07', NULL, NULL, 'Hỗ trợ tiếp nhận và chăm sóc trong ca 3'),
+(4, 3, 4, 1, '2026-09-11 08:00:00+07', NULL, NULL, 'Hỗ trợ tiếp nhận và chăm sóc trong ca 4'),
+(5, 3, 5, 1, '2026-09-11 08:00:00+07', NULL, NULL, 'Hỗ trợ tiếp nhận và chăm sóc trong ca 5'),
+(6, 3, 6, 1, '2026-09-11 08:00:00+07', NULL, NULL, 'Hỗ trợ tiếp nhận và chăm sóc trong ca 6'),
+(7, 3, 7, 1, '2026-09-11 08:00:00+07', NULL, NULL, 'Hỗ trợ tiếp nhận và chăm sóc trong ca 7'),
+(8, 3, 8, 1, '2026-09-11 08:00:00+07', NULL, NULL, 'Hỗ trợ tiếp nhận và chăm sóc trong ca 8'),
+(9, 3, 9, 1, '2026-09-11 08:00:00+07', NULL, NULL, 'Hỗ trợ tiếp nhận và chăm sóc trong ca 9'),
+(10, 3, 10, 1, '2026-09-11 08:00:00+07', NULL, NULL, 'Hỗ trợ tiếp nhận và chăm sóc trong ca 10'),
+(11, 3, 1, 1, '2026-09-10 11:00:00+07', '2026-09-10 12:00:00+07', 1, 'Phân công cũ đã thu hồi, ca 1 được giao lại bằng bản ghi 1');
+
 -- Đồng bộ sequence sau khi seed ID thủ công để lần INSERT tiếp theo không bị trùng khóa chính.
 SELECT setval(pg_get_serial_sequence('role', 'role_id'), (SELECT MAX(role_id) FROM role), true);
 SELECT setval(pg_get_serial_sequence('users', 'user_id'), (SELECT MAX(user_id) FROM users), true);
@@ -304,15 +344,18 @@ SELECT setval(pg_get_serial_sequence('department', 'department_id'), (SELECT MAX
 SELECT setval(pg_get_serial_sequence('doctor_profile', 'doctor_profile_id'), (SELECT MAX(doctor_profile_id) FROM doctor_profile), true);
 SELECT setval(pg_get_serial_sequence('room', 'room_id'), (SELECT MAX(room_id) FROM room), true);
 SELECT setval(pg_get_serial_sequence('work_schedule', 'schedule_id'), (SELECT MAX(schedule_id) FROM work_schedule), true);
-SELECT setval(pg_get_serial_sequence('visit', 'visit_id'), (SELECT MAX(visit_id) FROM visit), true);
-SELECT setval(pg_get_serial_sequence('visit_status_log', 'log_id'), (SELECT MAX(log_id) FROM visit_status_log), true);
-SELECT setval(pg_get_serial_sequence('visit_transfer_log', 'log_id'), (SELECT MAX(log_id) FROM visit_transfer_log), true);
+SELECT setval(pg_get_serial_sequence('encounter', 'encounter_id'), (SELECT MAX(encounter_id) FROM encounter), true);
+SELECT setval(pg_get_serial_sequence('encounter_status_log', 'log_id'), (SELECT MAX(log_id) FROM encounter_status_log), true);
+SELECT setval(pg_get_serial_sequence('encounter_transfer_log', 'log_id'), (SELECT MAX(log_id) FROM encounter_transfer_log), true);
 SELECT setval(pg_get_serial_sequence('payment', 'payment_id'), (SELECT MAX(payment_id) FROM payment), true);
 SELECT setval(pg_get_serial_sequence('medical_record', 'record_id'), (SELECT MAX(record_id) FROM medical_record), true);
 SELECT setval(pg_get_serial_sequence('prescription_item', 'item_id'), (SELECT MAX(item_id) FROM prescription_item), true);
 SELECT setval(pg_get_serial_sequence('review', 'review_id'), (SELECT MAX(review_id) FROM review), true);
 SELECT setval(pg_get_serial_sequence('notification', 'notification_id'), (SELECT MAX(notification_id) FROM notification), true);
 SELECT setval(pg_get_serial_sequence('article', 'article_id'), (SELECT MAX(article_id) FROM article), true);
+
+SELECT setval(pg_get_serial_sequence('role_request', 'request_id'), (SELECT MAX(request_id) FROM role_request), true);
+SELECT setval(pg_get_serial_sequence('nurse_assignment', 'assignment_id'), (SELECT MAX(assignment_id) FROM nurse_assignment), true);
 
 COMMIT;
 
@@ -325,9 +368,9 @@ UNION ALL SELECT 'department', COUNT(*) FROM department
 UNION ALL SELECT 'doctor_profile', COUNT(*) FROM doctor_profile
 UNION ALL SELECT 'room', COUNT(*) FROM room
 UNION ALL SELECT 'work_schedule', COUNT(*) FROM work_schedule
-UNION ALL SELECT 'visit', COUNT(*) FROM visit
-UNION ALL SELECT 'visit_status_log', COUNT(*) FROM visit_status_log
-UNION ALL SELECT 'visit_transfer_log', COUNT(*) FROM visit_transfer_log
+UNION ALL SELECT 'encounter', COUNT(*) FROM encounter
+UNION ALL SELECT 'encounter_status_log', COUNT(*) FROM encounter_status_log
+UNION ALL SELECT 'encounter_transfer_log', COUNT(*) FROM encounter_transfer_log
 UNION ALL SELECT 'payment', COUNT(*) FROM payment
 UNION ALL SELECT 'medical_record', COUNT(*) FROM medical_record
 UNION ALL SELECT 'prescription_item', COUNT(*) FROM prescription_item
@@ -335,5 +378,7 @@ UNION ALL SELECT 'review', COUNT(*) FROM review
 UNION ALL SELECT 'notification', COUNT(*) FROM notification
 UNION ALL SELECT 'article', COUNT(*) FROM article
 UNION ALL SELECT 'system_configuration', COUNT(*) FROM system_configuration
+UNION ALL SELECT 'role_request', COUNT(*) FROM role_request
+UNION ALL SELECT 'nurse_assignment', COUNT(*) FROM nurse_assignment
 ORDER BY table_name;
 
