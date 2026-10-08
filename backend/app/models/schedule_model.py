@@ -14,8 +14,10 @@ _ACTIVE = ('HOLDING', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS')
 
 
 def list_schedules(db, *, doctor_profile_id=None, room_id=None, department_id=None,
-                   from_date=None, to_date=None, status=None, limit=20, offset=0):
+                   from_date=None, to_date=None, status=None, exclude_closed=False, limit=20, offset=0):
     where, params = ['TRUE'], []
+    if exclude_closed:
+        where.append("s.schedule_status <> 'CLOSED'")
     for clause, value in (('s.doctor_profile_id = %s', doctor_profile_id),
                           ('s.room_id = %s', room_id), ('r.department_id = %s', department_id),
                           ('s.work_date >= %s', from_date), ('s.work_date <= %s', to_date),

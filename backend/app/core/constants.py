@@ -30,3 +30,4 @@ MAX_PASSWORD_LENGTH = 128
 
 DEFAULT_PAGE_SIZE = 20
 MAX_PAGE_SIZE = 100
+SYSTEM_WORKER_EMAIL = 'system.encounter-worker@internal.invalid'

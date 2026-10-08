@@ -1,8 +1,14 @@
 # Kế hoạch API và phân công backend
 
+**Database 09/10/2026:** schema 20 bảng của cả 5 gói đã gộp đầy đủ vào database/init_db.sql; không còn ALTER TABLE nâng cấp bảng cũ. Người dùng chọn khởi tạo lại từ đầu theo [hướng dẫn chạy](HUONG_DAN_CHAY_DU_AN.md). Lần sửa file này chưa reset, nạp mẫu hay rebuild.
+
+**Gói 3:** 14 route đã được triển khai theo [quy tắc đã chốt](QUY_TAC_GOI_3_DA_CHOT.md). Thanh toán xác nhận dùng adapter cùng transaction cho gói 4; bệnh án/hoàn tất thuộc gói 5. Trạng thái xác minh xem [báo cáo triển khai gói 3](BAO_CAO_TRIEN_KHAI_GOI_3.md), không suy ra nghiệm thu chỉ từ việc có route.
+
 Hiện đã có khởi tạo/seed PostgreSQL, 20 bảng, GET /health và Swagger /docs/.
 Các API dưới đây là kế hoạch cần triển khai, chưa phải chức năng đã hoàn thành.
-Chỉ làm backend và database. Mọi đường dẫn nghiệp vụ dùng tiền tố /api/v1.
+Chỉ làm backend và database. Cả 5 gói dùng trực tiếp các đường dẫn nghiệp vụ
+ghi bên dưới (ví dụ /auth/login, /me, /patients, /encounters), không thêm tiền tố
+/api/v1 hoặc /v1. Đây là quy ước đã chốt ngày 08/10/2026.
 
 ## 1. Phạm vi đã thống nhất
 
@@ -84,6 +90,37 @@ không hạ quota dưới booked_count; y tá được giao phải có vai trò 
 Upload avatar kiểm tra nội dung/kích thước, sinh tên file, lưu bền vững qua volume.
 Ca có lượt khám không được sửa tùy ý làm sai lịch; phối hợp gói 3 xử lý ca báo nghỉ.
 
+**Trạng thái đối chiếu ngày 08/10/2026:** đã có route cho đủ 30 API gói 2.
+Nhóm phân công y tá đã bổ sung route/service/model/schema và kiểm thử PostgreSQL:
+ADMIN tạo/xem/thu hồi; chỉ nhận tài khoản NURSE đang hoạt động, đã duyệt;
+phân công đang hiệu lực trùng trả 409 kể cả hai yêu cầu đồng thời; thu hồi giữ
+người/thời điểm và cho phép tạo phân công mới. NURSE chỉ xem phân công của mình,
+mặc định chưa thu hồi; include_revoked=true cho phép xem lịch sử.
+Kiểm thử: backend/tests/test_nurse_assignment.py và bộ hồi quy test_postgres.py,
+7 test đạt trên PostgreSQL tạm. Chưa nghiệm thu toàn bộ 30 API: còn cần kiểm tra
+quyền xem bệnh nhân/lịch sử theo phân công, phân trang lịch công khai, xác minh
+ảnh avatar hợp lệ và tích hợp xử lý ca báo nghỉ với gói 3.
+
+Cập nhật sau kiểm thử Swagger: đã sửa quyền NURSE theo ca chưa thu hồi (cả
+danh sách/chi tiết patient và lịch sử encounter), tổng số/phân trang lịch công
+khai bỏ CLOSED trong SQL, và xác minh/giải mã avatar bằng Pillow. 10 test hồi quy
+đạt; thử lại Swagger lần lượt trả 404 khi hết quyền, total=0 khi lọc CLOSED,
+400 INVALID_IMAGE với PNG giả. Mục tham số page/page_size trong Swagger lịch
+công khai chưa sửa theo yêu cầu người dùng. Chi tiết và giới hạn còn lại xem
+BAO_CAO_KIEM_THU_GOI_2_SWAGGER.md; chưa nghiệm thu tích hợp ca báo nghỉ gói 3.
+
+Ví dụ body POST /admin/nurse-assignments (Bearer token ADMIN):
+`{"nurse_id": 12, "schedule_id": 1, "note": "Hỗ trợ trong ca"}`.
+ID phải lấy từ dữ liệu thực tế; assigned_by_id/assigned_at/revoked_by_id/revoked_at
+do server xác định, không nhận từ body. Thu hồi dùng
+POST /admin/nurse-assignments/{id}/revoke, không cần body; thu hồi lặp trả 409.
+Danh sách hỗ trợ schedule_id, page, page_size, include_revoked; ADMIN lọc thêm
+nurse_id. GET /nurse/assignments luôn dùng ID y tá đăng nhập.
+
+Chạy toàn bộ kiểm thử trong môi trường Docker đã có backend và PostgreSQL:
+`docker compose exec -e RUN_POSTGRES_TESTS=1 backend python -m unittest discover -s backend/tests -v`.
+Kiểm thử dùng schema tạm và tự dọn; không cần thay schema chính để thêm các API này.
+
 ### Gói 3 — Đặt lịch và tiếp nhận
 
 **API:**
@@ -104,6 +141,7 @@ jobs/encounter_jobs.py. Tất cả nằm trong backend/app/.
 
 **Luồng online:** HOLDING → thanh toán cọc giả lập → CONFIRMED → CHECKED_IN
 → IN_PROGRESS → COMPLETED. HOLDING quá hạn → EXPIRED, trả chỗ đúng một lần.
+Lịch gồm ca sáng/chiều; POST /encounters/online chỉ nhận khi còn ít nhất 5 giờ trước giờ bắt đầu ca (Asia/Saigon), đúng mốc được nhận, sau mốc và trong ca trả 409/SCHEDULE_TOO_LATE. Lượt đã HOLDING vẫn có 10 phút thanh toán. Cập nhật này theo quyết định 09/10/2026.
 
 **Luồng trực tiếp:** bệnh nhân không tự chọn ca; lễ tân/hệ thống chọn ca còn chỗ,
 tạo WALK_IN với CHECKED_IN và số sau các lịch online đã dành trong ca
@@ -117,6 +155,8 @@ encounter_status/booked_count; các gói khác gọi service, không tự UPDATE
 Job nền chạy worker riêng, không tạo scheduler trong mỗi Gunicorn worker.
 
 ### Gói 4 — Thanh toán giả lập và thông báo
+
+**Trạng thái code:** đã triển khai 10 API, Swagger, xử lý tiền cùng transaction gói 3 và thông báo/nhắc lịch chống lặp. Người dùng chốt: hủy trước từ 12 giờ hoàn 50% cọc, dưới 12 giờ mất cọc; nguyên nhân bệnh viện/bác sĩ hoàn toàn bộ. Đối chiếu [báo cáo gói 4](BAO_CAO_TRIEN_KHAI_GOI_4.md). Chưa chạy kiểm thử theo yêu cầu chỉ viết code.
 
 **API:**
 
@@ -142,6 +182,8 @@ người dùng chỉ đọc thông báo của mình; nhắc lịch không gửi 
 Không xây webhook ngân hàng hay kết nối nhà cung cấp email thật.
 
 ### Gói 5 — Khám, nội dung và thống kê
+
+**Trạng thái code:** đã triển khai 18 API, Swagger và tích hợp complete với gói 3. Người dùng đồng ý bổ sung/sửa bệnh án đã hoàn tất trên cùng bệnh án, bắt buộc lý do/lịch sử trước-sau, giữ COMPLETED; lần khám mới tạo encounter mới. Version chống sửa từ dữ liệu cũ; thống kê tiền dùng số REFUND thực tế. Xem [báo cáo gói 5](BAO_CAO_TRIEN_KHAI_GOI_5.md). Chưa kiểm thử/rebuild theo yêu cầu chỉ viết code.
 
 **API:**
 
@@ -210,14 +252,13 @@ job chạy lặp không trả quota hoặc gửi thông báo nhiều lần.
 ## 5. Quy tắc cần nhóm chốt trước khi code
 
 - Mức cọc: dữ liệu mẫu dùng 30%, chưa coi là chính sách bắt buộc của hệ thống.
-- Hủy trước bao lâu được hoàn cọc; no-show có mất cọc không.
+- Hoàn cọc đã chốt ở gói 4: bệnh nhân hủy từ 12 giờ trước giờ hẹn hoàn 50%; dưới 12 giờ/no-show không hoàn; nguyên nhân bệnh viện/bác sĩ hoàn toàn bộ. Giờ tham chiếu lưu tại thời điểm hủy.
 - Check-in sớm/trễ và thời điểm tính no-show.
 - Walk-in đã chốt được hệ thống gắn ca. Online dành số khi xác nhận, check-in giữ
   số đó. Cần chốt việc chuyển người đang chờ sang ca sau và nhận online muộn.
   Schema bắt buộc schedule_id NOT NULL; API mới phải gắn ca theo luồng đã chốt.
 - Y tá được sửa những trường/thao tác nào; chưa cho sửa chẩn đoán và đơn thuốc.
-- Bệnh án được bổ sung/sửa sau hoàn tất theo yêu cầu người dùng; cần chốt cách
-  mở lại lượt khám hoặc tạo lượt mới và lưu lịch sử thay đổi.
+- Bệnh án đã chốt ở gói 5: bác sĩ phụ trách bổ sung/sửa cùng record, có lý do/version và lưu trước-sau; không mở lại COMPLETED. Lần khám mới tạo encounter mới.
 - Chuyển bác sĩ khác giá: đề xuất giữ giá đã chốt cho phạm vi đồ án.
 - Job tự động dùng danh tính hệ thống thế nào: changed_by_id hiện bắt buộc users;
   chưa có tài khoản hệ thống trong dữ liệu mẫu. Không giả danh người thao tác.

@@ -133,20 +133,21 @@ VALUES
 
 -- 8. WORK_SCHEDULE
 INSERT INTO work_schedule
-(schedule_id, doctor_profile_id, room_id, work_date, start_time, end_time, max_quota, booked_count, schedule_status, unavailable_reason, created_at, updated_at)
+(schedule_id, doctor_profile_id, room_id, work_date, start_time, end_time, max_quota, booked_count, last_queue_number, schedule_status, unavailable_reason, created_at, updated_at)
 VALUES
-(1, 1, 1, '2026-09-20', '08:00', '11:30', 12, 1, 'OPEN', NULL, '2026-09-10 10:00:00+07', '2026-09-10 10:00:00+07'),
-(2, 2, 2, '2026-09-21', '08:00', '11:30', 10, 1, 'OPEN', NULL, '2026-09-10 10:05:00+07', '2026-09-10 10:05:00+07'),
-(3, 3, 3, '2026-09-22', '13:30', '17:00', 10, 1, 'OPEN', NULL, '2026-09-10 10:10:00+07', '2026-09-10 10:10:00+07'),
-(4, 4, 4, '2026-09-23', '08:00', '11:30', 15, 1, 'OPEN', NULL, '2026-09-10 10:15:00+07', '2026-09-10 10:15:00+07'),
-(5, 5, 5, '2026-09-24', '13:30', '17:00', 8, 1, 'OPEN', NULL, '2026-09-10 10:20:00+07', '2026-09-10 10:20:00+07'),
-(6, 6, 6, '2026-09-25', '08:00', '11:30', 12, 1, 'OPEN', NULL, '2026-09-10 10:25:00+07', '2026-09-10 10:25:00+07'),
-(7, 7, 7, '2026-09-26', '08:00', '11:30', 10, 1, 'OPEN', NULL, '2026-09-10 10:30:00+07', '2026-09-10 10:30:00+07'),
-(8, 8, 8, '2026-09-27', '13:30', '17:00', 10, 1, 'OPEN', NULL, '2026-09-10 10:35:00+07', '2026-09-10 10:35:00+07'),
-(9, 9, 9, '2026-09-28', '08:00', '11:30', 12, 1, 'OPEN', NULL, '2026-09-10 10:40:00+07', '2026-09-10 10:40:00+07'),
-(10, 10, 10, '2026-09-29', '13:30', '17:00', 9, 1, 'OPEN', NULL, '2026-09-10 10:45:00+07', '2026-09-10 10:45:00+07');
+(1, 1, 1, '2026-09-20', '08:00', '11:30', 12, 1, 1, 'OPEN', NULL, '2026-09-10 10:00:00+07', '2026-09-10 10:00:00+07'),
+(2, 2, 2, '2026-09-21', '08:00', '11:30', 10, 1, 2, 'OPEN', NULL, '2026-09-10 10:05:00+07', '2026-09-10 10:05:00+07'),
+(3, 3, 3, '2026-09-22', '13:30', '17:00', 10, 1, 1, 'OPEN', NULL, '2026-09-10 10:10:00+07', '2026-09-10 10:10:00+07'),
+(4, 4, 4, '2026-09-23', '08:00', '11:30', 15, 1, 3, 'OPEN', NULL, '2026-09-10 10:15:00+07', '2026-09-10 10:15:00+07'),
+(5, 5, 5, '2026-09-24', '13:30', '17:00', 8, 1, 1, 'OPEN', NULL, '2026-09-10 10:20:00+07', '2026-09-10 10:20:00+07'),
+(6, 6, 6, '2026-09-25', '08:00', '11:30', 12, 1, 4, 'OPEN', NULL, '2026-09-10 10:25:00+07', '2026-09-10 10:25:00+07'),
+(7, 7, 7, '2026-09-26', '08:00', '11:30', 10, 1, 1, 'OPEN', NULL, '2026-09-10 10:30:00+07', '2026-09-10 10:30:00+07'),
+(8, 8, 8, '2026-09-27', '13:30', '17:00', 10, 1, 5, 'OPEN', NULL, '2026-09-10 10:35:00+07', '2026-09-10 10:35:00+07'),
+(9, 9, 9, '2026-09-28', '08:00', '11:30', 12, 1, 1, 'OPEN', NULL, '2026-09-10 10:40:00+07', '2026-09-10 10:40:00+07'),
+(10, 10, 10, '2026-09-29', '13:30', '17:00', 9, 1, 6, 'OPEN', NULL, '2026-09-10 10:45:00+07', '2026-09-10 10:45:00+07');
 
 -- 9. ENCOUNTER
+-- Các lượt mẫu không bị hủy: cancel_origin/refund_reference_at mặc định NULL.
 INSERT INTO encounter
 (encounter_id, encounter_type, patient_id, doctor_profile_id, schedule_id, room_id, created_by_id, consultation_fee_snapshot, deposit_amount_snapshot, symptoms,
  encounter_status, queue_number, estimated_exam_at, qr_code, hold_expires_at, checked_in_at,
@@ -195,6 +196,8 @@ VALUES
 (10, 10, 9, 10, 2, 'Triệu chứng thần kinh và mất ngủ', '2026-09-29 14:02:00+07');
 
 -- 12. PAYMENT
+-- Giao dịch mẫu là lịch sử thu, không có REFUND: original_payment_id mặc định NULL.
+-- Các trường audit nullable được API điền cho giao dịch mới; không tạo audit giả cho dữ liệu mẫu cũ.
 INSERT INTO payment
 (payment_id, encounter_id, payment_type, amount, payment_method, transaction_status, transaction_code, paid_at, refunded_at, created_at, updated_at)
 VALUES
@@ -220,6 +223,7 @@ VALUES
 (15, 9, 'DEPOSIT', 108000, 'EWALLET', 'SUCCESS', 'DEMO-DEPOSIT-009', '2026-09-27 18:32:00+07', NULL, '2026-09-27 18:32:00+07', '2026-09-27 18:32:00+07');
 
 -- 13. MEDICAL_RECORD
+-- Bệnh án mẫu chưa có bản sửa qua API: version=0 và revision_history=[] theo mặc định schema.
 INSERT INTO medical_record
 (record_id, encounter_id, diagnosis, treatment, doctor_notes, examined_at, created_at, updated_at)
 VALUES
@@ -265,6 +269,7 @@ VALUES
 (10, 10, 5, 'Trải nghiệm khám tốt.', '2026-09-29 20:00:00+07', '2026-09-29 20:00:00+07');
 
 -- 16. NOTIFICATION
+-- Thông báo mẫu thủ công có event_key=NULL; thông báo qua API/worker dùng khóa chống lặp.
 INSERT INTO notification
 (notification_id, user_id, notification_type, title, content, reference_type, reference_id, is_read, created_at)
 VALUES
@@ -299,10 +304,13 @@ INSERT INTO system_configuration
 (config_key, config_value, description, updated_at)
 VALUES
 ('APPOINTMENT_HOLD_MINUTES', '10', 'Số phút giữ lịch chờ thanh toán', '2026-10-01 08:00:00+07'),
-('DEFAULT_DEPOSIT_PERCENT', '30', 'Tỷ lệ đặt cọc mặc định theo phần trăm', '2026-10-01 08:00:00+07'),
+('DEFAULT_DEPOSIT_PERCENT', '100', 'Đặt mới cọc 100% giá bác sĩ; các snapshot 30% cũ giữ nguyên', '2026-10-09 00:00:00+07'),
 ('NO_SHOW_FORFEIT_DEPOSIT', 'true', 'No-show sẽ mất khoản đặt cọc', '2026-10-01 08:00:00+07'),
-('CHECKIN_EARLY_MINUTES', '30', 'Cho phép check-in sớm tối đa bao nhiêu phút', '2026-10-01 08:00:00+07'),
-('CHECKIN_LATE_MINUTES', '15', 'Khoảng trễ tối đa khi check-in', '2026-10-01 08:00:00+07'),
+('CHECKIN_EARLY_MINUTES', '30', 'Online bắt buộc check-in ít nhất 30 phút trước giờ hẹn', '2026-10-09 00:00:00+07'),
+('CHECKIN_LATE_MINUTES', '0', 'Không cho check-in sau hạn 30 phút trước giờ hẹn', '2026-10-09 00:00:00+07'),
+('NO_SHOW_GRACE_MINUTES', '15', 'No-show sau kết thúc ca 15 phút; chính sách cố định', '2026-10-09 00:00:00+07'),
+('CANCEL_HOURS_LIMIT', '12', 'Bệnh nhân hủy từ 12 giờ trước giờ hẹn được hoàn 50% cọc', '2026-10-09 00:00:00+07'),
+('CANCEL_REFUND_PERCENT', '50', 'Hoàn 50% cọc khi hủy đủ hạn; lỗi bệnh viện hoàn 100%', '2026-10-09 00:00:00+07'),
 ('REMINDER_BEFORE_HOURS', '24', 'Gửi thông báo nhắc lịch trước giờ khám', '2026-10-01 08:00:00+07'),
 ('MAX_REVIEW_RATING', '5', 'Điểm đánh giá tối đa', '2026-10-01 08:00:00+07'),
 ('HOSPITAL_NAME', 'Medicare Demo Clinic', 'Tên cơ sở khám bệnh hiển thị trên hệ thống', '2026-10-01 08:00:00+07'),

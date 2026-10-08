@@ -45,7 +45,8 @@ def login(data):
     if user is None:
         check_password_hash(_DUMMY_HASH, data['password'])
         raise unauthorized(_BAD_CREDENTIALS, 'INVALID_CREDENTIALS')
-    if not verify_password(user['password_hash'], data['password']) or user['deleted_at'] is not None:
+    if (user.get('email') == constants.SYSTEM_WORKER_EMAIL
+            or not verify_password(user['password_hash'], data['password']) or user['deleted_at'] is not None):
         raise unauthorized(_BAD_CREDENTIALS, 'INVALID_CREDENTIALS')
     if user['account_status'] != constants.ACCOUNT_ACTIVE:
         raise forbidden('Tài khoản đã bị khóa', 'ACCOUNT_LOCKED')
@@ -64,6 +65,7 @@ def logout():
 
 def _usable(user):
     return (user is not None and user['deleted_at'] is None
+            and user.get('email') != constants.SYSTEM_WORKER_EMAIL
             and user['account_status'] == constants.ACCOUNT_ACTIVE)
 
 

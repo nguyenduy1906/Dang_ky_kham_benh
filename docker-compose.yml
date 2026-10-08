@@ -42,6 +42,22 @@ services:
       retries: 6
       start_period: 20s
     restart: unless-stopped
+  encounter-worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["python", "-m", "backend.app.jobs.encounter_jobs"]
+    env_file:
+      - ./backend/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: medical
+      DB_USER: medical
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
 volumes:
   postgres_data:
   uploads_data:

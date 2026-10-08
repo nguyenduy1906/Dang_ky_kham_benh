@@ -26,6 +26,9 @@ def _load_visible(db, actor, patient_id):
         raise not_found('Không tìm thấy hồ sơ bệnh nhân', 'PATIENT_NOT_FOUND')
     if actor['role_name'] not in STAFF_READ + (constants.ROLE_USER,):
         raise forbidden()
+    if (actor['role_name'] == constants.ROLE_NURSE
+            and not patient_model.nurse_can_view(db, patient_id, actor['user_id'])):
+        raise not_found('Không tìm thấy hồ sơ bệnh nhân', 'PATIENT_NOT_FOUND')
     return patient
 
 
@@ -41,7 +44,9 @@ def list_patients(actor, query):
         raise forbidden()
     with get_db_connection() as db:
         rows, total = patient_model.list_patients(
-            db, user_id=owner_filter, q=query['q'], include_archived=query['include_archived'],
+            db, user_id=owner_filter,
+            nurse_id=actor['user_id'] if actor['role_name'] == constants.ROLE_NURSE else None,
+            q=query['q'], include_archived=query['include_archived'],
             limit=query['page_size'], offset=(query['page'] - 1) * query['page_size'])
     return {'items': [_present(r) for r in rows], 'total': total,
             'page': query['page'], 'page_size': query['page_size']}
@@ -91,6 +96,8 @@ def archive_patient(actor, patient_id):
 def list_encounters(actor, patient_id, page, page_size):
     with get_db_connection() as db:
         _load_visible(db, actor, patient_id)
-        rows, total = patient_model.list_encounters(db, patient_id, page_size, (page - 1) * page_size)
+        rows, total = patient_model.list_encounters(
+            db, patient_id, page_size, (page - 1) * page_size,
+            nurse_id=actor['user_id'] if actor['role_name'] == constants.ROLE_NURSE else None)
     return {'items': [jsonable(dict(r)) for r in rows], 'total': total,
             'page': page, 'page_size': page_size}

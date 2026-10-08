@@ -37,9 +37,8 @@ def list_doctor_public(doctor_profile_id, query):
         start = max(query['from_date'] or today_vn(), today_vn())
         rows, total = schedule_model.list_schedules(
             db, doctor_profile_id=doctor_profile_id, from_date=start, to_date=query['to_date'],
-            status=query['status'], limit=query['page_size'],
+            status=query['status'], exclude_closed=True, limit=query['page_size'],
             offset=(query['page'] - 1) * query['page_size'])
-    rows = [r for r in rows if r['schedule_status'] != 'CLOSED']
     return _page(rows, total, query)
 
 

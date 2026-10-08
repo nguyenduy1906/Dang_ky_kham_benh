@@ -81,6 +81,7 @@ def _authenticate():
     with get_db_connection() as db:
         user = user_model.get_user_by_id(db, payload.get('uid'))
     if (user is None or user['deleted_at'] is not None
+            or user.get('email') == constants.SYSTEM_WORKER_EMAIL
             or user['account_status'] != constants.ACCOUNT_ACTIVE
             or user['approval_status'] != constants.APPROVAL_APPROVED
             or not hmac.compare_digest(str(payload.get('pf')), _fingerprint(user['password_hash']))):

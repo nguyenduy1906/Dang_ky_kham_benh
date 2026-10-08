@@ -1,5 +1,11 @@
 # Hướng dẫn chạy backend và database
 
+**Schema thống nhất 09/10/2026:** `database/init_db.sql` định nghĩa đầy đủ 20 bảng của 5 gói API. Các cột bổ sung đã gộp vào `CREATE TABLE`, không còn `ALTER TABLE` để nâng cấp bảng cũ. Chủ đồ án chọn khởi tạo lại từ đầu theo mục 2; chỉ rebuild trên database cũ sẽ không bổ sung cột. Lần sửa này chưa thực hiện reset, nạp mẫu, rebuild hoặc kiểm thử API.
+
+Gói 4 có cột audit/liên kết hoàn tiền, khóa chống thông báo lặp và nguyên nhân hủy trong schema mới. API `/demo/payments/{id}/result` chỉ hoạt động khi `DEMO_MODE=1`; mặc định tắt. Worker chạy thêm nhắc lịch trong ứng dụng, không gửi email/ngân hàng thật. Chính sách và ví dụ: [BAO_CAO_TRIEN_KHAI_GOI_4.md](BAO_CAO_TRIEN_KHAI_GOI_4.md).
+
+Gói 3 có `work_schedule.last_queue_number`; gói 5 có `medical_record.version` và `revision_history` ngay trong định nghĩa bảng. Docker Compose có `encounter-worker` chạy job mỗi 30 giây, chờ backend khỏe; worker tự tạo tài khoản hệ thống LOCKED riêng. Chạy riêng: `python -m backend.app.jobs.encounter_jobs --once` hoặc bỏ `--once` để chạy liên tục. Quy tắc: [QUY_TAC_GOI_3_DA_CHOT.md](QUY_TAC_GOI_3_DA_CHOT.md), [BAO_CAO_TRIEN_KHAI_GOI_5.md](BAO_CAO_TRIEN_KHAI_GOI_5.md).
+
 Chạy PowerShell tại thư mục gốc. Dự án dùng docker-compose.yml, Flask/Gunicorn
 và PostgreSQL 17. Mở Docker Desktop trước khi chạy.
 
@@ -21,12 +27,11 @@ PostgreSQL; phải đổi mật khẩu tài khoản database tương ứng trư�
 
 ## 2. Tạo mới hoặc đặt lại toàn bộ dữ liệu đồ án
 
-**down -v xóa volume PostgreSQL và toàn bộ dữ liệu cũ.** Bỏ qua lệnh đó nếu đang
-khởi tạo lần đầu hoặc muốn giữ dữ liệu. Schema cuối cùng nằm trong init_db.sql.
+**down -v xóa các volume của dự án, gồm dữ liệu PostgreSQL và file ảnh trong uploads_data.** Bỏ qua lệnh đó nếu đang khởi tạo lần đầu. Schema cuối cùng nằm trong init_db.sql.
 
 ```powershell
 docker compose down -v
-docker compose up --build -d
+docker compose up --build -d db backend
 docker compose ps
 ```
 
@@ -41,6 +46,15 @@ Get-Content -Raw -Encoding UTF8 database/sample_data.sql | docker compose exec -
 volume. File chạy trong transaction; nếu có lỗi, không tiếp tục các bước khác.
 Có 15 tài khoản mẫu, mật khẩu chung Demo-password-123!, lưu bằng hash hợp lệ.
 Thanh toán, mã QR và thông báo trong file chỉ là dữ liệu giả lập cho đồ án.
+Các lượt khám mẫu là lịch sử tháng 09/2026 với snapshot cọc 30%; lượt đặt mới dùng cọc 100% và hạn đặt trước ca ít nhất 5 giờ. Bộ đếm số đã cấp trong từng ca khớp các lượt mẫu; bệnh án mẫu bắt đầu version=0/history=[].
+
+Sau khi nạp mẫu (hoặc bỏ qua mẫu để dùng database trống), khởi động worker:
+
+```powershell
+docker compose up -d --build encounter-worker
+```
+
+Khi nạp lại sample_data.sql ở những lần sau, dừng worker bằng `docker compose stop encounter-worker` trước khi nạp và chạy lại sau đó, để job không xử lý dữ liệu trong lúc seed.
 
 ## 3. Quy trình khi thay đổi cấu trúc database
 
@@ -55,7 +69,7 @@ bản schema vẫn giữ dữ liệu.
 
 - Health: http://localhost:5000/health
 - Swagger: http://localhost:5000/docs/
-- Trang / chưa có giao diện. API nghiệp vụ trong kế hoạch chưa được triển khai.
+- Trang / chưa có giao diện. API của 5 gói đã có code; kết quả kiểm thử từng gói xem báo cáo tương ứng.
 
 Kết quả health mong đợi:
 

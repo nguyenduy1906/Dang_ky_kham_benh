@@ -7,9 +7,17 @@ from backend.app.db.database import get_db_connection
 from backend.app.routes import health_routes
 from backend.app.routes.auth_routes import auth_bp
 from backend.app.routes.department_routes import department_bp
+from backend.app.routes.encounter_routes import encounter_bp
 from backend.app.routes.doctor_routes import doctor_bp
 from backend.app.routes.nurse_assignment_routes import nurse_assignment_bp
 from backend.app.routes.patient_routes import patient_bp
+from backend.app.routes.payment_routes import payment_bp
+from backend.app.routes.notification_routes import notification_bp
+from backend.app.routes.medical_record_routes import medical_record_bp
+from backend.app.routes.review_routes import review_bp
+from backend.app.routes.article_routes import article_bp
+from backend.app.routes.configuration_routes import configuration_bp
+from backend.app.routes.statistics_routes import statistics_bp
 from backend.app.routes.room_routes import room_bp
 from backend.app.routes.schedule_routes import schedule_bp
 from backend.app.routes.user_admin_routes import user_admin_bp
@@ -26,7 +34,8 @@ def create_app():
     register_error_handlers(app)
     app.register_blueprint(health_routes)
     for blueprint in (auth_bp, user_admin_bp, department_bp, room_bp, doctor_bp,
-                      patient_bp, schedule_bp, nurse_assignment_bp):
+                      patient_bp, schedule_bp, nurse_assignment_bp, encounter_bp, payment_bp, notification_bp,
+                      medical_record_bp, review_bp, article_bp, configuration_bp, statistics_bp):
         app.register_blueprint(blueprint)
     app.config['SWAGGER'] = {'title': 'Medical Booking API', 'uiversion': 3}
     Swagger(app, config={'specs_route': '/docs/'}, merge=True, template={

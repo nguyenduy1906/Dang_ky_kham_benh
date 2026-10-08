@@ -43,5 +43,7 @@ node_modules/
 Thumbs.db
 
 # Local business reports.
+/AGENTS.md
 /docs/BAO_CAO_NGHIEP_VU.md
 /docs/TONG_HOP_PHAN_TICH_NGHIEP_VU.txt
+/docs
