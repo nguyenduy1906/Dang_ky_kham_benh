@@ -6,6 +6,12 @@ from backend.app.core.security import get_secret_key
 from backend.app.db.database import get_db_connection
 from backend.app.routes import health_routes
 from backend.app.routes.auth_routes import auth_bp
+from backend.app.routes.department_routes import department_bp
+from backend.app.routes.doctor_routes import doctor_bp
+from backend.app.routes.nurse_assignment_routes import nurse_assignment_bp
+from backend.app.routes.patient_routes import patient_bp
+from backend.app.routes.room_routes import room_bp
+from backend.app.routes.schedule_routes import schedule_bp
 from backend.app.routes.user_admin_routes import user_admin_bp
 
 
@@ -19,8 +25,9 @@ def create_app():
     app = Flask(__name__)
     register_error_handlers(app)
     app.register_blueprint(health_routes)
-    app.register_blueprint(auth_bp)
-    app.register_blueprint(user_admin_bp)
+    for blueprint in (auth_bp, user_admin_bp, department_bp, room_bp, doctor_bp,
+                      patient_bp, schedule_bp, nurse_assignment_bp):
+        app.register_blueprint(blueprint)
     app.config['SWAGGER'] = {'title': 'Medical Booking API', 'uiversion': 3}
     Swagger(app, config={'specs_route': '/docs/'}, merge=True, template={
         'swagger': '2.0',
