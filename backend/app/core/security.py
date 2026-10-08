@@ -16,7 +16,7 @@ from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from backend.app.core import constants
-from backend.app.core.errors import forbidden, unauthorized
+from backend.app.core.errors import AppError, forbidden, unauthorized
 from backend.app.db.database import get_db_connection
 from backend.app.models import user_model
 
@@ -111,3 +111,17 @@ def roles_required(*roles):
             return view(*args, **kwargs)
         return wrapper
     return decorator
+
+
+def optional_user():
+    """Trả về user nếu request có token hợp lệ, ngược lại None (không báo lỗi)."""
+    if not request.headers.get('Authorization'):
+        return None
+    try:
+        return _authenticate()
+    except AppError:
+        return None
+
+
+def is_admin(user):
+    return user is not None and user['role_name'] == constants.ROLE_ADMIN
