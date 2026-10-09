@@ -3,6 +3,5 @@ from datetime import datetime, timedelta, timezone
 
 VN_TZ = timezone(timedelta(hours=7))
 
-
 def today_vn():
     return datetime.now(VN_TZ).date()

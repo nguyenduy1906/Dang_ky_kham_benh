@@ -1,0 +1,252 @@
+[
+  {
+    "label": "GET /departments",
+    "http_status": 200,
+    "item_count": 10
+  },
+  {
+    "label": "GET /doctors",
+    "http_status": 200,
+    "total": 10,
+    "item_count": 10
+  },
+  {
+    "label": "GET /rooms",
+    "http_status": 200,
+    "item_count": 10
+  },
+  {
+    "label": "POST /admin/departments",
+    "http_status": 201
+  },
+  {
+    "label": "PATCH /admin/departments/{id}",
+    "http_status": 200
+  },
+  {
+    "label": "GET /departments/{id}",
+    "http_status": 200
+  },
+  {
+    "label": "POST /admin/rooms",
+    "http_status": 201
+  },
+  {
+    "label": "PATCH /admin/rooms/{id}",
+    "http_status": 200
+  },
+  {
+    "label": "GET /doctors/{id}",
+    "http_status": 200
+  },
+  {
+    "label": "PATCH /admin/doctors/{id}",
+    "http_status": 200
+  },
+  {
+    "label": "POST /patients (walk-in không tài khoản)",
+    "http_status": 201
+  },
+  {
+    "label": "GET /patients",
+    "http_status": 200,
+    "total": 10,
+    "item_count": 10
+  },
+  {
+    "label": "GET /patients/{patient_id}",
+    "http_status": 200
+  },
+  {
+    "label": "PATCH /patients/{patient_id}",
+    "http_status": 200
+  },
+  {
+    "label": "GET /patients/{patient_id}/encounters",
+    "http_status": 200,
+    "total": 1,
+    "item_count": 1
+  },
+  {
+    "label": "POST /patients/{patient_id}/archive",
+    "http_status": 200
+  },
+  {
+    "label": "GET patient sau archive vẫn tồn tại",
+    "http_status": 200
+  },
+  {
+    "label": "GET /admin/schedules",
+    "http_status": 200,
+    "total": 10,
+    "item_count": 10
+  },
+  {
+    "label": "POST /admin/schedules",
+    "http_status": 201
+  },
+  {
+    "label": "Chặn chồng ca bác sĩ",
+    "http_status": 409,
+    "error_code": "DOCTOR_SCHEDULE_OVERLAP"
+  },
+  {
+    "label": "Chặn chồng ca phòng",
+    "http_status": 409,
+    "error_code": "ROOM_SCHEDULE_OVERLAP"
+  },
+  {
+    "label": "PATCH /admin/schedules/{schedule_id}",
+    "http_status": 200
+  },
+  {
+    "label": "GET /doctors/{doctor_profile_id}/schedules",
+    "http_status": 200,
+    "total": 1,
+    "item_count": 1
+  },
+  {
+    "label": "GET /admin/nurse-assignments",
+    "http_status": 200,
+    "total": 10,
+    "item_count": 10
+  },
+  {
+    "label": "POST /admin/nurse-assignments",
+    "http_status": 201
+  },
+  {
+    "label": "Chặn phân công trùng",
+    "http_status": 409,
+    "error_code": "DUPLICATE_NURSE_ASSIGNMENT"
+  },
+  {
+    "label": "Từ chối phân công tài khoản USER",
+    "http_status": 400,
+    "error_code": "NOT_A_NURSE"
+  },
+  {
+    "label": "POST /admin/nurse-assignments/{assignment_id}/revoke",
+    "http_status": 200
+  },
+  {
+    "label": "Thu hồi lặp",
+    "http_status": 409,
+    "error_code": "ASSIGNMENT_ALREADY_REVOKED"
+  },
+  {
+    "label": "Phân công lại sau thu hồi",
+    "http_status": 201
+  },
+  {
+    "label": "GET /nurse/assignments",
+    "http_status": 200,
+    "total": 11,
+    "item_count": 11
+  },
+  {
+    "label": "NURSE bị chặn API ADMIN",
+    "http_status": 403,
+    "error_code": "FORBIDDEN"
+  },
+  {
+    "label": "NURSE xem lịch sử ngoài phân công",
+    "http_status": 200,
+    "total": 1,
+    "item_count": 1
+  },
+  {
+    "label": "GET /doctor/profile",
+    "http_status": 200
+  },
+  {
+    "label": "PATCH /doctor/profile",
+    "http_status": 200
+  },
+  {
+    "label": "GET /doctor/schedules",
+    "http_status": 200,
+    "total": 2,
+    "item_count": 2
+  },
+  {
+    "label": "POST /doctor/schedules/{schedule_id}/unavailability",
+    "http_status": 200
+  },
+  {
+    "label": "POST /doctor/profile/avatar (ảnh PNG)",
+    "http_status": 200
+  },
+  {
+    "label": "POST /admin/doctors",
+    "http_status": 201
+  },
+  {
+    "label": "Không hạ quota dưới booked_count",
+    "http_status": 200
+  },
+  {
+    "label": "Không đổi giờ ca đã có lượt khám",
+    "http_status": 409,
+    "error_code": "SCHEDULE_HAS_ENCOUNTERS"
+  },
+  {
+    "label": "Thu hồi phân công ca 2 để kiểm tra quyền",
+    "http_status": 200
+  },
+  {
+    "label": "NURSE sau thu hồi ca 2 vẫn xem lịch sử ca 2",
+    "http_status": 200,
+    "total": 1,
+    "item_count": 1
+  },
+  {
+    "label": "Quota 1 thấp hơn booked_count 2",
+    "http_status": 409,
+    "error_code": "QUOTA_BELOW_BOOKED"
+  },
+  {
+    "label": "Tạo ca kiểm thử phân trang",
+    "http_status": 201
+  },
+  {
+    "label": "Đóng ca kiểm thử phân trang",
+    "http_status": 200
+  },
+  {
+    "label": "Lịch công khai lọc CLOSED",
+    "http_status": 200,
+    "total": 1,
+    "item_count": 0
+  },
+  {
+    "label": "USER chỉ thấy hồ sơ sở hữu",
+    "http_status": 200,
+    "total": 1,
+    "item_count": 1
+  },
+  {
+    "label": "USER xem hồ sơ người khác",
+    "http_status": 404,
+    "error_code": "PATIENT_NOT_FOUND"
+  },
+  {
+    "label": "USER sửa hồ sơ người khác",
+    "http_status": 404,
+    "error_code": "PATIENT_NOT_FOUND"
+  },
+  {
+    "label": "USER tạo hồ sơ, không tự gán chủ sở hữu khác",
+    "http_status": 201
+  },
+  {
+    "label": "Avatar chỉ có 8 byte chữ ký PNG, không phải ảnh hợp lệ",
+    "http_status": 200
+  },
+  {
+    "label": "Bằng chứng NURSE truy cập lịch sử sau thu hồi",
+    "http_status": 200,
+    "total": 1,
+    "item_count": 1
+  }
+]

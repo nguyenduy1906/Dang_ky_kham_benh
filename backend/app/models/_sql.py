@@ -1,4 +1,4 @@
-"""Hàm SQL dùng chung cho các model Gói 2."""
+"""Hàm SQL dùng chung cho các model """
 from datetime import date, datetime, time
 from decimal import Decimal
 
