@@ -1,6 +1,6 @@
 from backend.app.core.errors import conflict, not_found
 from backend.app.db.database import get_db_connection
-from backend.app.models import medical_record_model as records, prescription_model as prescriptions
+from backend.app.models import medical_record_model as records
 from backend.app.models._sql import jsonable
 from backend.app.services import encounter_service as encounters
 
@@ -14,7 +14,7 @@ def _read_access(db, actor, encounter_id):
 def _snapshot(db, record):
     return {'diagnosis': record['diagnosis'], 'treatment': record['treatment'],
             'doctor_notes': record['doctor_notes'], 'examined_at': record['examined_at'],
-            'prescription_items': prescriptions.list_items(db, record['record_id'])}
+            'prescription_items': records.list_items(db, record['record_id'])}
 
 
 def _public(row):
@@ -82,7 +82,7 @@ def get_items(actor, record_id, page, size):
         encounter_id = _record_encounter_id(db, record_id)
         _read_access(db, actor, encounter_id)
         record = records.get(db, encounter_id, lock='share')
-        rows = prescriptions.list_items(db, record_id)
+        rows = records.list_items(db, record_id)
     return {'items': jsonable(rows[(page - 1) * size:page * size]), 'total': len(rows),
             'page': page, 'page_size': size, 'record_version': record['version']}
 
@@ -98,10 +98,10 @@ def put_items(actor, record_id, fields):
         before = _snapshot(db, record)
         existing = [{k: r[k] for k in ('medication_name', 'dosage', 'quantity', 'instructions')} for r in before['prescription_items']]
         if existing != fields['items']:
-            prescriptions.replace_items(db, record_id, fields['items'])
+            records.replace_items(db, record_id, fields['items'])
             records.append_revision(db, record_id, actor['user_id'], fields['reason'] or 'Cập nhật đơn thuốc', before, _snapshot(db, record))
         result = records.get(db, encounter_id)
-        rows = prescriptions.list_items(db, record_id)
+        rows = records.list_items(db, record_id)
     return {'items': jsonable(rows), 'record_version': result['version']}
 
 

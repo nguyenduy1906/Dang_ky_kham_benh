@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flasgger import swag_from
 from backend.app.core.security import current_user, login_required, roles_required
-from backend.app.schemas import medical_record_schema, prescription_schema
+from backend.app.schemas import medical_record_schema
 from backend.app.schemas.common_schema import page_params
 from backend.app.services import medical_record_service as service
 from backend.app.routes.package5_docs import spec, path, body, PAGE
@@ -42,7 +42,7 @@ def get_items(record_id):
 @swag_from(spec('Medical records', 'Thay toàn bộ đơn thuốc; items=[] là không kê thuốc; lưu lịch sử', [path('record_id'), body({
     'items': {'type': 'array', 'items': ITEM}, 'reason': RECORD['reason'], 'expected_version': RECORD['expected_version']}, ('items',))]))
 def put_items(record_id):
-    return jsonify(service.put_items(current_user(), record_id, prescription_schema.validate_items(request.get_json(silent=True))))
+    return jsonify(service.put_items(current_user(), record_id, medical_record_schema.validate_items(request.get_json(silent=True))))
 
 
 @medical_record_bp.post('/doctor/encounters/<int:encounter_id>/complete')

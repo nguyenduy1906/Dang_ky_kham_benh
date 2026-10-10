@@ -19,6 +19,6 @@ Gói 3 có 14 API trực tiếp, không tiền tố `/v1`. API thanh toán/hoàn
 
 Gói 4 đã bổ sung chính sách hủy/hoàn: bệnh nhân hủy từ 12 giờ trước giờ hẹn hoàn 50% cọc, dưới 12 giờ/no-show không hoàn; lỗi bệnh viện/bác sĩ hoàn 100%. API hủy lưu cancel_origin/refund_reference_at; ADMIN/RECEPTIONIST ghi HOSPITAL có lý do, USER không tự khai. Hủy và hoàn riêng. Chi tiết: [BAO_CAO_TRIEN_KHAI_GOI_4.md](BAO_CAO_TRIEN_KHAI_GOI_4.md).
 
-Schema thống nhất 09/10/2026 đã có bộ đếm ngay trong CREATE TABLE. Khởi tạo lại database theo [hướng dẫn chạy](HUONG_DAN_CHAY_DU_AN.md); init_db không nâng cấp cấu trúc bảng cũ. Worker có thể chạy thủ công `python -m backend.app.jobs.encounter_jobs --once` hoặc bỏ `--once` để chạy liên tục.
+Schema thống nhất 09/10/2026 đã có bộ đếm ngay trong CREATE TABLE. Khởi tạo lại database theo [hướng dẫn chạy](HUONG_DAN_CHAY_DU_AN.md); init_db không nâng cấp cấu trúc bảng cũ. Worker có thể chạy thủ công `python -m backend.app.utils.worker --once` hoặc bỏ `--once` để chạy liên tục.
 
 Tiêu chí nghiệm thu: đặt online trước/đúng mốc 5 giờ được nhận nếu còn chỗ, sau mốc hoặc trong ca bị từ chối cho cả ca sáng/chiều; tranh chỗ cuối chỉ một thành công; lỗi log rollback quota/encounter; cọc 100%; walk-in nhận số trước HOLDING; thao tác lặp an toàn; check-in đúng/sai mốc 30 phút; no-show đúng/sai mốc kết thúc + 15 phút; chuyển cùng khoa giữ snapshot/quota; quyền USER/DOCTOR/NURSE theo tài nguyên; worker hết hạn và thanh toán muộn không tái giữ quota.

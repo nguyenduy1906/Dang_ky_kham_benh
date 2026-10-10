@@ -47,3 +47,50 @@ def parse_list_query(args):
     work_date = parse_date(args['work_date'], 'work_date') if args.get('work_date') else None
     return {**filters, 'encounter_status': status, 'encounter_type': kind,
             'work_date': work_date, 'page': page, 'page_size': page_size}
+
+
+def validate_walk_in(data):
+    data = ensure_object(data)
+    if set(data) - {'patient_id', 'doctor_profile_id', 'symptoms'}:
+        raise bad_request('Walk-in chỉ nhận patient_id, doctor_profile_id, symptoms; hệ thống chọn ca')
+    return {'patient_id': int_field(data, 'patient_id', required=True, minimum=1),
+            'doctor_profile_id': int_field(data, 'doctor_profile_id', required=True, minimum=1),
+            'symptoms': text_field(data, 'symptoms', max_len=5000)}
+
+
+def validate_transfer(data):
+    data = ensure_object(data)
+    if set(data) - {'schedule_id', 'reason'}:
+        raise bad_request('Chỉ nhận schedule_id và reason')
+    return {'schedule_id': int_field(data, 'schedule_id', required=True, minimum=1),
+            'reason': text_field(data, 'reason', required=True, max_len=1000)}
+
+
+METHODS = ('CASH', 'BANK', 'EWALLET', 'CARD')
+
+
+def _object(data, allowed):
+    data = ensure_object(data)
+    if set(data) - set(allowed):
+        raise bad_request('Body chứa trường không được phép; số tiền/trạng thái do server xác định')
+    return data
+
+
+def validate_method(data):
+    data = _object(data, ('payment_method',))
+    method = text_field(data, 'payment_method', required=True)
+    if method not in METHODS:
+        raise bad_request('payment_method phải là CASH, BANK, EWALLET hoặc CARD')
+    return {'payment_method': method}
+
+
+def validate_result(data):
+    data = _object(data, ('result',))
+    result = text_field(data, 'result', required=True)
+    if result not in ('SUCCESS', 'FAILED'):
+        raise bad_request('result phải là SUCCESS hoặc FAILED')
+    return result
+
+
+def validate_refund(data):
+    return text_field(_object(data, ('reason',)), 'reason', required=True, max_len=1000)

@@ -2,6 +2,7 @@
 import secrets
 from werkzeug.security import generate_password_hash
 from backend.app.core.config import DATABASE_DIR
+from backend.app.schemas import auth_schema
 from backend.app.db.database import get_db_connection
 
 
@@ -20,10 +21,11 @@ ROLES = (
 
 def seed_database(*, demo=False, admin_email=None, admin_password=None, admin_name=None):
     if admin_email is not None:
-        admin_email = admin_email.strip().lower()
-        if '@' not in admin_email or not admin_name or not admin_name.strip():
-            raise ValueError('Admin email and full name are required')
-        if not admin_password or len(admin_password) < 12:
+        admin_email = auth_schema.normalize_email(auth_schema.text_field(
+            {'email': admin_email}, 'email', required=True, max_len=254))
+        admin_name = auth_schema.text_field({'full_name': admin_name}, 'full_name', required=True, max_len=150)
+        admin_password = auth_schema.check_password(admin_password)
+        if len(admin_password) < 12:
             raise ValueError('Use an admin password of at least 12 characters')
     with get_db_connection() as db:
         db.execute('SELECT pg_advisory_xact_lock(78124001)')

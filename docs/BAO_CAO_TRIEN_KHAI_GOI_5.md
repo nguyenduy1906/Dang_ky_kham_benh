@@ -1,5 +1,12 @@
 # Triển khai gói 5 — 09/10/2026
 
+**Hồi quy sau gộp module 10/10/2026:** bệnh án và thuốc đã dùng chung model/schema
+`medical_record`. Bộ test backend đạt 23/23 trên PostgreSQL 17 tạm, gồm ca ghi
+bệnh án, từ chối số lượng thuốc 0, ghi thuốc, hoàn tất, từ chối bổ sung thiếu lý
+do, bổ sung đúng version và kiểm tra lịch sử trước/sau giữ cả thuốc; encounter
+vẫn COMPLETED. Đây là kiểm thử phạm vi bị ảnh hưởng, chưa nghiệm thu đầy đủ mọi
+API/tiêu chí gói 5. Không áp dụng schema hoặc rebuild dịch vụ chính.
+
 Đã viết code cho đủ 18 API bệnh án, thuốc, đánh giá, bài viết, cấu hình, thống kê và đối soát theo danh sách backend. Đã đăng ký Blueprint/Swagger, không thêm tiền tố /v1. Theo yêu cầu người dùng, chưa chạy kiểm thử, chưa thử /docs, chưa rebuild hoặc áp dụng schema lên database đang chạy.
 
 ## Danh sách API

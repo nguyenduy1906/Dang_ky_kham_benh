@@ -19,7 +19,7 @@ def bad_request(message, code='VALIDATION_ERROR'):
     return AppError(400, code, message)
 
 
-def unauthorized(message='Chưa đăng nhập hoặc phiên đã hết hạn', code='UNAUTHORIZED'):
+def unauthorized(message='Bạn chưa đăng nhập hoặc phiên đăng nhập của bạn đã hết hạn', code='UNAUTHORIZED'):
     return AppError(401, code, message)
 
 

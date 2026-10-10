@@ -3,8 +3,8 @@ from flask import Blueprint, jsonify, request
 
 from backend.app.core import constants
 from backend.app.core.security import current_user, login_required, roles_required
-from backend.app.schemas import auth_schema, user_admin_schema
-from backend.app.services import user_admin_service
+from backend.app.schemas import auth_schema, auth_schema as user_admin_schema
+from backend.app.services import auth_service as user_admin_service
 
 user_admin_bp = Blueprint('user_admin', __name__)
 

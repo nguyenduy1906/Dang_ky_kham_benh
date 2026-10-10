@@ -2,6 +2,8 @@
 
 Code đã triển khai đủ 10 API theo kế hoạch backend. Chưa chạy kiểm thử hoặc rebuild backend theo yêu cầu người dùng chỉ viết code.
 
+**Đồng bộ và kiểm thử 10/10/2026:** theo tên mới của chủ đồ án, route/service thanh toán và log email/OTP dùng `SEND_EMAIL`; task nhắc lịch dùng `utils/worker.py`. Toàn bộ bộ test backend hiện có đạt 19/19 trên PostgreSQL 17 tạm, gồm hai test bổ sung xác minh API kết quả thanh toán bật khi `SEND_EMAIL=1`, tắt khi thiếu biến/giá trị `0`, và thanh toán lặp không tăng tiền/quota/log xác nhận. Kết quả này xác minh thay đổi tên và các ca hồi quy hiện có, chưa bao phủ đầy đủ mọi tiêu chí gói 4 ở cuối báo cáo. Không reset database dự án hoặc rebuild dịch vụ chính trong lần này.
+
 ## API và quyền
 
 | Method | Đường dẫn | Quyền và hành vi |
@@ -9,7 +11,7 @@ Code đã triển khai đủ 10 API theo kế hoạch backend. Chưa chạy ki�
 | GET | /encounters/{id}/payments | USER sở hữu, ADMIN/RECEPTIONIST; page/page_size |
 | GET | /payments/{id} | Cùng phạm vi tài nguyên; DOCTOR/NURSE không xem tiền |
 | POST | /encounters/{id}/payment-intents | USER sở hữu, online HOLDING; body payment_method |
-| POST | /demo/payments/{id}/result | Chỉ DEMO_MODE=1, USER sở hữu hoặc ADMIN; result SUCCESS/FAILED |
+| POST | /demo/payments/{id}/result | Chỉ SEND_EMAIL=1, USER sở hữu hoặc ADMIN; result SUCCESS/FAILED |
 | POST | /staff/encounters/{id}/exam-fees | ADMIN/RECEPTIONIST, từ CHECKED_IN; thu phần còn lại |
 | POST | /admin/payments/{id}/refund | ADMIN, giao dịch thu thành công, body reason; server tính tiền hoàn |
 | GET | /notifications | Chỉ thông báo mình, page/page_size/unread_only |
@@ -48,13 +50,13 @@ encounter-worker gọi job nhắc lịch mỗi chu kỳ 30 giây. ONLINE CONFIRM
 
 Từ 09/10/2026, các cột audit/link refund, event_key thông báo, cancel_origin/refund_reference_at nằm ngay trong CREATE TABLE của schema 20 bảng. Người dùng chọn khởi tạo lại từ đầu; không còn ALTER TABLE nâng cấp bảng cũ. ERD đã đồng bộ. Dữ liệu mẫu giữ snapshot 30% lịch sử, cấu hình DEFAULT_DEPOSIT_PERCENT là 100% cho đặt mới.
 
-`docker compose up -d --build` cập nhật backend và worker. Bật DEMO_MODE=1 trong backend/.env chỉ khi cần mô phỏng kết quả. Không có thay đổi .env hoặc dữ liệu đang chạy trong lần viết code này.
+`docker compose up -d --build` cập nhật backend và worker. Bật SEND_EMAIL=1 trong backend/.env chỉ khi cần mô phỏng kết quả. Không có thay đổi .env hoặc dữ liệu đang chạy trong lần viết code này.
 
 Ví dụ với ID thực tế lấy từ phản hồi API:
 
 1. USER tạo online, lấy encounter_id.
 2. POST /encounters/{id}/payment-intents với `{"payment_method":"EWALLET"}`, lấy payment_id.
-3. POST /demo/payments/{payment_id}/result với `{"result":"SUCCESS"}` (DEMO_MODE=1).
+3. POST /demo/payments/{payment_id}/result với `{"result":"SUCCESS"}` (SEND_EMAIL=1).
 4. Khi hủy do bác sĩ, ADMIN/RECEPTIONIST POST /encounters/{id}/cancel với `{"cancel_origin":"HOSPITAL","reason":"Bác sĩ báo nghỉ"}`.
 5. ADMIN POST /admin/payments/{payment_id}/refund với `{"reason":"Hoàn tiền theo nguyên nhân hủy đã ghi nhận"}`.
 

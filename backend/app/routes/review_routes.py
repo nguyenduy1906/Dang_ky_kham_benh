@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flasgger import swag_from
 from backend.app.core.security import current_user, roles_required
-from backend.app.schemas.review_schema import validate_review
+from backend.app.schemas.medical_record_schema import validate_review
 from backend.app.schemas.common_schema import page_params
 from backend.app.services import review_service as service
 from backend.app.routes.package5_docs import spec, path, body, PAGE

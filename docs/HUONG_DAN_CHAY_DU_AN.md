@@ -3,9 +3,9 @@
 **Schema thống nhất 09/10/2026:** `database/init_db.sql` định nghĩa đầy đủ 20 bảng của 5 gói API. Các cột bổ sung đã gộp vào `CREATE TABLE`, không còn `ALTER TABLE` để nâng cấp bảng cũ. Chủ đồ án chọn khởi tạo lại từ đầu theo mục 2; chỉ rebuild trên database cũ sẽ không bổ sung cột. Lần sửa này chưa thực hiện reset, nạp mẫu, rebuild hoặc kiểm thử API.
 Danh sách cột đã gộp và phần đã đối chiếu: [BAO_CAO_THONG_NHAT_DATABASE.md](BAO_CAO_THONG_NHAT_DATABASE.md).
 
-Gói 4 có cột audit/liên kết hoàn tiền, khóa chống thông báo lặp và nguyên nhân hủy trong schema mới. API `/demo/payments/{id}/result` chỉ hoạt động khi `DEMO_MODE=1`; mặc định tắt. Worker chạy thêm nhắc lịch trong ứng dụng, không gửi email/ngân hàng thật. Chính sách và ví dụ: [BAO_CAO_TRIEN_KHAI_GOI_4.md](BAO_CAO_TRIEN_KHAI_GOI_4.md).
+Gói 4 có cột audit/liên kết hoàn tiền, khóa chống thông báo lặp và nguyên nhân hủy trong schema mới. API `/demo/payments/{id}/result` chỉ hoạt động khi `SEND_EMAIL=1`; file `backend/.env.example` đặt sẵn `SEND_EMAIL=1`, khi thiếu biến hoặc khác `1` thì tắt. Biến này cũng bật log OTP/mã xác minh email giả lập. Worker chạy thêm nhắc lịch trong ứng dụng, không gửi email/ngân hàng thật. Chính sách và ví dụ: [BAO_CAO_TRIEN_KHAI_GOI_4.md](BAO_CAO_TRIEN_KHAI_GOI_4.md).
 
-Gói 3 có `work_schedule.last_queue_number`; gói 5 có `medical_record.version` và `revision_history` ngay trong định nghĩa bảng. Docker Compose có `encounter-worker` chạy job mỗi 30 giây, chờ backend khỏe; worker tự tạo tài khoản hệ thống LOCKED riêng. Chạy riêng: `python -m backend.app.jobs.encounter_jobs --once` hoặc bỏ `--once` để chạy liên tục. Quy tắc: [QUY_TAC_GOI_3_DA_CHOT.md](QUY_TAC_GOI_3_DA_CHOT.md), [BAO_CAO_TRIEN_KHAI_GOI_5.md](BAO_CAO_TRIEN_KHAI_GOI_5.md).
+Gói 3 có `work_schedule.last_queue_number`; gói 5 có `medical_record.version` và `revision_history` ngay trong định nghĩa bảng. Docker Compose có `encounter-worker` chạy job mỗi 30 giây, chờ backend khỏe; worker tự tạo tài khoản hệ thống LOCKED riêng với email `medical_booking@gmail.com`. Email này dành riêng cho worker. Chạy riêng: `python -m backend.app.utils.worker --once` hoặc bỏ `--once` để chạy liên tục. Tác vụ nhắc lịch nằm trong `backend/app/utils/worker.py`. Quy tắc: [QUY_TAC_GOI_3_DA_CHOT.md](QUY_TAC_GOI_3_DA_CHOT.md), [BAO_CAO_TRIEN_KHAI_GOI_5.md](BAO_CAO_TRIEN_KHAI_GOI_5.md).
 
 Chạy PowerShell tại thư mục gốc. Dự án dùng docker-compose.yml, Flask/Gunicorn
 và PostgreSQL 17. Mở Docker Desktop trước khi chạy.
@@ -23,6 +23,12 @@ Copy-Item backend/.env.example backend/.env
 ```
 
 Thay CHANGE_ME ở POSTGRES_PASSWORD và DB_PASSWORD bằng cùng một mật khẩu.
+Đặt SECRET_KEY riêng trong backend/.env để ký token đăng nhập. Nếu đang có
+`SECRET_KEY=CHANGE_ME_SECRET_KEY_SAMPLE_ONLY`, đây chỉ là giá trị mẫu để tự sửa;
+thay bằng chuỗi ngẫu nhiên dài và giữ ổn định giữa các lần chạy. Đổi khóa làm các
+access token đã cấp mất hiệu lực. Sau khi sửa .env, chạy
+`docker compose up -d --force-recreate backend encounter-worker` để các container
+nhận cấu hình mới (không xóa volume).
 Không đưa backend/.env lên Git. Với volume cũ, sửa .env không tự đổi mật khẩu
 PostgreSQL; phải đổi mật khẩu tài khoản database tương ứng trước.
 
@@ -104,6 +110,12 @@ Tạo admin bằng thông tin nhập tương tác:
 ```powershell
 docker compose exec backend python -m backend.app.db.seed_db --admin
 ```
+
+Luồng tạo admin ban đầu đã thống nhất trong `seed_db.py` và `db_service.py`.
+Email phải hợp lệ, họ tên không rỗng và tối đa 150 ký tự; mật khẩu 12–128 ký tự,
+có chữ và số. Email đã tồn tại được giữ nguyên, không đổi vai trò hoặc mật khẩu.
+Email chưa được tự đánh dấu xác minh. Có thể cung cấp `ADMIN_EMAIL`, `ADMIN_NAME`,
+`ADMIN_PASSWORD` qua môi trường thay cho nhập tương tác.
 
 Backend hiện đã có kiểm thử tích hợp PostgreSQL trong schema tạm. Sau khi build
 image chứa mã mới, có thể chạy kiểm thử mà không sửa bảng dữ liệu chính:

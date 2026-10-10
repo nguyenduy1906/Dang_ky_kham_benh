@@ -9,7 +9,7 @@ from backend.app.core.security import create_access_token
 from backend.app.db.database import get_db_connection
 from backend.app.main import create_app
 from backend.app.models import user_model
-from backend.app.services import nurse_assignment_service
+from backend.app.services import schedule_service as nurse_assignment_service
 
 
 @unittest.skipUnless(os.environ.get('RUN_POSTGRES_TESTS') == '1', 'Set RUN_POSTGRES_TESTS=1 with PostgreSQL available')

@@ -3,7 +3,7 @@ from psycopg import errors as pg_errors
 from backend.app.core import constants, uploads
 from backend.app.core.errors import bad_request, conflict, not_found
 from backend.app.db.database import get_db_connection
-from backend.app.models import department_model, doctor_model, user_model
+from backend.app.models import catalog_model, doctor_model, user_model
 from backend.app.models._sql import flags, jsonable
 
 _PRIVATE = ('user_id', 'email', 'phone', 'account_ok')
@@ -37,7 +37,7 @@ def get_doctor(doctor_profile_id, is_admin):
 
 
 def _check_department(db, department_id):
-    department = department_model.get_department(db, department_id)
+    department = catalog_model.get_department(db, department_id)
     if department is None or not department['is_active']:
         raise bad_request('Chuyên khoa không tồn tại hoặc đã ngưng hoạt động', 'DEPARTMENT_INVALID')
 

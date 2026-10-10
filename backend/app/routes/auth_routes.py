@@ -105,7 +105,7 @@ def forgot_password():
             email: {type: string, example: a@example.com}
     responses:
       200:
-        description: Luôn trả cùng một thông báo (OTP nằm trong log khi DEMO_MODE=1)
+        description: Luôn trả cùng một thông báo (OTP nằm trong log khi SEND_EMAIL=1)
     """
     data = auth_schema.validate_forgot_password(_body())
     return jsonify(auth_service.forgot_password(data))
@@ -174,7 +174,7 @@ def email_verification_request():
       - Bearer: []
     responses:
       200:
-        description: Đã gửi mã (nằm trong log khi DEMO_MODE=1)
+        description: Đã gửi mã (nằm trong log khi SEND_EMAIL=1)
       409:
         description: Email đã được xác minh
     """

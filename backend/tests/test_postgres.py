@@ -9,6 +9,7 @@ import psycopg
 from psycopg import sql
 from werkzeug.security import check_password_hash
 from backend.app.core.config import postgres_options
+from backend.app.core.errors import AppError
 from backend.app.db.database import get_db_connection
 from backend.app.db.db_service import init_database, seed_database
 from backend.app.main import create_app
@@ -71,6 +72,21 @@ class PostgresTests(unittest.TestCase):
             self.assertEqual(db.execute('SELECT count(*) AS n FROM users').fetchone()['n'], 2)
             self.assertEqual(db.execute("SELECT password_hash FROM users WHERE email='admin@example.test'").fetchone()['password_hash'], original)
             self.assertEqual(db.execute('SELECT title FROM article').fetchone()['title'], 'Edited')
+
+    def test_seed_admin_validates_before_writing(self):
+        options = dict(admin_email='admin@example.test', admin_name='Admin', admin_password='Valid-password-123')
+        for invalid in ({'admin_email': 'invalid'}, {'admin_name': ' '},
+                        {'admin_password': 'Short123'}, {'admin_password': '123456789012'}):
+            with self.subTest(invalid=invalid), self.assertRaises((AppError, ValueError)):
+                seed_database(**{**options, **invalid})
+        with get_db_connection() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) n FROM users').fetchone()['n'], 0)
+        seed_database(**options)
+        with get_db_connection() as db:
+            user = db.execute("SELECT u.*,r.role_name FROM users u JOIN role r ON r.role_id=u.role_id WHERE email='admin@example.test'").fetchone()
+            self.assertEqual(user['role_name'], 'ADMIN')
+            self.assertEqual(user['approval_status'], 'APPROVED')
+            self.assertEqual(user['email_verified'], 0)
 
     def test_constraints_and_update_trigger(self):
         with get_db_connection() as db:

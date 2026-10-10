@@ -6,10 +6,9 @@ from backend.app.core.security import get_secret_key
 from backend.app.db.database import get_db_connection
 from backend.app.routes import health_routes
 from backend.app.routes.auth_routes import auth_bp
-from backend.app.routes.department_routes import department_bp
+from backend.app.routes.catalog_routes import department_bp, room_bp
 from backend.app.routes.encounter_routes import encounter_bp
 from backend.app.routes.doctor_routes import doctor_bp
-from backend.app.routes.nurse_assignment_routes import nurse_assignment_bp
 from backend.app.routes.patient_routes import patient_bp
 from backend.app.routes.payment_routes import payment_bp
 from backend.app.routes.notification_routes import notification_bp
@@ -18,8 +17,7 @@ from backend.app.routes.review_routes import review_bp
 from backend.app.routes.article_routes import article_bp
 from backend.app.routes.configuration_routes import configuration_bp
 from backend.app.routes.statistics_routes import statistics_bp
-from backend.app.routes.room_routes import room_bp
-from backend.app.routes.schedule_routes import schedule_bp
+from backend.app.routes.schedule_routes import schedule_bp, nurse_assignment_bp
 from backend.app.routes.user_admin_routes import user_admin_bp
 
 

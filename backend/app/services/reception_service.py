@@ -1,7 +1,7 @@
 """Tiếp nhận và điều phối, dùng transaction/khóa/quota chung của gói 3."""
 from backend.app.core.errors import conflict, not_found
 from backend.app.db.database import get_db_connection
-from backend.app.models import encounter_model as model, encounter_log_model as logs, configuration_model
+from backend.app.models import encounter_model as model, configuration_model
 from backend.app.services import encounter_service as service
 
 
@@ -42,7 +42,7 @@ def create_walk_in(actor, fields):
             'consultation_fee_snapshot': doctor['consultation_fee'], 'deposit_amount_snapshot': 0,
             'queue_number': queue, 'estimated_exam_at': max(start, now), 'checked_in_at': now})
         service._change_quota(db, schedule, 1)
-        logs.add_status(db, row['encounter_id'], None, 'CHECKED_IN', actor['user_id'], 'Tiếp nhận walk-in, cấp số ' + str(queue))
+        model.add_status(db, row['encounter_id'], None, 'CHECKED_IN', actor['user_id'], 'Tiếp nhận walk-in, cấp số ' + str(queue))
         result = service._present(service._visible(db, actor, row['encounter_id']))
     return {'encounter': result}
 
@@ -132,8 +132,8 @@ def transfer(actor, encounter_id, fields):
         model.update_encounter(db, encounter_id, {'doctor_profile_id': doctor['doctor_profile_id'],
                                                 'schedule_id': target['schedule_id'], 'room_id': target['room_id'],
                                                 'queue_number': queue, 'estimated_exam_at': start})
-        logs.add_transfer(db, encounter_id, encounter['doctor_profile_id'], doctor['doctor_profile_id'], actor['user_id'], fields['reason'])
-        logs.add_status(db, encounter_id, encounter['encounter_status'], encounter['encounter_status'],
+        model.add_transfer(db, encounter_id, encounter['doctor_profile_id'], doctor['doctor_profile_id'], actor['user_id'], fields['reason'])
+        model.add_status(db, encounter_id, encounter['encounter_status'], encounter['encounter_status'],
                         actor['user_id'], 'Chuyển ca/bác sĩ; giữ giá đã chốt; cấp số ' + str(queue))
         result = service._present(service._visible(db, actor, encounter_id))
     return {'encounter': result}

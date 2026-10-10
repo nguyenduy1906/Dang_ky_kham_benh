@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify, request
 from flasgger import swag_from
 
 from backend.app.core.security import current_user, login_required
-from backend.app.schemas import encounter_schema, reception_schema
+from backend.app.schemas import encounter_schema
 from backend.app.schemas.common_schema import page_params
 from backend.app.services import encounter_service, reception_service
 
@@ -101,7 +101,7 @@ def cancel(encounter_id):
                 'doctor_profile_id': {'type': 'integer'}, 'symptoms': {'type': 'string'}}, ('patient_id', 'doctor_profile_id'))],
             'responses': {**_ACTION_RESPONSES, 201: {'description': 'CHECKED_IN, số thứ tự đã cấp'}}})
 def walk_in():
-    return jsonify(reception_service.create_walk_in(current_user(), reception_schema.validate_walk_in(request.get_json(silent=True)))), 201
+    return jsonify(reception_service.create_walk_in(current_user(), encounter_schema.validate_walk_in(request.get_json(silent=True)))), 201
 
 
 @encounter_bp.post('/staff/encounters/<int:encounter_id>/check-in')
@@ -136,7 +136,7 @@ def transfer_options(encounter_id):
             'security': _SECURITY, 'parameters': [_ID, _body({'schedule_id': {'type': 'integer'},
                 'reason': {'type': 'string'}}, ('schedule_id', 'reason'))], 'responses': _ACTION_RESPONSES})
 def transfer(encounter_id):
-    return jsonify(reception_service.transfer(current_user(), encounter_id, reception_schema.validate_transfer(request.get_json(silent=True))))
+    return jsonify(reception_service.transfer(current_user(), encounter_id, encounter_schema.validate_transfer(request.get_json(silent=True))))
 
 
 @encounter_bp.post('/staff/encounters/<int:encounter_id>/no-show')

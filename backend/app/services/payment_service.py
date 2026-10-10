@@ -175,7 +175,7 @@ def refund(actor, payment_id, reason):
 
 def demo_result(actor, payment_id, outcome):
     # Kiểm tra cả ở service để không gọi mô phỏng khi môi trường thật tắt demo.
-    if os.environ.get('DEMO_MODE', '0') != '1':
+    if os.environ.get('SEND_EMAIL', '0') != '1':
         raise not_found('Không tìm thấy API', 'NOT_FOUND')
     encounters.require_role(actor, 'USER', 'ADMIN')
     with get_db_connection() as db:

@@ -21,6 +21,28 @@ class Package2FixTests(unittest.TestCase):
     drop_schema = test_nurse_assignment.NurseAssignmentTests.drop_schema
     headers = test_nurse_assignment.NurseAssignmentTests.headers
 
+    def test_catalog_routes_keep_department_and_room_rules(self):
+        admin = self.headers('ADMIN')
+        self.assertEqual(self.client.post('/admin/departments', headers=self.headers('USER'), json={'name': 'Khoa kiểm thử'}).status_code, 403)
+        response = self.client.post('/admin/departments', headers=admin, json={'name': 'Khoa kiểm thử'})
+        self.assertEqual(response.status_code, 201, response.json)
+        dept_id = response.json['department']['department_id']
+        self.assertEqual(self.client.post('/admin/departments', headers=admin, json={'name': 'Khoa kiểm thử'}).status_code, 409)
+        fields = {'department_id': dept_id, 'room_name': 'Phòng kiểm thử'}
+        response = self.client.post('/admin/rooms', headers=admin, json=fields)
+        self.assertEqual(response.status_code, 201, response.json)
+        room_id = response.json['room']['room_id']
+        self.assertEqual(response.json['room']['department_name'], 'Khoa kiểm thử')
+        self.assertEqual(self.client.post('/admin/rooms', headers=admin, json=fields).status_code, 409)
+        response = self.client.patch(f'/admin/rooms/{room_id}', headers=admin, json={'room_name': 'Phòng đổi tên', 'is_active': False})
+        self.assertEqual(response.status_code, 200, response.json)
+        self.assertNotIn(room_id, [r['room_id'] for r in self.client.get(f'/rooms?department_id={dept_id}&include_inactive=true').json['items']])
+        self.assertIn(room_id, [r['room_id'] for r in self.client.get(f'/rooms?department_id={dept_id}&include_inactive=true', headers=admin).json['items']])
+        self.assertEqual(self.client.patch(f'/admin/departments/{dept_id}', headers=admin, json={'is_active': False}).status_code, 200)
+        self.assertEqual(self.client.get(f'/departments/{dept_id}').status_code, 404)
+        self.assertEqual(self.client.get(f'/departments/{dept_id}', headers=admin).status_code, 200)
+        self.assertEqual(self.client.post('/admin/rooms', headers=admin, json={**fields, 'room_name': 'Phòng khác'}).status_code, 400)
+
     def test_nurse_scope_and_revoked_history(self):
         admin, nurse = self.headers('ADMIN'), self.headers('NURSE')
         nurse_id = self.actors['NURSE']['user_id']

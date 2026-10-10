@@ -1,0 +1,1209 @@
+TỔNG HỢP PHÂN TÍCH NGHIỆP VỤ
+
+GỘP D1/D2 11/10/2026: validator hồ sơ bác sĩ/phân công y tá dùng staff_schema.py; validator lượt khám/thanh toán dùng encounter_schema.py. Chuyển nguyên hàm, chỉ cập nhật import. Giảm thêm 2 file; 437 hàm/lớp/decorator giữ nguyên nội dung; 23/23 test hiện có và ca tích hợp hồ sơ bác sĩ đạt; 75 module import thành công. Không thay schema database hoặc reset dữ liệu. Chi tiết docs/BAO_CAO_GOP_MODULE_ABC.md.
+
+
+GỘP A/B/C 11/10/2026: đã chuyển nguyên hàm của 7 cặp được duyệt vào user_model, auth_schema, auth_service, schedule_service, schedule_routes, medical_record_model và medical_record_schema. Giữ nguyên code hàm/decorator/SQL/quyền/transaction/endpoint; chỉ cập nhật import và đăng ký Blueprint. Giảm 7 file. Bộ kiểm thử hiện có 23/23 đạt, hai ca tích hợp bổ sung đạt, 77 module import thành công; so sánh 437 hàm/lớp trước/sau giữ nguyên. Chi tiết docs/BAO_CAO_GOP_MODULE_ABC.md. Không thay schema hoặc reset database.
+
+
+GỘP MODULE 10/10/2026 theo yêu cầu chủ đồ án: bệnh án và thuốc dùng chung model/schema medical_record; lượt khám và log dùng model encounter, online/walk-in/chuyển bác sĩ dùng schema encounter. Chuyên khoa/phòng dùng catalog_* theo từng tầng. Tác vụ nền gộp trong backend/app/utils/worker.py (folder utils), vẫn chạy worker riêng và giữ transaction riêng cho từng tác vụ. Tạo admin ban đầu thống nhất qua seed_db --admin, mật khẩu 12–128 ký tự có chữ/số, không ghi đè tài khoản có sẵn và không tự xác minh email. Không thay endpoint/schema database, không cần reset dữ liệu.
+
+ĐỒNG BỘ TÊN ngày 10/10/2026 theo yêu cầu chủ đồ án: dùng backend/app/utils/ và worker.py; email tài khoản worker là medical_booking@gmail.com (LOCKED, không đăng nhập). SEND_EMAIL=1 bật log email/OTP và API kết quả thanh toán giả lập; mẫu cấu hình đặt 1, thiếu biến hoặc khác 1 thì tắt. Không gửi email/ngân hàng thật; đổi tên không cần reset database.
+THỐNG NHẤT DATABASE ngày 09/10/2026: chủ đồ án chọn khởi tạo lại từ đầu. database/init_db.sql giữ 20 bảng, gộp 12 cột gói 3–5 vào CREATE TABLE, bỏ ALTER TABLE nâng cấp bảng cũ; giữ đầy đủ FK/CHECK/UNIQUE/index/trigger. Dữ liệu mẫu, ERD và hướng dẫn chạy đã đồng bộ; chưa reset/nạp mẫu/rebuild database đang chạy.
+CHỐT ngày 09/10/2026: lịch chỉ gồm ca sáng/chiều. Đặt ONLINE ít nhất 5 giờ trước giờ bắt đầu ca, tính từ work_date/start_time theo Asia/Saigon. Đúng mốc 5 giờ được nhận nếu còn chỗ; sau mốc và trong ca bị từ chối 409/SCHEDULE_TOO_LATE. Ca 08:00 hạn đặt 03:00; ca 13:30 hạn đặt 08:30 cùng ngày. Hạn áp dụng tạo HOLDING, lượt đã giữ chỗ vẫn có 10 phút thanh toán. Thay mốc đặt 30 phút cũ và đề xuất 12 giờ; không đổi check-in hay chính sách hoàn cọc 12 giờ. Bỏ qua các đề xuất bổ sung khác theo yêu cầu chủ đồ án.
+CHỐT GÓI 5 ngày 09/10/2026: bác sĩ phụ trách được sửa/bổ sung cùng bệnh án đã hoàn tất, giữ COMPLETED, bắt buộc reason/expected_version, lưu revision_history trước-sau cả nội dung và thuốc. Lần khám mới tạo ENCOUNTER mới. NURSE chỉ đọc theo phân công, không sửa. Chi tiết API và giới hạn: docs/BAO_CAO_TRIEN_KHAI_GOI_5.md. Đã viết code, chưa kiểm thử/rebuild theo yêu cầu.
+CHỐT GÓI 4: bệnh nhân hủy từ 12 giờ trước giờ hẹn hoàn 50% cọc; hủy dưới 12 giờ hoặc no-show không hoàn; mọi nguyên nhân thuộc bệnh viện/bác sĩ hoàn 100%. Dùng estimated_exam_at tại thời điểm hủy, lưu refund_reference_at và cancel_origin. USER không tự khai HOSPITAL. Giao dịch thu đến muộn sau hết hạn/hủy được trả lại, không hồi sinh lịch. Thanh toán/thông báo đều giả lập. Chi tiết: docs/BAO_CAO_TRIEN_KHAI_GOI_4.md.
+CHỐT GÓI 3 ngày 08/10/2026 (ưu tiên hơn các phương án cũ bên dưới): giữ chỗ 10 phút; cọc 100% giá bác sĩ; check-in ít nhất 30 phút trước giờ hẹn; walk-in cấp số ngay trong thời gian online chờ trả tiền, online cấp số sau khi trả đủ; hủy walk-in bỏ qua số, không đánh lại số. No-show sau kết thúc ca + 15 phút; chuyển cùng khoa giữ snapshot; không tự chuyển người đợi sang ca sau; worker dùng tài khoản SYSTEM LOCKED riêng. Chi tiết và phạm vi tích hợp: docs/QUY_TAC_GOI_3_DA_CHOT.md. Cọc 30% trong mẫu là snapshot lịch sử, không áp dụng cho đặt mới.
+WEBSITE ĐẶT LỊCH KHÁM CHỮA BỆNH
+I. TỔNG QUAN HỆ THỐNG
+Hệ thống là website hỗ trợ quản lý quá trình đăng ký, tiếp nhận và khám chữa bệnh, phục vụ bệnh nhân, bác sĩ, lễ tân, y tá và quản trị viên.
+Hệ thống hỗ trợ hai hình thức tiếp nhận bệnh nhân:
+ONLINE: bệnh nhân hoặc người thân đặt lịch khám trước trên website.
+WALK_IN: bệnh nhân đến trực tiếp bệnh viện mà không đặt lịch trước.
+Hai hình thức này được quản lý thống nhất bằng thực thể:
+ENCOUNTER
+Trong đó:
+encounter_type = ONLINE: lượt khám được đặt trước.
+encounter_type = WALK_IN: lượt khám trực tiếp.
+Nhờ đó, toàn bộ quá trình từ tiếp nhận → chờ khám → thực hiện khám → lưu kết quả đều sử dụng chung một mô hình nghiệp vụ.
+Phạm vi hiện tại là đồ án; thanh toán, hoàn tiền, email và OTP được mô phỏng, không tích hợp ngân hàng hoặc dịch vụ email thật.
+Hiện đã có schema, dữ liệu mẫu, khởi tạo/seed, /health và Swagger; các nghiệp vụ dưới đây là thiết kế cần triển khai, không phải tất cả đã hoàn thành.
+Các nghiệp vụ chính gồm:
+Quản lý tài khoản và phân quyền.
+Quản lý bệnh nhân.
+Đặt lịch cho bản thân hoặc người thân.
+Tra cứu khoa, bác sĩ và lịch làm việc.
+Đặt lịch online.
+Tiếp nhận bệnh nhân walk-in.
+Giữ lịch trong thời gian chờ đặt cọc.
+Quản lý nhiều giao dịch thanh toán giả lập của một lượt khám.
+Lưu giá khám và tiền cọc đã chốt.
+Lưu mã thẻ bảo hiểm y tế do bệnh nhân cung cấp.
+Phân công y tá theo ca và lưu lịch sử thu hồi.
+Hủy lịch và xử lý hoàn tiền.
+Quản lý No-show.
+Check-in.
+Quản lý hàng chờ.
+Chuyển bác sĩ.
+Quản lý quá trình khám.
+Lưu hồ sơ khám bệnh.
+Quản lý đơn thuốc.
+Đánh giá bác sĩ.
+Gửi thông báo.
+Lưu lịch sử thay đổi trạng thái lượt khám.
+Quản lý tin tức.
+Quản lý OTP và token xác thực.
+Soft Delete.
+Thống kê và truy vết nghiệp vụ.
+
+II. PHÂN BIỆT USERS VÀ PATIENT
+Một thay đổi quan trọng của hệ thống là tách:
+USERS
+và:
+PATIENT
+thành hai thực thể riêng.
+2.1. USERS
+USERS đại diện cho tài khoản có khả năng đăng nhập vào hệ thống.
+USERS phục vụ:
+Xác thực đăng nhập.
+Phân quyền.
+Quản lý Role.
+Quản lý trạng thái tài khoản.
+Thực hiện các thao tác trên website.
+password_hash bắt buộc NOT NULL và không được rỗng theo thiết kế cơ sở dữ liệu.
+Mật khẩu phải được băm trước khi lưu; không lưu mật khẩu gốc.
+Mọi vai trò đều có hồ sơ cá nhân trong USERS. Chỉ bác sĩ có ảnh đại diện, lưu tại DOCTOR_PROFILE.avatar_url.
+Tên bảng sử dụng:
+USERS
+thay cho USER để tránh xung đột với từ khóa và tạo cách đặt tên rõ ràng hơn.
+2.2. PATIENT
+PATIENT đại diện cho người thực tế được khám bệnh.
+Một Patient không bắt buộc phải có tài khoản USERS.
+Điều này hỗ trợ hai trường hợp quan trọng:
+Trường hợp 1: Bệnh nhân Walk-in chưa có tài khoản
+Bệnh nhân đến bệnh viện trực tiếp.
+Receptionist:
+→ Tra cứu PATIENT
+→ Nếu chưa có thì tạo PATIENT
+→ Không bắt buộc phải tạo tài khoản đăng nhập
+→ Tạo ENCOUNTER loại WALK_IN
+Trường hợp 2: Đặt lịch cho người thân
+Một User có thể đặt lịch cho:
+Chính mình.
+Con.
+Bố/mẹ.
+Vợ/chồng.
+Người thân khác.
+Quan hệ giữa người đặt và người được khám được biểu diễn thông qua thông tin relationship.
+PATIENT có thể lưu health_insurance là mã thẻ BHYT, không xác minh hoặc tính quyền lợi chi trả trong phạm vi đồ án.
+archived_at dùng để ngừng sử dụng hồ sơ cho lượt khám mới nhưng giữ lịch sử.
+Do đó cần phân biệt rõ:
+Người đặt lịch ≠ luôn luôn là người được khám.
+
+III. ACTOR CỦA HỆ THỐNG
+Hệ thống có các nhóm người sử dụng chính sau.
+3.1. User – Người dùng có tài khoản
+User có thể:
+Đăng ký với vai trò USER duy nhất.
+Đăng nhập.
+Quản lý hồ sơ.
+Quản lý thông tin bệnh nhân liên quan.
+Đặt lịch cho bản thân.
+Đặt lịch cho người thân.
+Xem khoa.
+Xem bác sĩ.
+Xem lịch làm việc.
+Chọn thời gian khám.
+Nhập triệu chứng.
+Đặt cọc.
+Theo dõi ENCOUNTER.
+Hủy lịch.
+Xem lịch sử khám.
+Xem kết quả.
+Xem đơn thuốc.
+Đánh giá bác sĩ.
+Xem thông báo.
+3.2. Doctor – Bác sĩ
+Bác sĩ có thể:
+Đăng nhập.
+Quản lý DoctorProfile và ảnh đại diện bác sĩ.
+Xem lịch làm việc.
+Xem danh sách ENCOUNTER.
+Xem bệnh nhân.
+Xem triệu chứng.
+Thực hiện khám.
+Cập nhật chẩn đoán.
+Cập nhật hướng điều trị.
+Tạo MedicalRecord.
+Cập nhật đơn thuốc.
+Bổ sung/sửa bệnh án sau hoàn tất theo quy trình được cấp quyền; cách mở lại lượt khám và lưu lịch sử cần chốt.
+Báo nghỉ đột xuất.
+Xem lịch sử các lượt khám do mình thực hiện.
+3.3. Receptionist – Lễ tân
+Lễ tân có thể:
+Tra cứu bệnh nhân.
+Tạo PATIENT cho bệnh nhân mới.
+Tra cứu ENCOUNTER.
+Kiểm tra trạng thái ENCOUNTER.
+Check-in.
+Tiếp nhận Walk-in.
+Chọn bác sĩ.
+Xếp ca phù hợp cho bệnh nhân trực tiếp; bệnh nhân không tự chọn ca.
+Cấp số sau các số online đã dành trong ca.
+Nếu ca hiện tại đầy/đóng, xếp người mới đến vào ca tiếp theo còn tiếp nhận.
+Phân phòng theo nghiệp vụ.
+Quản lý hàng chờ.
+Chuyển bác sĩ.
+Ghi nhận lý do chuyển.
+Hỗ trợ bệnh nhân.
+3.4. Nurse – Y tá
+Y tá có thể:
+Xem ca được phân công còn hiệu lực.
+Xem danh sách bệnh nhân trong phạm vi ca được giao.
+Xem ENCOUNTER.
+Xem triệu chứng.
+Hỗ trợ quá trình khám.
+Cập nhật thông tin được phân quyền.
+Chưa chốt danh sách trường được sửa; không mặc định y tá có quyền sửa chẩn đoán và đơn thuốc.
+3.5. Admin – Quản trị viên
+Admin có thể:
+Quản lý USERS.
+Quản lý Role.
+Tạo/cấp vai trò nhân viên sau khi kiểm tra hồ sơ và hợp đồng bên ngoài.
+Khóa/kích hoạt tài khoản.
+Quản lý PATIENT khi cần.
+Quản lý Department.
+Quản lý DoctorProfile.
+Quản lý WorkSchedule.
+Quản lý Room.
+Phân công và thu hồi phân công y tá theo ca.
+Quản lý Article.
+Quản lý cấu hình.
+Xem thống kê.
+Truy vết hoạt động nghiệp vụ.
+
+IV. MÔ HÌNH PHÂN QUYỀN
+Hệ thống sử dụng:
+USERS → ROLE
+Các Role chính:
+USER
+DOCTOR
+RECEPTIONIST
+NURSE
+ADMIN
+Mỗi USERS chỉ có một Role tại một thời điểm.
+Chỉ USER được tự đăng ký qua chức năng công khai.
+Các vai trò DOCTOR, RECEPTIONIST, NURSE được ADMIN tạo tài khoản sau khi kiểm tra hồ sơ và hợp đồng bên ngoài.
+Hệ thống không quản lý hợp đồng trong database và không cung cấp luồng USER tự yêu cầu nâng vai trò.
+Luồng tài khoản nhân viên:
+Admin kiểm tra hồ sơ/hợp đồng
+→ Tạo USERS với vai trò phù hợp
+→ Thiết lập trạng thái phê duyệt phù hợp
+→ Kích hoạt quyền tương ứng
+Admin đầu tiên được tạo bằng bước seed; các tài khoản quản trị bổ sung do người có quyền tạo.
+ROLE_REQUEST đã có trong schema do thiết kế trước đây, nhưng hiện chưa sử dụng và chưa xóa.
+Trường hợp DOCTOR
+USERS
+→ Role = DOCTOR
+→ Tạo DoctorProfile
+→ Gán Department
+→ Thiết lập thông tin chuyên môn
+→ Thiết lập lịch làm việc
+DoctorProfile lưu các thông tin như:
+Chuyên môn.
+Department.
+Học vị.
+Kinh nghiệm.
+Giới thiệu.
+Giá khám.
+Ảnh đại diện.
+
+V. CÁC THỰC THỂ CHÍNH
+Hệ thống gồm các thực thể chính:
+1. USERS
+Quản lý tài khoản đăng nhập.
+2. ROLE
+Quản lý vai trò và quyền.
+3. PATIENT
+Quản lý người thực tế được khám.
+4. DEPARTMENT
+Quản lý khoa chuyên môn.
+5. DOCTOR_PROFILE
+Quản lý thông tin chuyên môn của bác sĩ.
+6. ROOM
+Quản lý phòng khám.
+7. WORK_SCHEDULE
+Quản lý lịch/ca làm việc của bác sĩ.
+8. ENCOUNTER
+Thực thể trung tâm quản lý cả khám online và walk-in.
+9. ENCOUNTER_STATUS_LOG
+Lưu lịch sử thay đổi trạng thái của ENCOUNTER.
+10. PAYMENT
+Quản lý các giao dịch liên quan tới ENCOUNTER.
+11. MEDICAL_RECORD
+Lưu kết quả của lượt khám thực tế.
+12. PRESCRIPTION_ITEM
+Lưu thông tin thuốc/chi tiết đơn thuốc của lượt khám.
+13. REVIEW
+Lưu đánh giá sau khám.
+14. NOTIFICATION
+Lưu thông báo gửi cho người dùng.
+15. ENCOUNTER_TRANSFER_LOG
+Lưu lịch sử chuyển bác sĩ của ENCOUNTER.
+16. AUTH_TOKEN
+Quản lý OTP, token đặt lại mật khẩu và các token xác thực tạm thời.
+17. ARTICLE
+Quản lý bài viết/tin tức.
+18. SYSTEM_CONFIGURATION
+Quản lý cấu hình nghiệp vụ.
+19. NURSE_ASSIGNMENT
+Lưu phân công y tá vào WorkSchedule, người phân công, thời điểm phân công và thông tin thu hồi.
+20. ROLE_REQUEST
+Lưu yêu cầu đổi vai trò theo thiết kế trước đây; hiện chưa dùng trong nghiệp vụ đã chốt.
+
+VI. ENCOUNTER – THỰC THỂ TRUNG TÂM
+ENCOUNTER thay thế cho hai thực thể trước đây:
+APPOINTMENT.
+WALK_IN_ENCOUNTER.
+ENCOUNTER đại diện cho một lượt bệnh nhân được tiếp nhận để khám.
+Phân biệt bằng:
+encounter_type
+với các giá trị:
+ONLINE.
+WALK_IN.
+ENCOUNTER liên kết với PATIENT để xác định người được khám.
+ENCOUNTER liên kết với DoctorProfile để xác định bác sĩ phụ trách.
+Department không cần lưu lặp lại trong ENCOUNTER nếu có thể xác định thông qua DoctorProfile.
+Nguyên tắc:
+ENCOUNTER → DoctorProfile → Department
+Do đó không cần sao chép department_id tại các bảng nếu dữ liệu đã có thể suy ra một cách duy nhất thông qua quan hệ hiện có.
+
+VII. QUY TRÌNH ĐẶT LỊCH ONLINE
+7.1. Chọn bệnh nhân
+Người dùng lựa chọn:
+Khám cho bản thân.
+Khám cho người thân.
+Hệ thống xác định PATIENT tương ứng.
+Nếu đặt cho người thân, hệ thống lưu mối quan hệ thông qua relationship.
+7.2. Chọn khoa
+Người dùng lựa chọn khoa cần khám.
+7.3. Chọn bác sĩ
+Sau khi chọn khoa, hệ thống hiển thị các bác sĩ phù hợp.
+Thông tin có thể hiển thị:
+Họ tên.
+Chuyên môn.
+Học vị.
+Giới thiệu.
+Giá khám.
+Đánh giá.
+Lịch làm việc.
+7.4. Chọn WorkSchedule
+Người dùng chọn lịch làm việc phù hợp.
+WORK_SCHEDULE quản lý:
+Bác sĩ.
+Ngày làm việc.
+Giờ bắt đầu.
+Giờ kết thúc.
+Room.
+max_quota.
+booked_count.
+Trạng thái.
+Hệ thống kiểm tra:
+booked_count < max_quota
+thì cho phép tiếp tục đặt.
+Nếu:
+booked_count >= max_quota
+thì không cho phép tiếp tục đặt vào ca đó.
+7.5. Nhập triệu chứng
+Người dùng nhập:
+Triệu chứng.
+Lý do khám.
+Ghi chú cần thiết.
+7.6. Tạo ENCOUNTER
+Sau khi hoàn tất:
+Tạo ENCOUNTER
+với:
+encounter_type = ONLINE
+Sau đó:
+ENCOUNTER
+→ HOLDING
+→ Giữ quota trong thời gian quy định
+→ Tạo PAYMENT loại DEPOSIT
+→ Lưu consultation_fee_snapshot và deposit_amount_snapshot từ giá/chính sách phía server
+Không nhận giá do client gửi để quyết định số tiền.
+
+VIII. GIỮ LỊCH VÀ ĐẶT CỌC
+Đối với ENCOUNTER ONLINE, hệ thống giữ lịch trong thời gian mặc định:
+10 phút theo cấu hình/dữ liệu mẫu hiện tại; có thể thay đổi bằng cấu hình nghiệp vụ.
+Luồng:
+Tạo ENCOUNTER
+→ HOLDING
+→ Giữ vị trí trong WorkSchedule
+→ Tạo PAYMENT
+→ Chờ đặt cọc
+Thanh toán thành công
+PAYMENT:
+payment_type = DEPOSIT
+và thanh toán thành công.
+Sau đó:
+ENCOUNTER
+→ CONFIRMED
+→ Dành queue_number trong ca; check-in giữ nguyên số đã cấp
+Khoản cọc mẫu là 30%, chưa coi là mức bắt buộc khi chưa chốt chính sách.
+Quá thời hạn
+Nếu hết thời gian giữ lịch nhưng khoản đặt cọc chưa thành công:
+ENCOUNTER
+→ EXPIRED
+PAYMENT tương ứng:
+→ FAILED theo xử lý nghiệp vụ; PAYMENT hiện không có trạng thái EXPIRED
+Kết quả thanh toán giả lập đến muộn không tự xác nhận lượt khám đã EXPIRED
+Sau đó:
+→ Giảm/giải phóng quota của WorkSchedule.
+
+IX. QUẢN LÝ PAYMENT
+Quan hệ:
+ENCOUNTER 1 ─── N PAYMENT
+Một ENCOUNTER có thể phát sinh nhiều giao dịch.
+Các loại giao dịch gồm:
+DEPOSIT
+Tiền đặt cọc khi đặt lịch.
+EXAM_FEE
+Tiền khám hoặc khoản thu của lượt khám.
+REFUND
+Giao dịch hoàn tiền.
+amount sử dụng kiểu:
+BIGINT
+để lưu số nguyên VND, không sử dụng số thực.
+Thanh toán và hoàn tiền đều là giả lập.
+EXAM_FEE là phần phí còn lại sau cọc nếu đã có DEPOSIT; không thu toàn bộ giá lần nữa.
+Tổng thu thành công trước hoàn tiền = DEPOSIT + EXAM_FEE.
+Giá và cọc đã chốt lưu tại ENCOUNTER; thay đổi giá bác sĩ không tự đổi giá của lịch đã đặt.
+Dữ liệu cũ chưa biết giá được để snapshot NULL, không coi là miễn phí.
+Ví dụ một ENCOUNTER có thể có:
+ENCOUNTER
+├── PAYMENT: DEPOSIT
+├── PAYMENT: EXAM_FEE
+└── PAYMENT: REFUND
+Cách thiết kế 1-nhiều giúp hệ thống lưu lại đầy đủ lịch sử giao dịch thay vì ghi đè một Payment duy nhất.
+
+X. HỦY LỊCH VÀ HOÀN TIỀN
+Mốc đã chốt là 12 giờ: tính từ cancelled_at tới estimated_exam_at tại thời điểm hủy, lưu refund_reference_at.
+Nguyên nhân bệnh viện/bác sĩ được hoàn 100% không phụ thuộc mốc; ADMIN/RECEPTIONIST ghi nhận hoặc hệ thống xác định ca báo nghỉ.
+Hoàn tiền trong phần này là mô phỏng.
+10.1. Bệnh nhân hủy trước ít nhất 12 giờ
+User yêu cầu hủy
+→ Kiểm tra thời gian
+→ Còn ≥ 12 giờ
+→ ENCOUNTER = CANCELLED
+→ ADMIN xử lý PAYMENT loại REFUND bằng 50% tiền cọc; hủy và hoàn là hai thao tác riêng
+→ Giải phóng quota
+10.2. Bệnh nhân hủy dưới 12 giờ
+User yêu cầu hủy
+→ Còn < 12 giờ
+→ ENCOUNTER = CANCELLED
+→ Không hoàn tiền đặt cọc
+→ Giải phóng quota
+Mọi thay đổi trạng thái ENCOUNTER cần được ghi nhận trong ENCOUNTER_STATUS_LOG để phục vụ truy vết.
+
+XI. NO-SHOW
+No-show xảy ra khi:
+ENCOUNTER đã được xác nhận.
+Bệnh nhân không hủy trước.
+Đến thời gian khám nhưng bệnh nhân không đến/check-in.
+Luồng:
+ENCOUNTER = CONFIRMED
+→ Đến thời gian khám
+→ Không check-in
+→ Xác định No-show
+→ ENCOUNTER = NO_SHOW
+→ Không hoàn tiền đặt cọc
+→ Giải phóng quota
+Thời điểm xác định No-show, khoảng check-in trễ và thời gian ân hạn còn cần chốt.
+Thay đổi:
+CONFIRMED → NO_SHOW
+được lưu trong ENCOUNTER_STATUS_LOG.
+
+XII. CHECK-IN VÀ HÀNG CHỜ
+Đối với ENCOUNTER ONLINE:
+Bệnh nhân đến bệnh viện
+→ Receptionist tra cứu ENCOUNTER
+→ Xác nhận bệnh nhân
+→ Kiểm tra trạng thái
+→ Check-in
+ENCOUNTER hợp lệ khi:
+encounter_type = ONLINE.
+Đã CONFIRMED.
+Không CANCELLED.
+Không EXPIRED.
+Không NO_SHOW.
+Đúng ngày/ca khám.
+Sau khi check-in:
+CONFIRMED
+→ CHECKED_IN
+Sau đó:
+Giữ queue_number đã dành khi xác nhận đặt lịch.
+Không cấp lại số hoặc tạo WALK_IN cho bệnh nhân đã có ENCOUNTER ONLINE.
+Xác định thời gian dự kiến khám.
+Đưa bệnh nhân vào hàng chờ.
+Mỗi lần thay đổi trạng thái đều được ghi vào ENCOUNTER_STATUS_LOG.
+
+XIII. QUY TRÌNH WALK-IN
+Bệnh nhân có thể đến trực tiếp bệnh viện mà không cần đặt lịch online.
+13.1. Bệnh nhân đã tồn tại
+Bệnh nhân đến
+→ Receptionist tra cứu PATIENT
+→ Tìm thấy
+→ Chọn bác sĩ
+→ Xác định WorkSchedule hiện tại còn khả năng tiếp nhận
+→ Nếu ca đầy/đóng, xếp người mới đến vào ca tiếp theo còn tiếp nhận
+→ Tạo ENCOUNTER có schedule_id
+→ Cấp số ngay sau các số online đã dành trong ca
+Trong đó:
+encounter_type = WALK_IN
+Sau đó:
+→ Đưa bệnh nhân vào hàng chờ
+→ CHECKED_IN
+13.2. Bệnh nhân chưa tồn tại
+Receptionist tra cứu
+→ Không tìm thấy PATIENT
+→ Nhập thông tin bệnh nhân
+→ Tạo PATIENT
+→ Không bắt buộc phải có tài khoản USERS
+→ Chọn bác sĩ
+→ Hệ thống/lễ tân xếp ca còn tiếp nhận
+→ Tạo ENCOUNTER WALK_IN có schedule_id
+→ Cấp số sau các số online của ca
+→ Đưa vào hàng chờ
+Thông tin PATIENT có thể bao gồm:
+Họ tên.
+Ngày sinh.
+Giới tính.
+Số điện thoại.
+CCCD/CMND.
+Mã thẻ BHYT nếu bệnh nhân cung cấp.
+Thông tin cần thiết cho việc khám.
+Walk-in không cần quy trình giữ lịch 10 phút giống ONLINE.
+Bệnh nhân trực tiếp không tự chọn ca; hệ thống/lễ tân gắn WorkSchedule khi tiếp nhận.
+Ví dụ ca sáng đã có số online 1–11 thì walk-in tiếp theo nhận 12, rồi 13.
+Nếu ca sáng đầy/đóng, người mới đến được xếp vào ca chiều; nếu ca chiều có online 1–8 thì họ nhận số 9.
+Schema cuối cùng bắt buộc schedule_id NOT NULL cho cả ONLINE và WALK_IN.
+Việc chuyển người đã nhận số nhưng chưa khám sang ca sau vẫn cần chốt, không tự chuyển mặc định.
+Quy tắc nhận online muộn sau khi đã cấp số walk-in cần chốt để không làm đổi các số đã cấp.
+
+XIV. QUẢN LÝ WORK_SCHEDULE
+WORK_SCHEDULE đại diện cho ca/lịch làm việc của bác sĩ.
+Thông tin nghiệp vụ gồm:
+DoctorProfile.
+Room.
+Ngày làm việc.
+Giờ bắt đầu.
+Giờ kết thúc.
+max_quota.
+booked_count.
+Trạng thái.
+Quan hệ:
+DoctorProfile 1 ─── N WorkSchedule
+và:
+Room 1 ─── N WorkSchedule
+theo lịch được cấu hình.
+booked_count
+booked_count thể hiện số lượng lượt khám hiện đang chiếm khả năng tiếp nhận của ca.
+Điều kiện đặt lịch:
+booked_count < max_quota
+→ Cho phép đặt.
+Nếu:
+booked_count >= max_quota
+→ Ca đầy.
+Việc cập nhật booked_count phải đồng bộ với trạng thái ENCOUNTER để tránh:
+Vượt quota.
+Double-booking.
+ENCOUNTER đã hủy nhưng quota chưa được trả.
+ENCOUNTER hết hạn nhưng vẫn được tính.
+ENCOUNTER chuyển bác sĩ nhưng quota bác sĩ cũ chưa được giải phóng.
+NURSE_ASSIGNMENT gắn y tá với ca; chỉ phân công chưa thu hồi mới cho phép hỗ trợ trong ca.
+Các ràng buộc unique của WorkSchedule được thực hiện theo ERD/database để tránh tạo các lịch làm việc trùng nhau không hợp lệ.
+UNIQUE giờ bắt đầu chưa ngăn chồng khoảng thời gian; cần kiểm tra chồng ca bác sĩ/phòng và kiểm thử đồng thời.
+
+XV. QUY TRÌNH THỰC HIỆN KHÁM
+Khi đến lượt bệnh nhân:
+CHECKED_IN
+→ Bác sĩ gọi bệnh nhân
+→ ENCOUNTER = IN_PROGRESS
+→ Bác sĩ xem triệu chứng
+→ Thực hiện khám
+→ Nhập kết quả
+→ Tạo MEDICAL_RECORD
+→ ENCOUNTER = COMPLETED
+Thông tin kết quả khám có thể bao gồm:
+Triệu chứng thực tế.
+Chẩn đoán.
+Hướng điều trị.
+Ghi chú.
+Phản hồi.
+Thời gian khám.
+Thông tin đơn thuốc.
+
+XVI. MEDICAL_RECORD
+MEDICAL_RECORD đại diện cho kết quả thực tế của một lượt khám.
+Thiết kế mới sử dụng:
+MEDICAL_RECORD → encounter_id
+Không cần lưu lặp:
+patient_id.
+doctor_profile_id.
+department_id.
+Các thông tin này được suy ra:
+MEDICAL_RECORD
+→ ENCOUNTER
+→ PATIENT
+và:
+MEDICAL_RECORD
+→ ENCOUNTER
+→ DoctorProfile
+→ Department
+Điều này tránh dữ liệu bị không đồng nhất giữa ENCOUNTER và MEDICAL_RECORD.
+Ví dụ nếu bác sĩ thực hiện ENCOUNTER là Doctor A thì MEDICAL_RECORD không cần lưu thêm Doctor A lần thứ hai.
+Một ENCOUNTER hoàn thành sẽ có MedicalRecord tương ứng theo quy tắc nghiệp vụ của hệ thống.
+MedicalRecord là dữ liệu lịch sử và không nên bị xóa vật lý trong hoạt động thông thường.
+Theo yêu cầu mới, bệnh án được phép bổ sung/sửa sau khi hoàn tất để hỗ trợ khám thêm.
+Đã chốt: sửa/bổ sung cùng bệnh án, giữ COMPLETED; khi khám lần mới tạo ENCOUNTER mới, không mở lại lượt cũ.
+Việc sửa kiểm tra quyền, reason và expected_version; medical_record.revision_history JSONB lưu người sửa, thời gian, lý do, trước/sau cả bệnh án và thuốc.
+Không tự cho mọi vai trò sửa bệnh án và không ghi đè lịch sử mà không truy vết.
+
+XVII. QUẢN LÝ ĐƠN THUỐC
+Hệ thống bổ sung:
+PRESCRIPTION_ITEM
+để lưu thông tin thuốc được kê trong quá trình khám.
+Sau khi bác sĩ thực hiện khám:
+ENCOUNTER
+→ MEDICAL_RECORD
+→ PRESCRIPTION_ITEM
+Thông tin thuốc được quản lý dưới dạng các mục riêng để một lần khám có thể có nhiều loại thuốc.
+Ví dụ:
+MedicalRecord
+├── Thuốc A
+├── Thuốc B
+└── Thuốc C
+Việc tách PRESCRIPTION_ITEM giúp hệ thống quản lý danh sách thuốc linh hoạt hơn so với lưu toàn bộ đơn thuốc dưới dạng một chuỗi văn bản.
+
+XVIII. CHUYỂN BÁC SĨ
+Trong các trường hợp:
+Bác sĩ nghỉ đột xuất.
+Bác sĩ không có mặt.
+Bác sĩ quá tải.
+Không thể tiếp tục khám.
+Có lý do nghiệp vụ khác.
+Receptionist có thể chuyển ENCOUNTER sang bác sĩ khác.
+Luồng:
+Doctor báo nghỉ
+→ Xác định WorkSchedule
+→ Xác định ENCOUNTER bị ảnh hưởng
+→ Tìm Doctor khác
+→ Kiểm tra Department
+→ Kiểm tra WorkSchedule
+→ Kiểm tra quota
+→ Giữ quota bác sĩ mới
+→ Chuyển ENCOUNTER
+→ Giải phóng quota bác sĩ cũ
+→ Tạo EncounterTransferLog
+→ Gửi Notification
+Tên bảng thống nhất hiện tại là ENCOUNTER_TRANSFER_LOG.
+Log phục vụ lưu:
+Lượt khám bị chuyển.
+Bác sĩ cũ.
+Bác sĩ mới.
+Người thực hiện.
+Lý do.
+Thời điểm.
+Nguyên tắc:
+Bác sĩ mới phải phù hợp.
+Phải còn khả năng tiếp nhận.
+Phải giữ được quota mới trước khi hoàn tất chuyển.
+Sau khi chuyển thành công mới giải phóng quota cũ.
+Payment không tự động thay đổi chỉ vì chuyển bác sĩ.
+Quy tắc tính theo giá bác sĩ mới hay giữ giá đã chốt còn cần xác nhận; nếu đổi giá phải xử lý rõ khoản chênh lệch, không ghi đè các giao dịch đã phát sinh.
+
+XIX. ENCOUNTER_STATUS_LOG
+Hệ thống bổ sung:
+ENCOUNTER_STATUS_LOG
+để lưu lịch sử thay đổi trạng thái của ENCOUNTER.
+Ví dụ:
+HOLDING
+→ CONFIRMED
+→ CHECKED_IN
+→ IN_PROGRESS
+→ COMPLETED
+ENCOUNTER hiện tại chỉ lưu trạng thái mới nhất.
+ENCOUNTER_STATUS_LOG giữ lịch sử để hệ thống biết ENCOUNTER đã trải qua những trạng thái nào.
+Các trường hợp cần ghi log gồm:
+Tạo ENCOUNTER.
+Thanh toán thành công.
+Hết hạn.
+Check-in.
+Bắt đầu khám.
+Hoàn thành.
+Hủy.
+No-show.
+Chuyển trạng thái do xử lý nghiệp vụ.
+Mục đích:
+Audit.
+Truy vết.
+Điều tra lỗi nghiệp vụ.
+Thống kê thời gian xử lý.
+Xác định lịch sử của lượt khám.
+
+XX. VÒNG ĐỜI ENCOUNTER
+20.1. ONLINE
+Các trạng thái có thể gồm:
+Trạng thái
+Ý nghĩa
+HOLDING
+Đang chờ đặt cọc
+CONFIRMED
+Đặt cọc thành công
+CHECKED_IN
+Đã check-in và đang chờ
+IN_PROGRESS
+Đang khám
+COMPLETED
+Đã khám xong
+CANCELLED
+Đã hủy
+NO_SHOW
+Không đến
+EXPIRED
+Quá thời gian giữ lịch
+
+Luồng thông thường:
+HOLDING
+→ CONFIRMED
+→ CHECKED_IN
+→ IN_PROGRESS
+→ COMPLETED
+Luồng hết hạn:
+HOLDING
+→ EXPIRED
+Luồng hủy:
+CONFIRMED
+→ CANCELLED
+Luồng No-show:
+CONFIRMED
+→ NO_SHOW
+20.2. WALK_IN
+Walk-in không cần đi qua trạng thái HOLDING để giữ lịch.
+Luồng cơ bản:
+Tạo ENCOUNTER WALK_IN
+→ CHECKED_IN
+→ IN_PROGRESS
+→ COMPLETED
+Mọi lần chuyển trạng thái đều được ghi vào ENCOUNTER_STATUS_LOG.
+
+XXI. REVIEW
+Sau khi ENCOUNTER hoàn thành:
+ENCOUNTER
+→ MedicalRecord tồn tại
+→ Người dùng đánh giá
+→ Tạo REVIEW
+REVIEW không cần lưu lặp:
+patient_id.
+doctor_profile_id.
+Các thông tin này được suy ra từ:
+REVIEW → record_id → MEDICAL_RECORD → encounter_id → ENCOUNTER
+Bệnh nhân:
+ENCOUNTER → PATIENT
+Bác sĩ:
+ENCOUNTER → DoctorProfile
+Quy tắc:
+Chỉ được Review khi lượt khám COMPLETED.
+MedicalRecord phải tồn tại.
+Rating từ 1 đến 5.
+Một MEDICAL_RECORD có tối đa một REVIEW nhờ UNIQUE(record_id), tương ứng một ENCOUNTER.
+Không được đánh giá lượt khám của bệnh nhân khác.
+
+XXII. NOTIFICATION
+NOTIFICATION được sử dụng để gửi thông tin thay đổi tới User.
+Các trường hợp:
+Đặt lịch thành công.
+Thanh toán thành công.
+Sắp đến giờ khám.
+Lịch hết hạn.
+Hủy lịch.
+Chuyển bác sĩ.
+Bác sĩ thay đổi lịch.
+Có kết quả khám.
+Thông báo hệ thống.
+Notification có thêm:
+reference_type
+reference_id
+Mục đích là cho phép thông báo tham chiếu tới đối tượng nghiệp vụ liên quan.
+Ví dụ:
+Thông báo:
+"Bạn đã đặt lịch thành công"
+có thể tham chiếu:
+reference_type = ENCOUNTER
+reference_id = <encounter_id>
+Khi người dùng bấm thông báo, hệ thống có thể mở đúng nội dung liên quan.
+Notification có:
+is_read = 0
+khi chưa đọc và:
+is_read = 1
+sau khi người dùng xem.
+
+XXIII. AUTH_TOKEN
+Hệ thống bổ sung:
+AUTH_TOKEN
+để quản lý các token xác thực tạm thời.
+Có thể sử dụng cho:
+Quên mật khẩu.
+Đặt lại mật khẩu.
+Xác nhận OTP.
+Xác thực các thao tác cần mã tạm thời.
+Luồng ví dụ:
+User yêu cầu quên mật khẩu
+→ Hệ thống tạo OTP/token
+→ Lưu AUTH_TOKEN
+→ User nhập OTP
+→ Kiểm tra token
+→ Xác thực thành công
+→ Cho phép đặt mật khẩu mới
+→ Token hết hiệu lực sau khi sử dụng hoặc hết hạn
+AUTH_TOKEN giúp tách logic xác thực tạm thời khỏi bảng USERS.
+Token lưu dưới dạng token_hash, có expires_at và used_at; chỉ dùng một lần.
+Email/OTP giả lập cho đồ án, không gửi qua dịch vụ thật.
+AUTH_TOKEN không thay thế cơ chế session/refresh token; phương thức đăng nhập còn cần xác nhận.
+
+XXIV. ARTICLE
+ARTICLE quản lý tin tức và nội dung của website.
+Ngoài các thông tin cơ bản, ARTICLE có thêm:
+slug
+category
+thumbnail_url
+Trong đó:
+slug
+Được sử dụng để tạo đường dẫn thân thiện.
+Ví dụ:
+/news/huong-dan-dat-lich-kham
+category
+Phân loại bài viết.
+Ví dụ:
+Tin bệnh viện.
+Kiến thức sức khỏe.
+Thông báo.
+thumbnail_url
+Lưu đường dẫn ảnh đại diện của bài viết.
+Admin chịu trách nhiệm quản lý Article.
+
+XXV. QUẢN LÝ ROOM
+ROOM đại diện cho phòng khám.
+Mỗi Room thuộc Department.
+Ví dụ:
+Khoa Nhi
+├── Phòng 201
+├── Phòng 202
+└── Phòng 203
+WorkSchedule có room_id, giúp xác định bác sĩ làm việc ở phòng nào trong một ca cụ thể.
+Điều này phù hợp với trường hợp một bác sĩ có thể làm việc ở những phòng khác nhau trong các ca khác nhau.
+Quan hệ tổng quát:
+DoctorProfile
+→ WorkSchedule
+→ Room
+
+XXVI. SOFT DELETE VÀ BẢO TOÀN LỊCH SỬ
+Các dữ liệu nghiệp vụ quan trọng không nên bị xóa vật lý thông thường.
+Các dữ liệu cần bảo toàn gồm:
+USERS.
+PATIENT.
+ENCOUNTER.
+ENCOUNTER_STATUS_LOG.
+PAYMENT.
+MEDICAL_RECORD.
+REVIEW.
+EncounterTransferLog.
+PRESCRIPTION_ITEM.
+NURSE_ASSIGNMENT và lịch sử thu hồi.
+USERS dùng deleted_at; PATIENT dùng archived_at; danh mục có is_active khi phù hợp.
+Không phải mọi bảng đều có cột soft delete riêng.
+Ví dụ:
+User bị khóa
+→ Không thể đăng nhập
+→ PATIENT vẫn tồn tại
+→ ENCOUNTER cũ vẫn tồn tại
+→ MEDICAL_RECORD vẫn tồn tại
+→ PAYMENT vẫn tồn tại
+Mục tiêu:
+Bảo toàn lịch sử khám.
+Truy vết nghiệp vụ.
+Thống kê.
+Audit.
+Đảm bảo toàn vẹn dữ liệu.
+
+XXVII. QUY TẮC NGHIỆP VỤ
+Mã
+Quy tắc
+BR01
+Mỗi USERS chỉ có một Role tại một thời điểm
+BR02
+PATIENT có thể tồn tại mà không cần tài khoản USERS
+BR03
+User có thể đặt ENCOUNTER cho bản thân hoặc người thân
+BR04
+ENCOUNTER phải liên kết với một PATIENT
+BR05
+ENCOUNTER phải có encounter_type = ONLINE hoặc WALK_IN
+BR06
+Department được suy ra thông qua DoctorProfile, tránh lưu trùng nếu không cần
+BR07
+Không được đặt ONLINE ENCOUNTER khi WorkSchedule đã đạt max_quota
+BR08
+booked_count phải được cập nhật đồng bộ với ENCOUNTER
+BR09
+ONLINE ENCOUNTER ở HOLDING chỉ giữ quota trong thời gian quy định
+BR10
+Đặt cọc thành công mới chuyển ONLINE ENCOUNTER sang CONFIRMED
+BR11
+Hết thời gian đặt cọc phải chuyển ENCOUNTER sang EXPIRED và trả quota
+BR12
+Hủy trước ≥12 giờ được hoàn 50% cọc; nguyên nhân bệnh viện/bác sĩ được hoàn 100%
+BR13
+Bệnh nhân hủy trước <12 giờ không được hoàn tiền đặt cọc
+BR14
+No-show không được hoàn tiền đặt cọc
+BR15
+Một ENCOUNTER có thể có nhiều PAYMENT
+BR16
+PAYMENT phải xác định payment_type
+BR17
+amount của PAYMENT sử dụng BIGINT
+BR18
+MEDICAL_RECORD chỉ cần liên kết encounter_id
+BR19
+Patient và Doctor của MedicalRecord được suy ra từ ENCOUNTER
+BR20
+REVIEW liên kết record_id, suy ra ENCOUNTER qua MEDICAL_RECORD và không lưu lặp Patient/Doctor
+BR21
+Không được Review nếu ENCOUNTER chưa COMPLETED
+BR22
+Mọi thay đổi trạng thái quan trọng của ENCOUNTER phải được lưu ENCOUNTER_STATUS_LOG
+BR23
+Chuyển bác sĩ phải lưu lịch sử chuyển
+BR24
+Bác sĩ mới phải còn khả năng tiếp nhận trước khi chuyển
+BR25
+Bệnh nhân WALK_IN không tự chọn ca; hệ thống/lễ tân ghi schedule_id theo ca còn tiếp nhận (SQL hiện vẫn cho phép NULL)
+BR26
+WALK_IN không sử dụng cơ chế giữ lịch 10 phút giống ONLINE
+BR27
+Dữ liệu lịch sử quan trọng không được xóa vật lý thông thường
+BR28
+Chỉ USER tự đăng ký; ADMIN tạo nhân viên sau kiểm tra hợp đồng bên ngoài
+BR29
+password_hash NOT NULL, không rỗng; mật khẩu lưu dưới dạng hash
+BR30
+ONLINE được dành số khi xác nhận; check-in giữ nguyên số
+BR31
+WALK_IN cấp số sau online trong ca; ca đầy/đóng thì xếp người mới đến vào ca tiếp theo
+BR32
+NURSE chỉ hỗ trợ trong ca được phân công còn hiệu lực; quyền sửa cụ thể cần chốt
+BR33
+BHYT chỉ lưu mã thẻ do bệnh nhân cung cấp
+BR34
+Chỉ bác sĩ có avatar trong DOCTOR_PROFILE
+BR35
+Lưu giá/cọc đã chốt trên ENCOUNTER; đổi giá bác sĩ không tự đổi lịch cũ
+BR36
+Thanh toán, hoàn tiền và email/OTP đều giả lập
+BR37
+Bệnh án được bổ sung/sửa sau hoàn tất bởi bác sĩ phụ trách, có lý do/version/lịch sử trước-sau; giữ COMPLETED; khám lần mới tạo lượt mới
+BR38
+ROLE_REQUEST hiện chưa dùng, không cung cấp luồng USER xin vai trò đặc quyền
+
+
+XXVIII. QUAN HỆ NGHIỆP VỤ TỔNG QUÁT
+ROLE
+ │
+ └── USERS
+      │
+      ├── DOCTOR_PROFILE
+      │      │
+      │      └── WORK_SCHEDULE
+      │              │
+      │              └── ROOM
+      │
+      ├── NURSE_ASSIGNMENT → WORK_SCHEDULE
+      ├── ROLE_REQUEST (chưa sử dụng)
+      ├── AUTH_TOKEN
+      ├── NOTIFICATION
+      └── ARTICLE
+
+USERS
+ │
+ └── Quan hệ bệnh nhân / người đặt
+          │
+          └── PATIENT
+                  │
+                  └── ENCOUNTER
+                       │
+                       ├── PAYMENT
+                       ├── ENCOUNTER_STATUS_LOG
+                       ├── ENCOUNTER_TRANSFER_LOG
+                       │
+                       ├── MEDICAL_RECORD
+                       │      │
+                       │      ├── PRESCRIPTION_ITEM
+                       │      └── REVIEW
+                       │
+                       └── Thông báo tham chiếu bằng reference_type/reference_id
+
+DOCTOR_PROFILE
+ │
+ ├── DEPARTMENT
+ ├── WORK_SCHEDULE
+ └── ENCOUNTER
+ENCOUNTER là trung tâm của nghiệp vụ khám:
+PATIENT → ENCOUNTER → MEDICAL_RECORD
+Trong đó:
+encounter_type = ONLINE
+hoặc:
+encounter_type = WALK_IN
+
+XXIX. QUY ƯỚC DỮ LIỆU
+Các ID tự tăng chính sử dụng:
+INTEGER GENERATED BY DEFAULT AS IDENTITY.
+SYSTEM_CONFIGURATION có khóa chính config_key kiểu text.
+Tiền dùng BIGINT, thời điểm dùng TIMESTAMPTZ, ngày dùng DATE, giờ dùng TIME.
+Các cờ requires_approval, email_verified, is_active, is_read dùng INTEGER với CHECK 0/1.
+Các trạng thái nghiệp vụ nên sử dụng:
+text kết hợp CHECK giới hạn giá trị theo schema PostgreSQL hiện tại.
+Không sử dụng PostgreSQL ENUM trong bản schema này.
+Ví dụ:
+ENCOUNTER status.
+encounter_type.
+payment_type.
+Payment status.
+Role.
+Các unique constraint quan trọng được khai báo trực tiếp trong thiết kế database/ERD để ngăn dữ liệu trùng hoặc mâu thuẫn.
+
+XXX. CẤU HÌNH HỆ THỐNG
+SYSTEM_CONFIGURATION có thể lưu:
+Config Key
+Giá trị ví dụ
+Ý nghĩa
+APPOINTMENT_HOLD_MINUTES
+10
+Thời gian giữ lịch online
+CANCEL_HOURS_LIMIT
+12
+Mốc hoàn 50% cọc do bệnh nhân hủy; chính sách hiện được triển khai trong service gói 4
+DEFAULT_QUEUE_INTERVAL
+Theo cấu hình
+Khoảng thời gian dự kiến giữa bệnh nhân (khóa đề xuất, chưa có trong dữ liệu mẫu)
+MAX_REVIEW_RATING
+5
+Điểm đánh giá tối đa
+DEFAULT_DEPOSIT_PERCENT
+30
+Tỷ lệ cọc ví dụ trong dữ liệu mẫu, chính sách cần chốt
+CHECKIN_EARLY_MINUTES / CHECKIN_LATE_MINUTES
+30 / 15
+Giá trị minh họa, chưa thay thế quyết định nghiệp vụ
+REMINDER_BEFORE_HOURS
+24
+Số giờ nhắc trước lịch khám
+Các khóa không có trong dữ liệu mẫu cần được bổ sung khi nhóm chốt sử dụng.
+
+Ví dụ:
+APPOINTMENT_HOLD_MINUTES = 10
+Tạo ENCOUNTER lúc 10:00
+→ hold_expires_at = 10:10
+Nếu đến 10:10 chưa đặt cọc thành công:
+→ ENCOUNTER = EXPIRED
+→ Ghi ENCOUNTER_STATUS_LOG
+→ Giải phóng quota WorkSchedule.
+
+XXXI. LUỒNG NGHIỆP VỤ TỔNG THỂ
+31.1. ONLINE
+User đăng nhập
+→ Chọn người được khám
+→ PATIENT
+→ Chọn Department
+→ Chọn Doctor
+→ Chọn WorkSchedule
+→ Kiểm tra booked_count / max_quota
+→ Nhập triệu chứng
+→ Tạo ENCOUNTER ONLINE
+→ HOLDING
+→ PAYMENT DEPOSIT
+→ CONFIRMED
+→ Dành queue_number trong ca
+→ Đến bệnh viện
+→ Check-in
+→ CHECKED_IN
+→ IN_PROGRESS
+→ Bác sĩ khám
+→ MEDICAL_RECORD
+→ PRESCRIPTION_ITEM nếu có
+→ COMPLETED
+→ Notification
+→ Review
+31.2. WALK_IN
+Bệnh nhân đến bệnh viện
+→ Receptionist tra cứu PATIENT
+Nếu có:
+→ Sử dụng PATIENT hiện tại
+Nếu chưa có:
+→ Tạo PATIENT mới
+Sau đó:
+→ Chọn Doctor
+→ Hệ thống/lễ tân xếp WorkSchedule còn tiếp nhận
+→ Ca đầy/đóng thì chọn ca tiếp theo cho người mới đến
+→ Tạo ENCOUNTER WALK_IN và chốt giá, tiền cọc 0
+→ Cấp số sau online trong ca
+→ CHECKED_IN
+→ IN_PROGRESS
+→ Bác sĩ khám
+→ MEDICAL_RECORD
+→ PRESCRIPTION_ITEM nếu có
+→ COMPLETED
+→ Lưu lịch sử khám
+
+XXXII. GIAO DIỆN CHÍNH
+Public
+Trang chủ.
+Danh sách khoa.
+Danh sách bác sĩ.
+Chi tiết bác sĩ.
+Lịch làm việc.
+Lịch còn trống.
+Tin tức.
+Đăng ký.
+Đăng nhập.
+Quên mật khẩu.
+Nhập OTP.
+Đặt lại mật khẩu.
+User
+Hồ sơ tài khoản.
+Quản lý thông tin bệnh nhân và mã thẻ BHYT.
+Lưu trữ hồ sơ bệnh nhân.
+Thêm người thân.
+Đặt lịch cho bản thân.
+Đặt lịch cho người thân.
+Thanh toán.
+Lịch khám.
+Chi tiết ENCOUNTER.
+Hủy lịch.
+Lịch sử khám.
+MedicalRecord.
+Đơn thuốc.
+Review.
+Notification.
+Doctor
+Dashboard.
+Hồ sơ chuyên môn và cập nhật avatar.
+WorkSchedule.
+Danh sách ENCOUNTER.
+Danh sách bệnh nhân.
+Thực hiện khám.
+MedicalRecord.
+Đơn thuốc.
+Báo nghỉ.
+Lịch sử khám.
+Receptionist
+Dashboard.
+Tra cứu PATIENT.
+Tạo PATIENT.
+Tra cứu ENCOUNTER.
+Tiếp nhận Walk-in.
+Check-in.
+Quản lý hàng chờ.
+Chuyển bác sĩ.
+Phân ca/phòng theo nghiệp vụ.
+Nurse
+Dashboard.
+Ca được phân công và phạm vi hỗ trợ.
+Danh sách bệnh nhân.
+Danh sách ENCOUNTER.
+Hỗ trợ khám.
+Cập nhật thông tin theo quyền.
+Admin
+Quản lý USERS.
+Quản lý Role.
+Tạo/cấp vai trò nhân viên sau khi kiểm tra hồ sơ và hợp đồng bên ngoài.
+Quản lý PATIENT.
+Quản lý Department.
+Quản lý DoctorProfile.
+Quản lý Room.
+Quản lý WorkSchedule.
+Phân công/thu hồi phân công y tá.
+Quản lý Article.
+Quản lý cấu hình.
+Thống kê ENCOUNTER.
+Thống kê ONLINE/WALK_IN.
+Thống kê No-show.
+Thống kê hủy.
+Thống kê Payment.
+Thống kê Review.
+
+XXXIII. HAI QUYẾT ĐỊNH TRIỂN KHAI CẦN CHỐT
+33.1. Walk-in có thanh toán qua hệ thống hay không
+Hiện mô hình PAYMENT đã hỗ trợ:
+payment_type = EXAM_FEE
+Do đó nếu bệnh viện muốn quản lý tiền khám Walk-in trên hệ thống:
+ENCOUNTER WALK_IN
+→ PAYMENT EXAM_FEE
+Nếu phạm vi đồ án không xử lý tiền khám của Walk-in thì không cần tạo PAYMENT cho trường hợp này.
+Đây là lựa chọn về phạm vi chức năng, không ảnh hưởng tới việc ENCOUNTER WALK_IN được lưu và tạo MedicalRecord.
+33.2. Walk-in có gắn WorkSchedule hay không
+Quyết định mới: WALK_IN được gắn WorkSchedule bởi lễ tân/hệ thống; bệnh nhân không tự chọn ca.
+ENCOUNTER WALK_IN
+→ schedule_id có giá trị theo luồng tiếp nhận
+→ Cấp queue_number sau các số online của ca
+Ưu điểm:
+Quản lý quota thống nhất.
+Dễ tính số bệnh nhân trong ca.
+Dễ quản lý hàng chờ.
+Dễ xác định Room thông qua WorkSchedule.
+Dùng được phân công y tá theo ca.
+Schema cuối cùng bắt buộc encounter.schedule_id NOT NULL; lễ tân/hệ thống gắn ca cho walk-in trước khi tạo lượt khám.
+Nếu ca hiện tại đầy/đóng, người mới đến được xếp vào ca tiếp theo còn tiếp nhận.
+Chưa chốt tự chuyển người đã có số nhưng chưa khám sang ca tiếp theo.
+Chưa chốt nhận online muộn sau khi đã cấp số walk-in.
+Các nội dung khác còn cần xác nhận trước khi triển khai:
+Session hay JWT và cách đăng xuất/thu hồi phiên.
+Mức cọc, thời điểm thu phần phí còn lại và thời gian ân hạn No-show.
+Đã chốt tham chiếu giờ hẹn tại thời điểm hủy cho mốc hoàn cọc 12 giờ; xem quy tắc gói 4.
+Danh sách quyền cập nhật của y tá.
+Giá khi chuyển bác sĩ.
+Đã chốt: bổ sung bệnh án cùng record, không mở lại COMPLETED; quay lại khám lần mới tạo encounter mới.
+Danh tính ghi log của tác vụ tự động.
+
+XXXIV. TỔNG KẾT
+Hệ thống được xây dựng xoay quanh thực thể trung tâm ENCOUNTER.
+Thay vì quản lý riêng Appointment và WalkInVisit, cả hai hình thức khám được thống nhất:
+ENCOUNTER
+với:
+ONLINE / WALK_IN
+Nhờ đó, toàn bộ các nghiệp vụ:
+Check-in.
+Hàng chờ.
+Khám.
+Chuyển bác sĩ.
+MedicalRecord.
+Prescription.
+Payment.
+Review.
+Notification.
+Trạng thái.
+đều có thể liên kết thống nhất với một lượt khám.
+Việc tách PATIENT khỏi USERS cho phép hệ thống hỗ trợ tốt hơn bệnh nhân không có tài khoản và trường hợp người dùng đặt lịch cho người thân.
+MEDICAL_RECORD và REVIEW không lưu lặp Patient, Doctor hoặc Department khi những thông tin này đã có thể suy ra từ ENCOUNTER.
+PAYMENT được thiết kế theo quan hệ 1-nhiều với ENCOUNTER để quản lý đầy đủ các loại giao dịch như đặt cọc, phí khám và hoàn tiền.
+WORK_SCHEDULE quản lý thêm Room và booked_count để phục vụ kiểm soát khả năng tiếp nhận bệnh nhân.
+ENCOUNTER_STATUS_LOG cung cấp khả năng truy vết toàn bộ vòng đời lượt khám, trong khi AUTH_TOKEN phục vụ các nghiệp vụ OTP và đặt lại mật khẩu.
+Với cấu trúc này, mô hình nghiệp vụ, cơ sở dữ liệu, Use Case và API có thể được xây dựng thống nhất xung quanh:
+PATIENT → ENCOUNTER → MEDICAL_RECORD
+đồng thời vẫn phân biệt rõ nguồn tiếp nhận:
+ONLINE
+và:
+WALK_IN.
+Bổ sung NURSE_ASSIGNMENT giúp quản lý phạm vi hỗ trợ của y tá theo ca; archived_at giữ hồ sơ bệnh nhân đã ngừng sử dụng mà không mất lịch sử.
+Giá khám/cọc được lưu riêng trên ENCOUNTER, password_hash bắt buộc có giá trị và chỉ bác sĩ có avatar.
+Thanh toán và email trong đồ án đều mô phỏng. Các điểm chưa chốt được ghi rõ để không biến đề xuất hoặc dữ liệu mẫu thành yêu cầu chính thức.

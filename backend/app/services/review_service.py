@@ -1,6 +1,6 @@
 from backend.app.core.errors import conflict, not_found
 from backend.app.db.database import get_db_connection
-from backend.app.models import review_model as model, doctor_model
+from backend.app.models import medical_record_model as model, doctor_model
 from backend.app.models._sql import jsonable
 from backend.app.services import encounter_service as encounters
 

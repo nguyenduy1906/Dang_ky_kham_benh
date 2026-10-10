@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 from flasgger import swag_from
 from backend.app.core.security import current_user, login_required
 from backend.app.core.errors import not_found
-from backend.app.schemas import payment_schema
+from backend.app.schemas import encounter_schema as payment_schema
 from backend.app.schemas.common_schema import page_params
 from backend.app.services import payment_service
 
@@ -57,11 +57,11 @@ def intent(encounter_id):
 
 @payment_bp.post('/demo/payments/<int:payment_id>/result')
 @login_required
-@swag_from({'tags': ['Payments'], 'summary': 'DEMO_MODE=1: mô phỏng SUCCESS/FAILED cho phiên cọc của mình (ADMIN hỗ trợ)',
+@swag_from({'tags': ['Payments'], 'summary': 'SEND_EMAIL=1: mô phỏng SUCCESS/FAILED cho phiên cọc của mình (ADMIN hỗ trợ)',
             'security': SECURITY, 'parameters': [path_id('payment_id'), body_field('result', ('SUCCESS', 'FAILED'))],
             'responses': RESPONSES})
 def demo_result(payment_id):
-    if os.environ.get('DEMO_MODE', '0') != '1':
+    if os.environ.get('SEND_EMAIL', '0') != '1':
         raise not_found('Không tìm thấy API', 'NOT_FOUND')
     return jsonify(payment_service.demo_result(current_user(), payment_id, payment_schema.validate_result(request.get_json(silent=True))))
 

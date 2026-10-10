@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from backend.app.core.errors import conflict, forbidden, not_found
 from backend.app.core.utils import VN_TZ
 from backend.app.db.database import get_db_connection
-from backend.app.models import encounter_model as model, encounter_log_model as logs
+from backend.app.models import encounter_model as model
 from backend.app.models._sql import jsonable
 
 
@@ -39,7 +39,7 @@ def get_encounter(actor, encounter_id):
 def history(actor, encounter_id, kind, page, page_size):
     with get_db_connection() as db:
         _visible(db, actor, encounter_id)
-        rows, total = logs.list_logs(db, encounter_id, kind, page, page_size)
+        rows, total = model.list_logs(db, encounter_id, kind, page, page_size)
     return _page(rows, total, {'page': page, 'page_size': page_size})
 
 
@@ -159,7 +159,7 @@ def create_online(actor, fields):
             'deposit_amount_snapshot': doctor['consultation_fee'],
             'estimated_exam_at': start, 'hold_expires_at': now + timedelta(minutes=10)})
         _change_quota(db, schedule, 1)
-        logs.add_status(db, row['encounter_id'], None, 'HOLDING', actor['user_id'], 'Giữ chỗ online 10 phút')
+        model.add_status(db, row['encounter_id'], None, 'HOLDING', actor['user_id'], 'Giữ chỗ online 10 phút')
         result = _present(_visible(db, actor, row['encounter_id']))
     return {'encounter': result}
 
@@ -189,7 +189,7 @@ def confirm_paid_online(db, encounter_id, actor_id):
         raise conflict('Ca đã đóng hoặc báo nghỉ; cần điều phối lượt khám', 'SCHEDULE_UNAVAILABLE')
     queue = model.next_queue_number(db, schedule['schedule_id'])
     model.update_encounter(db, encounter_id, {'encounter_status': 'CONFIRMED', 'queue_number': queue})
-    logs.add_status(db, encounter_id, 'HOLDING', 'CONFIRMED', actor_id, 'Đã thanh toán đủ tiền; cấp số ' + str(queue))
+    model.add_status(db, encounter_id, 'HOLDING', 'CONFIRMED', actor_id, 'Đã thanh toán đủ tiền; cấp số ' + str(queue))
     return True
 
 
@@ -200,7 +200,7 @@ def expire_locked(db, encounter, schedule, actor_id):
     from backend.app.models.payment_model import fail_pending_deposits
     fail_pending_deposits(db, encounter['encounter_id'], 'HOLD_EXPIRED')
     _change_quota(db, schedule, -1)
-    logs.add_status(db, encounter['encounter_id'], 'HOLDING', 'EXPIRED', actor_id, 'Hết hạn giữ chỗ')
+    model.add_status(db, encounter['encounter_id'], 'HOLDING', 'EXPIRED', actor_id, 'Hết hạn giữ chỗ')
     return True
 
 
@@ -214,7 +214,7 @@ def cancel_hospital_locked(db, encounter, schedule, actor_id, reason):
     _change_quota(db, schedule, -1)
     from backend.app.models.payment_model import fail_pending_deposits
     fail_pending_deposits(db, encounter['encounter_id'], 'HOSPITAL_CANCELLED')
-    logs.add_status(db, encounter['encounter_id'], 'HOLDING', 'CANCELLED', actor_id, reason)
+    model.add_status(db, encounter['encounter_id'], 'HOLDING', 'CANCELLED', actor_id, reason)
 
 
 def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIENT'):
@@ -264,7 +264,7 @@ def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIEN
         if operation == 'cancel':
             from backend.app.models.payment_model import fail_pending_deposits
             fail_pending_deposits(db, encounter_id, 'ENCOUNTER_CANCELLED')
-        logs.add_status(db, encounter_id, status, terminal, actor['user_id'], reason or operation)
+        model.add_status(db, encounter_id, status, terminal, actor['user_id'], reason or operation)
         result = _present(_visible(db, actor, encounter_id))
     return {'encounter': result}
 
@@ -285,5 +285,5 @@ def complete_with_medical_record(db, actor, encounter_id):
     if db.execute('SELECT 1 FROM medical_record WHERE encounter_id=%s', (encounter_id,)).fetchone() is None:
         raise conflict('Cần lưu bệnh án trước khi hoàn tất', 'MEDICAL_RECORD_REQUIRED')
     model.update_encounter(db, encounter_id, {'encounter_status': 'COMPLETED'})
-    logs.add_status(db, encounter_id, 'IN_PROGRESS', 'COMPLETED', actor['user_id'], 'Hoàn tất khám và lưu bệnh án')
+    model.add_status(db, encounter_id, 'IN_PROGRESS', 'COMPLETED', actor['user_id'], 'Hoàn tất khám và lưu bệnh án')
     return {'encounter': _present(_visible(db, actor, encounter_id))}
