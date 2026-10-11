@@ -3,7 +3,7 @@ from flask import Blueprint, jsonify, request
 
 from backend.app.core.security import current_user, login_required
 from backend.app.schemas import patient_schema
-from backend.app.schemas.common_schema import page_params
+from backend.app.utils.validation import page_params
 from backend.app.services import patient_service
 
 patient_bp = Blueprint('patient', __name__, url_prefix='/patients')

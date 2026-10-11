@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from backend.app.core import constants
 from backend.app.core.security import is_admin, optional_user, roles_required
 from backend.app.schemas import catalog_schema
-from backend.app.schemas.common_schema import bool_arg, optional_int_arg
+from backend.app.utils.validation import bool_arg, optional_int_arg
 from backend.app.services import catalog_service
 
 department_bp = Blueprint('department', __name__)

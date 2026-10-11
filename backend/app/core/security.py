@@ -18,7 +18,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from backend.app.core import constants
 from backend.app.core.errors import AppError, forbidden, unauthorized
 from backend.app.db.database import get_db_connection
-from backend.app.models import user_model
+from backend.app.models import auth_model
 
 
 def get_secret_key():
@@ -79,7 +79,7 @@ def _authenticate():
         raise unauthorized('Token không hợp lệ', 'TOKEN_INVALID') from None
 
     with get_db_connection() as db:
-        user = user_model.get_user_by_id(db, payload.get('uid'))
+        user = auth_model.get_user_by_id(db, payload.get('uid'))
     if (user is None or user['deleted_at'] is not None
             or user.get('email') == constants.SYSTEM_WORKER_EMAIL
             or user['account_status'] != constants.ACCOUNT_ACTIVE

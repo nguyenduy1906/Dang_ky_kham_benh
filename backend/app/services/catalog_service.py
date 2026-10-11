@@ -3,7 +3,7 @@ from psycopg import errors as pg_errors
 from backend.app.core.errors import bad_request, conflict, not_found
 from backend.app.db.database import get_db_connection
 from backend.app.models import catalog_model
-from backend.app.models._sql import flags, jsonable
+from backend.app.utils.database_helpers import flags, jsonable
 
 
 def _present(row):

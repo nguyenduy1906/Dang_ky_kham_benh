@@ -2,11 +2,12 @@
 
 from flask import Blueprint, jsonify, make_response, request, send_from_directory
 
-from backend.app.core import constants, uploads
+from backend.app.core import constants
+from backend.app.utils import uploads
 from backend.app.core.errors import not_found
 from backend.app.core.security import current_user, is_admin, optional_user, roles_required
-from backend.app.schemas import staff_schema as doctor_schema
-from backend.app.schemas.common_schema import bool_arg, optional_int_arg, page_params
+from backend.app.schemas import doctor_schema
+from backend.app.utils.validation import bool_arg, optional_int_arg, page_params
 from backend.app.services import doctor_service
 
 doctor_bp = Blueprint('doctor', __name__)

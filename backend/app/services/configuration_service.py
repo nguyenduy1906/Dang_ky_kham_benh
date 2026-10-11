@@ -1,7 +1,7 @@
 from backend.app.core.errors import not_found
 from backend.app.db.database import get_db_connection
 from backend.app.models import configuration_model as model
-from backend.app.models._sql import jsonable
+from backend.app.utils.database_helpers import jsonable
 from backend.app.schemas.configuration_schema import FIXED, EDITABLE, validate_configuration
 from backend.app.services.encounter_service import require_role
 

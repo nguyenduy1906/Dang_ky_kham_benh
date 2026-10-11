@@ -1,5 +1,5 @@
 from psycopg.types.json import Jsonb
-from backend.app.models._sql import insert_row, jsonable
+from backend.app.utils.database_helpers import insert_row, jsonable
 
 
 def get(db, encounter_id, *, lock=False):

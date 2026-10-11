@@ -140,7 +140,7 @@ kết luận lỗi hoặc kết luận đạt của điều kiện chưa tồn t
 - Chọn avatar-invalid.png chỉ chứa 8 byte chữ ký PNG, không có cấu trúc ảnh.
 - POST /doctor/profile/avatar qua Swagger trả 200 và avatar_url mới.
 - Mong đợi: 400 INVALID_IMAGE; cần xác minh ảnh giải mã hợp lệ, không chỉ magic bytes.
-- Code liên quan: backend/app/core/uploads.py detect_image_type/save_avatar.
+- Code liên quan: backend/app/utils/uploads.py detect_image_type/save_avatar (chuyển nguyên file từ core/uploads.py ngày 11/10/2026; kết quả kiểm thử trong báo cáo này thuộc đợt trước).
 - Bằng chứng: test-evidence/goi-2-swagger/avatar-invalid-accepted.jpg.
 
 ### 4. Swagger thiếu tham số phân trang của lịch công khai

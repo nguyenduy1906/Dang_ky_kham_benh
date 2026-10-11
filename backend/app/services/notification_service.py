@@ -1,7 +1,7 @@
 from backend.app.core.errors import not_found
 from backend.app.db.database import get_db_connection
 from backend.app.models import notification_model as model
-from backend.app.models._sql import jsonable
+from backend.app.utils.database_helpers import jsonable
 
 
 def notify_encounter(db, encounter_id, event_key, kind, title, content):

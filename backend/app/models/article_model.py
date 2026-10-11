@@ -1,4 +1,4 @@
-from backend.app.models._sql import insert_row, update_row
+from backend.app.utils.database_helpers import insert_row, update_row
 
 COLUMNS = ('author_id', 'title', 'slug', 'category', 'thumbnail_url', 'content', 'is_active', 'published_at')
 SELECT = 'SELECT a.*,u.full_name AS author_name FROM article a JOIN users u ON u.user_id=a.author_id'

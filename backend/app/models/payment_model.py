@@ -1,4 +1,4 @@
-from backend.app.models._sql import insert_row
+from backend.app.utils.database_helpers import insert_row
 
 COLUMNS = ('encounter_id', 'payment_type', 'amount', 'payment_method', 'transaction_status',
            'transaction_code', 'paid_at', 'refunded_at', 'original_payment_id',

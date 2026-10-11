@@ -3,7 +3,7 @@ from flasgger import swag_from
 from backend.app.core.security import current_user, roles_required
 from backend.app.schemas.article_schema import parse_query, validate_article
 from backend.app.services import article_service as service
-from backend.app.routes.package5_docs import spec, path, body, PAGE
+from backend.app.utils.swagger_helpers import spec, path, body, PAGE
 
 article_bp = Blueprint('article', __name__)
 FILTERS = PAGE + [{'in': 'query', 'name': 'q', 'type': 'string'}, {'in': 'query', 'name': 'category', 'type': 'string'}]

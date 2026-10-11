@@ -1,4 +1,4 @@
-from backend.app.models._sql import insert_row, update_row
+from backend.app.utils.database_helpers import insert_row, update_row
 
 _SELECT = '''SELECT d.doctor_profile_id, d.user_id, d.department_id, dep.name AS department_name,
  u.full_name, u.email, u.phone, d.academic_degree, d.specialization, d.experience_years,

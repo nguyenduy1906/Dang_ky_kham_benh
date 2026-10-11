@@ -1,9 +1,9 @@
 import re
 
 from backend.app.core.errors import bad_request
-from backend.app.core.utils import today_vn
+from backend.app.utils.date import today_vn
 from backend.app.schemas.auth_schema import ensure_object, normalize_phone, text_field
-from backend.app.schemas.common_schema import (bool_arg, int_field, page_params, parse_date)
+from backend.app.utils.validation import (bool_arg, int_field, page_params, parse_date)
 
 ID_CARD_RE = re.compile(r'^(\d{9}|\d{12})$')
 INSURANCE_RE = re.compile(r'^[A-Za-z0-9]{10,15}$')

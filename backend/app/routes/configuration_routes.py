@@ -1,10 +1,10 @@
 from flask import Blueprint, jsonify, request
 from flasgger import swag_from
 from backend.app.core.security import current_user, roles_required
-from backend.app.schemas.common_schema import page_params
+from backend.app.utils.validation import page_params
 from backend.app.schemas.configuration_schema import validate_configuration
 from backend.app.services import configuration_service as service
-from backend.app.routes.package5_docs import spec, path, body, PAGE
+from backend.app.utils.swagger_helpers import spec, path, body, PAGE
 
 configuration_bp = Blueprint('configuration', __name__)
 

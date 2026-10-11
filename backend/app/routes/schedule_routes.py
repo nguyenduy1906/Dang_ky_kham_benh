@@ -4,7 +4,6 @@ from flask import Blueprint, jsonify, request
 from backend.app.core import constants
 from backend.app.core.security import current_user, roles_required
 from backend.app.schemas import schedule_schema
-from backend.app.schemas import staff_schema as schema
 from backend.app.services import schedule_service
 from backend.app.services import schedule_service as service
 
@@ -193,7 +192,7 @@ def list_assignments():
       200: {description: Danh sách phân trang, mặc định chưa thu hồi}
       403: {description: Chỉ ADMIN được truy cập}
     """
-    return jsonify(service.list_assignments(schema.parse_list_query(request.args)))
+    return jsonify(service.list_assignments(schedule_schema.parse_assignment_query(request.args)))
 
 
 @nurse_assignment_bp.post('/admin/nurse-assignments')
@@ -220,7 +219,7 @@ def create_assignment():
       404: {description: Không tìm thấy tài khoản hoặc ca}
       409: {description: Phân công đang hiệu lực bị trùng}
     """
-    return jsonify(service.create_assignment(current_user(), schema.validate_create(request.get_json(silent=True)))), 201
+    return jsonify(service.create_assignment(current_user(), schedule_schema.validate_assignment_create(request.get_json(silent=True)))), 201
 
 
 @nurse_assignment_bp.post('/admin/nurse-assignments/<int:assignment_id>/revoke')
@@ -256,4 +255,4 @@ def list_own_assignments():
       200: {description: Phân công của y tá đăng nhập}
       403: {description: Chỉ NURSE được truy cập}
     """
-    return jsonify(service.list_assignments(schema.parse_list_query(request.args), current_user()['user_id']))
+    return jsonify(service.list_assignments(schedule_schema.parse_assignment_query(request.args), current_user()['user_id']))

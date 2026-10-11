@@ -8,7 +8,7 @@ from backend.tests import test_encounter_reads
 from backend.app.db.database import get_db_connection
 from backend.app.services import encounter_service as service, payment_service
 from backend.app.utils.worker import expire_holds, enqueue_reminders
-from backend.app.models import user_model
+from backend.app.models import auth_model
 from backend.app.core.security import create_access_token
 from backend.app.core.constants import SYSTEM_WORKER_EMAIL
 from backend.app.core.errors import AppError
@@ -91,7 +91,7 @@ class EncounterWorkflowTests(unittest.TestCase):
         self.now = datetime(2035, 1, 1, 3, 0, tzinfo=timezone.utc)
         with get_db_connection() as db:
             uid = db.execute('SELECT user_id FROM doctor_profile WHERE doctor_profile_id=1').fetchone()['user_id']
-            doctor = user_model.get_user_by_id(db, uid)
+            doctor = auth_model.get_user_by_id(db, uid)
         headers = {'Authorization': 'Bearer ' + create_access_token(doctor)}
         response = self.client.post(f'/doctor/encounters/{eid}/start', headers=headers)
         self.assertEqual(response.status_code, 200, response.json)
@@ -180,7 +180,7 @@ class EncounterWorkflowTests(unittest.TestCase):
         for _ in range(2): self.assertEqual(self.client.post(url, headers=self.headers('ADMIN')).status_code, 200)
         with get_db_connection() as db:
             uid = db.execute('SELECT user_id FROM doctor_profile WHERE doctor_profile_id=1').fetchone()['user_id']
-            doctor = user_model.get_user_by_id(db, uid)
+            doctor = auth_model.get_user_by_id(db, uid)
         headers = {'Authorization': 'Bearer ' + create_access_token(doctor)}
         start = f'/doctor/encounters/{eid}/start'
         self.assertEqual(self.client.post(start, headers=headers).status_code, 409)

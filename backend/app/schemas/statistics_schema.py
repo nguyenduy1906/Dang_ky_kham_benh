@@ -1,5 +1,5 @@
 from backend.app.core.errors import bad_request
-from backend.app.schemas.common_schema import date_range, optional_int_arg, page_params
+from backend.app.utils.validation import date_range, optional_int_arg, page_params
 from backend.app.schemas.encounter_schema import STATUSES
 
 

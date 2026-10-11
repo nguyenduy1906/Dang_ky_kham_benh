@@ -1,4 +1,4 @@
-from backend.app.models._sql import update_row
+from backend.app.utils.database_helpers import update_row
 
 
 def list_departments(db, include_inactive=False):

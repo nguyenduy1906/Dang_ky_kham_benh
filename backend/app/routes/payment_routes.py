@@ -3,8 +3,8 @@ from flask import Blueprint, jsonify, request
 from flasgger import swag_from
 from backend.app.core.security import current_user, login_required
 from backend.app.core.errors import not_found
-from backend.app.schemas import encounter_schema as payment_schema
-from backend.app.schemas.common_schema import page_params
+from backend.app.schemas import payment_schema
+from backend.app.utils.validation import page_params
 from backend.app.services import payment_service
 
 payment_bp = Blueprint('payment', __name__)

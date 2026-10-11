@@ -3,7 +3,7 @@ from flasgger import swag_from
 from backend.app.core.security import current_user, roles_required
 from backend.app.schemas.statistics_schema import parse_query
 from backend.app.services.statistics_service import report
-from backend.app.routes.package5_docs import spec, PAGE
+from backend.app.utils.swagger_helpers import spec, PAGE
 
 statistics_bp = Blueprint('statistics', __name__)
 FILTERS = PAGE + [{'in': 'query', 'name': name, 'type': 'string', 'format': 'date'} for name in ('from_date', 'to_date')] + [

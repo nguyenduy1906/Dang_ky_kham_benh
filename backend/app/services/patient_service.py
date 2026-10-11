@@ -1,8 +1,8 @@
 from backend.app.core import constants
 from backend.app.core.errors import bad_request, conflict, forbidden, not_found
 from backend.app.db.database import get_db_connection
-from backend.app.models import patient_model, user_model
-from backend.app.models._sql import jsonable
+from backend.app.models import patient_model, auth_model
+from backend.app.utils.database_helpers import jsonable
 
 STAFF_READ = (constants.ROLE_ADMIN, constants.ROLE_RECEPTIONIST,
               constants.ROLE_DOCTOR, constants.ROLE_NURSE)
@@ -59,7 +59,7 @@ def create_patient(actor, fields):
             fields['user_id'] = actor['user_id']
         elif role in STAFF_WRITE:
             if fields.get('user_id') is not None:
-                owner = user_model.get_user_by_id(db, fields['user_id'])
+                owner = auth_model.get_user_by_id(db, fields['user_id'])
                 if owner is None or owner['deleted_at'] is not None:
                     raise bad_request('Tài khoản chủ hồ sơ không tồn tại', 'USER_NOT_FOUND')
         else:

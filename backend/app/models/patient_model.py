@@ -1,4 +1,4 @@
-from backend.app.models._sql import insert_row, update_row
+from backend.app.utils.database_helpers import insert_row, update_row
 
 _COLUMNS = ['user_id', 'full_name', 'dob', 'gender', 'id_card', 'address', 'phone',
             'health_insurance', 'relationship']

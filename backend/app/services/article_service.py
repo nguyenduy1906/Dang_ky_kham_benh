@@ -2,7 +2,7 @@ from psycopg import errors as pg_errors
 from backend.app.core.errors import conflict, not_found
 from backend.app.db.database import get_db_connection
 from backend.app.models import article_model as model
-from backend.app.models._sql import jsonable
+from backend.app.utils.database_helpers import jsonable
 from backend.app.services import encounter_service as encounters
 
 

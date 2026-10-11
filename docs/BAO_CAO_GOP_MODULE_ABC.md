@@ -1,5 +1,15 @@
 # Tổng hợp thay đổi backend — cập nhật 11/10/2026
 
+**Cấu trúc hiện tại đã được chủ đồ án duyệt:** giữ bốn folder theo tầng, thống nhất 12 nhóm nghiệp vụ; xem [CAU_TRUC_BACKEND.md](CAU_TRUC_BACKEND.md) và mục 18 bên dưới. Mã ứng dụng hiện có 71 file Python. Các phần 1–17 ghi lịch sử những đợt trước và không thay thế bảng vị trí hiện tại.
+
+**Tên tiện ích hiện tại theo quyết định mới nhất:** `backend/app/utils/database_helpers.py`, `backend/app/utils/mail.py`, `backend/app/utils/date.py` lần lượt thay `_sql.py`, `mail_adapter.py`, `time_utils.py`. Xem mục 17 cho phạm vi và kiểm tra. Tên/vị trí trong các mục trước là lịch sử của từng đợt.
+
+**Tên mới nhất của helper Swagger:** `backend/app/utils/swagger_helpers.py`, đổi từ `utils/package5_docs.py` theo yêu cầu chủ đồ án; xem mục 16. `_sql.py` và `worker.py` chưa đổi tên. Các tên ở mục 14/15 ghi lại lịch sử trước lần đổi này.
+
+**Bổ sung vị trí hiện tại của bốn tiện ích:** `utils/time_utils.py`, `utils/validation.py`, `utils/uploads.py`, `utils/mail_adapter.py` đã nhận nguyên nội dung từ các vị trí cũ trong `core`/`schemas`. Xem mục 15 cho phạm vi và kiểm tra riêng. Các dòng mô tả sửa mail adapter ở đợt trước bên dưới dùng vị trí cũ để ghi lịch sử; đường dẫn hiện tại là `backend/app/utils/mail_adapter.py`.
+
+**Cập nhật cấu trúc mới theo yêu cầu chủ đồ án:** `models/user_model.py` đổi thành `models/auth_model.py`; `models/_sql.py` và `routes/package5_docs.py` chuyển lần lượt sang `utils/_sql.py`, `utils/package5_docs.py`. Các đường dẫn đều thuộc `backend/app`. Quyết định này thay thế vị trí module trước đây; nguồn lịch sử trong bảng chuyển/gộp vẫn ghi tên ở thời điểm cũ. Phạm vi và kiểm tra của lần đổi này nằm ở mục 14.
+
 ## 1. Phạm vi báo cáo
 
 Báo cáo này tập hợp toàn bộ thay đổi của đợt làm việc 10–11/10/2026 trong cuộc trao đổi, gồm các tên/giá trị chủ đồ án đã sửa, phần đồng bộ theo các tên mới, các lần gộp file đã duyệt và trạng thái cuối cùng ngày 11/10/2026. Đây là một tài liệu tổng hợp để tra cứu toàn bộ đợt thay đổi, thay thế nội dung báo cáo A/B/C và D1/D2 trước đây trong chính file này.
@@ -8,7 +18,7 @@ Nguồn đối chiếu: yêu cầu/phê duyệt trong cuộc trao đổi, code h
 
 Trong lần viết báo cáo này chỉ sửa tài liệu, không sửa code ứng dụng, không chạy lại kiểm thử, không build hoặc thao tác database.
 
-## 2. Kết quả cuối cùng
+## 2. Kết quả cuối cùng của đợt gộp ban đầu
 
 | Nội dung | Kết quả |
 |---|---|
@@ -42,7 +52,7 @@ Các đường dẫn dưới đây tính từ thư mục gốc dự án. Cột c
 | Danh mục — route | `backend/app/routes/department_routes.py`, `backend/app/routes/room_routes.py` | `backend/app/routes/catalog_routes.py` | Giữ hai Blueprint `department_bp`, `room_bp`, các endpoint hiện có |
 | Tác vụ nền | `backend/app/jobs/encounter_jobs.py`, `backend/app/jobs/payment_jobs.py`; tên trung gian từng dùng là `backend/app/scheduled_tasks/encounter_jobs.py`, `backend/app/scheduled_tasks/appointment_reminders.py` | `backend/app/utils/worker.py` | `system_actor()`, `expire_holds()`, `enqueue_reminders()`, `main()` |
 | Admin ban đầu | `backend/app/db/create_admin.py` và luồng admin trong `backend/app/db/seed_db.py` | `backend/app/db/seed_db.py`, `backend/app/db/db_service.py` | Một luồng tạo admin qua `seed_db --admin`; quy tắc cụ thể ở mục 6 |
-| A1 | `backend/app/models/user_model.py`, `backend/app/models/auth_token_model.py` | `backend/app/models/user_model.py` | SQL users/role và OTP/token reset mật khẩu/xác minh email |
+| A1 | `backend/app/models/user_model.py`, `backend/app/models/auth_token_model.py` | `backend/app/models/auth_model.py` | SQL users/role và OTP/token reset mật khẩu/xác minh email; đích đổi tên theo yêu cầu mới 11/10/2026 |
 | A2 | `backend/app/schemas/auth_schema.py`, `backend/app/schemas/user_admin_schema.py` | `backend/app/schemas/auth_schema.py` | Validator xác thực, hồ sơ cá nhân và quản trị tài khoản |
 | A3 | `backend/app/services/auth_service.py`, `backend/app/services/user_admin_service.py` | `backend/app/services/auth_service.py` | Xác thực, OTP, `/me`, đổi mật khẩu và quản trị tài khoản |
 | B1 | `backend/app/services/schedule_service.py`, `backend/app/services/nurse_assignment_service.py` | `backend/app/services/schedule_service.py` | Nghiệp vụ lịch và tạo/xem/thu hồi phân công y tá |
@@ -158,7 +168,7 @@ Trong `backend/app/db/db_service.py`, dữ liệu admin được kiểm tra bằ
 | `backend/app/routes/encounter_routes.py` | Validator walk-in/chuyển bác sĩ lấy từ `encounter_schema` |
 | `backend/app/routes/medical_record_routes.py` | Validator bệnh án/thuốc lấy từ `medical_record_schema` |
 | `backend/app/routes/review_routes.py` | Import `validate_review` từ `medical_record_schema` |
-| `backend/app/services/auth_service.py` | Token dùng `user_model as auth_token_model`; chứa thêm nghiệp vụ hồ sơ/quản trị |
+| `backend/app/services/auth_service.py` | Token dùng `auth_model as auth_token_model`; chứa thêm nghiệp vụ hồ sơ/quản trị |
 | `backend/app/services/doctor_service.py` | SQL chuyên khoa lấy từ `catalog_model` |
 | `backend/app/services/schedule_service.py` | SQL phòng lấy từ `catalog_model`; giữ model phân công riêng với alias `model` |
 | `backend/app/services/encounter_service.py` | Ghi/đọc log qua `encounter_model` |
@@ -215,10 +225,10 @@ Các script/compose/audit tạm đã được xóa sau xác minh; các ca bổ s
 - Chưa kiểm thử trực tiếp bản dịch vụ chính sau rebuild; chưa chạy mọi ca đồng thời intent/result/refund, mọi boundary hoàn tiền hoặc mọi nghiệp vụ của cả 5 gói.
 - Kết quả 23/23 xác minh bộ test hiện có và phạm vi refactor; không phải tuyên bố nghiệm thu toàn bộ hệ thống.
 
-## 10. Những phần giữ nguyên hoặc không duyệt gộp
+## 10. Những phần giữ nguyên hoặc không duyệt gộp tại đợt trước
 
-- `backend/app/routes/package5_docs.py` giữ nguyên trong folder `routes`. Không xóa, không chuyển vào `core/swagger_docs.py` hoặc `routes/__init__.py` theo quyết định cuối của chủ đồ án. Nó vẫn phục vụ Swagger cho route bệnh án, đánh giá, bài viết, cấu hình và thống kê.
-- D3 (`notification_model.py` vào `user_model.py`) chưa được duyệt, không thực hiện. Model thông báo vẫn riêng.
+- `package5_docs.py` từng được giữ trong `routes` ở đợt gộp trước; theo yêu cầu mới 11/10/2026, file đã chuyển sang `backend/app/utils/package5_docs.py`. Nó vẫn phục vụ Swagger cho route bệnh án, đánh giá, bài viết, cấu hình và thống kê.
+- D3 (`notification_model.py` vào model tài khoản, hiện tên `auth_model.py`) chưa được duyệt, không thực hiện. Model thông báo vẫn riêng.
 - Tài khoản và bệnh nhân vẫn là hai loại hồ sơ riêng; không gộp `patient_*` vào tài khoản, không gộp bảng `patient` và `users`.
 - Hồ sơ bác sĩ, nghiệp vụ tiếp nhận/lượt khám vẫn có service/model riêng; chỉ schema bác sĩ/phân công chuyển vào `staff_schema`.
 - `backend/app/models/nurse_assignment_model.py` và `backend/app/models/schedule_model.py` vẫn riêng.
@@ -298,3 +308,119 @@ Các snapshot 437 hàm/lớp được ghi ở mục trước là so trước/sau
 ### 13.3. Phạm vi xử lý lần đối chiếu
 
 Chỉ phân tích và bổ sung báo cáo. Không tự sửa lại hành vi admin hoặc sửa code ứng dụng. Bộ 23 test và các ca bổ sung của các lượt trước vẫn là bằng chứng hồi quy đã có; lần này không chạy lại toàn bộ test PostgreSQL. Script AST, snapshot commit và container kiểm tra registry là tài nguyên tạm của lần audit.
+
+## 14. Đổi tên model và chuyển helper vào utils — 11/10/2026
+
+Theo yêu cầu mới của chủ đồ án, đã đổi/chuyển ba module:
+
+| Vị trí cũ | Vị trí hiện tại | Chức năng |
+|---|---|---|
+| `backend/app/models/user_model.py` | `backend/app/models/auth_model.py` | SQL tài khoản, vai trò và OTP/token xác thực |
+| `backend/app/models/_sql.py` | `backend/app/utils/_sql.py` | INSERT/UPDATE dùng chung, chuyển kiểu JSON và cờ boolean |
+| `backend/app/routes/package5_docs.py` | `backend/app/utils/package5_docs.py` | Helper mô tả tham số, body, bảo mật và phản hồi Swagger gói 5 |
+
+Đã cập nhật tham chiếu/import trong 32 file Python, gồm ứng dụng và bốn file kiểm thử có import model tài khoản. Không tạo module tương thích ở vị trí cũ. Folder `utils` sau đợt này, trước phần bổ sung ở mục 15, có `_sql.py`, `package5_docs.py` và `worker.py`; Python dùng namespace package cho folder này. Tổng số file Python ứng dụng vẫn là 75.
+
+Tiêu chí của lần thay đổi: ba module có vị trí mới đúng yêu cầu; không còn tham chiếu vị trí cũ trong mã Python; bảo toàn hàm, SQL, hằng số, decorator, quyền, transaction và endpoint sau khi chuẩn hóa tên/đường dẫn module. Chỉ tổ chức lại module, không thay nghiệp vụ hoặc cấu trúc database.
+
+Kiểm tra đã thực hiện:
+
+- 80/80 file Python, gồm 75 file ứng dụng và 5 file kiểm thử, compile/parse thành công mà không ghi bytecode.
+- Kiểm tra tĩnh các đường dẫn import module nội bộ: không có module bị thiếu; không còn tham chiếu `user_model`, `backend.app.models._sql` hoặc `backend.app.routes.package5_docs` trong mã Python.
+- Đối chiếu AST của toàn bộ 80 file với snapshot ngay trước lần đổi này, sau khi chuẩn hóa đúng ba tên/đường dẫn được đổi: không khác biệt; không thêm hoặc mất file Python.
+- Nội dung byte của cả ba file được chuyển/đổi tên giống hệt trước khi chuyển.
+- Import thực tế `backend.app.models.auth_model`, `backend.app.utils._sql`, `backend.app.utils.package5_docs` thành công. Kiểm tra chuyển date/time/Decimal sang JSON, cờ boolean và mô tả Swagger công khai/cần đăng nhập đều đạt.
+- `git diff --check` đạt.
+
+Giới hạn: chưa chạy lại bộ kiểm thử tích hợp PostgreSQL hoặc toàn bộ import ứng dụng. Docker daemon không hoạt động; Python trong `.venv` thiếu Flask, psycopg, flasgger và Pillow. Kết quả 23/23 ở các mục trước thuộc đợt cũ, không phải kết quả chạy lại sau lần đổi này. Chưa rebuild dịch vụ chính; không khởi tạo lại, seed hoặc thao tác database dự án trong lần này.
+
+## 15. Chuyển bốn file tiện ích bổ sung — 11/10/2026
+
+Chủ đồ án chọn chuyển đúng bốn file đầu trong đề xuất rà soát, chưa chọn tách hàm tiện ích nằm trong các file nghiệp vụ:
+
+| Vị trí cũ | Vị trí hiện tại |
+|---|---|
+| `backend/app/core/utils.py` | `backend/app/utils/time_utils.py` |
+| `backend/app/schemas/common_schema.py` | `backend/app/utils/validation.py` |
+| `backend/app/core/uploads.py` | `backend/app/utils/uploads.py` |
+| `backend/app/core/mail_adapter.py` | `backend/app/utils/mail_adapter.py` |
+
+Đã cập nhật import/tham chiếu trong 22 file Python. Khi import cũ cùng dòng với `constants`, giữ `constants` trong `core` và chuyển import `uploads`/`mail_adapter` sang `utils`. Không tách thêm hàm khỏi `auth_schema.py`, `encounter_service.py` hoặc `payment_routes.py`. Ba file tiện ích đã có `_sql.py`, `package5_docs.py`, `worker.py` chưa đổi tên; yêu cầu tìm tên khác chỉ được trả lời bằng đề xuất.
+
+Folder `utils` hiện có bảy file: `_sql.py`, `package5_docs.py`, `worker.py`, `time_utils.py`, `validation.py`, `uploads.py`, `mail_adapter.py`. Tổng file Python ứng dụng vẫn là 75. Nội dung nghiệp vụ, endpoint, schema database và cấu hình chạy giữ nguyên.
+
+Tiêu chí và kiểm tra đã thực hiện:
+
+- Đúng bốn file được chuyển; nội dung byte của từng file giống hệt trước khi chuyển.
+- 80/80 file Python compile/parse thành công; không ghi bytecode.
+- Kiểm tra tĩnh module và tên được import trong nội bộ: không phát hiện đích bị thiếu. Không còn import bốn vị trí cũ trong mã Python.
+- Đối chiếu AST của 80 file với snapshot ngay trước đợt này sau khi chuẩn hóa đường dẫn và tách đúng ba import gộp: không khác biệt; không thêm/mất file Python.
+- Import thực tế `utils.time_utils` và `utils.mail_adapter` thành công. Múi giờ UTC+7 và ngày Việt Nam đúng; với `SEND_EMAIL=1` adapter ghi nội dung OTP/token giả lập, với `SEND_EMAIL=0` không ghi mã OTP/token.
+- `git diff --check` đạt. Đã đồng bộ vị trí mới trong ba tài liệu nghiệp vụ/API, báo cáo này và tham chiếu code avatar trong báo cáo kiểm thử gói 2.
+
+Giới hạn: chưa import thực tế `utils.validation`/`utils.uploads`, chưa import toàn bộ ứng dụng hoặc chạy lại kiểm thử PostgreSQL. Docker daemon vẫn không hoạt động; Python `.venv` thiếu Flask, psycopg, flasgger và Pillow. Chưa rebuild hoặc sửa dữ liệu dịch vụ chính. Các kết quả kiểm thử tích hợp ở những mục trước không phải kết quả chạy lại cho đợt này.
+
+## 16. Đổi riêng tên helper Swagger — 11/10/2026
+
+Đã đổi `backend/app/utils/package5_docs.py` thành `backend/app/utils/swagger_helpers.py` và cập nhật import ở năm route: bài viết, cấu hình, bệnh án, đánh giá, thống kê. Nội dung byte của helper giữ nguyên. `_sql.py` và `worker.py` không đổi tên theo yêu cầu chủ đồ án.
+
+Kiểm tra: 80 file Python compile/parse đạt; đối chiếu AST trước/sau khi chuẩn hóa tên module không khác biệt, không thêm/mất file Python; không còn import đường dẫn helper cũ trong mã Python. Import helper mới và kiểm tra mô tả path/body, Swagger công khai/cần đăng nhập đều đạt. Không chạy lại kiểm thử tích hợp PostgreSQL hoặc rebuild dịch vụ chính trong lần này; giữ nguyên giới hạn môi trường đã ghi ở mục 15.
+
+## 17. Chốt tên tiện ích SQL, email và thời gian — 11/10/2026
+
+Theo yêu cầu chủ đồ án, đã đổi ba file trong `backend/app/utils`:
+
+| Tên trước | Tên hiện tại |
+|---|---|
+| `_sql.py` | `database_helpers.py` |
+| `mail_adapter.py` | `mail.py` |
+| `time_utils.py` | `date.py` |
+
+Đã cập nhật import/tham chiếu trong 24 file Python; lời gọi `mail_adapter` trong `auth_service.py` dùng tên `mail`. Không đổi tên hoặc tách thêm các file khác. Tổng số file ứng dụng vẫn là 75; folder `utils` có `database_helpers.py`, `mail.py`, `date.py`, `swagger_helpers.py`, `validation.py`, `uploads.py`, `worker.py`.
+
+Tiêu chí kiểm tra và kết quả:
+
+- Cả ba file giữ nguyên nội dung byte; chỉ đổi tên file và tham chiếu module.
+- 80/80 file Python compile/parse thành công; đối chiếu AST với snapshot ngay trước lần đổi sau khi chuẩn hóa đúng tên/đường dẫn mới không có khác biệt, không thêm/mất file.
+- Kiểm tra tĩnh các module và tên import nội bộ không phát hiện đích bị thiếu; không còn tham chiếu ba tên cũ trong mã Python.
+- Import thực tế ba module mới đạt. Kiểm tra chuyển ngày/Decimal sang JSON, chuyển cờ boolean, múi giờ UTC+7 và ngày Việt Nam đạt. Bật/tắt `SEND_EMAIL` vẫn ghi/ẩn mã OTP và token xác minh đúng như trước.
+- `git diff --check` đạt; đã cập nhật ba tài liệu nghiệp vụ/API và báo cáo này.
+
+Chưa chạy lại kiểm thử tích hợp PostgreSQL hoặc import toàn bộ ứng dụng trong đợt này; giới hạn môi trường đã ghi ở mục 15. Không rebuild, seed hoặc sửa dữ liệu dịch vụ chính. Các kết quả kiểm thử tích hợp ở đợt trước không phải kết quả chạy lại cho lần đổi tên này.
+
+## 18. Chuẩn hóa tên nhóm ở bốn tầng — 11/10/2026
+
+Chủ đồ án chọn giữ cấu trúc theo tầng và hậu tố `_routes`, `_schema`, `_service`, `_model`, sau đó duyệt thực hiện đủ năm mục đã đề xuất. Không chuyển sang cấu trúc folder theo nhóm chức năng. Bảng 12 nhóm/file hiện tại nằm trong [CAU_TRUC_BACKEND.md](CAU_TRUC_BACKEND.md).
+
+### 18.1. Các thay đổi
+
+- Bốn validator hồ sơ bác sĩ từ `staff_schema.py` vào `doctor_schema.py`. Hai validator phân công vào `schedule_schema.py`, với tên `validate_assignment_create`, `parse_assignment_query`; bỏ module `staff_schema`.
+- SQL phân công y tá từ `nurse_assignment_model.py` vào `schedule_model.py`, đổi hằng `_SELECT` của phân công thành `_ASSIGNMENT_SELECT` để không ghi đè truy vấn ca. Service dùng `schedule_model` cho cả hai nhóm truy vấn.
+- Các route `/me` và quản trị tài khoản từ `user_admin_routes.py` vào `auth_routes.py`. Giữ hai Blueprint `auth_bp`, `user_admin_bp`. Hai hàm `_body` giống hệt dùng một hàm chung; chỉ giảm helper trùng, không giảm API.
+- Năm hàm tiếp nhận/điều phối từ `reception_service.py` vào `encounter_service.py`. Tham chiếu helper của service lượt khám được đổi thành lời gọi trong cùng module; giữ nguyên transaction và thứ tự khóa.
+- Hằng `METHODS` và bốn hàm `_object`, `validate_method`, `validate_result`, `validate_refund` từ `encounter_schema.py` vào `payment_schema.py`.
+- Phần đánh giá đã được gộp trước khi chủ đồ án yêu cầu chờ duyệt, sau đó được giữ trong phương án đã duyệt: service có `create_review`, `list_public_reviews`; route nằm trong `medical_record_routes.py`, giữ `review_bp` cùng tên endpoint cũ. Hai file review riêng đã bỏ.
+- Cập nhật import, lời gọi và đăng ký Blueprint; các file tiện ích đã chốt giữ nguyên. Không thay SQL, schema database, chính sách, dependency của dự án hoặc frontend.
+
+Sau gộp review và năm mục trên, file ứng dụng từ 75 xuống 71. Mỗi tầng có đúng 12 file nhóm nghiệp vụ ngoài `__init__.py`.
+
+### 18.2. Tiêu chí và bằng chứng kiểm tra
+
+- 76/76 file Python hiện tại compile/parse được, gồm 71 file ứng dụng và 5 file kiểm thử. Tất cả 71 module ứng dụng import thành công trong runtime kiểm tra.
+- Snapshot ngay trước năm mục còn lại: chuẩn hóa vị trí, tên validator/hằng và alias; 436 khai báo hàm/lớp cấp module, toàn bộ hằng/assignment và 63 file không liên quan giữ nguyên AST. Chỉ bỏ một `_body` trùng sau khi xác nhận hai bản giống hệt. Phần review trước đó đã đối chiếu 437 khai báo trước/sau và không mất nội dung sau chuẩn hóa.
+- Kiểm tra tĩnh các module/tên import nội bộ và tham chiếu module cũ đạt; không có tên hàm/lớp trùng trong các file gộp.
+- Khởi tạo hai phiên bản trước/sau trong tiến trình riêng: 98 rule Flask có cùng URL, phương thức và endpoint; toàn bộ JSON Swagger giống nhau, gồm 82 path. Chỉ mock hai truy vấn sẵn sàng của bảng role khi tạo app, không dùng kết quả này để khẳng định kiểm thử database.
+- 10 nhóm kiểm tra runtime trên mỗi phiên bản đạt: validator bác sĩ/ca/phân công/thanh toán, tách đúng hai SELECT ca và phân công; quyền route USER/ADMIN; route bác sĩ, phân công, walk-in, chuyển ca và review gọi đúng service/validator. Các thao tác service/database trong nhóm kiểm tra kết nối route được mock rõ ràng.
+- 23/23 test thường trực đạt trên PostgreSQL 18 tạm, gồm quyền/phân công, luồng khám/quota/log, thanh toán lặp/muộn, check-in/no-show, chuyển ca, tranh chấp chỗ cuối/rollback, bệnh án/thuốc, nhắc lịch, danh mục, avatar, seed và ràng buộc schema.
+- Hai ca tích hợp bổ sung trên schema tạm đạt. Ca tài khoản/bác sĩ kiểm tra đăng ký không tự nâng quyền, login/me, USER bị chặn quản trị, ADMIN tạo DOCTOR/hồ sơ, bác sĩ tự sửa chuyên môn nhưng không sửa phí, ADMIN sửa phí. Ca đánh giá chạy đặt–trả cọc–check-in–khám–bệnh án–hoàn tất–review; gửi lặp không tạo thêm, đổi nội dung trả xung đột, rating sai/role sai bị chặn, dữ liệu công khai chỉ có bốn trường đánh giá.
+- `git diff --check` đạt; cập nhật tài liệu nghiệp vụ, phân công API và bảng cấu trúc hiện tại.
+
+### 18.3. Môi trường và giới hạn
+
+Runtime kiểm tra là Python 3.12.14, Flask/Werkzeug 3.0.3, psycopg 3.2.10, flasgger 0.9.7.1, Pillow 12.3.0. Thư viện kiểm tra được đặt trong thư mục tạm riêng, không cài vào `.venv` hay thay `requirements.txt`.
+
+Docker daemon không hoạt động, nên dùng PostgreSQL 18 sẵn có trên máy để tạo cluster tạm mới trên cổng loopback riêng; mỗi test dùng schema riêng. Không kết nối database của dự án, không reset/nạp mẫu/rebuild dịch vụ chính. Lượt thử trong sandbox bị chặn TCP 10013; đã chạy lại bộ test với quyền kết nối tới cluster tạm và đạt. Một ResourceWarning về tempfile xuất hiện trong bộ test nhưng không làm test thất bại; không sửa ngoài phạm vi refactor để xử lý cảnh báo đó.
+
+Database tạm đã dừng và không còn tiến trình PostgreSQL/initdb thuộc lần kiểm tra. Script, snapshot, thư viện và dữ liệu kiểm tra tạm được dọn sau xác minh. Hai ca bổ sung và các kiểm tra runtime không được cộng vào 23 test thường trực.
+
+Chưa rebuild hoặc kiểm thử bản Docker/PostgreSQL 17 của dự án sau thay đổi. Bằng chứng trên xác minh các ca đã chạy và phạm vi refactor; không tuyên bố nghiệm thu toàn bộ mọi nghiệp vụ của năm gói API.

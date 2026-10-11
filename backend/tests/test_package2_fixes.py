@@ -10,9 +10,9 @@ from PIL import Image
 
 from backend.tests import test_nurse_assignment
 from backend.app.core.security import create_access_token
-from backend.app.core.utils import today_vn
+from backend.app.utils.date import today_vn
 from backend.app.db.database import get_db_connection
-from backend.app.models import user_model
+from backend.app.models import auth_model
 
 
 @unittest.skipUnless(os.environ.get('RUN_POSTGRES_TESTS') == '1', 'Set RUN_POSTGRES_TESTS=1 with PostgreSQL available')
@@ -98,7 +98,7 @@ class Package2FixTests(unittest.TestCase):
     def test_avatar_decoding_and_no_side_effect_on_invalid_image(self):
         with get_db_connection() as db:
             actor_id = db.execute("SELECT user_id FROM doctor_profile WHERE doctor_profile_id=1").fetchone()['user_id']
-            doctor = user_model.get_user_by_id(db, actor_id)
+            doctor = auth_model.get_user_by_id(db, actor_id)
         headers = {'Authorization': 'Bearer ' + create_access_token(doctor)}
         with TemporaryDirectory() as directory, patch.dict(os.environ, {'UPLOAD_DIR': directory}):
             for fmt, ext in (('PNG', 'png'), ('JPEG', 'jpg'), ('WEBP', 'webp')):

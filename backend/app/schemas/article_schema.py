@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from urllib.parse import urlparse
 from backend.app.core.errors import bad_request
 from backend.app.schemas.auth_schema import ensure_object, text_field
-from backend.app.schemas.common_schema import page_params, flag_field, optional_int_arg
+from backend.app.utils.validation import page_params, flag_field, optional_int_arg
 
 
 def validate_article(data, *, partial=False):

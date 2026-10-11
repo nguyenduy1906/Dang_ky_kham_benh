@@ -2,12 +2,13 @@
 from psycopg import errors as pg_errors
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from backend.app.core import constants, mail_adapter
+from backend.app.core import constants
+from backend.app.utils import mail
 from backend.app.core.errors import AppError, bad_request, conflict, forbidden, not_found, unauthorized
 from backend.app.core.security import (create_access_token, generate_otp, generate_token,
                                        hash_password, hash_token, verify_password)
 from backend.app.db.database import get_db_connection
-from backend.app.models import user_model, user_model as auth_token_model
+from backend.app.models import auth_model, auth_model as auth_token_model
 
 _DUMMY_HASH = generate_password_hash('dummy-password-to-equalize-timing')
 _IDENTITY_MESSAGES = {'email': 'Email đã được sử dụng',
@@ -19,29 +20,29 @@ _BAD_RESET = 'Phiên đặt lại mật khẩu không hợp lệ hoặc đã h�
 
 def register(data):
     with get_db_connection() as db:
-        role = user_model.get_role_by_name(db, constants.ROLE_USER)
+        role = auth_model.get_role_by_name(db, constants.ROLE_USER)
         if role is None:
             raise AppError(500, 'ROLE_NOT_SEEDED', 'Chưa có vai trò USER, hãy chạy seed_db')
-        taken = user_model.find_identity_conflict(db, data['email'], data['phone'])
+        taken = auth_model.find_identity_conflict(db, data['email'], data['phone'])
         if taken:
             raise conflict(_IDENTITY_MESSAGES[taken], 'DUPLICATE_IDENTITY')
         approval = (constants.APPROVAL_PENDING if role['requires_approval']
                     else constants.APPROVAL_APPROVED)
         try:
-            user_id = user_model.create_user(
+            user_id = auth_model.create_user(
                 db, role_id=role['role_id'], full_name=data['full_name'],
                 email=data['email'], phone=data['phone'],
                 password_hash=hash_password(data['password']), approval_status=approval)
         except pg_errors.UniqueViolation:
             raise conflict('Email hoặc số điện thoại đã được sử dụng', 'DUPLICATE_IDENTITY') from None
-        user = user_model.get_user_by_id(db, user_id)
-    return {'user': user_model.to_public(user)}
+        user = auth_model.get_user_by_id(db, user_id)
+    return {'user': auth_model.to_public(user)}
 
 
 def login(data):
     with get_db_connection() as db:
-        user = (user_model.get_user_by_email(db, data['email']) if data['email']
-                else user_model.get_user_by_phone(db, data['phone']))
+        user = (auth_model.get_user_by_email(db, data['email']) if data['email']
+                else auth_model.get_user_by_phone(db, data['phone']))
     if user is None:
         check_password_hash(_DUMMY_HASH, data['password'])
         raise unauthorized(_BAD_CREDENTIALS, 'INVALID_CREDENTIALS')
@@ -54,7 +55,7 @@ def login(data):
         raise forbidden('Tài khoản chưa được duyệt', 'ACCOUNT_NOT_APPROVED')
     return {'access_token': create_access_token(user), 'token_type': 'Bearer',
             'expires_in': constants.ACCESS_TOKEN_TTL_SECONDS,
-            'user': user_model.to_public(user)}
+            'user': auth_model.to_public(user)}
 
 
 def logout():
@@ -72,7 +73,7 @@ def _usable(user):
 def forgot_password(data):
     outbox = None
     with get_db_connection() as db:
-        user = user_model.get_user_by_email(db, data['email'])
+        user = auth_model.get_user_by_email(db, data['email'])
         if _usable(user):
             uid = user['user_id']
             auth_token_model.invalidate_unused(db, uid, constants.TOKEN_OTP)
@@ -82,14 +83,14 @@ def forgot_password(data):
                                           hash_token(otp, uid), constants.OTP_TTL_MINUTES)
             outbox = (user['email'], otp)
     if outbox:
-        mail_adapter.send_otp(*outbox)
+        mail.send_otp(*outbox)
     # Luôn trả cùng một thông báo để không lộ email nào đã đăng ký.
     return {'message': 'Nếu email tồn tại, mã OTP đã được gửi'}
 
 
 def verify_otp(data):
     with get_db_connection() as db:
-        user = user_model.get_user_by_email(db, data['email'])
+        user = auth_model.get_user_by_email(db, data['email'])
         if not _usable(user):
             raise bad_request(_BAD_OTP, 'INVALID_OTP')
         uid = user['user_id']
@@ -107,10 +108,10 @@ def reset_password(data):
     with get_db_connection() as db:
         uid = auth_token_model.consume_by_hash(db, constants.TOKEN_RESET_PASSWORD,
                                                hash_token(data['reset_token']))
-        user = user_model.get_user_by_id(db, uid) if uid else None
+        user = auth_model.get_user_by_id(db, uid) if uid else None
         if not _usable(user):
             raise bad_request(_BAD_RESET, 'INVALID_RESET_TOKEN')
-        user_model.update_user(db, uid, {'password_hash': hash_password(data['new_password'])})
+        auth_model.update_user(db, uid, {'password_hash': hash_password(data['new_password'])})
         auth_token_model.invalidate_unused(db, uid, constants.TOKEN_OTP)
         auth_token_model.invalidate_unused(db, uid, constants.TOKEN_RESET_PASSWORD)
     return {'message': 'Đã đặt lại mật khẩu, hãy đăng nhập lại'}
@@ -126,7 +127,7 @@ def request_email_verification(user):
         auth_token_model.invalidate_unused(db, user['user_id'], constants.TOKEN_VERIFY_EMAIL)
         auth_token_model.create_token(db, user['user_id'], constants.TOKEN_VERIFY_EMAIL,
                                       hash_token(token), constants.EMAIL_VERIFY_TTL_MINUTES)
-    mail_adapter.send_email_verification(user['email'], token)
+    mail.send_email_verification(user['email'], token)
     return {'message': 'Đã gửi mã xác minh tới email của bạn'}
 
 
@@ -134,7 +135,7 @@ def confirm_email_verification(data):
     with get_db_connection() as db:
         uid = auth_token_model.consume_by_hash(db, constants.TOKEN_VERIFY_EMAIL,
                                                hash_token(data['token']))
-        if not uid or not user_model.update_user(db, uid, {'email_verified': 1}):
+        if not uid or not auth_model.update_user(db, uid, {'email_verified': 1}):
             raise bad_request('Mã xác minh không hợp lệ hoặc đã hết hạn', 'INVALID_VERIFY_TOKEN')
     return {'message': 'Đã xác minh email'}
 
@@ -144,7 +145,7 @@ def _duplicate():
 
 
 def _check_identity(db, fields, exclude_user_id=None):
-    taken = user_model.find_identity_conflict(db, fields.get('email'), fields.get('phone'),
+    taken = auth_model.find_identity_conflict(db, fields.get('email'), fields.get('phone'),
                                               exclude_user_id)
     if taken:
         raise conflict(_IDENTITY_MESSAGES[taken], 'DUPLICATE_IDENTITY')
@@ -153,7 +154,7 @@ def _check_identity(db, fields, exclude_user_id=None):
 # ---------- /me ----------
 
 def get_me(user):
-    return {'user': user_model.to_public(user)}
+    return {'user': auth_model.to_public(user)}
 
 
 def update_me(user, fields):
@@ -165,22 +166,22 @@ def update_me(user, fields):
     with get_db_connection() as db:
         _check_identity(db, updates, uid)
         try:
-            user_model.update_user(db, uid, updates)
+            auth_model.update_user(db, uid, updates)
         except pg_errors.UniqueViolation:
             raise _duplicate() from None
         if email_changed:
             auth_token_model.invalidate_unused(db, uid, constants.TOKEN_VERIFY_EMAIL)
-        fresh = user_model.get_user_by_id(db, uid)
-    return {'user': user_model.to_public(fresh)}
+        fresh = auth_model.get_user_by_id(db, uid)
+    return {'user': auth_model.to_public(fresh)}
 
 
 def change_password(user, data):
     if not verify_password(user['password_hash'], data['current_password']):
         raise bad_request('Mật khẩu hiện tại không đúng', 'WRONG_PASSWORD')
     with get_db_connection() as db:
-        user_model.update_user(db, user['user_id'],
+        auth_model.update_user(db, user['user_id'],
                                {'password_hash': hash_password(data['new_password'])})
-        fresh = user_model.get_user_by_id(db, user['user_id'])
+        fresh = auth_model.get_user_by_id(db, user['user_id'])
     # Mọi token cũ mất hiệu lực; trả token mới để phiên hiện tại tiếp tục dùng.
     return {'message': 'Đã đổi mật khẩu', 'access_token': create_access_token(fresh),
             'token_type': 'Bearer', 'expires_in': constants.ACCESS_TOKEN_TTL_SECONDS}
@@ -190,7 +191,7 @@ def change_password(user, data):
 
 def list_roles():
     with get_db_connection() as db:
-        rows = user_model.list_roles(db)
+        rows = auth_model.list_roles(db)
     return {'items': [{'role_id': r['role_id'], 'role_name': r['role_name'],
                        'description': r['description'],
                        'requires_approval': bool(r['requires_approval'])} for r in rows]}
@@ -198,17 +199,17 @@ def list_roles():
 
 def list_users(query):
     with get_db_connection() as db:
-        rows, total = user_model.list_users(
+        rows, total = auth_model.list_users(
             db, role=query['role'], account_status=query['account_status'],
             approval_status=query['approval_status'], q=query['q'],
             include_deleted=query['include_deleted'], limit=query['page_size'],
             offset=(query['page'] - 1) * query['page_size'])
-    return {'items': [user_model.to_public(r) for r in rows], 'total': total,
+    return {'items': [auth_model.to_public(r) for r in rows], 'total': total,
             'page': query['page'], 'page_size': query['page_size']}
 
 
 def _get_or_404(db, user_id):
-    user = user_model.get_user_by_id(db, user_id)
+    user = auth_model.get_user_by_id(db, user_id)
     if user is None:
         raise not_found('Không tìm thấy người dùng', 'USER_NOT_FOUND')
     return user
@@ -216,11 +217,11 @@ def _get_or_404(db, user_id):
 
 def get_user(user_id):
     with get_db_connection() as db:
-        return {'user': user_model.to_public(_get_or_404(db, user_id))}
+        return {'user': auth_model.to_public(_get_or_404(db, user_id))}
 
 
 def _role_id(db, role_name):
-    role = user_model.get_role_by_name(db, role_name)
+    role = auth_model.get_role_by_name(db, role_name)
     if role is None:
         raise bad_request(f'Vai trò {role_name} chưa có trong database', 'ROLE_NOT_FOUND')
     return role['role_id']
@@ -230,7 +231,7 @@ def create_user(data):
     with get_db_connection() as db:
         _check_identity(db, data)
         try:
-            user_id = user_model.create_user(
+            user_id = auth_model.create_user(
                 db, role_id=_role_id(db, data['role']), full_name=data['full_name'],
                 email=data['email'], phone=data['phone'],
                 password_hash=hash_password(data['password']),
@@ -238,8 +239,8 @@ def create_user(data):
                 email_verified=1 if data['email_verified'] else 0)
         except pg_errors.UniqueViolation:
             raise _duplicate() from None
-        user = user_model.get_user_by_id(db, user_id)
-    return {'user': user_model.to_public(user)}
+        user = auth_model.get_user_by_id(db, user_id)
+    return {'user': auth_model.to_public(user)}
 
 
 def update_user(admin, user_id, fields):
@@ -257,11 +258,11 @@ def update_user(admin, user_id, fields):
             updates['email_verified'] = 0
         _check_identity(db, updates, user_id)
         try:
-            user_model.update_user(db, user_id, updates)
+            auth_model.update_user(db, user_id, updates)
         except pg_errors.UniqueViolation:
             raise _duplicate() from None
-        user = user_model.get_user_by_id(db, user_id)
-    return {'user': user_model.to_public(user)}
+        user = auth_model.get_user_by_id(db, user_id)
+    return {'user': auth_model.to_public(user)}
 
 
 def set_account_status(admin, user_id, account_status):
@@ -271,9 +272,9 @@ def set_account_status(admin, user_id, account_status):
         target = _get_or_404(db, user_id)
         if target['deleted_at'] is not None:
             raise conflict('Người dùng đã bị xóa', 'USER_DELETED')
-        user_model.update_user(db, user_id, {'account_status': account_status})
-        user = user_model.get_user_by_id(db, user_id)
-    return {'user': user_model.to_public(user)}
+        auth_model.update_user(db, user_id, {'account_status': account_status})
+        user = auth_model.get_user_by_id(db, user_id)
+    return {'user': auth_model.to_public(user)}
 
 
 def delete_user(admin, user_id):
@@ -281,6 +282,6 @@ def delete_user(admin, user_id):
         raise forbidden('Không thể tự xóa tài khoản của chính mình', 'SELF_CHANGE_FORBIDDEN')
     with get_db_connection() as db:
         _get_or_404(db, user_id)
-        if not user_model.soft_delete_user(db, user_id):
+        if not auth_model.soft_delete_user(db, user_id):
             raise conflict('Người dùng đã bị xóa trước đó', 'USER_DELETED')
     return {'message': 'Đã xóa người dùng (xóa mềm)'}

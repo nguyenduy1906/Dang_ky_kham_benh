@@ -1,5 +1,5 @@
 """SQL cho gói 3; tất cả nghiệp vụ nhiều bước dùng connection do service truyền vào."""
-from backend.app.models._sql import insert_row, update_row
+from backend.app.utils.database_helpers import insert_row, update_row
 
 SELECT = '''SELECT e.*, p.full_name AS patient_name, p.user_id AS owner_id,
  d.department_id, u.full_name AS doctor_name, d.user_id AS doctor_user_id,

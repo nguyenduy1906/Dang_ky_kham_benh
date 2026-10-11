@@ -1,4 +1,4 @@
-from backend.app.models._sql import jsonable
+from backend.app.utils.database_helpers import jsonable
 
 JOIN = (' JOIN encounter e ON e.encounter_id={encounter_id} JOIN work_schedule s ON s.schedule_id=e.schedule_id '
         'JOIN doctor_profile d ON d.doctor_profile_id=e.doctor_profile_id ')

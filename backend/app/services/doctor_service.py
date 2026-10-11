@@ -1,10 +1,11 @@
 from psycopg import errors as pg_errors
 
-from backend.app.core import constants, uploads
+from backend.app.core import constants
+from backend.app.utils import uploads
 from backend.app.core.errors import bad_request, conflict, not_found
 from backend.app.db.database import get_db_connection
-from backend.app.models import catalog_model, doctor_model, user_model
-from backend.app.models._sql import flags, jsonable
+from backend.app.models import catalog_model, doctor_model, auth_model
+from backend.app.utils.database_helpers import flags, jsonable
 
 _PRIVATE = ('user_id', 'email', 'phone', 'account_ok')
 
@@ -44,7 +45,7 @@ def _check_department(db, department_id):
 
 def create_doctor(fields):
     with get_db_connection() as db:
-        user = user_model.get_user_by_id(db, fields['user_id'])
+        user = auth_model.get_user_by_id(db, fields['user_id'])
         if user is None or user['deleted_at'] is not None:
             raise not_found('Không tìm thấy tài khoản', 'USER_NOT_FOUND')
         if user['role_name'] != constants.ROLE_DOCTOR:

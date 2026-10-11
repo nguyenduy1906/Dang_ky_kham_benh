@@ -2,11 +2,10 @@ from psycopg import errors as pg_errors
 
 from backend.app.core import constants
 from backend.app.core.errors import bad_request, conflict, forbidden, not_found
-from backend.app.core.utils import today_vn
+from backend.app.utils.date import today_vn
 from backend.app.db.database import get_db_connection
 from backend.app.models import doctor_model, catalog_model, schedule_model
-from backend.app.models import nurse_assignment_model as model
-from backend.app.models._sql import jsonable
+from backend.app.utils.database_helpers import jsonable
 
 _CHANGES_TIME_OR_ROOM = ('room_id', 'work_date', 'start_time', 'end_time')
 
@@ -154,7 +153,7 @@ def report_unavailable(user, schedule_id, reason):
 
 def list_assignments(query, nurse_id=None):
     with get_db_connection() as db:
-        rows, total = model.list_assignments(
+        rows, total = schedule_model.list_assignments(
             db, nurse_id=nurse_id if nurse_id is not None else query['nurse_id'],
             schedule_id=query['schedule_id'], include_revoked=query['include_revoked'],
             limit=query['page_size'], offset=(query['page'] - 1) * query['page_size'])
@@ -177,18 +176,18 @@ def create_assignment(actor, fields):
         if schedule_model.get_for_update(db, fields['schedule_id']) is None:
             raise not_found('Không tìm thấy ca làm việc', 'SCHEDULE_NOT_FOUND')
         try:
-            assignment_id = model.create_assignment(db, actor['user_id'], fields)
+            assignment_id = schedule_model.create_assignment(db, actor['user_id'], fields)
         except pg_errors.UniqueViolation:
             raise conflict('Y tá đã được phân công trong ca này', 'DUPLICATE_NURSE_ASSIGNMENT') from None
-        row = model.get_assignment(db, assignment_id)
+        row = schedule_model.get_assignment(db, assignment_id)
     return {'assignment': jsonable(dict(row))}
 
 
 def revoke_assignment(actor, assignment_id):
     with get_db_connection() as db:
-        if model.revoke_assignment(db, assignment_id, actor['user_id']) is None:
-            if model.get_assignment(db, assignment_id) is None:
+        if schedule_model.revoke_assignment(db, assignment_id, actor['user_id']) is None:
+            if schedule_model.get_assignment(db, assignment_id) is None:
                 raise not_found('Không tìm thấy phân công', 'ASSIGNMENT_NOT_FOUND')
             raise conflict('Phân công đã được thu hồi', 'ASSIGNMENT_ALREADY_REVOKED')
-        row = model.get_assignment(db, assignment_id)
+        row = schedule_model.get_assignment(db, assignment_id)
     return {'assignment': jsonable(dict(row))}

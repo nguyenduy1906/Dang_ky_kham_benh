@@ -1,5 +1,5 @@
 from backend.app.core.errors import bad_request
-from backend.app.schemas.common_schema import page_params
+from backend.app.utils.validation import page_params
 
 
 def parse_query(args):
