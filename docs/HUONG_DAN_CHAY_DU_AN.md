@@ -5,7 +5,7 @@ Danh sách cột đã gộp và phần đã đối chiếu: [BAO_CAO_THONG_NHAT_
 
 Gói 4 có cột audit/liên kết hoàn tiền, khóa chống thông báo lặp và nguyên nhân hủy trong schema mới. API `/demo/payments/{id}/result` chỉ hoạt động khi `DEMO_MODE=1`; mặc định tắt. Worker chạy thêm nhắc lịch trong ứng dụng, không gửi email/ngân hàng thật. Chính sách và ví dụ: [BAO_CAO_TRIEN_KHAI_GOI_4.md](BAO_CAO_TRIEN_KHAI_GOI_4.md).
 
-Gói 3 có `work_schedule.last_queue_number`; gói 5 có `medical_record.version` và `revision_history` ngay trong định nghĩa bảng. Docker Compose có `encounter-worker` chạy job mỗi 30 giây, chờ backend khỏe; worker tự tạo tài khoản hệ thống LOCKED riêng. Chạy riêng: `python -m backend.app.jobs.encounter_jobs --once` hoặc bỏ `--once` để chạy liên tục. Quy tắc: [QUY_TAC_GOI_3_DA_CHOT.md](QUY_TAC_GOI_3_DA_CHOT.md), [BAO_CAO_TRIEN_KHAI_GOI_5.md](BAO_CAO_TRIEN_KHAI_GOI_5.md).
+Gói 3 có `work_schedule.last_queue_number`; gói 5 có `medical_record.version` và `revision_history` ngay trong định nghĩa bảng. Docker Compose có `encounter-worker` chạy job mỗi 30 giây, chờ backend khỏe; worker tự tạo tài khoản hệ thống LOCKED riêng. Chạy riêng: `python -m backend.app.utils.worker --once` hoặc bỏ `--once` để chạy liên tục. Quy tắc: [QUY_TAC_GOI_3_DA_CHOT.md](QUY_TAC_GOI_3_DA_CHOT.md), [BAO_CAO_TRIEN_KHAI_GOI_5.md](BAO_CAO_TRIEN_KHAI_GOI_5.md).
 
 Chạy PowerShell tại thư mục gốc. Dự án dùng docker-compose.yml, Flask/Gunicorn
 và PostgreSQL 17. Mở Docker Desktop trước khi chạy.
@@ -102,7 +102,7 @@ user medical, password theo backend/.env. Backend trong Docker dùng db:5432.
 Tạo admin bằng thông tin nhập tương tác:
 
 ```powershell
-docker compose exec backend python -m backend.app.db.seed_db --admin
+docker compose exec backend python -m backend.app.utils.seed_db --admin
 ```
 
 Backend hiện đã có kiểm thử tích hợp PostgreSQL trong schema tạm. Sau khi build

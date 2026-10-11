@@ -1,9 +1,10 @@
-from flask import Blueprint, jsonify, request
+from backend.app.controllers import article_controller as controller
+from flask import Blueprint
 from flasgger import swag_from
-from backend.app.core.security import current_user, roles_required
-from backend.app.schemas.article_schema import parse_query, validate_article
-from backend.app.services import article_service as service
-from backend.app.routes.package5_docs import spec, path, body, PAGE
+from backend.app.middlewares.auth_middleware import roles_required
+
+
+from backend.app.utils.swagger import spec, path, body, PAGE
 
 article_bp = Blueprint('article', __name__)
 FILTERS = PAGE + [{'in': 'query', 'name': 'q', 'type': 'string'}, {'in': 'query', 'name': 'category', 'type': 'string'}]
@@ -17,13 +18,13 @@ FIELDS = {'title': {'type': 'string'}, 'slug': {'type': 'string', 'example': 'hu
 @article_bp.get('/articles')
 @swag_from(spec('Articles', 'Danh sách bài đã xuất bản; ẩn nháp, bài ngừng hiển thị và lịch xuất bản tương lai', FILTERS, public=True))
 def listing():
-    return jsonify(service.listing(parse_query(request.args)))
+    return controller.listing()
 
 
 @article_bp.get('/articles/<string:slug>')
 @swag_from(spec('Articles', 'Chi tiết bài viết đã xuất bản theo slug', [path('slug', type_name='string')], public=True))
 def detail(slug):
-    return jsonify(service.detail(slug))
+    return controller.detail(slug)
 
 
 @article_bp.get('/admin/articles')
@@ -31,18 +32,18 @@ def detail(slug):
 @swag_from(spec('Articles Admin', 'ADMIN xem cả bài nháp và đã xuất bản', FILTERS + [
     {'in': 'query', 'name': 'is_active', 'type': 'boolean'}, {'in': 'query', 'name': 'article_id', 'type': 'integer'}]))
 def admin_list():
-    return jsonify(service.listing(parse_query(request.args, admin=True), current_user()))
+    return controller.admin_list()
 
 
 @article_bp.post('/admin/articles')
 @roles_required('ADMIN')
 @swag_from(spec('Articles Admin', 'Tạo bài; tác giả từ ADMIN đăng nhập, slug duy nhất', [body(FIELDS, ('title', 'slug', 'content'))]))
 def create():
-    return jsonify(service.create(current_user(), validate_article(request.get_json(silent=True)))), 201
+    return controller.create()
 
 
 @article_bp.patch('/admin/articles/<int:article_id>')
 @roles_required('ADMIN')
 @swag_from(spec('Articles Admin', 'Sửa bài/ẩn bài/xuất bản; không đổi tác giả', [path('article_id'), body(FIELDS)]))
 def update(article_id):
-    return jsonify(service.update(current_user(), article_id, validate_article(request.get_json(silent=True), partial=True)))
+    return controller.update(article_id)

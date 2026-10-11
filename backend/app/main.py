@@ -1,10 +1,10 @@
 """Create the Flask backend after database initialization and seed."""
 from flask import Flask
 from flasgger import Swagger
-from backend.app.core.errors import register_error_handlers
-from backend.app.core.security import get_secret_key
-from backend.app.db.database import get_db_connection
-from backend.app.routes import health_routes
+from backend.app.middlewares.error_handler import register_error_handlers
+from backend.app.utils.security import get_secret_key
+from backend.app.services.startup_service import check_database_ready
+from backend.app.routes.health_routes import health_routes
 from backend.app.routes.auth_routes import auth_bp
 from backend.app.routes.department_routes import department_bp
 from backend.app.routes.encounter_routes import encounter_bp
@@ -24,11 +24,7 @@ from backend.app.routes.user_admin_routes import user_admin_bp
 
 
 def create_app():
-    with get_db_connection() as db:
-        if not db.execute("SELECT to_regclass('role') AS table_name").fetchone()['table_name']:
-            raise RuntimeError('Run python -m backend.app.db.init_db first')
-        if not db.execute('SELECT 1 FROM role LIMIT 1').fetchone():
-            raise RuntimeError('Run python -m backend.app.db.seed_db first')
+    check_database_ready()
     get_secret_key()  # báo lỗi sớm nếu thiếu SECRET_KEY và mật khẩu DB
     app = Flask(__name__)
     register_error_handlers(app)

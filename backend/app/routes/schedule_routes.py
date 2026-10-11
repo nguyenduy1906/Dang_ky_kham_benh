@@ -1,10 +1,10 @@
 """Route lịch làm việc."""
-from flask import Blueprint, jsonify, request
+from backend.app.controllers import schedule_controller as controller
+from flask import Blueprint
 
-from backend.app.core import constants
-from backend.app.core.security import current_user, roles_required
-from backend.app.schemas import schedule_schema
-from backend.app.services import schedule_service
+from backend.app.config import constants
+from backend.app.middlewares.auth_middleware import roles_required
+
 
 schedule_bp = Blueprint('schedule', __name__)
 
@@ -26,8 +26,7 @@ def doctor_schedules(doctor_profile_id):
       404:
         description: Không tìm thấy bác sĩ
     """
-    query = schedule_schema.parse_list_query(request.args)
-    return jsonify(schedule_service.list_doctor_public(doctor_profile_id, query))
+    return controller.doctor_schedules(doctor_profile_id)
 
 
 @schedule_bp.get('/doctor/schedules')
@@ -47,8 +46,7 @@ def own_schedules():
       200:
         description: Danh sách ca
     """
-    return jsonify(schedule_service.list_own(
-        current_user(), schedule_schema.parse_list_query(request.args)))
+    return controller.own_schedules()
 
 
 @schedule_bp.get('/admin/schedules')
@@ -73,7 +71,7 @@ def admin_schedules():
       200:
         description: Danh sách ca
     """
-    return jsonify(schedule_service.list_schedules(schedule_schema.parse_list_query(request.args)))
+    return controller.admin_schedules()
 
 
 @schedule_bp.post('/admin/schedules')
@@ -105,8 +103,7 @@ def create_schedule():
       409:
         description: Trùng ca bác sĩ hoặc phòng
     """
-    fields = schedule_schema.validate_create(request.get_json(silent=True))
-    return jsonify(schedule_service.create_schedule(fields)), 201
+    return controller.create_schedule()
 
 
 @schedule_bp.patch('/admin/schedules/<int:schedule_id>')
@@ -138,8 +135,7 @@ def update_schedule(schedule_id):
       409:
         description: Vi phạm ràng buộc ca
     """
-    fields = schedule_schema.validate_update(request.get_json(silent=True))
-    return jsonify(schedule_service.update_schedule(schedule_id, fields))
+    return controller.update_schedule(schedule_id)
 
 
 @schedule_bp.post('/doctor/schedules/<int:schedule_id>/unavailability')
@@ -167,5 +163,4 @@ def report_unavailable(schedule_id):
       404:
         description: Không phải ca của bạn
     """
-    data = schedule_schema.validate_unavailability(request.get_json(silent=True))
-    return jsonify(schedule_service.report_unavailable(current_user(), schedule_id, data['reason']))
+    return controller.report_unavailable(schedule_id)

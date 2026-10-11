@@ -1,13 +1,11 @@
 """Route hồ sơ bệnh nhân."""
-from flask import Blueprint, jsonify, request
+from backend.app.controllers import patient_controller as controller
+from flask import Blueprint
 
-from backend.app.core.security import current_user, login_required
-from backend.app.schemas import patient_schema
-from backend.app.schemas.common_schema import page_params
-from backend.app.services import patient_service
+from backend.app.middlewares.auth_middleware import login_required
+
 
 patient_bp = Blueprint('patient', __name__, url_prefix='/patients')
-
 
 
 @patient_bp.get('')
@@ -28,8 +26,7 @@ def list_patients():
       200:
         description: Danh sách hồ sơ
     """
-    return jsonify(patient_service.list_patients(current_user(),
-                                                 patient_schema.parse_list_query(request.args)))
+    return controller.list_patients()
 
 
 @patient_bp.post('')
@@ -62,10 +59,7 @@ def create_patient():
       201:
         description: Đã tạo
     """
-    actor = current_user()
-    allow_user_id = actor['role_name'] in patient_service.STAFF_WRITE
-    fields = patient_schema.validate_create(request.get_json(silent=True), allow_user_id)
-    return jsonify(patient_service.create_patient(actor, fields)), 201
+    return controller.create_patient()
 
 
 @patient_bp.get('/<int:patient_id>')
@@ -85,7 +79,7 @@ def get_patient(patient_id):
       404:
         description: Không tìm thấy hoặc không có quyền xem
     """
-    return jsonify(patient_service.get_patient(current_user(), patient_id))
+    return controller.get_patient(patient_id)
 
 
 @patient_bp.patch('/<int:patient_id>')
@@ -119,8 +113,7 @@ def update_patient(patient_id):
       409:
         description: Hồ sơ đã lưu trữ
     """
-    fields = patient_schema.validate_update(request.get_json(silent=True))
-    return jsonify(patient_service.update_patient(current_user(), patient_id, fields))
+    return controller.update_patient(patient_id)
 
 
 @patient_bp.post('/<int:patient_id>/archive')
@@ -140,7 +133,7 @@ def archive_patient(patient_id):
       409:
         description: Đã lưu trữ trước đó
     """
-    return jsonify(patient_service.archive_patient(current_user(), patient_id))
+    return controller.archive_patient(patient_id)
 
 
 @patient_bp.get('/<int:patient_id>/encounters')
@@ -160,5 +153,4 @@ def list_encounters(patient_id):
       200:
         description: Danh sách lượt khám
     """
-    page, page_size = page_params(request.args)
-    return jsonify(patient_service.list_encounters(current_user(), patient_id, page, page_size))
+    return controller.list_encounters(patient_id)

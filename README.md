@@ -1,8 +1,9 @@
 # Đăng ký và đặt lịch khám bệnh
 
 Backend Flask + Gunicorn và PostgreSQL 17 chạy bằng Docker Compose.
-Hiện có 20 bảng, dữ liệu mẫu và endpoint `/health`; chưa có giao diện hoặc API
-nghiệp vụ hoàn chỉnh.
+Backend được tổ chức theo các tầng `config`, `routes`, `controllers`, `services`,
+`repositories`, `models`, `validators`, `middlewares`, `utils`.
+Xem [cấu trúc và trách nhiệm từng tầng](docs/CAU_TRUC_BACKEND.md).
 
 ## Chạy dự án
 

@@ -1,15 +1,11 @@
 """Route xác thực: đăng ký, đăng nhập, quên mật khẩu/OTP, xác minh email."""
-from flask import Blueprint, jsonify, request
+from backend.app.controllers import auth_controller as controller
+from flask import Blueprint
 
-from backend.app.core.security import current_user, login_required
-from backend.app.schemas import auth_schema
-from backend.app.services import auth_service
+from backend.app.middlewares.auth_middleware import login_required
+
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
-
-
-def _body():
-    return request.get_json(silent=True)
 
 
 @auth_bp.post('/register')
@@ -38,8 +34,7 @@ def register():
       409:
         description: Email hoặc số điện thoại đã tồn tại
     """
-    data = auth_schema.validate_register(_body())
-    return jsonify(auth_service.register(data)), 201
+    return controller.register()
 
 
 @auth_bp.post('/login')
@@ -66,8 +61,7 @@ def login():
       403:
         description: Tài khoản bị khóa hoặc chưa được duyệt
     """
-    data = auth_schema.validate_login(_body())
-    return jsonify(auth_service.login(data))
+    return controller.login()
 
 
 @auth_bp.post('/logout')
@@ -85,7 +79,7 @@ def logout():
       401:
         description: Chưa đăng nhập
     """
-    return jsonify(auth_service.logout())
+    return controller.logout()
 
 
 @auth_bp.post('/forgot-password')
@@ -107,8 +101,7 @@ def forgot_password():
       200:
         description: Luôn trả cùng một thông báo (OTP nằm trong log khi DEMO_MODE=1)
     """
-    data = auth_schema.validate_forgot_password(_body())
-    return jsonify(auth_service.forgot_password(data))
+    return controller.forgot_password()
 
 
 @auth_bp.post('/verify-otp')
@@ -133,8 +126,7 @@ def verify_otp():
       400:
         description: OTP sai, hết hạn hoặc đã dùng
     """
-    data = auth_schema.validate_verify_otp(_body())
-    return jsonify(auth_service.verify_otp(data))
+    return controller.verify_otp()
 
 
 @auth_bp.post('/reset-password')
@@ -159,8 +151,7 @@ def reset_password():
       400:
         description: Token không hợp lệ hoặc đã hết hạn
     """
-    data = auth_schema.validate_reset_password(_body())
-    return jsonify(auth_service.reset_password(data))
+    return controller.reset_password()
 
 
 @auth_bp.post('/email-verification/request')
@@ -178,7 +169,7 @@ def email_verification_request():
       409:
         description: Email đã được xác minh
     """
-    return jsonify(auth_service.request_email_verification(current_user()))
+    return controller.email_verification_request()
 
 
 @auth_bp.post('/email-verification/confirm')
@@ -202,5 +193,4 @@ def email_verification_confirm():
       400:
         description: Mã không hợp lệ hoặc đã hết hạn
     """
-    data = auth_schema.validate_email_confirm(_body())
-    return jsonify(auth_service.confirm_email_verification(data))
+    return controller.email_verification_confirm()

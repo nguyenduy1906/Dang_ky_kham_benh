@@ -46,7 +46,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    command: ["python", "-m", "backend.app.jobs.encounter_jobs"]
+    command: ["python", "-m", "backend.app.utils.worker"]
     env_file:
       - ./backend/.env
     environment:

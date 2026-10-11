@@ -5,16 +5,16 @@ from pathlib import Path
 from unittest.mock import patch
 
 from backend.tests import test_postgres
-from backend.app.core.security import create_access_token
-from backend.app.db.database import get_db_connection
+from backend.app.utils.security import create_access_token
+from backend.app.config.database import get_db_connection
 from backend.app.main import create_app
-from backend.app.models import user_model
+from backend.app.repositories import user_repository
 from backend.app.services import nurse_assignment_service
 
 
 @unittest.skipUnless(os.environ.get('RUN_POSTGRES_TESTS') == '1', 'Set RUN_POSTGRES_TESTS=1 with PostgreSQL available')
 class NurseAssignmentTests(unittest.TestCase):
-    drop_schema = test_postgres.PostgresTests.drop_schema
+    drop_validator = test_postgres.PostgresTests.drop_validator
 
     def setUp(self):
         test_postgres.PostgresTests.setUp(self)
@@ -26,7 +26,7 @@ class NurseAssignmentTests(unittest.TestCase):
             for role in ('ADMIN', 'NURSE', 'USER'):
                 row = db.execute('SELECT user_id FROM users u JOIN role r ON r.role_id=u.role_id '
                                  'WHERE r.role_name=%s ORDER BY user_id LIMIT 1', (role,)).fetchone()
-                self.actors[role] = user_model.get_user_by_id(db, row['user_id'])
+                self.actors[role] = user_repository.get_user_by_id(db, row['user_id'])
             self.schedule_id = db.execute('SELECT schedule_id FROM work_schedule LIMIT 1').fetchone()['schedule_id']
         self.secret = patch.dict(os.environ, {'SECRET_KEY': 'nurse-assignment-test-only'})
         self.secret.start()
@@ -77,7 +77,7 @@ class NurseAssignmentTests(unittest.TestCase):
                                "SELECT role_id, 'Other nurse', password_hash, approval_status, account_status "
                                'FROM users WHERE user_id=%s RETURNING user_id',
                                (self.actors['NURSE']['user_id'],)).fetchone()
-            other_user = user_model.get_user_by_id(db, other['user_id'])
+            other_user = user_repository.get_user_by_id(db, other['user_id'])
         headers = {'Authorization': 'Bearer ' + create_access_token(other_user)}
         self.assertEqual(self.client.get('/nurse/assignments', headers=headers).json['total'], 0)
         # Swagger xuất được cả bốn API.

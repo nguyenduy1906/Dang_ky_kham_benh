@@ -1,12 +1,12 @@
-from backend.app.core.errors import not_found
-from backend.app.db.database import get_db_connection
-from backend.app.models import notification_model as model
-from backend.app.models._sql import jsonable
+from backend.app.repositories import notification_repository as queries
+from backend.app.utils.errors import not_found
+from backend.app.config.database import get_db_connection
+from backend.app.repositories import notification_repository as model
+from backend.app.utils.serialization import jsonable
 
 
 def notify_encounter(db, encounter_id, event_key, kind, title, content):
-    owner = db.execute('SELECT p.user_id FROM encounter e JOIN patient p ON p.patient_id=e.patient_id '
-                       'WHERE e.encounter_id=%s', (encounter_id,)).fetchone()
+    owner = queries.get_encounter_owner(db, encounter_id)
     if owner and owner['user_id'] is not None:
         return model.create_once(db, owner['user_id'], event_key, kind, title, content, encounter_id)
 
@@ -35,15 +35,13 @@ def public(row):
 
 def unread_count(actor):
     with get_db_connection() as db:
-        count = db.execute('SELECT COUNT(*) AS n FROM notification WHERE user_id=%s AND is_read=0',
-                           (actor['user_id'],)).fetchone()['n']
+        count = queries.count_unread(db, actor)['n']
     return {'unread_count': count}
 
 
 def mark_read(actor, notification_id):
     with get_db_connection() as db:
-        row = db.execute('UPDATE notification SET is_read=1 WHERE notification_id=%s AND user_id=%s RETURNING *',
-                         (notification_id, actor['user_id'])).fetchone()
+        row = queries.mark_read(db, actor, notification_id)
         if row is None:
             raise not_found('Không tìm thấy thông báo', 'NOTIFICATION_NOT_FOUND')
     return {'notification': public(row)}
@@ -51,6 +49,5 @@ def mark_read(actor, notification_id):
 
 def read_all(actor):
     with get_db_connection() as db:
-        count = db.execute('UPDATE notification SET is_read=1 WHERE user_id=%s AND is_read=0',
-                           (actor['user_id'],)).rowcount
+        count = queries.mark_all_read(db, actor)
     return {'updated_count': count}

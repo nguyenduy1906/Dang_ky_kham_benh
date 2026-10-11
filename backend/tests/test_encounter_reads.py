@@ -2,15 +2,15 @@ import os
 import unittest
 
 from backend.tests import test_nurse_assignment
-from backend.app.core.security import create_access_token
-from backend.app.db.database import get_db_connection
-from backend.app.models import user_model
+from backend.app.utils.security import create_access_token
+from backend.app.config.database import get_db_connection
+from backend.app.repositories import user_repository
 
 
 @unittest.skipUnless(os.environ.get('RUN_POSTGRES_TESTS') == '1', 'Set RUN_POSTGRES_TESTS=1 with PostgreSQL available')
 class EncounterReadTests(unittest.TestCase):
     setUp = test_nurse_assignment.NurseAssignmentTests.setUp
-    drop_schema = test_nurse_assignment.NurseAssignmentTests.drop_schema
+    drop_validator = test_nurse_assignment.NurseAssignmentTests.drop_validator
     headers = test_nurse_assignment.NurseAssignmentTests.headers
 
     def test_reads_enforce_resource_permissions_and_pagination(self):
@@ -29,7 +29,7 @@ class EncounterReadTests(unittest.TestCase):
         self.assertEqual(self.client.get('/encounters/1/transfer-history', headers=owner).status_code, 200)
         with get_db_connection() as db:
             doctor_id = db.execute('SELECT user_id FROM doctor_profile WHERE doctor_profile_id=1').fetchone()['user_id']
-            doctor = user_model.get_user_by_id(db, doctor_id)
+            doctor = user_repository.get_user_by_id(db, doctor_id)
         doctor_headers = {'Authorization': 'Bearer ' + create_access_token(doctor)}
         self.assertEqual(self.client.get('/encounters/1', headers=doctor_headers).status_code, 200)
         self.assertEqual(self.client.get('/encounters/2', headers=doctor_headers).status_code, 404)

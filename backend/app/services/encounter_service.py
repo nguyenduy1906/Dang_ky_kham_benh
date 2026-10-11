@@ -1,11 +1,13 @@
 """Đầu mối gói 3 cho quyền truy cập và transaction lượt khám."""
+from backend.app.services import encounter_log_service
+from backend.app.repositories import encounter_repository as queries
 from datetime import datetime, timedelta, timezone
 
-from backend.app.core.errors import conflict, forbidden, not_found
-from backend.app.core.utils import VN_TZ
-from backend.app.db.database import get_db_connection
-from backend.app.models import encounter_model as model, encounter_log_model as logs
-from backend.app.models._sql import jsonable
+from backend.app.utils.errors import conflict, forbidden, not_found
+from backend.app.utils.datetime_utils import VN_TZ
+from backend.app.config.database import get_db_connection
+from backend.app.repositories import encounter_repository as model, encounter_log_repository as logs
+from backend.app.utils.serialization import jsonable
 
 
 def _visible(db, actor, encounter_id):
@@ -49,8 +51,7 @@ def locked_context(db, encounter_id, *, target_schedule_id=None):
     Nếu lượt khám vừa được chuyển ca giữa peek và lock, yêu cầu phải thử lại;
     không tiếp tục với ca cũ và không đảo thứ tự khóa gây deadlock.
     """
-    peek = db.execute('SELECT schedule_id FROM encounter WHERE encounter_id=%s',
-                      (encounter_id,)).fetchone()
+    peek = queries.get_schedule_reference(db, encounter_id)
     if peek is None:
         raise not_found('Không tìm thấy lượt khám', 'ENCOUNTER_NOT_FOUND')
     ids = [peek['schedule_id']]
@@ -80,16 +81,12 @@ def schedule_bounds(schedule):
 
 
 def _active_doctor(db, schedule):
-    row = db.execute('SELECT d.*, u.account_status,u.approval_status,u.deleted_at,r.role_name '
-                     'FROM doctor_profile d JOIN users u ON u.user_id=d.user_id '
-                     'JOIN role r ON r.role_id=u.role_id JOIN department dep ON dep.department_id=d.department_id '
-                     'WHERE d.doctor_profile_id=%s AND dep.is_active=1',
-                     (schedule['doctor_profile_id'],)).fetchone()
+    row = queries.get_booking_doctor(db, schedule)
     if (row is None or not row['is_active'] or row['deleted_at'] is not None
             or row['role_name'] != 'DOCTOR' or row['account_status'] != 'ACTIVE'
             or row['approval_status'] != 'APPROVED'):
         raise conflict('Bác sĩ không còn tiếp nhận', 'DOCTOR_UNAVAILABLE')
-    room = db.execute('SELECT is_active FROM room WHERE room_id=%s', (schedule['room_id'],)).fetchone()
+    room = queries.get_booking_room(db, schedule)
     if room is None or not room['is_active']:
         raise conflict('Phòng không còn hoạt động', 'ROOM_UNAVAILABLE')
     return row
@@ -102,8 +99,7 @@ def _change_quota(db, schedule, delta):
     status = schedule['schedule_status']
     if status in ('OPEN', 'FULL'):
         status = 'FULL' if booked >= schedule['max_quota'] else 'OPEN'
-    db.execute('UPDATE work_schedule SET booked_count=%s,schedule_status=%s WHERE schedule_id=%s',
-               (booked, status, schedule['schedule_id']))
+    queries.update_schedule_quota(db, booked, schedule, status)
     schedule['booked_count'], schedule['schedule_status'] = booked, status
 
 
@@ -120,7 +116,7 @@ def _require_available(schedule, now, *, online=False):
 
 
 def _patient_for_booking(db, patient_id, actor, *, online):
-    patient = db.execute('SELECT * FROM patient WHERE patient_id=%s FOR UPDATE', (patient_id,)).fetchone()
+    patient = queries.lock_booking_patient(db, patient_id)
     if patient is None or (online and patient['user_id'] != actor['user_id']):
         raise not_found('Không tìm thấy hồ sơ bệnh nhân', 'PATIENT_NOT_FOUND')
     if patient['archived_at'] is not None:
@@ -129,10 +125,7 @@ def _patient_for_booking(db, patient_id, actor, *, online):
 
 
 def _reject_duplicate(db, patient_id, doctor_id, work_date):
-    duplicate = db.execute('SELECT e.encounter_id FROM encounter e JOIN work_schedule s ON s.schedule_id=e.schedule_id '
-                           "WHERE e.patient_id=%s AND e.doctor_profile_id=%s AND s.work_date=%s "
-                           "AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS') LIMIT 1",
-                           (patient_id, doctor_id, work_date)).fetchone()
+    duplicate = queries.find_duplicate_booking(db, doctor_id, patient_id, work_date)
     if duplicate:
         raise conflict('Bệnh nhân đã có lượt khám với bác sĩ trong ngày; dùng lượt khám hiện có',
                        'DUPLICATE_ENCOUNTER')
@@ -159,7 +152,7 @@ def create_online(actor, fields):
             'deposit_amount_snapshot': doctor['consultation_fee'],
             'estimated_exam_at': start, 'hold_expires_at': now + timedelta(minutes=10)})
         _change_quota(db, schedule, 1)
-        logs.add_status(db, row['encounter_id'], None, 'HOLDING', actor['user_id'], 'Giữ chỗ online 10 phút')
+        encounter_log_service.add_status(db, row['encounter_id'], None, 'HOLDING', actor['user_id'], 'Giữ chỗ online 10 phút')
         result = _present(_visible(db, actor, row['encounter_id']))
     return {'encounter': result}
 
@@ -173,8 +166,7 @@ def confirm_paid_online(db, encounter_id, actor_id):
     encounter, schedules = locked_context(db, encounter_id)
     if encounter['encounter_type'] != 'ONLINE':
         raise conflict('Chỉ xác nhận lượt online', 'NOT_ONLINE')
-    paid = db.execute("SELECT SUM(amount) AS amount FROM payment WHERE encounter_id=%s "
-                      "AND payment_type='DEPOSIT' AND transaction_status='SUCCESS'", (encounter_id,)).fetchone()['amount']
+    paid = queries.sum_successful_deposits(db, encounter_id)['amount']
     if paid is None or paid != encounter['deposit_amount_snapshot']:
         raise conflict('Chưa thanh toán đủ tiền đăng ký khám đã chốt', 'DEPOSIT_NOT_PAID')
     if encounter['encounter_status'] in ('CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED'):
@@ -189,7 +181,7 @@ def confirm_paid_online(db, encounter_id, actor_id):
         raise conflict('Ca đã đóng hoặc báo nghỉ; cần điều phối lượt khám', 'SCHEDULE_UNAVAILABLE')
     queue = model.next_queue_number(db, schedule['schedule_id'])
     model.update_encounter(db, encounter_id, {'encounter_status': 'CONFIRMED', 'queue_number': queue})
-    logs.add_status(db, encounter_id, 'HOLDING', 'CONFIRMED', actor_id, 'Đã thanh toán đủ tiền; cấp số ' + str(queue))
+    encounter_log_service.add_status(db, encounter_id, 'HOLDING', 'CONFIRMED', actor_id, 'Đã thanh toán đủ tiền; cấp số ' + str(queue))
     return True
 
 
@@ -197,10 +189,10 @@ def expire_locked(db, encounter, schedule, actor_id):
     if encounter['encounter_status'] != 'HOLDING' or utc_now() < encounter['hold_expires_at']:
         return False
     model.update_encounter(db, encounter['encounter_id'], {'encounter_status': 'EXPIRED'})
-    from backend.app.models.payment_model import fail_pending_deposits
+    from backend.app.repositories.payment_repository import fail_pending_deposits
     fail_pending_deposits(db, encounter['encounter_id'], 'HOLD_EXPIRED')
     _change_quota(db, schedule, -1)
-    logs.add_status(db, encounter['encounter_id'], 'HOLDING', 'EXPIRED', actor_id, 'Hết hạn giữ chỗ')
+    encounter_log_service.add_status(db, encounter['encounter_id'], 'HOLDING', 'EXPIRED', actor_id, 'Hết hạn giữ chỗ')
     return True
 
 
@@ -212,9 +204,9 @@ def cancel_hospital_locked(db, encounter, schedule, actor_id, reason):
         'cancelled_by_id': actor_id, 'cancelled_at': utc_now(), 'cancel_reason': reason,
         'cancel_origin': 'HOSPITAL', 'refund_reference_at': encounter['estimated_exam_at']})
     _change_quota(db, schedule, -1)
-    from backend.app.models.payment_model import fail_pending_deposits
+    from backend.app.repositories.payment_repository import fail_pending_deposits
     fail_pending_deposits(db, encounter['encounter_id'], 'HOSPITAL_CANCELLED')
-    logs.add_status(db, encounter['encounter_id'], 'HOLDING', 'CANCELLED', actor_id, reason)
+    encounter_log_service.add_status(db, encounter['encounter_id'], 'HOLDING', 'CANCELLED', actor_id, reason)
 
 
 def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIENT'):
@@ -262,9 +254,9 @@ def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIEN
                 raise conflict('Ca chưa bắt đầu hoặc không hoạt động', 'SCHEDULE_UNAVAILABLE')
         model.update_encounter(db, encounter_id, fields)
         if operation == 'cancel':
-            from backend.app.models.payment_model import fail_pending_deposits
+            from backend.app.repositories.payment_repository import fail_pending_deposits
             fail_pending_deposits(db, encounter_id, 'ENCOUNTER_CANCELLED')
-        logs.add_status(db, encounter_id, status, terminal, actor['user_id'], reason or operation)
+        encounter_log_service.add_status(db, encounter_id, status, terminal, actor['user_id'], reason or operation)
         result = _present(_visible(db, actor, encounter_id))
     return {'encounter': result}
 
@@ -282,8 +274,8 @@ def complete_with_medical_record(db, actor, encounter_id):
         return {'encounter': _present(_visible(db, actor, encounter_id))}
     if encounter['encounter_status'] != 'IN_PROGRESS':
         raise conflict('Chỉ hoàn tất lượt đang khám', 'INVALID_ENCOUNTER_STATUS')
-    if db.execute('SELECT 1 FROM medical_record WHERE encounter_id=%s', (encounter_id,)).fetchone() is None:
+    if queries.find_medical_record(db, encounter_id) is None:
         raise conflict('Cần lưu bệnh án trước khi hoàn tất', 'MEDICAL_RECORD_REQUIRED')
     model.update_encounter(db, encounter_id, {'encounter_status': 'COMPLETED'})
-    logs.add_status(db, encounter_id, 'IN_PROGRESS', 'COMPLETED', actor['user_id'], 'Hoàn tất khám và lưu bệnh án')
+    encounter_log_service.add_status(db, encounter_id, 'IN_PROGRESS', 'COMPLETED', actor['user_id'], 'Hoàn tất khám và lưu bệnh án')
     return {'encounter': _present(_visible(db, actor, encounter_id))}

@@ -1,8 +1,9 @@
-from backend.app.core.errors import not_found
-from backend.app.db.database import get_db_connection
-from backend.app.models import configuration_model as model
-from backend.app.models._sql import jsonable
-from backend.app.schemas.configuration_schema import FIXED, EDITABLE, validate_configuration
+from backend.app.repositories import configuration_repository as queries
+from backend.app.utils.errors import not_found
+from backend.app.config.database import get_db_connection
+from backend.app.repositories import configuration_repository as model
+from backend.app.utils.serialization import jsonable
+from backend.app.validators.configuration_validator import FIXED, EDITABLE, validate_configuration
 from backend.app.services.encounter_service import require_role
 
 
@@ -14,8 +15,8 @@ def _present(row):
 def listing(actor, page, size):
     require_role(actor, 'ADMIN')
     with get_db_connection() as db:
-        total = db.execute('SELECT COUNT(*) n FROM system_configuration').fetchone()['n']
-        rows = db.execute('SELECT * FROM system_configuration ORDER BY config_key LIMIT %s OFFSET %s', (size, (page - 1) * size)).fetchall()
+        total = queries.count_configurations(db)['n']
+        rows = queries.list_configurations(db, page, size)
     return {'items': [_present(r) for r in rows], 'total': total, 'page': page, 'page_size': size}
 
 
@@ -25,5 +26,18 @@ def update(actor, key, value):
     with get_db_connection() as db:
         if model.get(db, key, lock=True) is None:
             raise not_found('Không tìm thấy khóa cấu hình', 'CONFIGURATION_NOT_FOUND')
-        row = db.execute('UPDATE system_configuration SET config_value=%s WHERE config_key=%s RETURNING *', (value, key)).fetchone()
+        row = queries.update_value(db, key, value)
     return {'configuration': _present(row)}
+
+
+def reminder_hours(db):
+    row = model.get(db, 'REMINDER_BEFORE_HOURS')
+    value = int(row['config_value']) if row else 24
+    if not 1 <= value <= 168:
+        raise RuntimeError('REMINDER_BEFORE_HOURS phải từ 1 đến 168')
+    return value
+
+
+def walk_in_allowed(db):
+    row = model.get(db, 'ALLOW_WALK_IN')
+    return row is None or row['config_value'].lower() == 'true'

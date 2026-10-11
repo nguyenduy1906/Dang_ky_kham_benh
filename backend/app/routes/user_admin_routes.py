@@ -1,16 +1,12 @@
 """Route hồ sơ cá nhân (/me) và quản trị người dùng (/admin)."""
-from flask import Blueprint, jsonify, request
+from backend.app.controllers import user_admin_controller as controller
+from flask import Blueprint
 
-from backend.app.core import constants
-from backend.app.core.security import current_user, login_required, roles_required
-from backend.app.schemas import auth_schema, user_admin_schema
-from backend.app.services import user_admin_service
+from backend.app.config import constants
+from backend.app.middlewares.auth_middleware import login_required, roles_required
+
 
 user_admin_bp = Blueprint('user_admin', __name__)
-
-
-def _body():
-    return request.get_json(silent=True)
 
 
 @user_admin_bp.get('/me')
@@ -28,7 +24,7 @@ def get_me():
       401:
         description: Chưa đăng nhập
     """
-    return jsonify(user_admin_service.get_me(current_user()))
+    return controller.get_me()
 
 
 @user_admin_bp.patch('/me')
@@ -56,8 +52,7 @@ def update_me():
       409:
         description: Email hoặc số điện thoại đã tồn tại
     """
-    fields = auth_schema.validate_update_me(_body())
-    return jsonify(user_admin_service.update_me(current_user(), fields))
+    return controller.update_me()
 
 
 @user_admin_bp.post('/me/change-password')
@@ -85,8 +80,7 @@ def change_password():
       400:
         description: Mật khẩu hiện tại sai hoặc mật khẩu mới không hợp lệ
     """
-    data = auth_schema.validate_change_password(_body())
-    return jsonify(user_admin_service.change_password(current_user(), data))
+    return controller.change_password()
 
 
 @user_admin_bp.get('/admin/roles')
@@ -104,7 +98,7 @@ def admin_roles():
       403:
         description: Không phải ADMIN
     """
-    return jsonify(user_admin_service.list_roles())
+    return controller.admin_roles()
 
 
 @user_admin_bp.get('/admin/users')
@@ -128,8 +122,7 @@ def admin_list_users():
       200:
         description: Danh sách người dùng
     """
-    return jsonify(user_admin_service.list_users(
-        user_admin_schema.parse_list_query(request.args)))
+    return controller.admin_list_users()
 
 
 @user_admin_bp.post('/admin/users')
@@ -162,8 +155,7 @@ def admin_create_user():
       409:
         description: Trùng email hoặc số điện thoại
     """
-    data = user_admin_schema.validate_admin_create(_body())
-    return jsonify(user_admin_service.create_user(data)), 201
+    return controller.admin_create_user()
 
 
 @user_admin_bp.get('/admin/users/<int:user_id>')
@@ -183,7 +175,7 @@ def admin_get_user(user_id):
       404:
         description: Không tìm thấy
     """
-    return jsonify(user_admin_service.get_user(user_id))
+    return controller.admin_get_user(user_id)
 
 
 @user_admin_bp.patch('/admin/users/<int:user_id>')
@@ -214,8 +206,7 @@ def admin_update_user(user_id):
       403:
         description: Không được tự đổi vai trò hoặc trạng thái duyệt của mình
     """
-    fields = user_admin_schema.validate_admin_update(_body())
-    return jsonify(user_admin_service.update_user(current_user(), user_id, fields))
+    return controller.admin_update_user(user_id)
 
 
 @user_admin_bp.patch('/admin/users/<int:user_id>/account-status')
@@ -241,8 +232,7 @@ def admin_account_status(user_id):
       200:
         description: Đã cập nhật
     """
-    status = user_admin_schema.validate_account_status(_body())
-    return jsonify(user_admin_service.set_account_status(current_user(), user_id, status))
+    return controller.admin_account_status(user_id)
 
 
 @user_admin_bp.delete('/admin/users/<int:user_id>')
@@ -262,4 +252,4 @@ def admin_delete_user(user_id):
       404:
         description: Không tìm thấy
     """
-    return jsonify(user_admin_service.delete_user(current_user(), user_id))
+    return controller.admin_delete_user(user_id)

@@ -1,8 +1,9 @@
+from backend.app.repositories import article_repository as queries
 from psycopg import errors as pg_errors
-from backend.app.core.errors import conflict, not_found
-from backend.app.db.database import get_db_connection
-from backend.app.models import article_model as model
-from backend.app.models._sql import jsonable
+from backend.app.utils.errors import conflict, not_found
+from backend.app.config.database import get_db_connection
+from backend.app.repositories import article_repository as model
+from backend.app.utils.serialization import jsonable
 from backend.app.services import encounter_service as encounters
 
 
@@ -24,7 +25,7 @@ def listing(query, actor=None):
 
 def detail(slug):
     with get_db_connection() as db:
-        row = db.execute(model.SELECT + ' WHERE a.slug=%s AND a.is_active=1 AND a.published_at<=CURRENT_TIMESTAMP', (slug,)).fetchone()
+        row = queries.get_published_by_slug(db, slug)
         if row is None: raise not_found('Không tìm thấy bài viết', 'ARTICLE_NOT_FOUND')
     return {'article': _public(row)}
 
@@ -45,7 +46,7 @@ def create(actor, fields):
 def update(actor, article_id, fields):
     encounters.require_role(actor, 'ADMIN')
     with get_db_connection() as db:
-        existing = db.execute('SELECT * FROM article WHERE article_id=%s FOR UPDATE', (article_id,)).fetchone()
+        existing = queries.lock_article(db, article_id)
         if existing is None: raise not_found('Không tìm thấy bài viết', 'ARTICLE_NOT_FOUND')
         if fields.get('is_active') == 1 and existing['published_at'] is None and 'published_at' not in fields:
             fields = {**fields, 'published_at': encounters.utc_now()}

@@ -1,10 +1,11 @@
+from backend.app.repositories import nurse_assignment_repository as queries
 from psycopg import errors as pg_errors
 
-from backend.app.core import constants
-from backend.app.core.errors import bad_request, conflict, not_found
-from backend.app.db.database import get_db_connection
-from backend.app.models import nurse_assignment_model as model, schedule_model
-from backend.app.models._sql import jsonable
+from backend.app.config import constants
+from backend.app.utils.errors import bad_request, conflict, not_found
+from backend.app.config.database import get_db_connection
+from backend.app.repositories import nurse_assignment_repository as model, schedule_repository
+from backend.app.utils.serialization import jsonable
 
 
 def list_assignments(query, nurse_id=None):
@@ -20,8 +21,7 @@ def list_assignments(query, nurse_id=None):
 def create_assignment(actor, fields):
     with get_db_connection() as db:
         # Khóa tài khoản để vai trò/trạng thái không đổi trong lúc phân công.
-        nurse = db.execute('SELECT u.*, r.role_name FROM users u JOIN role r ON r.role_id = u.role_id '
-                           'WHERE u.user_id = %s FOR UPDATE OF u', (fields['nurse_id'],)).fetchone()
+        nurse = queries.lock_nurse_account(db, fields)
         if nurse is None or nurse['deleted_at'] is not None:
             raise not_found('Không tìm thấy tài khoản y tá', 'NURSE_NOT_FOUND')
         if nurse['role_name'] != constants.ROLE_NURSE:
@@ -29,7 +29,7 @@ def create_assignment(actor, fields):
         if (nurse['account_status'] != constants.ACCOUNT_ACTIVE
                 or nurse['approval_status'] != constants.APPROVAL_APPROVED):
             raise bad_request('Tài khoản y tá chưa được duyệt hoặc bị khóa', 'NURSE_INACTIVE')
-        if schedule_model.get_for_update(db, fields['schedule_id']) is None:
+        if schedule_repository.get_for_update(db, fields['schedule_id']) is None:
             raise not_found('Không tìm thấy ca làm việc', 'SCHEDULE_NOT_FOUND')
         try:
             assignment_id = model.create_assignment(db, actor['user_id'], fields)

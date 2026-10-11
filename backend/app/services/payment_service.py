@@ -1,12 +1,13 @@
 """Thanh toán mô phỏng; khóa ca → lượt khám → payment trong cùng transaction."""
+from backend.app.repositories import payment_repository as queries
 import os
 from datetime import timedelta
 from uuid import uuid4
 
-from backend.app.core.errors import conflict, not_found
-from backend.app.db.database import get_db_connection
-from backend.app.models import payment_model as model, encounter_model
-from backend.app.models._sql import jsonable
+from backend.app.utils.errors import conflict, not_found
+from backend.app.config.database import get_db_connection
+from backend.app.repositories import payment_repository as model, encounter_repository
+from backend.app.utils.serialization import jsonable
 from backend.app.services import encounter_service as encounters, notification_service as notifications
 
 
@@ -71,8 +72,7 @@ def create_intent(actor, encounter_id, fields):
                 raise conflict('Ca đã đóng/báo nghỉ, không nhận cọc', 'SCHEDULE_UNAVAILABLE')
             if model.paid_total(db, encounter_id, 'DEPOSIT'):
                 raise conflict('Đã có tiền cọc; không tạo giao dịch thu thêm', 'DEPOSIT_ALREADY_PAID')
-            pending = db.execute("SELECT * FROM payment WHERE encounter_id=%s AND payment_type='DEPOSIT' "
-                                 "AND transaction_status='PENDING' ORDER BY payment_id LIMIT 1 FOR UPDATE", (encounter_id,)).fetchone()
+            pending = queries.find_pending_deposit(db, encounter_id)
             if pending:
                 if pending['payment_method'] != fields['payment_method']:
                     raise conflict('Có phiên đang chờ với phương thức khác; xử lý phiên đó trước', 'PAYMENT_INTENT_EXISTS')
@@ -102,11 +102,9 @@ def collect_exam_fee(actor, encounter_id, fields):
         if remaining < 0:
             raise conflict('Tổng thu vượt giá đã chốt; cần đối soát', 'PAYMENT_TOTAL_CONFLICT')
         if remaining == 0:
-            last = db.execute("SELECT * FROM payment WHERE encounter_id=%s AND payment_type='EXAM_FEE' "
-                              "AND transaction_status='SUCCESS' ORDER BY payment_id DESC LIMIT 1", (encounter_id,)).fetchone()
+            last = queries.find_last_successful_exam_fee(db, encounter_id)
             return {'payment': jsonable(last), 'amount_due': 0, 'message': 'Đã thanh toán đủ giá khám đã chốt'}, False
-        pending = db.execute("SELECT 1 FROM payment WHERE encounter_id=%s AND payment_type='EXAM_FEE' "
-                             "AND transaction_status='PENDING'", (encounter_id,)).fetchone()
+        pending = queries.find_pending_exam_fee(db, encounter_id)
         if pending:
             raise conflict('Có phiên phí khám chưa xử lý; không thu lần hai', 'PAYMENT_INTENT_EXISTS')
         now = encounters.utc_now()
@@ -122,8 +120,7 @@ def collect_exam_fee(actor, encounter_id, fields):
 
 def _refund_amount(db, payment, actor_id, reason, amount):
     """Một giao dịch hoàn theo chính sách; không nhận số tiền từ client."""
-    existing = db.execute("SELECT * FROM payment WHERE original_payment_id=%s AND payment_type='REFUND'",
-                           (payment['payment_id'],)).fetchone()
+    existing = queries.find_refund_for_payment(db, payment)
     if existing:
         return existing
     if payment['payment_type'] == 'REFUND' or payment['transaction_status'] != 'SUCCESS':
@@ -136,8 +133,7 @@ def _refund_amount(db, payment, actor_id, reason, amount):
         'original_payment_id': payment['payment_id'], 'transaction_code': 'DEMO-REFUND-' + uuid4().hex,
         'paid_at': now, 'refunded_at': now, 'result_received_at': now, 'reason': reason,
         'created_by_id': actor_id, 'processed_by_id': actor_id})
-    db.execute("UPDATE payment SET transaction_status='REFUNDED',refunded_at=%s WHERE payment_id=%s",
-               (now, payment['payment_id']))
+    queries.mark_refunded(db, now, payment)
     notifications.notify_encounter(db, payment['encounter_id'], f'refund:{payment["payment_id"]}', 'REFUND',
                                    'Đã hoàn tiền giả lập', f'Hoàn {amount:,} đồng. Lý do: {reason}')
     return refund
@@ -147,7 +143,7 @@ def refund(actor, payment_id, reason):
     encounters.require_role(actor, 'ADMIN')
     with get_db_connection() as db:
         payment, encounter, _ = _locked_payment(db, actor, payment_id)
-        existing = db.execute("SELECT * FROM payment WHERE original_payment_id=%s AND payment_type='REFUND'", (payment_id,)).fetchone()
+        existing = queries.find_refund_for_id(db, payment_id)
         if existing:
             return _response(db, payment, actor, refund=existing)
         if payment['payment_type'] == 'REFUND' or payment['transaction_status'] != 'SUCCESS':
@@ -187,7 +183,7 @@ def demo_result(actor, payment_id, outcome):
         if status in ('SUCCESS', 'REFUNDED'):
             if outcome != 'SUCCESS':
                 raise conflict('Không đổi kết quả giao dịch đã xử lý', 'PAYMENT_RESULT_CONFLICT')
-            refunded = db.execute("SELECT * FROM payment WHERE original_payment_id=%s AND payment_type='REFUND'", (payment_id,)).fetchone()
+            refunded = queries.find_processed_refund(db, payment_id)
             return _response(db, payment, actor, refund=refunded)
         auto_failed = payment['failure_reason'] in ('HOLD_EXPIRED', 'ENCOUNTER_CANCELLED', 'HOSPITAL_CANCELLED')
         if status == 'FAILED' and (payment['result_received_at'] is not None or not auto_failed):
@@ -198,11 +194,9 @@ def demo_result(actor, payment_id, outcome):
         if encounter['encounter_status'] == 'HOLDING':
             expired = encounters.expire_locked(db, encounter, schedule, actor['user_id'])
             if expired:
-                encounter = encounter_model.lock_encounter(db, encounter['encounter_id'])
+                encounter = encounter_repository.lock_encounter(db, encounter['encounter_id'])
         if outcome == 'FAILED':
-            row = db.execute("UPDATE payment SET transaction_status='FAILED',result_received_at=%s,processed_by_id=%s,"
-                              "failure_reason=COALESCE(failure_reason,'DEMO_FAILED') WHERE payment_id=%s RETURNING *",
-                              (now, actor['user_id'], payment_id)).fetchone()
+            row = queries.mark_demo_failed(db, actor, now, payment_id)
             notifications.notify_encounter(db, encounter['encounter_id'], f'payment-failed:{payment_id}', 'PAYMENT',
                                            'Thanh toán giả lập thất bại', 'Có thể tạo phiên mới nếu giữ chỗ còn hiệu lực.')
             return _response(db, row, actor)
@@ -212,9 +206,8 @@ def demo_result(actor, payment_id, outcome):
             raise conflict('Lượt khám đã có cọc; không thu lần hai', 'DEPOSIT_ALREADY_PAID')
         if encounter['encounter_status'] == 'HOLDING' and schedule['schedule_status'] in ('CLOSED', 'UNAVAILABLE'):
             encounters.cancel_hospital_locked(db, encounter, schedule, actor['user_id'], 'Bệnh viện/bác sĩ ngừng tiếp nhận trước xác nhận cọc')
-            encounter = encounter_model.lock_encounter(db, encounter['encounter_id'])
-        row = db.execute("UPDATE payment SET transaction_status='SUCCESS',paid_at=%s,result_received_at=%s,processed_by_id=%s "
-                          'WHERE payment_id=%s RETURNING *', (now, now, actor['user_id'], payment_id)).fetchone()
+            encounter = encounter_repository.lock_encounter(db, encounter['encounter_id'])
+        row = queries.mark_demo_success(db, actor, now, payment_id)
         confirmed = encounters.confirm_paid_online(db, encounter['encounter_id'], actor['user_id'])
         refunded = None
         if not confirmed and row['amount'] > 0:

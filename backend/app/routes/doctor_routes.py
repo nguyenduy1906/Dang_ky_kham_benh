@@ -1,13 +1,13 @@
 """Route bác sĩ, hồ sơ bác sĩ và ảnh đại diện."""
+from backend.app.controllers import doctor_controller as controller
 
-from flask import Blueprint, jsonify, make_response, request, send_from_directory
+from flask import Blueprint
 
-from backend.app.core import constants, uploads
-from backend.app.core.errors import not_found
-from backend.app.core.security import current_user, is_admin, optional_user, roles_required
-from backend.app.schemas import doctor_schema
-from backend.app.schemas.common_schema import bool_arg, optional_int_arg, page_params
-from backend.app.services import doctor_service
+from backend.app.config import constants
+
+
+from backend.app.middlewares.auth_middleware import roles_required
+
 
 doctor_bp = Blueprint('doctor', __name__)
 
@@ -28,12 +28,7 @@ def list_doctors():
       200:
         description: Danh sách bác sĩ
     """
-    page, page_size = page_params(request.args)
-    query = {'department_id': optional_int_arg(request.args, 'department_id'),
-             'q': (request.args.get('q') or '').strip()[:100] or None,
-             'page': page, 'page_size': page_size}
-    include = bool_arg(request.args, 'include_inactive') and is_admin(optional_user())
-    return jsonify(doctor_service.list_doctors(query, include))
+    return controller.list_doctors()
 
 
 @doctor_bp.get('/doctors/<int:doctor_profile_id>')
@@ -50,7 +45,7 @@ def get_doctor(doctor_profile_id):
       404:
         description: Không tìm thấy
     """
-    return jsonify(doctor_service.get_doctor(doctor_profile_id, is_admin(optional_user())))
+    return controller.get_doctor(doctor_profile_id)
 
 
 @doctor_bp.post('/admin/doctors')
@@ -84,8 +79,7 @@ def create_doctor():
       409:
         description: Tài khoản đã có hồ sơ
     """
-    fields = doctor_schema.validate_admin_create(request.get_json(silent=True))
-    return jsonify(doctor_service.create_doctor(fields)), 201
+    return controller.create_doctor()
 
 
 @doctor_bp.patch('/admin/doctors/<int:doctor_profile_id>')
@@ -116,8 +110,7 @@ def update_doctor(doctor_profile_id):
       200:
         description: Đã cập nhật
     """
-    fields = doctor_schema.validate_admin_update(request.get_json(silent=True))
-    return jsonify(doctor_service.update_doctor(doctor_profile_id, fields))
+    return controller.update_doctor(doctor_profile_id)
 
 
 @doctor_bp.get('/doctor/profile')
@@ -135,7 +128,7 @@ def get_own_profile():
       404:
         description: Chưa có hồ sơ
     """
-    return jsonify(doctor_service.get_own_profile(current_user()))
+    return controller.get_own_profile()
 
 
 @doctor_bp.patch('/doctor/profile')
@@ -162,8 +155,7 @@ def update_own_profile():
       200:
         description: Đã cập nhật
     """
-    fields = doctor_schema.validate_self_update(request.get_json(silent=True))
-    return jsonify(doctor_service.update_own_profile(current_user(), fields))
+    return controller.update_own_profile()
 
 
 @doctor_bp.post('/doctor/profile/avatar')
@@ -185,7 +177,7 @@ def upload_avatar():
       400:
         description: File không hợp lệ hoặc quá lớn
     """
-    return jsonify(doctor_service.upload_avatar(current_user(), request.files.get('file')))
+    return controller.upload_avatar()
 
 
 @doctor_bp.get('/uploads/avatars/<filename>')
@@ -202,9 +194,4 @@ def get_avatar(filename):
       404:
         description: Không có ảnh
     """
-    if not uploads.FILENAME_RE.match(filename):
-        raise not_found('Không tìm thấy ảnh')
-    response = make_response(send_from_directory(uploads.avatar_dir(), filename))
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['Cache-Control'] = 'public, max-age=86400'
-    return response
+    return controller.get_avatar(filename)

@@ -1,7 +1,8 @@
-from backend.app.core.errors import conflict, not_found
-from backend.app.db.database import get_db_connection
-from backend.app.models import review_model as model, doctor_model
-from backend.app.models._sql import jsonable
+from backend.app.repositories import review_repository as queries
+from backend.app.utils.errors import conflict, not_found
+from backend.app.config.database import get_db_connection
+from backend.app.repositories import review_repository as model, doctor_repository
+from backend.app.utils.serialization import jsonable
 from backend.app.services import encounter_service as encounters
 
 
@@ -12,10 +13,10 @@ def create(actor, encounter_id, fields):
         encounters._visible(db, actor, encounter_id)
         if encounter['encounter_status'] != 'COMPLETED':
             raise conflict('Chỉ đánh giá lượt khám đã hoàn tất', 'ENCOUNTER_NOT_COMPLETED')
-        record = db.execute('SELECT record_id FROM medical_record WHERE encounter_id=%s FOR UPDATE', (encounter_id,)).fetchone()
+        record = queries.lock_review_record(db, encounter_id)
         if record is None:
             raise conflict('Lượt khám chưa có bệnh án', 'MEDICAL_RECORD_REQUIRED')
-        existing = db.execute('SELECT * FROM review WHERE record_id=%s', (record['record_id'],)).fetchone()
+        existing = queries.find_existing_review(db, record)
         if existing:
             if existing['rating'] == fields['rating'] and existing['comment'] == fields['comment']:
                 return {'review': jsonable(existing)}, False
@@ -26,7 +27,7 @@ def create(actor, encounter_id, fields):
 
 def list_public(doctor_id, page, size):
     with get_db_connection() as db:
-        doctor = doctor_model.get_by_id(db, doctor_id)
+        doctor = doctor_repository.get_by_id(db, doctor_id)
         if doctor is None or not doctor['is_active'] or not doctor['account_ok']:
             raise not_found('Không tìm thấy bác sĩ', 'DOCTOR_NOT_FOUND')
         rows, stats = model.list_public(db, doctor_id, page, size)

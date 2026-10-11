@@ -50,7 +50,7 @@ Các file ghi bên dưới là vị trí cần tạo, không có nghĩa file/API
 
 **File chính:** routes/auth_routes.py, routes/user_admin_routes.py;
 services/auth_service.py, user_admin_service.py; models/user_model.py,
-auth_token_model.py; schemas/auth_schema.py, user_admin_schema.py.
+auth_token_model.py; schemas/auth_validator.py, user_admin_validator.py.
 Các đường dẫn này nằm trong backend/app/.
 
 **Phần dùng chung do gói 1 tích hợp:** core/security.py, core/errors.py,
@@ -136,7 +136,7 @@ Kiểm thử dùng schema tạm và tự dọn; không cần thay schema chính 
 
 **File chính:** routes/encounter_routes.py, reception_routes.py;
 services/encounter_service.py, reception_service.py; models/encounter_model.py,
-encounter_log_model.py; schemas/encounter_schema.py, reception_schema.py;
+encounter_log_model.py; schemas/encounter_validator.py, reception_validator.py;
 jobs/encounter_jobs.py. Tất cả nằm trong backend/app/.
 
 **Luồng online:** HOLDING → thanh toán cọc giả lập → CONFIRMED → CHECKED_IN
@@ -171,7 +171,7 @@ Job nền chạy worker riêng, không tạo scheduler trong mỗi Gunicorn work
 
 **File chính:** routes/payment_routes.py, notification_routes.py;
 services/payment_service.py, notification_service.py; models/payment_model.py,
-notification_model.py; schemas/payment_schema.py, notification_schema.py;
+notification_model.py; schemas/payment_validator.py, notification_validator.py;
 jobs/payment_jobs.py nếu cần tác vụ mô phỏng. Dùng backend/app/.
 
 **Nghiệm thu:** server chốt tiền, lưu snapshot; deposit + EXAM_FEE phần còn lại

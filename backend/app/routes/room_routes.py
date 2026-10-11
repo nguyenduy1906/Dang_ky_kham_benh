@@ -1,11 +1,10 @@
 """Route phòng khám."""
-from flask import Blueprint, jsonify, request
+from backend.app.controllers import room_controller as controller
+from flask import Blueprint
 
-from backend.app.core import constants
-from backend.app.core.security import is_admin, optional_user, roles_required
-from backend.app.schemas import room_schema
-from backend.app.schemas.common_schema import bool_arg, optional_int_arg
-from backend.app.services import room_service
+from backend.app.config import constants
+from backend.app.middlewares.auth_middleware import roles_required
+
 
 room_bp = Blueprint('room', __name__)
 
@@ -23,8 +22,7 @@ def list_rooms():
       200:
         description: Danh sách phòng
     """
-    include = bool_arg(request.args, 'include_inactive') and is_admin(optional_user())
-    return jsonify(room_service.list_rooms(optional_int_arg(request.args, 'department_id'), include))
+    return controller.list_rooms()
 
 
 @room_bp.post('/admin/rooms')
@@ -54,8 +52,7 @@ def create_room():
       409:
         description: Trùng tên phòng trong chuyên khoa
     """
-    fields = room_schema.validate_create(request.get_json(silent=True))
-    return jsonify(room_service.create_room(fields)), 201
+    return controller.create_room()
 
 
 @room_bp.patch('/admin/rooms/<int:room_id>')
@@ -83,5 +80,4 @@ def update_room(room_id):
       200:
         description: Đã cập nhật
     """
-    fields = room_schema.validate_update(request.get_json(silent=True))
-    return jsonify(room_service.update_room(room_id, fields))
+    return controller.update_room(room_id)

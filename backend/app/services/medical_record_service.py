@@ -1,8 +1,16 @@
-from backend.app.core.errors import conflict, not_found
-from backend.app.db.database import get_db_connection
-from backend.app.models import medical_record_model as records, prescription_model as prescriptions
-from backend.app.models._sql import jsonable
+from backend.app.repositories import medical_record_repository as queries
+from backend.app.utils.errors import conflict, not_found
+from backend.app.config.database import get_db_connection
+from backend.app.repositories import medical_record_repository as records, prescription_repository as prescriptions
+from backend.app.utils.serialization import jsonable
 from backend.app.services import encounter_service as encounters
+
+
+def _append_revision(db, record_id, actor_id, reason, before, after):
+    # Snapshot trước/sau cả bệnh án và thuốc, khóa record do service sở hữu.
+    entry = {'actor_id': actor_id, 'reason': reason, 'changed_at': encounters.utc_now().isoformat(),
+             'before': jsonable(before), 'after': jsonable(after)}
+    records.append_revision(db, record_id, entry)
 
 
 def _read_access(db, actor, encounter_id):
@@ -58,20 +66,17 @@ def put_record(actor, encounter_id, fields):
         if record:
             if all(record[k] == v for k, v in values.items()):
                 return {'medical_record': _public(record)}
-            db.execute('UPDATE medical_record SET diagnosis=%s,treatment=%s,doctor_notes=%s WHERE record_id=%s',
-                       (values['diagnosis'], values['treatment'], values['doctor_notes'], record['record_id']))
+            queries.update_content(db, record, values)
         else:
-            record = db.execute('INSERT INTO medical_record(encounter_id,diagnosis,treatment,doctor_notes,examined_at) '
-                                'VALUES (%s,%s,%s,%s,%s) RETURNING *',
-                                (encounter_id, values['diagnosis'], values['treatment'], values['doctor_notes'], encounters.utc_now())).fetchone()
+            record = queries.create_record(db, encounters.utc_now(), encounter_id, values)
         after = records.get(db, encounter_id)
-        records.append_revision(db, record['record_id'], actor['user_id'], fields['reason'] or 'Ghi bệnh án', before, _snapshot(db, after))
+        _append_revision(db, record['record_id'], actor['user_id'], fields['reason'] or 'Ghi bệnh án', before, _snapshot(db, after))
         result = records.get(db, encounter_id)
     return {'medical_record': _public(result)}
 
 
 def _record_encounter_id(db, record_id):
-    row = db.execute('SELECT encounter_id FROM medical_record WHERE record_id=%s', (record_id,)).fetchone()
+    row = queries.get_encounter_reference(db, record_id)
     if row is None:
         raise not_found('Không tìm thấy bệnh án', 'MEDICAL_RECORD_NOT_FOUND')
     return row['encounter_id']
@@ -99,7 +104,7 @@ def put_items(actor, record_id, fields):
         existing = [{k: r[k] for k in ('medication_name', 'dosage', 'quantity', 'instructions')} for r in before['prescription_items']]
         if existing != fields['items']:
             prescriptions.replace_items(db, record_id, fields['items'])
-            records.append_revision(db, record_id, actor['user_id'], fields['reason'] or 'Cập nhật đơn thuốc', before, _snapshot(db, record))
+            _append_revision(db, record_id, actor['user_id'], fields['reason'] or 'Cập nhật đơn thuốc', before, _snapshot(db, record))
         result = records.get(db, encounter_id)
         rows = prescriptions.list_items(db, record_id)
     return {'items': jsonable(rows), 'record_version': result['version']}

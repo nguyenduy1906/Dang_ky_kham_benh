@@ -8,9 +8,9 @@ from unittest.mock import patch
 import psycopg
 from psycopg import sql
 from werkzeug.security import check_password_hash
-from backend.app.core.config import postgres_options
-from backend.app.db.database import get_db_connection
-from backend.app.db.db_service import init_database, seed_database
+from backend.app.config.settings import postgres_options
+from backend.app.config.database import get_db_connection
+from backend.app.services.database_setup_service import init_database, seed_database
 from backend.app.main import create_app
 
 
@@ -21,15 +21,15 @@ class PostgresTests(unittest.TestCase):
         self.schema = 'test_' + uuid.uuid4().hex
         with psycopg.connect(**self.options) as db:
             db.execute(sql.SQL('CREATE SCHEMA {}').format(sql.Identifier(self.schema)))
-        self.addCleanup(self.drop_schema)
+        self.addCleanup(self.drop_validator)
         self.options = dict(self.options, options=f'-c timezone=UTC -c search_path={self.schema}')
-        self.config = patch('backend.app.db.database.postgres_options', return_value=self.options)
+        self.config = patch('backend.app.config.database.postgres_options', return_value=self.options)
         self.config.start()
         self.addCleanup(self.config.stop)
         init_database()
         seed_database()
 
-    def drop_schema(self):
+    def drop_validator(self):
         with psycopg.connect(**postgres_options()) as db:
             db.execute(sql.SQL('DROP SCHEMA {} CASCADE').format(sql.Identifier(self.schema)))
 
@@ -41,7 +41,7 @@ class PostgresTests(unittest.TestCase):
             for name, body in entities:
                 expected = set(re.findall(r'^\s+\w+ (\w+)', body, re.M))
                 actual = {r['column_name'] for r in db.execute(
-                    'SELECT column_name FROM information_schema.columns WHERE table_schema=%s AND table_name=%s',
+                    'SELECT column_name FROM information_validator.columns WHERE table_validator=%s AND table_name=%s',
                     (self.schema, name.lower()))}
                 self.assertEqual(actual, expected, name)
             db.execute("INSERT INTO department(name) VALUES ('Keep me')")

@@ -1,11 +1,11 @@
-import os
-from flask import Blueprint, jsonify, request
+from backend.app.controllers import payment_controller as controller
+
+from flask import Blueprint
 from flasgger import swag_from
-from backend.app.core.security import current_user, login_required
-from backend.app.core.errors import not_found
-from backend.app.schemas import payment_schema
-from backend.app.schemas.common_schema import page_params
-from backend.app.services import payment_service
+from backend.app.middlewares.auth_middleware import login_required
+
+from backend.app.validators import payment_validator
+
 
 payment_bp = Blueprint('payment', __name__)
 SECURITY = [{'Bearer': []}]
@@ -34,7 +34,7 @@ def body_field(name, enum=None):
 @swag_from({'tags': ['Payments'], 'summary': 'USER sở hữu, ADMIN/RECEPTIONIST xem giao dịch lượt khám',
             'security': SECURITY, 'parameters': [path_id('encounter_id')] + PAGE, 'responses': RESPONSES})
 def list_payments(encounter_id):
-    return jsonify(payment_service.list_payments(current_user(), encounter_id, *page_params(request.args)))
+    return controller.list_payments(encounter_id)
 
 
 @payment_bp.get('/payments/<int:payment_id>')
@@ -42,17 +42,16 @@ def list_payments(encounter_id):
 @swag_from({'tags': ['Payments'], 'summary': 'Chi tiết giao dịch theo quyền tài nguyên',
             'security': SECURITY, 'parameters': [path_id('payment_id')], 'responses': RESPONSES})
 def get_payment(payment_id):
-    return jsonify(payment_service.get_payment(current_user(), payment_id))
+    return controller.get_payment(payment_id)
 
 
 @payment_bp.post('/encounters/<int:encounter_id>/payment-intents')
 @login_required
 @swag_from({'tags': ['Payments'], 'summary': 'USER tạo phiên cọc mô phỏng, server chốt tiền từ snapshot',
-            'security': SECURITY, 'parameters': [path_id('encounter_id'), body_field('payment_method', payment_schema.METHODS)],
+            'security': SECURITY, 'parameters': [path_id('encounter_id'), body_field('payment_method', payment_validator.METHODS)],
             'responses': RESPONSES})
 def intent(encounter_id):
-    result, created = payment_service.create_intent(current_user(), encounter_id, payment_schema.validate_method(request.get_json(silent=True)))
-    return jsonify(result), 201 if created else 200
+    return controller.intent(encounter_id)
 
 
 @payment_bp.post('/demo/payments/<int:payment_id>/result')
@@ -61,19 +60,16 @@ def intent(encounter_id):
             'security': SECURITY, 'parameters': [path_id('payment_id'), body_field('result', ('SUCCESS', 'FAILED'))],
             'responses': RESPONSES})
 def demo_result(payment_id):
-    if os.environ.get('DEMO_MODE', '0') != '1':
-        raise not_found('Không tìm thấy API', 'NOT_FOUND')
-    return jsonify(payment_service.demo_result(current_user(), payment_id, payment_schema.validate_result(request.get_json(silent=True))))
+    return controller.demo_result(payment_id)
 
 
 @payment_bp.post('/staff/encounters/<int:encounter_id>/exam-fees')
 @login_required
 @swag_from({'tags': ['Payments'], 'summary': 'ADMIN/RECEPTIONIST thu giả lập phần còn lại; không thu lại giá sau cọc 100%',
-            'security': SECURITY, 'parameters': [path_id('encounter_id'), body_field('payment_method', payment_schema.METHODS)],
+            'security': SECURITY, 'parameters': [path_id('encounter_id'), body_field('payment_method', payment_validator.METHODS)],
             'responses': RESPONSES})
 def exam_fee(encounter_id):
-    result, created = payment_service.collect_exam_fee(current_user(), encounter_id, payment_schema.validate_method(request.get_json(silent=True)))
-    return jsonify(result), 201 if created else 200
+    return controller.exam_fee(encounter_id)
 
 
 @payment_bp.post('/admin/payments/<int:payment_id>/refund')
@@ -81,4 +77,4 @@ def exam_fee(encounter_id):
 @swag_from({'tags': ['Payments'], 'summary': 'ADMIN hoàn tiền giả lập theo chính sách, có giao dịch REFUND và lý do',
             'security': SECURITY, 'parameters': [path_id('payment_id'), body_field('reason')], 'responses': RESPONSES})
 def refund(payment_id):
-    return jsonify(payment_service.refund(current_user(), payment_id, payment_schema.validate_refund(request.get_json(silent=True))))
+    return controller.refund(payment_id)

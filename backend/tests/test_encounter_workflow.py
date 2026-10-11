@@ -5,17 +5,17 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 from backend.tests import test_encounter_reads
-from backend.app.db.database import get_db_connection
+from backend.app.config.database import get_db_connection
 from backend.app.services import encounter_service as service
-from backend.app.jobs.encounter_jobs import expire_holds
-from backend.app.models import user_model
-from backend.app.core.security import create_access_token
+from backend.app.utils.worker import expire_holds
+from backend.app.repositories import user_repository
+from backend.app.utils.security import create_access_token
 
 
 @unittest.skipUnless(os.environ.get('RUN_POSTGRES_TESTS') == '1', 'Requires disposable PostgreSQL')
 class EncounterWorkflowTests(unittest.TestCase):
     setUp = test_encounter_reads.EncounterReadTests.setUp
-    drop_schema = test_encounter_reads.EncounterReadTests.drop_schema
+    drop_validator = test_encounter_reads.EncounterReadTests.drop_validator
     headers = test_encounter_reads.EncounterReadTests.headers
 
     def fixture(self):
@@ -91,7 +91,7 @@ class EncounterWorkflowTests(unittest.TestCase):
         for _ in range(2): self.assertEqual(self.client.post(url, headers=self.headers('ADMIN')).status_code, 200)
         with get_db_connection() as db:
             uid = db.execute('SELECT user_id FROM doctor_profile WHERE doctor_profile_id=1').fetchone()['user_id']
-            doctor = user_model.get_user_by_id(db, uid)
+            doctor = user_repository.get_user_by_id(db, uid)
         headers = {'Authorization': 'Bearer ' + create_access_token(doctor)}
         start = f'/doctor/encounters/{eid}/start'
         self.assertEqual(self.client.post(start, headers=headers).status_code, 409)
@@ -134,7 +134,7 @@ class EncounterWorkflowTests(unittest.TestCase):
         with get_db_connection() as db:
             self.assertEqual(db.execute('SELECT booked_count FROM work_schedule WHERE schedule_id=1').fetchone()['booked_count'], 1)
         self.fixture()
-        with patch('backend.app.models.encounter_log_model.add_status', side_effect=RuntimeError('test rollback')):
+        with patch('backend.app.services.encounter_log_service.add_status', side_effect=RuntimeError('test rollback')):
             with self.assertRaises(RuntimeError): service.create_online(self.actors['USER'], {'patient_id': 2, 'schedule_id': 2})
         with get_db_connection() as db:
             self.assertEqual(db.execute('SELECT booked_count FROM work_schedule WHERE schedule_id=2').fetchone()['booked_count'], 0)
