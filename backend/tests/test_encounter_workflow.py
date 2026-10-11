@@ -6,9 +6,10 @@ from unittest.mock import patch
 
 from backend.tests import test_encounter_reads
 from backend.app.db.database import get_db_connection
-from backend.app.services import encounter_service as service, payment_service
+from backend.app.visits import service
+from backend.app.payments import service as payment_service
 from backend.app.utils.worker import expire_holds, enqueue_reminders
-from backend.app.models import auth_model
+from backend.app.accounts import queries as auth_model
 from backend.app.core.security import create_access_token
 from backend.app.core.constants import SYSTEM_WORKER_EMAIL
 from backend.app.core.errors import AppError
@@ -223,7 +224,7 @@ class EncounterWorkflowTests(unittest.TestCase):
         with get_db_connection() as db:
             self.assertEqual(db.execute('SELECT booked_count FROM work_schedule WHERE schedule_id=1').fetchone()['booked_count'], 1)
         self.fixture()
-        with patch('backend.app.models.encounter_model.add_status', side_effect=RuntimeError('test rollback')):
+        with patch('backend.app.visits.queries.add_status', side_effect=RuntimeError('test rollback')):
             with self.assertRaises(RuntimeError): service.create_online(self.actors['USER'], {'patient_id': 2, 'schedule_id': 2})
         with get_db_connection() as db:
             self.assertEqual(db.execute('SELECT booked_count FROM work_schedule WHERE schedule_id=2').fetchone()['booked_count'], 0)

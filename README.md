@@ -27,6 +27,7 @@ Xem các bước chuẩn bị và nhập dữ liệu tại
 
 Danh sách API, phân công và vị trí viết code:
 [Kế hoạch backend](docs/DANH_SACH_API_VA_PHAN_CONG_BACKEND.md).
+Các module được chia theo chức năng; xem cây thư mục, nhiệm vụ từng folder và cách đọc mã tại [Cấu trúc backend](docs/CAU_TRUC_BACKEND.md).
 
 | File | Chức năng |
 |---|---|

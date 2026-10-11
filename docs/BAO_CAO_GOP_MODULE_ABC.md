@@ -1,6 +1,6 @@
 # Tổng hợp thay đổi backend — cập nhật 11/10/2026
 
-**Cấu trúc hiện tại đã được chủ đồ án duyệt:** giữ bốn folder theo tầng, thống nhất 12 nhóm nghiệp vụ; xem [CAU_TRUC_BACKEND.md](CAU_TRUC_BACKEND.md) và mục 18 bên dưới. Mã ứng dụng hiện có 71 file Python. Các phần 1–17 ghi lịch sử những đợt trước và không thay thế bảng vị trí hiện tại.
+**Cấu trúc hiện tại đã được chủ đồ án duyệt:** tổ chức theo 12 nhóm chức năng, mỗi nhóm có `routes.py`, `validators.py`, `service.py`, `queries.py`. Xem [CAU_TRUC_BACKEND.md](CAU_TRUC_BACKEND.md) và mục 19 bên dưới. Mã ứng dụng có 80 file Python. Các phần 1–18 ghi lịch sử những đợt trước; tên/vị trí module ở các ghi chú cũ phía dưới không thay thế bảng hiện tại.
 
 **Tên tiện ích hiện tại theo quyết định mới nhất:** `backend/app/utils/database_helpers.py`, `backend/app/utils/mail.py`, `backend/app/utils/date.py` lần lượt thay `_sql.py`, `mail_adapter.py`, `time_utils.py`. Xem mục 17 cho phạm vi và kiểm tra. Tên/vị trí trong các mục trước là lịch sử của từng đợt.
 
@@ -424,3 +424,36 @@ Docker daemon không hoạt động, nên dùng PostgreSQL 18 sẵn có trên m�
 Database tạm đã dừng và không còn tiến trình PostgreSQL/initdb thuộc lần kiểm tra. Script, snapshot, thư viện và dữ liệu kiểm tra tạm được dọn sau xác minh. Hai ca bổ sung và các kiểm tra runtime không được cộng vào 23 test thường trực.
 
 Chưa rebuild hoặc kiểm thử bản Docker/PostgreSQL 17 của dự án sau thay đổi. Bằng chứng trên xác minh các ca đã chạy và phạm vi refactor; không tuyên bố nghiệm thu toàn bộ mọi nghiệp vụ của năm gói API.
+
+
+## 19. Chuyển từ các folder theo tầng sang folder theo chức năng
+
+### 19.1. Yêu cầu và phạm vi
+
+Chủ đồ án yêu cầu chuyển bốn folder `routes`, `schemas`, `services`, `models` thành các folder chức năng có tên dễ hiểu; cho phép đặt tên khác ERD và tạo thêm folder khi cần. Các folder khác giữ tên, vị trí và chức năng. Quyết định mới thay yêu cầu giữ cấu trúc theo tầng ở mục 18.
+
+- 48 file nghiệp vụ chuyển vào 12 package: `accounts`, `patients`, `doctors`, `clinics`, `schedules`, `visits`, `medical_records`, `payments`, `notifications`, `articles`, `reports`, `settings`.
+- Mỗi nhóm dùng `routes.py`, `validators.py`, `service.py`, `queries.py`; phần SQL dùng tên queries vì mã thực tế dùng truy vấn psycopg trực tiếp.
+- `routes/__init__.py` chứa `/health` chuyển sang `health.py`. Bốn folder tầng cũ đã bỏ sau khi xác nhận mọi file có chức năng đã được chuyển.
+- `core`, `db`, `utils` giữ toàn bộ tên/vị trí file và nhiệm vụ. Chỉ sửa import trong security, seed và worker để trỏ tới module mới. Main và test/mock cũng cập nhật đường dẫn import.
+- Thêm mô tả đầu file và package cho biết phạm vi/nhiệm vụ. Hàm, SQL, hằng số, quyền, transaction và chính sách giữ nguyên; không thay database, API, dependency của dự án hoặc frontend.
+- `visits` bao gồm online và trực tiếp, nhưng bảng/cột/URL vẫn là `encounter`. Bệnh án/thuốc/đánh giá tiếp tục cùng nhóm `medical_records`. Dữ liệu thống kê cho dashboard ở `reports`; chưa có chức năng xét nghiệm hay dashboard độc lập để tạo folder riêng.
+- Mã ứng dụng từ 71 thành 80 file Python: tăng file đánh dấu package do chuyển từ bốn tầng sang 12 nhóm và tách health khỏi package init. Có 15 file `__init__.py` trong app; 5 file test giữ nguyên số lượng.
+
+### 19.2. Tiêu chí và bằng chứng
+
+- 85 file Python ứng dụng/kiểm thử compile/parse được; tất cả 80 module ứng dụng import thành công.
+- Snapshot ngay trước khi chuyển: đối chiếu 73 file trước/sau (68 file ứng dụng có vị trí tương ứng và 5 test), chuẩn hóa đường dẫn import và mô tả module. AST giữ nguyên, bao gồm 436 khai báo hàm/lớp cấp module, các hàm lồng nhau, decorator, SQL, hằng/assignment. Ba package init cũ không có xử lý nghiệp vụ đã bỏ; 12 package init mới chỉ chứa mô tả.
+- Kiểm tra tĩnh đạt: mỗi nhóm có đúng bộ năm file; tên file trong core/db/utils giống trước; không còn import/đường dẫn mock về bốn folder tầng cũ.
+- Khởi tạo hai phiên bản trong tiến trình riêng: 98 rule Flask giống URL, phương thức và endpoint; toàn bộ JSON Swagger giống nhau, gồm 82 path. Chỉ mock hai truy vấn kiểm tra bảng role khi so sánh registry; kiểm tra này không thay thế test database.
+- 23/23 test thường trực đạt trong 50,013 giây trên PostgreSQL 18 tạm. Bao gồm quyền/phân công, lượt khám/quota/log, tranh chấp chỗ cuối và rollback, hủy/check-in/no-show/chuyển ca, thanh toán lặp/muộn, bệnh án/thuốc/version/lịch sử, thông báo/nhắc lịch, danh mục, avatar, seed và ràng buộc schema.
+- Hai ca tích hợp bổ sung qua Flask test client trên schema tạm đạt. Tài khoản/bác sĩ: đăng ký không nâng quyền, login/me, USER bị chặn quản trị, ADMIN tạo DOCTOR/hồ sơ, bác sĩ tự sửa chuyên môn nhưng không sửa phí, ADMIN sửa phí. Bệnh án/đánh giá: đặt–trả cọc–check-in–bắt đầu–ghi bệnh án–hoàn tất–review; gửi lặp không tạo thêm, đổi nội dung trả xung đột, rating/role sai bị chặn, dữ liệu public chỉ có bốn trường đánh giá.
+- Tài liệu cấu trúc, nghiệp vụ, tổng hợp, phân công API, hướng dẫn chạy và README đã cập nhật. Các đường dẫn File chính trong kế hoạch API dùng vị trí mới; lịch sử các đợt trước vẫn được ghi riêng.
+
+### 19.3. Môi trường và giới hạn
+
+Runtime kiểm tra: Python 3.12.14; Flask/Werkzeug 3.0.3, psycopg 3.2.10, flasgger 0.9.7.1; Pillow 12.3.0 từ runtime sẵn có. Thư viện kiểm tra nằm trong thư mục tạm riêng, không cài vào .venv và không sửa requirements.txt. PostgreSQL 18 chạy cluster mới trên cổng loopback riêng, mỗi ca dùng schema riêng; không kết nối database dự án.
+
+Không reset/nạp mẫu/rebuild dịch vụ chính. Chưa kiểm thử bản Docker/PostgreSQL 17 sau thay đổi. Các bằng chứng trên xác minh việc tổ chức lại mã và những ca đã chạy, không là nghiệm thu toàn bộ mọi tiêu chí của năm gói API. Hai ca bổ sung không cộng vào 23 test thường trực.
+
+Cluster kiểm tra đã dừng, không còn tiến trình PostgreSQL/initdb thuộc lần kiểm tra và dữ liệu tạm của cluster đã dọn. Script, snapshot và thư viện kiểm tra tạm trong dự án cũng đã dọn; `git diff --check` đạt sau cập nhật tài liệu.

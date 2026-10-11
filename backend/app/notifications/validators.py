@@ -1,0 +1,11 @@
+"""Thông báo trong ứng dụng và nhắc lịch. Kiểm tra và chuẩn hóa dữ liệu đầu vào."""
+from backend.app.core.errors import bad_request
+from backend.app.utils.validation import page_params
+
+
+def parse_query(args):
+    raw = args.get('unread_only', 'false').lower()
+    if raw not in ('true', 'false', '1', '0'):
+        raise bad_request('unread_only phải là true/false')
+    page, size = page_params(args)
+    return page, size, raw in ('true', '1')

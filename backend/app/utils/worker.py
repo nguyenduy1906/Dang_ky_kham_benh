@@ -10,8 +10,9 @@ from werkzeug.security import generate_password_hash
 from backend.app.core.constants import SYSTEM_WORKER_EMAIL
 
 from backend.app.db.database import get_db_connection
-from backend.app.models.configuration_model import reminder_hours
-from backend.app.services import encounter_service as service, notification_service as notifications
+from backend.app.settings.queries import reminder_hours
+from backend.app.visits import service
+from backend.app.notifications import service as notifications
 
 logger = logging.getLogger(__name__)
 

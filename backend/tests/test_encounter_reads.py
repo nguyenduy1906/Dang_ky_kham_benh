@@ -4,7 +4,7 @@ import unittest
 from backend.tests import test_nurse_assignment
 from backend.app.core.security import create_access_token
 from backend.app.db.database import get_db_connection
-from backend.app.models import auth_model
+from backend.app.accounts import queries as auth_model
 
 
 @unittest.skipUnless(os.environ.get('RUN_POSTGRES_TESTS') == '1', 'Set RUN_POSTGRES_TESTS=1 with PostgreSQL available')

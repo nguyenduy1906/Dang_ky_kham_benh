@@ -1,10 +1,6 @@
 # Kế hoạch API và phân công backend
 
-**Cấu trúc theo tầng mới nhất 11/10/2026:** đã thống nhất 12 nhóm ở `routes`, `schemas`, `services`, `models`, giữ hậu tố theo tầng. Xem [bảng file hiện tại](CAU_TRUC_BACKEND.md). 23/23 test hiện có và hai ca tích hợp bổ sung đạt trên PostgreSQL 18 tạm; đăng ký 98 rule Flask và 82 path Swagger giữ nguyên. Chi tiết/giới hạn xem mục 18 [báo cáo gộp](BAO_CAO_GOP_MODULE_ABC.md). Những đoạn ghi lịch sử A/B/C, D1/D2 bên dưới dùng tên ở thời điểm cũ; các mục File chính đã cập nhật vị trí hiện tại.
-
-**Tiện ích dùng chung cập nhật 11/10/2026:** thời gian ở `utils/date.py`; kiểm tra dữ liệu và phân trang tổng quát ở `utils/validation.py`; xử lý avatar ở `utils/uploads.py`; adapter email giả lập ở `utils/mail.py`. Các đường dẫn thuộc `backend/app`; import ứng dụng và kiểm thử đã cập nhật. Các schema/service nghiệp vụ tiếp tục ở folder hiện tại; chưa tách thêm hàm. Đợt chuyển vị trí xem mục 15; lần đổi tên mới nhất xem mục 17 `BAO_CAO_GOP_MODULE_ABC.md`.
-
-**Vị trí module cập nhật 11/10/2026:** model tài khoản/token là `models/auth_model.py`; SQL/JSON dùng chung là `utils/database_helpers.py`; helper Swagger gói 5 là `utils/swagger_helpers.py` (đều trong `backend/app`, tên helper cũ là `package5_docs.py`). Các import đã chuyển theo vị trí mới; chức năng và đường dẫn API giữ nguyên. Kết quả kiểm tra đổi vị trí xem mục 14; đổi tên Swagger xem mục 16; đổi tên SQL/email/thời gian xem mục 17 của `BAO_CAO_GOP_MODULE_ABC.md`.
+**Cấu trúc theo chức năng mới nhất 11/10/2026:** bốn folder tầng cũ đã được thay bằng `accounts`, `patients`, `doctors`, `clinics`, `schedules`, `visits`, `medical_records`, `payments`, `notifications`, `articles`, `reports`, `settings`. Mỗi nhóm có `routes.py`, `validators.py`, `service.py`, `queries.py`; `core`, `db`, `utils` giữ vị trí, tên và trách nhiệm. Tên folder không buộc trùng ERD; schema database, SQL và đường dẫn API giữ nguyên. Xem [cấu trúc hiện tại](CAU_TRUC_BACKEND.md) và mục 19 [báo cáo thay đổi](BAO_CAO_GOP_MODULE_ABC.md). 23/23 test hiện có và hai ca tích hợp bổ sung đạt trên PostgreSQL 18 tạm; 98 rule Flask và toàn bộ Swagger (82 path) giống trước/sau. Chưa rebuild/kiểm thử Docker của dự án. Quyết định này thay thế cấu trúc theo tầng; các ghi chú đổi/gộp module trước đó là lịch sử.
 
 **Kiểm thử sau gộp module 10/10/2026:** 23/23 test đạt trên PostgreSQL 17 tạm.
 Bao gồm hồi quy lượt khám/quota/log/quyền, luồng bệnh án–thuốc–hoàn tất–bổ sung
@@ -62,11 +58,7 @@ Các file ghi bên dưới là vị trí cần tạo, không có nghĩa file/API
 - PATCH /admin/users/{id}/account-status; DELETE /admin/users/{id} (soft delete).
 - GET /admin/roles. Thêm /auth/refresh nếu nhóm chọn cơ chế refresh token.
 
-**File chính:** routes/auth_routes.py (xác thực, /me và quản trị tài khoản);
-services/auth_service.py (xác thực, hồ sơ và quản trị tài khoản);
-models/auth_model.py (users, role và auth_token); schemas/auth_schema.py
-(xác thực, hồ sơ và quản trị tài khoản).
-Các đường dẫn này nằm trong backend/app/.
+**File chính:** `accounts/routes.py`, `accounts/validators.py`, `accounts/service.py`, `accounts/queries.py` cho xác thực, mật khẩu, hồ sơ và quản trị tài khoản. Các đường dẫn nằm trong `backend/app/`.
 
 **Phần dùng chung do gói 1 tích hợp:** core/security.py, core/errors.py,
 core/constants.py, đăng ký Blueprint/error handler/Swagger trong main.py,
@@ -94,11 +86,7 @@ Cung cấp adapter giả lập chỉ dùng môi trường demo để lấy mã/l
 - GET/POST /admin/nurse-assignments; POST /admin/nurse-assignments/{id}/revoke.
 - GET /nurse/assignments.
 
-**File chính:** routes/{patient,catalog,doctor,schedule}_routes.py;
-services/{patient,catalog,doctor,schedule}_service.py;
-models/{patient,catalog,doctor,schedule}_model.py;
-schemas/{patient,catalog,doctor,schedule}_schema.py. Phân công y tá dùng
-trọn nhóm schedule; hồ sơ bác sĩ có doctor_schema riêng. Dùng thư mục backend/app/.
+**File chính:** các folder `patients/`, `clinics/`, `doctors/`, `schedules/` trong `backend/app/`. Mỗi folder có `routes.py`, `validators.py`, `service.py`, `queries.py`. Ca và phân công y tá cùng ở `schedules`; hồ sơ chuyên môn bác sĩ ở `doctors`; chuyên khoa/phòng ở `clinics`.
 
 **Nghiệm thu:** USER chỉ quản lý hồ sơ mình sở hữu; walk-in không cần tài khoản;
 archive không mất bệnh án; BHYT được lưu/cập nhật; bác sĩ/phòng không chồng ca;
@@ -150,11 +138,7 @@ Kiểm thử dùng schema tạm và tự dọn; không cần thay schema chính 
 - GET /staff/schedules/{id}/affected-encounters.
 - POST /doctor/encounters/{id}/start (dùng chung với gói 5).
 
-**File chính:** routes/encounter_routes.py;
-services/encounter_service.py (đặt online, tiếp nhận và điều phối); models/encounter_model.py
-(gồm SQL lượt khám và log trạng thái/chuyển bác sĩ); schemas/encounter_schema.py
-(gồm online, walk-in và chuyển bác sĩ); utils/worker.py.
-Tất cả nằm trong backend/app/.
+**File chính:** `visits/routes.py`, `visits/validators.py`, `visits/service.py`, `visits/queries.py` (đặt online, walk-in, tiếp nhận, điều phối, SQL lượt khám và log). Tác vụ nền giữ ở `utils/worker.py`. Tất cả nằm trong `backend/app/`; API và database tiếp tục dùng tên `encounter`.
 
 **Luồng online:** HOLDING → thanh toán cọc giả lập → CONFIRMED → CHECKED_IN
 → IN_PROGRESS → COMPLETED. HOLDING quá hạn → EXPIRED, trả chỗ đúng một lần.
@@ -186,11 +170,7 @@ Job nền chạy worker riêng, không tạo scheduler trong mỗi Gunicorn work
 - GET /notifications, /notifications/unread-count.
 - PATCH /notifications/{id}/read; POST /notifications/read-all.
 
-**File chính:** routes/payment_routes.py, notification_routes.py;
-services/payment_service.py, notification_service.py; models/payment_model.py,
-notification_model.py; validator thanh toán dùng schemas/payment_schema.py,
-thông báo dùng schemas/notification_schema.py;
-utils/worker.py để tạo thông báo nhắc lịch. Dùng backend/app/.
+**File chính:** các folder `payments/`, `notifications/` trong `backend/app/`, mỗi folder có `routes.py`, `validators.py`, `service.py`, `queries.py`. Tạo thông báo nhắc lịch vẫn chạy qua `utils/worker.py`.
 
 **Nghiệm thu:** server chốt tiền, lưu snapshot; deposit + EXAM_FEE phần còn lại
 bằng giá khám; walk-in deposit = 0; mô phỏng kết quả lặp không thu hai lần hoặc
@@ -217,10 +197,7 @@ Không xây webhook ngân hàng hay kết nối nhà cung cấp email thật.
 - GET /admin/statistics/encounters, /admin/statistics/payments,
   /admin/statistics/reviews, /admin/audit/encounters.
 
-**File chính:** routes/{medical_record,article,configuration,statistics}_routes.py;
-services và schemas tương ứng; models/medical_record_model.py (gồm bệnh án, thuốc và đánh giá),
-article_model.py, configuration_model.py,
-statistics_model.py. Dùng backend/app/.
+**File chính:** các folder `medical_records/`, `articles/`, `settings/`, `reports/` trong `backend/app/`. Mỗi folder có `routes.py`, `validators.py`, `service.py`, `queries.py`. Bệnh án, thuốc và đánh giá thuộc `medical_records`; cấu hình nghiệp vụ thuộc `settings`; thống kê/đối soát thuộc `reports`.
 
 **Lịch sử gộp A/B/C ngày 11/10/2026, trước lần chuẩn hóa theo tầng:** tài khoản/token dùng model `auth_model` (trước đây `user_model`), dữ liệu
 xác thực/quản trị dùng schema `auth_schema`, nghiệp vụ xác thực/quản trị dùng

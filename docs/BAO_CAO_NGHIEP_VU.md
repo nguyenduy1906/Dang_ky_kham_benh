@@ -1,23 +1,8 @@
 # Báo cáo nghiệp vụ — Đăng ký và đặt lịch khám bệnh
 
-**Chuẩn hóa theo tầng đã duyệt 11/10/2026:** cả `routes`, `schemas`, `services`, `models` có cùng 12 nhóm nghiệp vụ và hậu tố theo tầng. Bác sĩ dùng `doctor_schema`; ca/phân công dùng trọn nhóm `schedule`; tiếp nhận dùng `encounter_service`; tài khoản/quản trị dùng `auth_routes`; thanh toán dùng `payment_schema`; đánh giá dùng trọn nhóm `medical_record`. Cấu trúc hiện tại xem [CAU_TRUC_BACKEND.md](CAU_TRUC_BACKEND.md), bằng chứng kiểm tra xem mục 18 [BAO_CAO_GOP_MODULE_ABC.md](BAO_CAO_GOP_MODULE_ABC.md). Các ghi chú module phía dưới thuộc từng đợt cũ. Tổng mã ứng dụng hiện có 71 file Python; 23/23 test hiện có và hai ca tích hợp bổ sung đạt trên PostgreSQL 18 tạm. Không đổi nghiệp vụ, SQL, schema database, URL hoặc dữ liệu dịch vụ chính.
+**Cấu trúc theo chức năng mới nhất 11/10/2026:** bốn folder tầng cũ đã được thay bằng `accounts`, `patients`, `doctors`, `clinics`, `schedules`, `visits`, `medical_records`, `payments`, `notifications`, `articles`, `reports`, `settings`. Mỗi nhóm có `routes.py`, `validators.py`, `service.py`, `queries.py`; `core`, `db`, `utils` giữ vị trí, tên và trách nhiệm. Tên folder không buộc trùng ERD; schema database, SQL và đường dẫn API giữ nguyên. Xem [cấu trúc hiện tại](CAU_TRUC_BACKEND.md) và mục 19 [báo cáo thay đổi](BAO_CAO_GOP_MODULE_ABC.md). 23/23 test hiện có và hai ca tích hợp bổ sung đạt trên PostgreSQL 18 tạm; 98 rule Flask và toàn bộ Swagger (82 path) giống trước/sau. Chưa rebuild/kiểm thử Docker của dự án. Quyết định này thay thế cấu trúc theo tầng; các ghi chú đổi/gộp module trước đó là lịch sử.
 
-**Tên ba tiện ích đã chốt 11/10/2026:** `utils/database_helpers.py` thay `_sql.py`; `utils/mail.py` thay `mail_adapter.py`; `utils/date.py` thay `time_utils.py` (đường dẫn thuộc `backend/app`). Cập nhật import và tên module được gọi, giữ nguyên nội dung hàm. Các ghi chú cũ phía dưới ghi lại tên tại từng đợt trước; vị trí hiện tại dùng ba tên mới này. Kết quả kiểm tra riêng xem mục 17 của `BAO_CAO_GOP_MODULE_ABC.md`.
-
-**Tên helper Swagger hiện tại, chốt 11/10/2026:** `backend/app/utils/swagger_helpers.py` thay cho `utils/package5_docs.py`; năm route dùng helper đã cập nhật import. `_sql.py` và `worker.py` giữ tên. Các ghi chú mục 14/15 bên dưới mô tả thời điểm trước lần đổi tên này; kết quả kiểm tra mới ở mục 16 của `BAO_CAO_GOP_MODULE_ABC.md`.
-
-**Chuyển thêm bốn tiện ích 11/10/2026 theo yêu cầu chủ đồ án:** `core/utils.py` chuyển thành `utils/time_utils.py`; `schemas/common_schema.py` chuyển thành `utils/validation.py`; `core/uploads.py` và `core/mail_adapter.py` chuyển sang `utils/uploads.py`, `utils/mail_adapter.py` (đường dẫn thuộc `backend/app`). Chỉ chuyển nguyên file và cập nhật import; chưa tách các hàm trong schema/service/route nghiệp vụ. Các file `_sql.py`, `package5_docs.py`, `worker.py` giữ tên hiện tại. Trạng thái kiểm tra lần này xem mục 15 của `BAO_CAO_GOP_MODULE_ABC.md`.
-
-**Đổi tên/chuyển tiện ích 11/10/2026 theo yêu cầu chủ đồ án:** model tài khoản/token dùng `backend/app/models/auth_model.py` (trước đây là `user_model.py`). Hàm SQL/JSON dùng chung chuyển sang `backend/app/utils/_sql.py`; mô tả Swagger dùng chung chuyển sang `backend/app/utils/package5_docs.py`. Cập nhật import của ứng dụng và kiểm thử; giữ nguyên nội dung hàm, SQL, quyền, transaction và endpoint. Quyết định này thay thế vị trí giữ `package5_docs.py` trong `routes` ở báo cáo cũ. Trạng thái kiểm tra của lần đổi này xem mục 14 trong `BAO_CAO_GOP_MODULE_ABC.md`; không dùng kết quả kiểm thử của đợt trước để suy ra lần đổi này đã được kiểm thử tích hợp.
-
-GỘP D1/D2 11/10/2026: validator hồ sơ bác sĩ/phân công y tá dùng staff_schema.py; validator lượt khám/thanh toán dùng encounter_schema.py. Chuyển nguyên hàm, chỉ cập nhật import. Giảm thêm 2 file; 437 hàm/lớp/decorator giữ nguyên nội dung; 23/23 test hiện có và ca tích hợp hồ sơ bác sĩ đạt; 75 module import thành công. Không thay schema database hoặc reset dữ liệu. Chi tiết docs/BAO_CAO_GOP_MODULE_ABC.md.
-
-
-GỘP A/B/C 11/10/2026: đã chuyển nguyên hàm của 7 cặp được duyệt vào auth_model (tên lúc gộp là user_model), auth_schema, auth_service, schedule_service, schedule_routes, medical_record_model và medical_record_schema. Giữ nguyên code hàm/decorator/SQL/quyền/transaction/endpoint; chỉ cập nhật import và đăng ký Blueprint. Giảm 7 file. Bộ kiểm thử hiện có 23/23 đạt, hai ca tích hợp bổ sung đạt, 77 module import thành công; so sánh 437 hàm/lớp trước/sau giữ nguyên. Chi tiết docs/BAO_CAO_GOP_MODULE_ABC.md. Không thay schema hoặc reset database.
-
-
-GỘP MODULE 10/10/2026 theo yêu cầu chủ đồ án: bệnh án và thuốc dùng chung model/schema medical_record; lượt khám và log dùng model encounter, online/walk-in/chuyển bác sĩ dùng schema encounter. Chuyên khoa/phòng dùng catalog_* theo từng tầng. Tác vụ nền gộp trong backend/app/utils/worker.py (folder utils), vẫn chạy worker riêng và giữ transaction riêng cho từng tác vụ. Tạo admin ban đầu thống nhất qua seed_db --admin, mật khẩu 12–128 ký tự có chữ/số, không ghi đè tài khoản có sẵn và không tự xác minh email. Không thay endpoint/schema database, không cần reset dữ liệu.
-
+**Tiện ích hiện tại:** `utils/database_helpers.py`, `utils/mail.py`, `utils/date.py`, `utils/swagger_helpers.py`, `utils/uploads.py`, `utils/validation.py`, `utils/worker.py` (thuộc `backend/app`). Lịch sử chuyển/đổi tên nằm ở mục 14–18 báo cáo thay đổi.
 
 **Đồng bộ tên 10/10/2026 theo yêu cầu chủ đồ án:** tác vụ nền dùng `backend/app/utils/`, nhắc lịch dùng `worker.py`; tài khoản worker dùng email `medical_booking@gmail.com`, trạng thái LOCKED và không đăng nhập. `SEND_EMAIL=1` bật log email/OTP giả lập và API kết quả thanh toán giả lập; mẫu cấu hình đặt giá trị `1`, khi thiếu biến hoặc khác `1` thì tắt. Đây là mô phỏng, chưa gửi email hoặc kết nối ngân hàng thật. Đổi tên không thay schema và không cần xóa dữ liệu.
 
@@ -56,7 +41,7 @@ khi có quyết định mới, cập nhật mục tương ứng, không giữ ha
 | BHYT | Bệnh nhân cung cấp mã thẻ qua patient.health_insurance; không xử lý quyền lợi/chi trả BHYT |
 | Online và trực tiếp | Hai quy trình riêng, cùng lưu trong encounter qua encounter_type; bệnh nhân walk-in không tự chọn ca; lễ tân/hệ thống gắn ca và cấp số sau lịch online của ca đó |
 | Bệnh án hoàn tất | Đã chốt gói 5: bác sĩ phụ trách bổ sung/sửa cùng bệnh án, giữ COMPLETED, bắt buộc lý do/version và lưu trước-sau; lần khám mới tạo encounter mới |
-| Tên lượt khám | Dùng encounter, không dùng visit trong schema/API mới |
+| Tên lượt khám | Schema/API dùng encounter; folder Python `visits` là tên nhóm chức năng, không đổi tên bảng/cột/API |
 | Thanh toán/hoàn tiền | Giả lập, không liên kết ngân hàng hay cổng thanh toán thật |
 | Email/OTP | Giả lập, không tích hợp nhà cung cấp email thật |
 | Mật khẩu | users.password_hash bắt buộc NOT NULL và không rỗng; lưu hash, không lưu mật khẩu rõ |

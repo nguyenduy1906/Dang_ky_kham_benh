@@ -2,7 +2,7 @@
 import secrets
 from werkzeug.security import generate_password_hash
 from backend.app.core.config import DATABASE_DIR
-from backend.app.schemas import auth_schema
+from backend.app.accounts import validators as auth_schema
 from backend.app.db.database import get_db_connection
 
 

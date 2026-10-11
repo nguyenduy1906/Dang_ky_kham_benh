@@ -18,7 +18,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from backend.app.core import constants
 from backend.app.core.errors import AppError, forbidden, unauthorized
 from backend.app.db.database import get_db_connection
-from backend.app.models import auth_model
+from backend.app.accounts import queries as auth_model
 
 
 def get_secret_key():

@@ -1,5 +1,7 @@
 # Hướng dẫn chạy backend và database
 
+**Tổ chức mã theo chức năng 11/10/2026:** xem [cấu trúc backend](CAU_TRUC_BACKEND.md). Điểm chạy Flask, worker và lệnh khởi tạo/seed vẫn giữ nguyên. Thay đổi folder Python không thay schema database và không cần reset/nạp lại dữ liệu. Khi dùng Docker, rebuild backend/worker theo mục 5 để image nhận mã mới; lần refactor này chưa rebuild dịch vụ chính.
+
 **Schema thống nhất 09/10/2026:** `database/init_db.sql` định nghĩa đầy đủ 20 bảng của 5 gói API. Các cột bổ sung đã gộp vào `CREATE TABLE`, không còn `ALTER TABLE` để nâng cấp bảng cũ. Chủ đồ án chọn khởi tạo lại từ đầu theo mục 2; chỉ rebuild trên database cũ sẽ không bổ sung cột. Lần sửa này chưa thực hiện reset, nạp mẫu, rebuild hoặc kiểm thử API.
 Danh sách cột đã gộp và phần đã đối chiếu: [BAO_CAO_THONG_NHAT_DATABASE.md](BAO_CAO_THONG_NHAT_DATABASE.md).
 
