@@ -7,7 +7,7 @@ from backend.app.db.database import get_db_connection
 from backend.app.models import doctor_model, catalog_model, schedule_model
 from backend.app.utils.database_helpers import jsonable
 
-_CHANGES_TIME_OR_ROOM = ('room_id', 'work_date', 'start_time', 'end_time')
+_CHANGES_TIME_OR_ROOM = ('room_id', 'work_date', 'start_time', 'end_time', 'slot_minutes')
 
 
 def _present(row):
@@ -40,6 +40,15 @@ def list_doctor_public(doctor_profile_id, query):
             db, doctor_profile_id=doctor_profile_id, from_date=start, to_date=query['to_date'],
             status=query['status'], exclude_closed=True, limit=query['page_size'],
             offset=(query['page'] - 1) * query['page_size'])
+        from backend.app.services.appointment_slot_service import available_slots
+        from backend.app.services.encounter_service import utc_now, schedule_bounds
+        from datetime import timedelta
+        for row in rows:
+            allowed = (row['schedule_status'] == 'OPEN' and row['remaining'] > 0
+                       and utc_now() <= schedule_bounds(row)[0] - timedelta(hours=5))
+            row['slots'] = [{'appointment_time': start.strftime('%H:%M'),
+                             'starts_at': start.isoformat(), 'ends_at': end.isoformat()}
+                            for start, end in available_slots(db, row)] if allowed else []
     return _page(rows, total, query)
 
 
@@ -76,6 +85,12 @@ def create_schedule(fields):
         doctor = doctor_model.get_by_id(db, fields['doctor_profile_id'])
         if doctor is None or not doctor['is_active'] or not doctor['account_ok']:
             raise bad_request('Bác sĩ không tồn tại hoặc đã ngưng hoạt động', 'DOCTOR_INVALID')
+        fields = dict(fields)
+        if fields.get('slot_minutes') is None:
+            department = db.execute('SELECT dep.name FROM department dep JOIN doctor_profile d '
+                                    'ON d.department_id=dep.department_id WHERE d.doctor_profile_id=%s',
+                                    (fields['doctor_profile_id'],)).fetchone()
+            fields['slot_minutes'] = 15 if department['name'] in ('Da liễu', 'Tai Mũi Họng', 'Mắt', 'Răng Hàm Mặt') else 30
         _active_room(db, fields['room_id'])
         schedule_model.lock_doctor_and_room(db, fields['doctor_profile_id'], fields['room_id'])
         _check_free(db, fields['doctor_profile_id'], fields['room_id'], fields['work_date'],

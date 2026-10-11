@@ -1,3 +1,5 @@
+> Cập nhật 12/10/2026: người dùng đã đổi sang đặt khung giờ và phát phiếu, bỏ cấp số thứ tự. Quy tắc mới có ưu tiên hơn các nội dung cũ bên dưới: [THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md](THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md).
+
 # Hướng dẫn chạy backend và database
 
 **Schema thống nhất 09/10/2026:** `database/init_db.sql` định nghĩa đầy đủ 20 bảng của 5 gói API. Các cột bổ sung đã gộp vào `CREATE TABLE`, không còn `ALTER TABLE` để nâng cấp bảng cũ. Chủ đồ án chọn khởi tạo lại từ đầu theo mục 2; chỉ rebuild trên database cũ sẽ không bổ sung cột. Lần sửa này chưa thực hiện reset, nạp mẫu, rebuild hoặc kiểm thử API.

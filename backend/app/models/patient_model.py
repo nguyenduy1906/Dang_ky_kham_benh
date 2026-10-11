@@ -66,7 +66,7 @@ def list_encounters(db, patient_id, limit, offset, *, nurse_id=None):
     total = db.execute(f'SELECT COUNT(*) AS n FROM encounter e WHERE {clause}',
                        params).fetchone()['n']
     rows = db.execute(
-        'SELECT e.encounter_id, e.encounter_type, e.encounter_status, e.queue_number, '
+        'SELECT e.encounter_id, e.encounter_type, e.encounter_status, e.ticket_code, e.appointment_end_at, '
         'e.estimated_exam_at, e.symptoms, e.created_at, e.doctor_profile_id, '
         'du.full_name AS doctor_name, e.schedule_id, s.work_date, s.start_time, s.end_time, '
         'r.room_name FROM encounter e '

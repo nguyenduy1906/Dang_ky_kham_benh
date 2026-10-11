@@ -126,7 +126,7 @@ erDiagram
         time end_time "NOT NULL"
         integer max_quota "NOT NULL"
         integer booked_count "NOT NULL; cập nhật trong transaction"
-        integer last_queue_number "NOT NULL; mặc định 0, không âm; số lớn nhất đã cấp, không giảm khi chuyển/hủy"
+        integer slot_minutes "NOT NULL; 15 hoặc 30"
         text schedule_status "NOT NULL; OPEN, FULL, CLOSED, UNAVAILABLE"
         text unavailable_reason
         timestamptz created_at "NOT NULL"
@@ -134,7 +134,7 @@ erDiagram
     }
 
     %% ===== 5. LƯỢT KHÁM (gộp online + walk-in) =====
-    %% UNIQUE (schedule_id, queue_number)
+    %% UNIQUE active (schedule_id, estimated_exam_at)
     %% department suy ra từ doctor_profile
 
     ENCOUNTER {
@@ -149,7 +149,8 @@ erDiagram
         bigint deposit_amount_snapshot "VND; NULL với dữ liệu cũ chưa rõ giá"
         text symptoms
         text encounter_status "NOT NULL; HOLDING, CONFIRMED, CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW, EXPIRED"
-        integer queue_number
+        text ticket_code "UNIQUE; phát sau thanh toán"
+        timestamptz appointment_end_at "NOT NULL"
         timestamptz estimated_exam_at
         text qr_code
         timestamptz hold_expires_at "chỉ online"

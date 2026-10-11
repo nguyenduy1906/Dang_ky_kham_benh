@@ -1,3 +1,5 @@
+> Cập nhật 12/10/2026: người dùng đã đổi sang đặt khung giờ và phát phiếu, bỏ cấp số thứ tự. Quy tắc mới có ưu tiên hơn các nội dung cũ bên dưới: [THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md](THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md).
+
 # Phân công frontend theo vai trò
 
 Cập nhật: 08/10/2026. Thay thế kế hoạch chia FE theo gói nghiệp vụ trước đó.
@@ -248,3 +250,112 @@ mobile/desktop, bàn phím/label, loading/rỗng/lỗi, 401/403/404/409 và subm
 Luồng chung: Auth → Patient hồ sơ/đặt online/cọc → Reception check-in → Doctor
 khám/thuốc/hoàn tất → Patient kết quả/review. Kiểm tra thêm walk-in, Nurse và Admin.
 Phần chưa chốt hoặc chưa kiểm thử ghi rõ, không đánh dấu hoàn thành.
+
+## 8. Trang chủ giao diện — 11/10/2026
+
+Theo yêu cầu mới, bắt đầu frontend bằng giao diện tĩnh, chưa kết nối API.
+Trang đầu tiên: `frontend/templates/public/home.html`; CSS: `frontend/static/css/home.css`;
+JavaScript tương tác mẫu: `frontend/static/js/pages/home.js`.
+Bố cục dựa trên ảnh tham khảo: thanh xanh, nhận diện/khẩu hiệu, menu ngang,
+banner ảnh lớn, bốn tiện ích và footer đơn giản. Không có thanh tìm kiếm góc phải;
+các khối và nút dùng góc vuông. Ảnh lấy từ assets hiện có. Tên bệnh viện được chốt là NEU Medical,
+không dùng logo bệnh viện hoặc số điện thoại chưa xác nhận.
+Các mục menu mở hộp thông tin minh họa; chưa triển khai đặt lịch, đăng nhập,
+tra cứu hay dữ liệu thật. Giữ nguyên thư mục theo vai trò và API backend.
+Xem cục bộ bằng `.venv\Scripts\python.exe -m http.server 8080 --bind 127.0.0.1 --directory frontend`,
+rồi mở `http://localhost:8080/templates/public/home.html`; không cần database.
+
+
+### Bổ sung trang chủ 11/10/2026
+
+Trang chủ tiếp tục có: chuyên khoa (hover/focus nền xanh, nút mở rộng), banner lịch khám,
+tin tức (lọc theo nhóm bằng dữ liệu tĩnh), sự kiện cuộn ngang, tám ảnh bác sĩ
+(cuộn/vuốt, nút trước/sau và phím mũi tên). Tất cả các khối giữ góc vuông.
+Nội dung và hồ sơ bác sĩ là minh họa, chưa kết nối API. Không dùng số lượng nhân viên,
+thành tích, chức danh hay tên bác sĩ của bệnh viện trong ảnh mẫu làm dữ liệu NEU Medical.
+Footer chỉ có một cơ sở, địa chỉ theo yêu cầu người dùng lấy từ NEU:
+207 đường Giải Phóng, phường Bạch Mai, Hà Nội, Việt Nam.
+Nguồn đối chiếu: https://neu.edu.vn/lien-he/ . Chưa có hotline/email riêng của bệnh viện.
+Ảnh cơ sở dùng ảnh minh họa hiện có. Đã kiểm tra đường dẫn tài nguyên;
+chưa xác minh trực quan và tương tác trên trình duyệt do truy cập localhost bị chặn.
+
+### Các trang menu và chi tiết bác sĩ — 11/10/2026
+
+Đã tạo các giao diện tĩnh public/about.html, departments.html, doctors.html,
+news.html, contact.html và (patient)/booking.html; cùng header/footer, menu thật,
+breadcrumb và góc vuông. public/doctor-detail.html nhận id mẫu 1–8, liên kết từ
+ảnh bác sĩ trên trang chủ và danh sách; có lịch mẫu, đào tạo/công tác đóng mở,
+đánh giá trạng thái rỗng. Không bịa lịch sử đào tạo, chức danh hoặc điểm đánh giá.
+Form đánh giá bị vô hiệu hóa vì chỉ được đánh giá sau lượt khám COMPLETED.
+Form đặt lịch chỉ xem lại dữ liệu nhập trong bộ nhớ; không tạo lịch, giữ chỗ,
+thu tiền hoặc lưu dữ liệu. Có kiểm tra trường bắt buộc và lọc bác sĩ mẫu theo khoa.
+Không thêm API hay đổi đường dẫn backend. JS điều hướng/menu/hộp thông tin
+chung đặt tại static/js/core/public.js; trang chủ và các trang còn lại dùng
+script riêng. Header không có tìm kiếm; tìm bác sĩ chỉ nằm trong trang danh sách.
+Đã kiểm tra cú pháp bốn file JS, đường dẫn tài nguyên/liên kết và ID duy nhất
+trong cả tám trang; chưa kiểm thử trực quan hay tương tác thực tế trên trình duyệt.
+
+### Bố cục mới footer và Chuyên khoa — 11/10/2026
+
+Yêu cầu mới thay footer có ảnh cơ sở bằng footer trắng ba cột: giới thiệu,
+địa chỉ/giờ khám và khối hotline; phía dưới có bản quyền và các nút thông tin.
+Áp dụng cả tám trang. Địa chỉ giữ theo NEU; giờ khám/hotline chưa xác nhận
+hiển thị Đang cập nhật. Không lấy giấy phép, số điện thoại hoặc cấp cứu 24/7 từ ảnh mẫu.
+Trang Chuyên khoa thay bố cục cũ bằng phần giới thiệu, tìm kiếm/lọc,
+lưới khoa, ba ảnh trang thiết bị minh họa và hướng dẫn cuối trang.
+Danh sách dùng đúng mười khoa trong sample_data.sql; khối cận lâm sàng
+chưa có dữ liệu mẫu nên hiển thị trạng thái rỗng. Khối số liệu ghi rõ dữ liệu mẫu.
+Giữ góc vuông, chưa nối API. Đã kiểm tra cú pháp JS và đường dẫn cả tám trang;
+chưa xác minh trực quan trên trình duyệt.
+
+### Danh sách bác sĩ theo mẫu mới — 11/10/2026
+
+Trang doctors.html có breadcrumb, giới thiệu, khối liên hệ hỗ trợ,
+tìm tên/lọc chuyên khoa và các nút lọc nhanh; lưới bốn thẻ mỗi hàng trên desktop.
+Thẻ có ảnh, chuyên khoa, tên mẫu, thông tin chuyên môn chờ cập nhật,
+lịch khám chưa có dữ liệu thật và liên kết hồ sơ chi tiết. Giữ góc vuông.
+Phân trang tám hồ sơ/trang; với tám hồ sơ hiện có chỉ có trang 1, nút trước/sau
+bị vô hiệu hóa thay vì tạo trang trống hoặc nhân bản bác sĩ.
+Script riêng static/js/pages/doctors.js; chưa gọi API.
+Đã kiểm tra cú pháp script, số thẻ và đường dẫn; chưa kiểm thử trực quan/tương tác.
+
+### Giao diện đăng ký khám ba cột — 11/10/2026
+
+Trang (patient)/booking.html theo mẫu mới: thông tin người khám/cơ sở/ngày/ca/BHYT
+bên trái, tìm và chọn bác sĩ ở giữa, tóm tắt bên phải. Giữ header/footer NEU,
+góc vuông và tông xanh lá. Một cơ sở, tám bác sĩ minh họa; giá chưa có dữ liệu thật
+không coi là miễn phí. Có tìm/lọc, chọn bác sĩ từ URL, tóm tắt ngày/ca và kiểm tra
+trường bắt buộc. BHYT chỉ nhập mã thẻ, không tính quyền lợi. Ngày tối thiểu theo
+Asia/Saigon. Ca, quota, giá và giới hạn 5 giờ chưa được xác minh bởi backend.
+Script riêng booking.js; thao tác xem lại không tạo lịch, gửi dữ liệu hoặc thanh toán.
+Đã kiểm tra cú pháp JS và đường dẫn/ID/số thẻ, chưa kiểm thử trình duyệt thực tế.
+
+### Header thu gọn và thêm người thân — 11/10/2026
+
+Cả tám trang dùng thanh header thu gọn khi cuộn qua header gốc và bật đăng nhập mẫu.
+Nút Thử đăng nhập mẫu/Thoát đăng nhập mẫu ở topbar; trạng thái boolean lưu sessionStorage
+để xem xuyên trang trong cùng tab. Đây không phải xác thực hoặc cơ chế phân quyền.
+Thanh hiện NEU Medical và TÀI KHOẢN MẪU; không dùng tên/thông tin cá nhân từ ảnh tham khảo.
+Trang đặt khám có dialog thêm người thân với các trường phù hợp schema patient:
+họ tên, điện thoại, ngày sinh, giới tính, quan hệ, CCCD, BHYT và địa chỉ.
+Không thêm nghề nghiệp/dân tộc/ngày cấp giấy tờ ngoài schema chỉ vì có trên ảnh.
+Hồ sơ giữ trong bộ nhớ, tự chọn sau khi thêm, cập nhật tên và BHYT; mất khi tải lại.
+Nút thêm ghi rõ bản xem trước, không thông báo đã lưu database.
+Kiểm tra cú pháp JS, tài nguyên dùng chung, liên kết và ID đạt; chưa kiểm thử trình duyệt.
+
+### Bộ lọc ngày, thông tin BHYT và khung giờ khám — 12/10/2026
+
+Ngày bắt đầu/kết thúc ở sidebar chỉ lọc bác sĩ có lịch trong khoảng, không phải ngày
+đặt lịch. Chọn bác sĩ mở lịch ngay trong thẻ, chọn ngày mẫu và giờ sáng/chiều,
+rồi cập nhật tóm tắt. Lịch mẫu tạo trong 60 ngày tới, không lấy từ database.
+Theo yêu cầu: khám ngoài 15 phút, khoa nặng như tim/phổi 30 phút mỗi lượt trong ca.
+Cấu hình FE mẫu: Da liễu/Tai Mũi Họng/Mắt/Răng Hàm Mặt 15 phút; Nội tổng quát,
+Tim mạch/Nhi/Sản phụ khoa tạm 30 phút. Danh mục chưa có khoa Phổi, không tự thêm.
+Ca nghiệp vụ vẫn là sáng/chiều; khung 15/30 phút là lượt hẹn bên trong ca.
+Giờ mẫu 08:00–12:00, 13:30–17:00 chỉ phục vụ bố cục, chưa áp dụng backend,
+quota, số thứ tự hay kiểm tra trước ca 5 giờ. Quy tắc thời lượng cần đồng bộ khi nối API.
+Chọn Có BHYT mở dialog nhập từ CCCD hoặc thẻ, họ tên, giới tính, ngày sinh.
+Chỉ kiểm tra định dạng; không truy vấn xác thực hoặc kết luận quyền lợi bảo hiểm.
+Tóm tắt có ảnh bác sĩ, ngày/giờ, cơ sở và vấn đề sức khỏe; nút xác nhận ghi rõ mẫu,
+không tạo lượt khám/giữ chỗ/thu tiền. Dữ liệu cá nhân giữ trong bộ nhớ.
+Đã kiểm tra cú pháp JS, ID và đường dẫn tài nguyên; chưa kiểm thử trình duyệt thực tế.

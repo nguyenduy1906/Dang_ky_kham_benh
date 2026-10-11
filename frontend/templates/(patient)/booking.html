@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Đặt lịch khám | NEU Medical</title>
+    <link rel="stylesheet" href="../../static/css/home.css" />
+    <link rel="stylesheet" href="../../static/css/public-pages.css" />
+    <script src="../../static/js/core/public.js" defer></script>
+    <script src="../../static/js/pages/booking.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Đến nội dung chính</a>
+    <header>
+      <div class="topbar">
+        <div class="topbar-inner">
+          <span>Chào mừng bạn đến với Bệnh viện NEU Medical</span>
+          <div>
+            <a href="../public/contact.html">Liên hệ hỗ trợ</a
+            ><a class="active" aria-current="page" href="../(patient)/booking.html">Đặt lịch khám</a
+            ><span class="language" aria-label="Ngôn ngữ tiếng Việt">🇻🇳</span>
+          </div>
+        </div>
+      </div>
+      <div class="identity">
+        <a class="brand" href="../public/home.html"
+          ><img
+            class="brand-logo"
+            src="../../static/assets/logo_neu.png"
+            alt="Logo NEU Medical"
+            width="68"
+            height="68"
+          /><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></a
+        >
+        <p class="motto">Vì sức khoẻ nhân dân</p>
+      </div>
+      <div class="navigation">
+        <button class="menu-toggle" aria-expanded="false" aria-controls="main-nav">
+          ☰ <span>Danh mục</span>
+        </button>
+        <nav id="main-nav" aria-label="Điều hướng chính">
+          <a href="../public/home.html">Trang chủ</a><a href="../public/about.html">Giới thiệu</a
+          ><a href="../public/departments.html">Chuyên khoa</a
+          ><a href="../public/doctors.html">Đội ngũ bác sĩ</a
+          ><a class="active" aria-current="page" href="../(patient)/booking.html">Đặt lịch khám</a
+          ><a href="../public/news.html">Tin tức</a><a href="../public/contact.html">Liên hệ</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="appointment-page">
+      <div class="appointment-layout">
+        <aside class="appointment-sidebar">
+          <h1>▦ Thông tin đặt khám</h1>
+          <form id="appointment-form">
+            <div class="appointment-field">
+              <label>Phương thức đặt khám</label>
+              <div class="appointment-modes" role="group" aria-label="Phương thức đặt khám">
+                <button
+                  type="button"
+                  data-booking-mode="doctor"
+                  class="selected"
+                  aria-pressed="true"
+                >
+                  Bác sĩ</button
+                ><button type="button" data-booking-mode="department" aria-pressed="false">
+                  Chuyên khoa
+                </button>
+              </div>
+            </div>
+            <div class="appointment-field">
+              <label for="appointment-patient">Người tới khám *</label
+              ><select id="appointment-patient" required>
+                <option value="self">Bản thân</option></select
+              ><button type="button" class="add-relative-button" id="add-relative">
+                ＋ Thêm người thân
+              </button>
+              <p class="field-note" id="relative-status" role="status"></p>
+            </div>
+
+            <div class="appointment-field">
+              <label for="appointment-location">Chọn cơ sở khám</label
+              ><select id="appointment-location">
+                <option>NEU Medical — 207 Giải Phóng</option>
+              </select>
+            </div>
+            <div class="appointment-field" id="appointment-department-field" hidden>
+              <label for="appointment-department">Chọn chuyên khoa</label
+              ><select id="appointment-department">
+                <option value="">Tất cả chuyên khoa</option>
+                <option value="0">Nội tổng quát</option>
+                <option value="1">Tim mạch</option>
+                <option value="2">Da liễu</option>
+                <option value="3">Nhi</option>
+                <option value="4">Sản phụ khoa</option>
+                <option value="5">Tai Mũi Họng</option>
+                <option value="6">Mắt</option>
+                <option value="7">Răng Hàm Mặt</option>
+              </select>
+            </div>
+            <div class="appointment-field">
+              <label>Chọn ngày khám</label>
+              <div class="booking-date-range">
+                <div>
+                  <label for="schedule-from">Ngày bắt đầu</label
+                  ><input id="schedule-from" type="date" />
+                </div>
+                <div>
+                  <label for="schedule-to">Ngày kết thúc</label
+                  ><input id="schedule-to" type="date" />
+                </div>
+              </div>
+
+              <p id="schedule-range-error" class="range-error" role="status"></p>
+            </div>
+            <fieldset class="appointment-insurance">
+              <legend>Sử dụng Bảo hiểm y tế</legend>
+              <label><input type="radio" name="insurance" value="no" checked /> Không</label
+              ><label><input type="radio" name="insurance" value="yes" /> Có</label>
+            </fieldset>
+            <div class="appointment-field" id="insurance-field" hidden>
+              <label for="appointment-insurance-code">Mã thẻ BHYT</label
+              ><input id="appointment-insurance-code" maxlength="15" readonly /><button
+                type="button"
+                id="edit-insurance"
+                class="add-relative-button"
+              >
+                Nhập / sửa thông tin thẻ
+              </button>
+              <p id="insurance-local-status" class="field-note" role="status"></p>
+            </div>
+          </form>
+        </aside>
+        <section class="appointment-results" aria-label="Lựa chọn bác sĩ">
+          <div class="appointment-search">
+            <label class="visually-hidden" for="appointment-search">Tìm theo tên bác sĩ</label
+            ><input
+              id="appointment-search"
+              type="search"
+              placeholder="Tìm kiếm theo tên bác sĩ..."
+            /><span id="appointment-count" role="status"></span>
+          </div>
+          <section
+            id="chosen-schedule"
+            class="chosen-schedule"
+            hidden
+            aria-labelledby="chosen-schedule-title"
+          >
+            <h2 id="chosen-schedule-title">Chọn ngày khám</h2>
+            <div
+              id="appointment-day-buttons"
+              class="appointment-day-buttons"
+              role="group"
+              aria-label="Chọn ngày khám"
+            ></div>
+            <div class="booking-date-range visually-hidden">
+              <div>
+                <label class="visually-hidden" for="appointment-date">Ngày khám *</label
+                ><select
+                  id="appointment-date"
+                  form="appointment-form"
+                  required
+                  class="visually-hidden"
+                  tabindex="-1"
+                >
+                  <option value="">Chọn ngày khám</option>
+                </select>
+              </div>
+              <div>
+                <label class="visually-hidden" for="appointment-shift">Ca khám *</label
+                ><select
+                  id="appointment-shift"
+                  form="appointment-form"
+                  required
+                  class="visually-hidden"
+                  tabindex="-1"
+                >
+                  <option value="">Chọn ca khám</option>
+                  <option>Ca sáng</option>
+                  <option>Ca chiều</option>
+                </select>
+              </div>
+            </div>
+          </section>
+          <div class="booking-doctor-list">
+            <article class="booking-doctor" data-booking-id="1" data-name="Bác sĩ 01" data-khoa="0">
+              <img
+                src="../../static/assets/doctors/doctors_1.jpg"
+                alt="Ảnh minh họa bác sĩ 1"
+                loading="lazy"
+              />
+              <div class="booking-doctor-info">
+                <h2>Bác sĩ 01</h2>
+                <p>Chuyên khoa: Nội tổng quát</p>
+              </div>
+              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
+              <button
+                type="button"
+                class="solid-button"
+                data-select-doctor="1"
+                aria-pressed="false"
+              >
+                Chọn
+              </button>
+            </article>
+            <article class="booking-doctor" data-booking-id="2" data-name="Bác sĩ 02" data-khoa="1">
+              <img
+                src="../../static/assets/doctors/doctors_2.jpg"
+                alt="Ảnh minh họa bác sĩ 2"
+                loading="lazy"
+              />
+              <div class="booking-doctor-info">
+                <h2>Bác sĩ 02</h2>
+                <p>Chuyên khoa: Tim mạch</p>
+              </div>
+              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
+              <button
+                type="button"
+                class="solid-button"
+                data-select-doctor="2"
+                aria-pressed="false"
+              >
+                Chọn
+              </button>
+            </article>
+            <article class="booking-doctor" data-booking-id="3" data-name="Bác sĩ 03" data-khoa="2">
+              <img
+                src="../../static/assets/doctors/doctors_3.jpg"
+                alt="Ảnh minh họa bác sĩ 3"
+                loading="lazy"
+              />
+              <div class="booking-doctor-info">
+                <h2>Bác sĩ 03</h2>
+                <p>Chuyên khoa: Da liễu</p>
+              </div>
+              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
+              <button
+                type="button"
+                class="solid-button"
+                data-select-doctor="3"
+                aria-pressed="false"
+              >
+                Chọn
+              </button>
+            </article>
+            <article class="booking-doctor" data-booking-id="4" data-name="Bác sĩ 04" data-khoa="3">
+              <img
+                src="../../static/assets/doctors/doctors_4.jpg"
+                alt="Ảnh minh họa bác sĩ 4"
+                loading="lazy"
+              />
+              <div class="booking-doctor-info">
+                <h2>Bác sĩ 04</h2>
+                <p>Chuyên khoa: Nhi</p>
+              </div>
+              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
+              <button
+                type="button"
+                class="solid-button"
+                data-select-doctor="4"
+                aria-pressed="false"
+              >
+                Chọn
+              </button>
+            </article>
+            <article class="booking-doctor" data-booking-id="5" data-name="Bác sĩ 05" data-khoa="4">
+              <img
+                src="../../static/assets/doctors/doctors_5.jpg"
+                alt="Ảnh minh họa bác sĩ 5"
+                loading="lazy"
+              />
+              <div class="booking-doctor-info">
+                <h2>Bác sĩ 05</h2>
+                <p>Chuyên khoa: Sản phụ khoa</p>
+              </div>
+              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
+              <button
+                type="button"
+                class="solid-button"
+                data-select-doctor="5"
+                aria-pressed="false"
+              >
+                Chọn
+              </button>
+            </article>
+            <article class="booking-doctor" data-booking-id="6" data-name="Bác sĩ 06" data-khoa="5">
+              <img
+                src="../../static/assets/doctors/doctors_6.jpg"
+                alt="Ảnh minh họa bác sĩ 6"
+                loading="lazy"
+              />
+              <div class="booking-doctor-info">
+                <h2>Bác sĩ 06</h2>
+                <p>Chuyên khoa: Tai Mũi Họng</p>
+              </div>
+              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
+              <button
+                type="button"
+                class="solid-button"
+                data-select-doctor="6"
+                aria-pressed="false"
+              >
+                Chọn
+              </button>
+            </article>
+            <article class="booking-doctor" data-booking-id="7" data-name="Bác sĩ 07" data-khoa="6">
+              <img
+                src="../../static/assets/doctors/doctors_7.jpg"
+                alt="Ảnh minh họa bác sĩ 7"
+                loading="lazy"
+              />
+              <div class="booking-doctor-info">
+                <h2>Bác sĩ 07</h2>
+                <p>Chuyên khoa: Mắt</p>
+              </div>
+              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
+              <button
+                type="button"
+                class="solid-button"
+                data-select-doctor="7"
+                aria-pressed="false"
+              >
+                Chọn
+              </button>
+            </article>
+            <article class="booking-doctor" data-booking-id="8" data-name="Bác sĩ 08" data-khoa="7">
+              <img
+                src="../../static/assets/doctors/doctors_8.jpg"
+                alt="Ảnh minh họa bác sĩ 8"
+                loading="lazy"
+              />
+              <div class="booking-doctor-info">
+                <h2>Bác sĩ 08</h2>
+                <p>Chuyên khoa: Răng Hàm Mặt</p>
+              </div>
+              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
+              <button
+                type="button"
+                class="solid-button"
+                data-select-doctor="8"
+                aria-pressed="false"
+              >
+                Chọn
+              </button>
+            </article>
+          </div>
+          <p id="appointment-empty" class="text-block" hidden>
+            Không tìm thấy bác sĩ phù hợp. Hãy thay đổi từ khóa hoặc chuyên khoa.
+          </p>
+        </section>
+        <aside class="appointment-summary">
+          <h2>Tóm tắt lịch khám</h2>
+          <div id="appointment-summary-empty">
+            <span aria-hidden="true">▦</span>
+            <p>Vui lòng chọn bác sĩ, ngày và ca khám để xem chi tiết.</p>
+          </div>
+          <div id="appointment-summary-content" hidden>
+            <div class="summary-doctor">
+              <img
+                id="summary-doctor-photo"
+                src="../../static/assets/doctors/doctors_1.jpg"
+                alt="Ảnh bác sĩ mẫu"
+              />
+              <div>
+                <strong id="summary-doctor-name"></strong
+                ><span id="summary-doctor-specialty"></span>
+              </div>
+            </div>
+            <dl id="appointment-summary-list"></dl>
+            <div class="appointment-field">
+              <label for="appointment-symptoms">Vấn đề sức khỏe gặp phải *</label
+              ><textarea
+                id="appointment-symptoms"
+                form="appointment-form"
+                required
+                rows="4"
+                maxlength="2000"
+                placeholder="Mô tả ngắn gọn triệu chứng..."
+              ></textarea>
+            </div>
+
+            <button class="solid-button" type="submit" form="appointment-form">
+              Xem lại thông tin
+            </button>
+            <p id="appointment-status" role="status"></p>
+          </div>
+        </aside>
+      </div>
+    </main>
+    <footer class="compact-footer">
+      <div class="compact-footer-wrap">
+        <div class="compact-footer-grid">
+          <div>
+            <a class="compact-brand" href="../public/home.html"
+              ><img src="../../static/assets/logo_neu.png" alt="Logo NEU Medical" /><strong
+                >NEU Medical</strong
+              ></a
+            >
+            <p>
+              Đồng hành cùng sức khỏe của bạn và gia đình. Tìm hiểu chuyên khoa, lựa chọn bác sĩ và
+              đăng ký lịch khám thuận tiện.
+            </p>
+            <span class="footer-badge">Bản xem trước giao diện</span>
+          </div>
+          <div>
+            <h3>Địa chỉ &amp; Giờ khám bệnh</h3>
+            <p>
+              <span class="footer-symbol" aria-hidden="true">⌖</span> 207 đường Giải Phóng, phường
+              Bạch Mai, Hà Nội.
+            </p>
+            <p>
+              <span class="footer-symbol" aria-hidden="true">◷</span> Giờ khám bệnh: Đang cập nhật.
+            </p>
+            <a
+              href="https://www.google.com/maps/search/?api=1&amp;query=207+Giai+Phong+Ha+Noi"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Xem bản đồ →</a
+            >
+          </div>
+          <div>
+            <h3>Đường dây nóng</h3>
+            <div class="hotline-box">
+              <strong>LIÊN HỆ HỖ TRỢ</strong>
+              <p>Đang cập nhật</p>
+              <span>Số hotline chính thức sẽ được bổ sung.</span>
+            </div>
+          </div>
+        </div>
+        <div class="compact-footer-bottom">
+          <span>© 2026 NEU Medical. Tất cả quyền được bảo lưu.</span>
+          <div>
+            <button data-panel="privacy">Chính sách bảo mật</button
+            ><button data-panel="terms">Điều khoản sử dụng</button
+            ><button data-panel="guide">Quy trình khám chữa bệnh</button
+            ><button data-panel="insurance">Bảo hiểm y tế</button>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <dialog id="info-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-heading">
+        <h2 id="dialog-title"></h2>
+        <button class="dialog-close" aria-label="Đóng">×</button>
+      </div>
+      <div id="dialog-content"></div>
+      <form method="dialog"><button class="dialog-done">Đóng</button></form>
+    </dialog>
+    <dialog id="relative-dialog" aria-labelledby="relative-title">
+      <div class="dialog-heading">
+        <h2 id="relative-title">Thêm người thân</h2>
+        <button
+          type="button"
+          id="relative-close"
+          class="dialog-close"
+          aria-label="Đóng biểu mẫu người thân"
+        >
+          ×
+        </button>
+      </div>
+
+      <form id="relative-form">
+        <div class="relative-form-grid">
+          <div class="relative-full">
+            <label for="relative-name">Họ và tên *</label
+            ><input
+              id="relative-name"
+              name="full_name"
+              required
+              maxlength="150"
+              autocomplete="off"
+            />
+          </div>
+          <div>
+            <label for="relative-phone">Số điện thoại</label
+            ><input id="relative-phone" name="phone" type="tel" maxlength="20" />
+          </div>
+          <div>
+            <label for="relative-dob">Ngày sinh</label
+            ><input id="relative-dob" name="dob" type="date" />
+          </div>
+          <div>
+            <label for="relative-gender">Giới tính</label
+            ><select id="relative-gender" name="gender">
+              <option value="">Chưa cung cấp</option>
+              <option>Nam</option>
+              <option>Nữ</option>
+              <option>Khác</option>
+            </select>
+          </div>
+          <div>
+            <label for="relative-relationship">Quan hệ *</label
+            ><select id="relative-relationship" name="relationship" required>
+              <option value="">Chọn quan hệ</option>
+              <option value="PARENT">Cha / Mẹ</option>
+              <option value="CHILD">Con</option>
+              <option value="SPOUSE">Vợ / Chồng</option>
+              <option value="OTHER">Người thân khác</option>
+            </select>
+          </div>
+          <div>
+            <label for="relative-id-card">CCCD / Mã định danh</label
+            ><input
+              id="relative-id-card"
+              name="id_card"
+              inputmode="numeric"
+              pattern="(?:[0-9]{9}|[0-9]{12})"
+              title="Nhập 9 hoặc 12 chữ số"
+              maxlength="12"
+            />
+          </div>
+          <div>
+            <label for="relative-insurance">Mã thẻ BHYT</label
+            ><input
+              id="relative-insurance"
+              name="health_insurance"
+              pattern="[A-Za-z0-9]{10,15}"
+              title="Nhập 10–15 chữ hoặc số"
+              maxlength="15"
+            />
+          </div>
+          <div class="relative-full">
+            <label for="relative-address">Địa chỉ</label
+            ><input id="relative-address" name="address" maxlength="255" />
+          </div>
+        </div>
+        <button type="submit" class="solid-button relative-submit">Thêm người thân</button>
+      </form>
+    </dialog>
+    <dialog id="insurance-dialog" aria-labelledby="insurance-title">
+      <div class="dialog-heading">
+        <h2 id="insurance-title">Thông tin thẻ BHYT</h2>
+        <button
+          type="button"
+          id="insurance-close"
+          class="dialog-close"
+          aria-label="Đóng thông tin thẻ"
+        >
+          ×
+        </button>
+      </div>
+
+      <form id="insurance-form">
+        <fieldset class="insurance-entry-method">
+          <legend>Nhập thông tin từ</legend>
+          <label><input type="radio" name="document-method" value="cccd" checked /> CCCD</label
+          ><label><input type="radio" name="document-method" value="bhyt" /> Thẻ BHYT</label>
+        </fieldset>
+        <div class="relative-form-grid">
+          <div>
+            <label for="insurance-document" id="insurance-document-label">Số CCCD *</label
+            ><input
+              id="insurance-document"
+              required
+              inputmode="numeric"
+              pattern="(?:[0-9]{9}|[0-9]{12})"
+              maxlength="12"
+              title="CCCD gồm 9 hoặc 12 chữ số"
+            />
+          </div>
+          <div>
+            <label for="insurance-full-name">Họ và tên *</label
+            ><input id="insurance-full-name" required maxlength="150" />
+          </div>
+          <div>
+            <label for="insurance-gender">Giới tính</label
+            ><select id="insurance-gender">
+              <option value="">Chưa cung cấp</option>
+              <option>Nam</option>
+              <option>Nữ</option>
+              <option>Khác</option>
+            </select>
+          </div>
+          <div>
+            <label for="insurance-dob">Ngày sinh *</label
+            ><input id="insurance-dob" type="date" required />
+          </div>
+        </div>
+        <button type="submit" class="solid-button relative-submit">Kiểm tra thông tin</button>
+      </form>
+    </dialog>
+  </body>
+</html>

@@ -1,6 +1,8 @@
+import re
+
 from backend.app.core.errors import bad_request
 from backend.app.schemas.auth_schema import ensure_object, text_field
-from backend.app.utils.validation import int_field, optional_int_arg, page_params, parse_date
+from backend.app.utils.validation import int_field, optional_int_arg, page_params, parse_date, parse_time
 
 STATUSES = ('HOLDING', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED',
             'CANCELLED', 'NO_SHOW', 'EXPIRED')
@@ -8,10 +10,11 @@ STATUSES = ('HOLDING', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED',
 
 def validate_online(data):
     data = ensure_object(data)
-    if set(data) - {'patient_id', 'schedule_id', 'symptoms'}:
-        raise bad_request('Chỉ nhận patient_id, schedule_id, symptoms; giá/trạng thái do server chốt')
+    if set(data) - {'patient_id', 'schedule_id', 'appointment_time', 'symptoms'}:
+        raise bad_request('Chỉ nhận patient_id, schedule_id, appointment_time, symptoms; giá/trạng thái do server chốt')
     return {'patient_id': int_field(data, 'patient_id', required=True, minimum=1),
             'schedule_id': int_field(data, 'schedule_id', required=True, minimum=1),
+            'appointment_time': appointment_time(data.get('appointment_time')),
             'symptoms': text_field(data, 'symptoms', max_len=5000)}
 
 
@@ -60,7 +63,14 @@ def validate_walk_in(data):
 
 def validate_transfer(data):
     data = ensure_object(data)
-    if set(data) - {'schedule_id', 'reason'}:
-        raise bad_request('Chỉ nhận schedule_id và reason')
-    return {'schedule_id': int_field(data, 'schedule_id', required=True, minimum=1),
+    if set(data) - {'schedule_id', 'appointment_time', 'reason'}:
+        raise bad_request('Chỉ nhận schedule_id, appointment_time và reason')
+    return {'appointment_time': appointment_time(data.get('appointment_time')),
+            'schedule_id': int_field(data, 'schedule_id', required=True, minimum=1),
             'reason': text_field(data, 'reason', required=True, max_len=1000)}
+
+
+def appointment_time(value):
+    if not isinstance(value, str) or not re.fullmatch(r'\d{2}:\d{2}', value):
+        raise bad_request('appointment_time phải có dạng HH:MM')
+    return parse_time(value, 'appointment_time')

@@ -11,8 +11,8 @@ SELECT = '''SELECT e.*, p.full_name AS patient_name, p.user_id AS owner_id,
 
 COLUMNS = ('encounter_type', 'patient_id', 'doctor_profile_id', 'schedule_id', 'room_id',
            'created_by_id', 'consultation_fee_snapshot', 'deposit_amount_snapshot', 'symptoms',
-           'encounter_status', 'queue_number', 'estimated_exam_at', 'hold_expires_at', 'checked_in_at')
-UPDATABLE = {'doctor_profile_id', 'schedule_id', 'room_id', 'encounter_status', 'queue_number',
+           'encounter_status', 'ticket_code', 'appointment_end_at', 'estimated_exam_at', 'hold_expires_at', 'checked_in_at')
+UPDATABLE = {'doctor_profile_id', 'schedule_id', 'room_id', 'encounter_status', 'ticket_code', 'appointment_end_at',
              'estimated_exam_at', 'checked_in_at', 'cancelled_by_id', 'cancel_reason', 'cancelled_at',
              'cancel_origin', 'refund_reference_at'}
 
@@ -53,7 +53,7 @@ def list_encounters(db, actor, query, *, queue=False):
     # SELECT có đầy đủ JOIN dùng cho quyền; COUNT đếm trên cùng tập dữ liệu.
     base = f'{SELECT} WHERE ' + ' AND '.join(where)
     total = db.execute(f'SELECT COUNT(*) AS n FROM ({base}) visible', params).fetchone()['n']
-    order = 's.work_date,s.start_time,e.schedule_id,e.queue_number NULLS LAST,e.encounter_id' if queue else 'e.created_at DESC,e.encounter_id DESC'
+    order = 's.work_date,s.start_time,e.schedule_id,e.estimated_exam_at,e.encounter_id' if queue else 'e.created_at DESC,e.encounter_id DESC'
     rows = db.execute(f'{base} ORDER BY {order} LIMIT %s OFFSET %s',
                       params + [query['page_size'], (query['page'] - 1) * query['page_size']]).fetchall()
     return rows, total
@@ -74,14 +74,6 @@ def create_encounter(db, fields):
 
 def update_encounter(db, encounter_id, fields):
     return update_row(db, 'encounter', 'encounter_id', encounter_id, fields, UPDATABLE)
-
-
-def next_queue_number(db, schedule_id):
-    # Ca đã khóa; bộ đếm vẫn tồn tại khi lượt khám chuyển khỏi ca.
-    return db.execute('UPDATE work_schedule SET last_queue_number=GREATEST(last_queue_number, '
-                      '(SELECT COALESCE(MAX(queue_number),0) FROM encounter WHERE schedule_id=%s))+1 '
-                      'WHERE schedule_id=%s RETURNING last_queue_number AS n',
-                      (schedule_id, schedule_id)).fetchone()['n']
 
 
 def add_status(db, encounter_id, old_status, new_status, actor_id, note=None):

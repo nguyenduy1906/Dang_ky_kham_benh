@@ -1,3 +1,5 @@
+> Cập nhật 12/10/2026: người dùng đã đổi sang đặt khung giờ và phát phiếu, bỏ cấp số thứ tự. Quy tắc mới có ưu tiên hơn các nội dung cũ bên dưới: [THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md](THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md).
+
 # Thống nhất schema khởi tạo mới — 09/10/2026
 
 Theo yêu cầu chủ đồ án, database sẽ được tạo lại từ đầu. `database/init_db.sql` là schema duy nhất cho cả 5 gói API; không giữ các đoạn ALTER TABLE nâng cấp bảng cũ.

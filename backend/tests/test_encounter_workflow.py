@@ -1,7 +1,7 @@
 import os
 import unittest
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from unittest.mock import patch
 
 from backend.tests import test_encounter_reads
@@ -25,10 +25,10 @@ class EncounterWorkflowTests(unittest.TestCase):
         self.now = datetime(2034, 12, 31, 20, 0, tzinfo=timezone.utc)
         with get_db_connection() as db:
             db.execute("UPDATE work_schedule SET work_date='2035-01-01',start_time='10:00',end_time='12:00',"
-                       "max_quota=10,booked_count=0,last_queue_number=0,schedule_status='OPEN' WHERE schedule_id=1")
+                       "max_quota=10,booked_count=0,slot_minutes=30,schedule_status='OPEN' WHERE schedule_id=1")
             db.execute("UPDATE work_schedule SET work_date='2035-01-01',start_time='10:00',end_time='12:00',"
-                       "max_quota=10,booked_count=0,last_queue_number=0,schedule_status='OPEN' WHERE schedule_id=2")
-            db.execute('UPDATE encounter SET schedule_id=10,queue_number=NULL WHERE schedule_id IN (1,2)')
+                       "max_quota=10,booked_count=0,slot_minutes=30,schedule_status='OPEN' WHERE schedule_id=2")
+            db.execute("UPDATE encounter SET encounter_status='CANCELLED',ticket_code=NULL WHERE schedule_id IN (1,2)")
             db.execute('UPDATE doctor_profile SET department_id=1,consultation_fee=100000,is_active=1 WHERE doctor_profile_id IN (1,2)')
             db.execute("UPDATE users SET account_status='ACTIVE',approval_status='APPROVED' WHERE user_id IN "
                        '(SELECT user_id FROM doctor_profile WHERE doctor_profile_id IN (1,2))')
@@ -37,8 +37,8 @@ class EncounterWorkflowTests(unittest.TestCase):
         clock = patch.object(service, 'utc_now', side_effect=lambda: self.now)
         clock.start(); self.addCleanup(clock.stop)
 
-    def book(self, patient=1):
-        response = self.client.post('/encounters/online', headers=self.headers('USER'), json={'patient_id': patient, 'schedule_id': 1})
+    def book(self, patient=1, appointment_time='10:00'):
+        response = self.client.post('/encounters/online', headers=self.headers('USER'), json={'patient_id': patient, 'schedule_id': 1, 'appointment_time': appointment_time})
         self.assertEqual(response.status_code, 201, response.json)
         return response.json['encounter']['encounter_id']
 
@@ -62,7 +62,7 @@ class EncounterWorkflowTests(unittest.TestCase):
                 response = self.client.post(url, headers=headers, json={'result': 'SUCCESS'})
                 self.assertEqual(response.status_code, 200, response.json)
                 self.assertEqual(response.json['encounter']['encounter_status'], 'CONFIRMED')
-                self.assertEqual(response.json['encounter']['queue_number'], 1)
+                self.assertTrue(response.json['encounter']['ticket_code'].startswith('NEU-'))
         with get_db_connection() as db:
             self.assertEqual(db.execute('SELECT booked_count FROM work_schedule WHERE schedule_id=1').fetchone()['booked_count'], 1)
             self.assertEqual(db.execute("SELECT COUNT(*) n FROM payment WHERE encounter_id=%s AND transaction_status='SUCCESS'", (eid,)).fetchone()['n'], 1)
@@ -135,24 +135,25 @@ class EncounterWorkflowTests(unittest.TestCase):
             self.assertEqual(len(rows), 1)
             self.assertEqual(rows[0]['user_id'], self.actors['USER']['user_id'])
 
-    def test_hold_walkin_priority_full_fee_and_idempotent_cancel(self):
+    def test_hold_excludes_walkin_slot_and_idempotent_cancel(self):
         self.fixture(); eid = self.book()
         hold = self.client.get(f'/encounters/{eid}', headers=self.headers('USER')).json['encounter']
         self.assertEqual(hold['deposit_amount_snapshot'], 100000)
-        self.assertIsNone(hold['queue_number'])
+        self.assertIsNone(hold['ticket_code'])
         walk = self.client.post('/staff/encounters/walk-in', headers=self.headers('ADMIN'), json={'patient_id': 2, 'doctor_profile_id': 1})
         self.assertEqual(walk.status_code, 201, walk.json)
-        self.assertEqual(walk.json['encounter']['queue_number'], 1)
+        self.assertTrue(walk.json['encounter']['ticket_code'].startswith('NEU-'))
+        self.assertNotEqual(walk.json['encounter']['estimated_exam_at'], hold['estimated_exam_at'])
         self.assertTrue(self.pay(eid))
         online = self.client.get(f'/encounters/{eid}', headers=self.headers('USER')).json['encounter']
-        self.assertEqual(online['queue_number'], 2)
+        self.assertTrue(online['ticket_code'].startswith('NEU-'))
         with get_db_connection() as db:
             self.assertTrue(service.confirm_paid_online(db, eid, self.actors['ADMIN']['user_id']))
         wid = walk.json['encounter']['encounter_id']
         for _ in range(2):
             self.assertEqual(self.client.post(f'/encounters/{wid}/cancel', headers=self.headers('ADMIN'), json={'reason': 'Không tiếp nhận được'}).status_code, 200)
         queue = self.client.get('/staff/queues?schedule_id=1', headers=self.headers('ADMIN')).json
-        self.assertEqual(queue['total'], 1); self.assertEqual(queue['items'][0]['queue_number'], 2)
+        self.assertEqual(queue['total'], 1); self.assertEqual(queue['items'][0]['ticket_code'], online['ticket_code'])
         with get_db_connection() as db:
             self.assertEqual(db.execute('SELECT booked_count FROM work_schedule WHERE schedule_id=1').fetchone()['booked_count'], 1)
             self.assertEqual(db.execute("SELECT COUNT(*) n FROM encounter_status_log WHERE encounter_id=%s AND new_status='CANCELLED'", (wid,)).fetchone()['n'], 1)
@@ -187,8 +188,8 @@ class EncounterWorkflowTests(unittest.TestCase):
         self.now += timedelta(minutes=30)
         for _ in range(2): self.assertEqual(self.client.post(start, headers=headers).status_code, 200)
         self.now = datetime(2034, 12, 31, 20, 0, tzinfo=timezone.utc)
-        second = self.book(2); self.pay(second)
-        self.now = datetime(2035, 1, 1, 2, 30, 1, tzinfo=timezone.utc)
+        second = self.book(2, '10:30'); self.pay(second)
+        self.now = datetime(2035, 1, 1, 3, 0, 1, tzinfo=timezone.utc)
         self.assertEqual(self.client.post(f'/staff/encounters/{second}/check-in', headers=self.headers('ADMIN')).status_code, 409)
         no_show = f'/staff/encounters/{second}/no-show'
         self.now = datetime(2035, 1, 1, 5, 15, tzinfo=timezone.utc)
@@ -196,17 +197,18 @@ class EncounterWorkflowTests(unittest.TestCase):
         self.now += timedelta(seconds=1)
         for _ in range(2): self.assertEqual(self.client.post(no_show, headers=self.headers('ADMIN')).status_code, 200)
 
-    def test_transfer_preserves_price_and_source_queue_counter(self):
+    def test_transfer_preserves_price_and_ticket(self):
         self.fixture(); eid = self.book(); self.pay(eid)
         options = self.client.get(f'/staff/encounters/{eid}/transfer-options', headers=self.headers('ADMIN'))
         self.assertEqual(options.status_code, 200)
         self.assertIn(2, [r['schedule_id'] for r in options.json['items']])
-        moved = self.client.post(f'/staff/encounters/{eid}/transfer', headers=self.headers('ADMIN'), json={'schedule_id': 2, 'reason': 'Bác sĩ nghỉ'})
+        moved = self.client.post(f'/staff/encounters/{eid}/transfer', headers=self.headers('ADMIN'), json={'schedule_id': 2, 'appointment_time': '10:00', 'reason': 'Bác sĩ nghỉ'})
         self.assertEqual(moved.status_code, 200, moved.json)
         self.assertEqual(moved.json['encounter']['deposit_amount_snapshot'], 100000)
         self.assertEqual(self.client.get(f'/encounters/{eid}/transfer-history', headers=self.headers('USER')).json['total'], 1)
         second = self.book(2); self.pay(second)
-        self.assertEqual(self.client.get(f'/encounters/{second}', headers=self.headers('USER')).json['encounter']['queue_number'], 2)
+        self.assertTrue(self.client.get(f'/encounters/{second}', headers=self.headers('USER')).json['encounter']['ticket_code'].startswith('NEU-'))
+        self.assertEqual(moved.json['encounter']['ticket_code'], self.client.get(f'/encounters/{eid}', headers=self.headers('USER')).json['encounter']['ticket_code'])
         with get_db_connection() as db:
             db.execute("UPDATE work_schedule SET schedule_status='UNAVAILABLE' WHERE schedule_id=1")
         affected = self.client.get('/staff/schedules/1/affected-encounters', headers=self.headers('ADMIN'))
@@ -217,13 +219,13 @@ class EncounterWorkflowTests(unittest.TestCase):
         with get_db_connection() as db: db.execute('UPDATE work_schedule SET max_quota=1 WHERE schedule_id=1')
         def reserve(patient):
             with self.client.application.test_client() as client:
-                return client.post('/encounters/online', headers=self.headers('USER'), json={'patient_id': patient, 'schedule_id': 1}).status_code
+                return client.post('/encounters/online', headers=self.headers('USER'), json={'patient_id': patient, 'schedule_id': 1, 'appointment_time': '10:00'}).status_code
         with ThreadPoolExecutor(max_workers=2) as pool:
             self.assertEqual(sorted(pool.map(reserve, (1,2))), [201,409])
         with get_db_connection() as db:
             self.assertEqual(db.execute('SELECT booked_count FROM work_schedule WHERE schedule_id=1').fetchone()['booked_count'], 1)
         self.fixture()
         with patch('backend.app.models.encounter_model.add_status', side_effect=RuntimeError('test rollback')):
-            with self.assertRaises(RuntimeError): service.create_online(self.actors['USER'], {'patient_id': 2, 'schedule_id': 2})
+            with self.assertRaises(RuntimeError): service.create_online(self.actors['USER'], {'patient_id': 2, 'schedule_id': 2, 'appointment_time': time(10, 0)})
         with get_db_connection() as db:
             self.assertEqual(db.execute('SELECT booked_count FROM work_schedule WHERE schedule_id=2').fetchone()['booked_count'], 0)

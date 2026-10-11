@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Chi tiết bác sĩ | NEU Medical</title>
+    <link rel="stylesheet" href="../../static/css/home.css" />
+    <link rel="stylesheet" href="../../static/css/public-pages.css" />
+    <script src="../../static/js/core/public.js" defer></script>
+    <script src="../../static/js/pages/public-pages.js" defer></script>
+    <script src="../../static/js/pages/doctor-detail.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Đến nội dung chính</a>
+    <header>
+      <div class="topbar">
+        <div class="topbar-inner">
+          <span>Chào mừng bạn đến với Bệnh viện NEU Medical</span>
+          <div>
+            <a href="contact.html">Liên hệ hỗ trợ</a
+            ><a href="../(patient)/booking.html">Đặt lịch khám</a
+            ><span class="language" aria-label="Ngôn ngữ tiếng Việt">🇻🇳</span>
+          </div>
+        </div>
+      </div>
+      <div class="identity">
+        <a class="brand" href="home.html"
+          ><img
+            class="brand-logo"
+            src="../../static/assets/logo_neu.png"
+            alt="Logo NEU Medical"
+            width="68"
+            height="68"
+          /><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></a
+        >
+        <p class="motto">Vì sức khoẻ nhân dân</p>
+      </div>
+      <div class="navigation">
+        <button class="menu-toggle" aria-expanded="false" aria-controls="main-nav">
+          ☰ <span>Danh mục</span>
+        </button>
+        <nav id="main-nav" aria-label="Điều hướng chính">
+          <a href="home.html">Trang chủ</a><a href="about.html">Giới thiệu</a
+          ><a href="departments.html">Chuyên khoa</a
+          ><a class="active" aria-current="page" href="doctors.html">Đội ngũ bác sĩ</a
+          ><a href="../(patient)/booking.html">Đặt lịch khám</a><a href="news.html">Tin tức</a
+          ><a href="contact.html">Liên hệ</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main">
+      <div class="page-title">
+        <div class="section-wrap">
+          <p>
+            <a href="home.html">Trang chủ</a> / <a href="doctors.html">Đội ngũ bác sĩ</a> / Chi tiết
+            bác sĩ
+          </p>
+          <h1>Thông tin bác sĩ</h1>
+        </div>
+      </div>
+      <div class="section-wrap doctor-detail-layout">
+        <div>
+          <section class="doctor-intro">
+            <img
+              id="detail-photo"
+              src="../../static/assets/doctors/doctors_1.jpg"
+              alt="Ảnh bác sĩ minh họa"
+            />
+            <div>
+              <p class="section-kicker">BÁC SĨ · HỒ SƠ MINH HỌA</p>
+              <h2 id="detail-name">Bác sĩ 01</h2>
+              <p id="detail-specialty">Nội tổng quát</p>
+              <p>Đánh giá: Chưa có đánh giá</p>
+              <a class="solid-button" id="detail-booking" href="../(patient)/booking.html?doctor=1"
+                >Đặt lịch khám ▦</a
+              >
+            </div>
+          </section>
+          <section class="detail-block">
+            <h2>Lịch khám</h2>
+            <div class="detail-body">
+              <strong id="schedule-specialty">Nội tổng quát</strong>
+              <p>Ca sáng / Ca chiều</p>
+              <p class="field-note">
+                Lịch minh họa. Ngày khám, giờ bắt đầu ca và chỗ trống chưa được cung cấp.
+              </p>
+              <a href="../(patient)/booking.html" id="schedule-booking"
+                >Xem giao diện chọn lịch →</a
+              >
+            </div>
+          </section>
+          <section class="detail-block">
+            <h2>Cảm nhận của người bệnh</h2>
+            <div class="detail-body">
+              <h3>Viết đánh giá của bạn</h3>
+              <p>Đánh giá được mở sau khi bạn hoàn tất lượt khám với bác sĩ.</p>
+              <fieldset class="review-preview" disabled>
+                <legend>Đánh giá</legend>
+                <div class="rating-options" aria-label="Chọn số sao">
+                  <label><input type="radio" name="rating" value="1" />1 ★</label
+                  ><label><input type="radio" name="rating" value="2" />2 ★</label
+                  ><label><input type="radio" name="rating" value="3" />3 ★</label
+                  ><label><input type="radio" name="rating" value="4" />4 ★</label
+                  ><label><input type="radio" name="rating" value="5" />5 ★</label>
+                </div>
+                <label for="review-comment">Chia sẻ trải nghiệm khám bệnh</label
+                ><textarea
+                  id="review-comment"
+                  rows="4"
+                  placeholder="Nội dung đánh giá của bạn"
+                ></textarea
+                ><button class="solid-button" type="button">Gửi đánh giá</button>
+              </fieldset>
+              <h3>Đánh giá từ người bệnh</h3>
+              <p class="empty-review">Chưa có đánh giá để hiển thị.</p>
+            </div>
+          </section>
+        </div>
+        <div>
+          <details class="detail-block" open>
+            <summary>Quá trình đào tạo</summary>
+            <div class="detail-body">
+              <p>Thông tin đào tạo của bác sĩ sẽ được bổ sung khi có hồ sơ chính thức.</p>
+              <p class="field-note">
+                Chưa có dữ liệu về học vị, cơ sở đào tạo hoặc năm tốt nghiệp.
+              </p>
+            </div>
+          </details>
+          <details class="detail-block" open>
+            <summary>Quá trình công tác</summary>
+            <div class="detail-body">
+              <h3>Kinh nghiệm khám, chữa bệnh</h3>
+              <p>Thông tin nơi công tác và thời gian làm việc sẽ được cập nhật từ hồ sơ bác sĩ.</p>
+              <h3>Thông tin chuyên môn</h3>
+              <p>Đây là nội dung minh họa bố cục, chưa phải hồ sơ chuyên môn thực tế.</p>
+            </div>
+          </details>
+          <details class="detail-block" open>
+            <summary>Hướng dẫn trước khi khám</summary>
+            <div class="detail-body">
+              <ul>
+                <li>Chuẩn bị giấy tờ và thông tin người được khám.</li>
+                <li>Mang theo kết quả khám trước đây nếu có.</li>
+                <li>Đến check-in ít nhất 30 phút trước giờ hẹn online.</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+      </div>
+    </main>
+    <footer class="compact-footer">
+      <div class="compact-footer-wrap">
+        <div class="compact-footer-grid">
+          <div>
+            <a class="compact-brand" href="home.html"
+              ><img src="../../static/assets/logo_neu.png" alt="Logo NEU Medical" /><strong
+                >NEU Medical</strong
+              ></a
+            >
+            <p>
+              Đồng hành cùng sức khỏe của bạn và gia đình. Tìm hiểu chuyên khoa, lựa chọn bác sĩ và
+              đăng ký lịch khám thuận tiện.
+            </p>
+            <span class="footer-badge">Bản xem trước giao diện</span>
+          </div>
+          <div>
+            <h3>Địa chỉ &amp; Giờ khám bệnh</h3>
+            <p>
+              <span class="footer-symbol" aria-hidden="true">⌖</span> 207 đường Giải Phóng, phường
+              Bạch Mai, Hà Nội.
+            </p>
+            <p>
+              <span class="footer-symbol" aria-hidden="true">◷</span> Giờ khám bệnh: Đang cập nhật.
+            </p>
+            <a
+              href="https://www.google.com/maps/search/?api=1&amp;query=207+Giai+Phong+Ha+Noi"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Xem bản đồ →</a
+            >
+          </div>
+          <div>
+            <h3>Đường dây nóng</h3>
+            <div class="hotline-box">
+              <strong>LIÊN HỆ HỖ TRỢ</strong>
+              <p>Đang cập nhật</p>
+              <span>Số hotline chính thức sẽ được bổ sung.</span>
+            </div>
+          </div>
+        </div>
+        <div class="compact-footer-bottom">
+          <span>© 2026 NEU Medical. Tất cả quyền được bảo lưu.</span>
+          <div>
+            <button data-panel="privacy">Chính sách bảo mật</button
+            ><button data-panel="terms">Điều khoản sử dụng</button
+            ><button data-panel="guide">Quy trình khám chữa bệnh</button
+            ><button data-panel="insurance">Bảo hiểm y tế</button>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <dialog id="info-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-heading">
+        <h2 id="dialog-title"></h2>
+        <button class="dialog-close" aria-label="Đóng">×</button>
+      </div>
+      <div id="dialog-content"></div>
+      <form method="dialog"><button class="dialog-done">Đóng</button></form>
+    </dialog>
+  </body>
+</html>

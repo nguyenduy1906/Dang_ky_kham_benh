@@ -1,14 +1,14 @@
 from backend.app.utils.database_helpers import update_row
 
 _SELECT = '''SELECT s.schedule_id, s.doctor_profile_id, s.room_id, s.work_date, s.start_time, s.end_time,
- s.max_quota, s.booked_count, (s.max_quota - s.booked_count) AS remaining, s.schedule_status,
+ s.slot_minutes, s.max_quota, s.booked_count, (s.max_quota - s.booked_count) AS remaining, s.schedule_status,
  s.unavailable_reason, s.created_at, s.updated_at, u.full_name AS doctor_name,
  r.room_name, r.department_id, dep.name AS department_name
  FROM work_schedule s JOIN doctor_profile d ON d.doctor_profile_id = s.doctor_profile_id
  JOIN users u ON u.user_id = d.user_id JOIN room r ON r.room_id = s.room_id
  JOIN department dep ON dep.department_id = r.department_id'''
 
-_UPDATABLE = {'room_id', 'work_date', 'start_time', 'end_time', 'max_quota', 'schedule_status'}
+_UPDATABLE = {'room_id', 'work_date', 'start_time', 'end_time', 'max_quota', 'slot_minutes', 'schedule_status'}
 _LOCKING = ('HOLDING', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED')
 _ACTIVE = ('HOLDING', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS')
 
@@ -72,10 +72,10 @@ def count_active_encounters(db, schedule_id):
 
 def create_schedule(db, f):
     return db.execute(
-        'INSERT INTO work_schedule (doctor_profile_id, room_id, work_date, start_time, end_time, max_quota) '
-        'VALUES (%s, %s, %s, %s, %s, %s) RETURNING schedule_id',
+        'INSERT INTO work_schedule (doctor_profile_id, room_id, work_date, start_time, end_time, max_quota, slot_minutes) '
+        'VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING schedule_id',
         (f['doctor_profile_id'], f['room_id'], f['work_date'], f['start_time'], f['end_time'],
-         f['max_quota'])).fetchone()['schedule_id']
+         f['max_quota'], f['slot_minutes'])).fetchone()['schedule_id']
 
 
 def update_schedule(db, schedule_id, fields):

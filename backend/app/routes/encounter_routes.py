@@ -39,6 +39,15 @@ def get_encounter(encounter_id):
     return jsonify(encounter_service.get_encounter(current_user(), encounter_id))
 
 
+@encounter_bp.get('/encounters/<int:encounter_id>/ticket')
+@login_required
+@swag_from({'tags': ['Encounters'], 'summary': 'Phiếu khám theo khung giờ, chỉ sau khi phát phiếu',
+            'security': _SECURITY, 'parameters': [_ID],
+            'responses': {**_RESPONSES, 409: {'description': 'Chưa phát phiếu'}}})
+def ticket(encounter_id):
+    return jsonify(encounter_service.get_ticket(current_user(), encounter_id))
+
+
 @encounter_bp.get('/encounters/<int:encounter_id>/status-history')
 @login_required
 @swag_from({'tags': ['Encounters'], 'summary': 'Lịch sử trạng thái lượt khám',
@@ -69,12 +78,12 @@ _REASON = _body({'reason': {'type': 'string', 'example': 'Bệnh nhân đổi k�
 
 @encounter_bp.post('/encounters/online')
 @login_required
-@swag_from({'tags': ['Encounters'], 'summary': 'USER giữ chỗ 10 phút, cọc 100% giá bác sĩ; chưa cấp số',
-            'description': 'Đặt theo ca sáng/chiều, ít nhất 5 giờ trước giờ bắt đầu ca (Asia/Saigon). '
+@swag_from({'tags': ['Encounters'], 'summary': 'USER giữ chỗ 10 phút, cọc 100% giá bác sĩ; chưa phát phiếu',
+            'description': 'Chọn khung giờ trong ca sáng/chiều, ít nhất 5 giờ trước giờ bắt đầu ca (Asia/Saigon). '
                            'Đúng mốc 5 giờ được nhận; sau mốc này hoặc trong ca bị từ chối với 409/SCHEDULE_TOO_LATE. '
                            'Lượt đã HOLDING vẫn có 10 phút để thanh toán.',
             'security': _SECURITY, 'parameters': [_body({'patient_id': {'type': 'integer'},
-                'schedule_id': {'type': 'integer'}, 'symptoms': {'type': 'string'}}, ('patient_id', 'schedule_id'))],
+                'schedule_id': {'type': 'integer'}, 'appointment_time': {'type': 'string', 'example': '08:30'}, 'symptoms': {'type': 'string'}}, ('patient_id', 'schedule_id', 'appointment_time'))],
             'responses': {**_ACTION_RESPONSES, 201: {'description': 'HOLDING, giữ quota và giá/cọc snapshot'}}})
 def online():
     return jsonify(encounter_service.create_online(current_user(), encounter_schema.validate_online(request.get_json(silent=True)))), 201
@@ -82,7 +91,7 @@ def online():
 
 @encounter_bp.post('/encounters/<int:encounter_id>/cancel')
 @login_required
-@swag_from({'tags': ['Encounters'], 'summary': 'Hủy lượt, hoàn quota; giữ nguyên số đã cấp',
+@swag_from({'tags': ['Encounters'], 'summary': 'Hủy lượt, hoàn quota; giải phóng khung giờ; giữ lịch sử phiếu',
             'security': _SECURITY, 'parameters': [_ID, _body({'reason': {'type': 'string'},
                 'cancel_origin': {'type': 'string', 'enum': ['PATIENT', 'HOSPITAL'], 'default': 'PATIENT',
                                   'description': 'HOSPITAL chỉ ADMIN/RECEPTIONIST ghi nhận, cần reason'}})],
@@ -99,7 +108,7 @@ def cancel(encounter_id):
 @swag_from({'tags': ['Reception'], 'summary': 'Tiếp nhận walk-in; tự chọn ca còn chỗ, cấp số ngay',
             'security': _SECURITY, 'parameters': [_body({'patient_id': {'type': 'integer'},
                 'doctor_profile_id': {'type': 'integer'}, 'symptoms': {'type': 'string'}}, ('patient_id', 'doctor_profile_id'))],
-            'responses': {**_ACTION_RESPONSES, 201: {'description': 'CHECKED_IN, số thứ tự đã cấp'}}})
+            'responses': {**_ACTION_RESPONSES, 201: {'description': 'CHECKED_IN, phiếu khung giờ đã phát'}}})
 def walk_in():
     return jsonify(encounter_service.create_walk_in(current_user(), encounter_schema.validate_walk_in(request.get_json(silent=True)))), 201
 
@@ -112,6 +121,7 @@ def check_in(encounter_id):
     return jsonify(encounter_service.action(current_user(), encounter_id, 'check-in'))
 
 
+@encounter_bp.get('/staff/appointment-tickets')
 @encounter_bp.get('/staff/queues')
 @login_required
 @swag_from({'tags': ['Reception'], 'summary': 'Hàng đợi theo ca và quyền phân công; bỏ qua lượt đã hủy',
@@ -134,7 +144,8 @@ def transfer_options(encounter_id):
 @login_required
 @swag_from({'tags': ['Reception'], 'summary': 'Chuyển bác sĩ cùng khoa, giữ nguyên giá/cọc đã chốt',
             'security': _SECURITY, 'parameters': [_ID, _body({'schedule_id': {'type': 'integer'},
-                'reason': {'type': 'string'}}, ('schedule_id', 'reason'))], 'responses': _ACTION_RESPONSES})
+                'appointment_time': {'type': 'string', 'example': '08:30'},
+                'reason': {'type': 'string'}}, ('schedule_id', 'appointment_time', 'reason'))], 'responses': _ACTION_RESPONSES})
 def transfer(encounter_id):
     return jsonify(encounter_service.transfer(current_user(), encounter_id, encounter_schema.validate_transfer(request.get_json(silent=True))))
 

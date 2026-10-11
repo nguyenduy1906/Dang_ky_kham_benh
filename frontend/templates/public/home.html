@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trang chủ | NEU Medical</title>
+    <link rel="stylesheet" href="../../static/css/home.css" />
+    <link rel="stylesheet" href="../../static/css/public-pages.css" />
+    <script src="../../static/js/core/public.js" defer></script>
+    <script src="../../static/js/pages/home.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Đến nội dung chính</a>
+    <header>
+      <div class="topbar">
+        <div class="topbar-inner">
+          <span>Chào mừng bạn đến với Bệnh viện NEU Medical</span>
+          <div>
+            <a href="contact.html">Liên hệ hỗ trợ</a
+            ><a href="../(patient)/booking.html">Đặt lịch khám</a
+            ><span class="language" aria-label="Ngôn ngữ tiếng Việt">🇻🇳</span>
+          </div>
+        </div>
+      </div>
+      <div class="identity">
+        <a class="brand" href="home.html"
+          ><img
+            class="brand-logo"
+            src="../../static/assets/logo_neu.png"
+            alt="Logo NEU Medical"
+            width="68"
+            height="68"
+          /><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></a
+        >
+        <p class="motto">Vì sức khoẻ nhân dân</p>
+      </div>
+      <div class="navigation">
+        <button class="menu-toggle" aria-expanded="false" aria-controls="main-nav">
+          ☰ <span>Danh mục</span>
+        </button>
+        <nav id="main-nav" aria-label="Điều hướng chính">
+          <a class="active" href="home.html" aria-current="page">Trang chủ</a
+          ><a href="about.html">Giới thiệu</a><a href="departments.html">Chuyên khoa</a
+          ><a href="doctors.html">Đội ngũ bác sĩ</a
+          ><a href="../(patient)/booking.html">Đặt lịch khám</a><a href="news.html">Tin tức</a
+          ><a href="contact.html">Liên hệ</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main">
+      <section class="hero" aria-label="Giới thiệu dịch vụ khám bệnh">
+        <img
+          class="hero-photo"
+          src="../../static/assets/clinic/lễ_tân.jpg"
+          alt="Không gian tiếp đón tại cơ sở khám bệnh"
+        />
+        <div class="hero-shade"></div>
+        <div class="hero-inner">
+          <div class="hero-copy">
+            <span class="eyebrow">CHĂM SÓC SỨC KHỎE CHO BẠN VÀ GIA ĐÌNH</span>
+            <p class="hero-script">Vì sức khoẻ</p>
+            <h1>NHÂN DÂN</h1>
+            <p class="hero-description">
+              Đồng hành cùng bạn từ việc lựa chọn bác sĩ<br />đến đăng ký lịch khám thuận tiện.
+            </p>
+            <button class="hero-button" data-panel="booking">
+              Đặt lịch khám <span aria-hidden="true">→</span>
+            </button>
+          </div>
+          <div class="hero-gallery" aria-label="Hình ảnh hoạt động khám chữa bệnh">
+            <figure class="gallery-large">
+              <img
+                src="../../static/assets/doctors/doctors_9.jpg"
+                alt="Hình ảnh đội ngũ nhân viên y tế"
+              />
+            </figure>
+            <figure>
+              <img
+                src="../../static/assets/surgery/surgery_1.jpg"
+                alt="Hoạt động của đội ngũ phẫu thuật"
+              />
+            </figure>
+            <figure>
+              <img
+                src="../../static/assets/nurses/nurses_1.jpg"
+                alt="Nhân viên điều dưỡng hỗ trợ chăm sóc"
+              />
+            </figure>
+            <div class="gallery-caption">Tận tâm chăm sóc · Thuận tiện đặt lịch</div>
+          </div>
+        </div>
+        <div class="hero-bottom" aria-hidden="true"></div>
+      </section>
+      <section class="services" aria-label="Tiện ích dành cho bệnh nhân">
+        <button class="service" data-panel="contact">
+          <span class="service-icon" aria-hidden="true">☎</span
+          ><span
+            ><strong>Liên hệ hỗ trợ</strong
+            ><span>Thông tin liên hệ và hướng dẫn đăng ký khám</span></span
+          ><span class="service-arrow" aria-hidden="true">↗</span>
+        </button>
+        <button class="service" data-panel="booking">
+          <span class="service-icon" aria-hidden="true">▦</span
+          ><span
+            ><strong>Đặt lịch khám</strong
+            ><span>Chọn bác sĩ và ca khám phù hợp tại website</span></span
+          ><span class="service-arrow" aria-hidden="true">↗</span>
+        </button>
+        <button class="service" data-panel="doctors">
+          <span class="service-icon" aria-hidden="true">♧</span
+          ><span
+            ><strong>Đội ngũ bác sĩ</strong
+            ><span>Tìm hiểu bác sĩ và chuyên khoa khám bệnh</span></span
+          ><span class="service-arrow" aria-hidden="true">↗</span>
+        </button>
+        <button class="service" data-panel="guide">
+          <span class="service-icon" aria-hidden="true">▤</span
+          ><span
+            ><strong>Hướng dẫn khám bệnh</strong
+            ><span>Chuẩn bị thông tin trước khi đến khám</span></span
+          ><span class="service-arrow" aria-hidden="true">↗</span>
+        </button>
+      </section>
+      <section class="departments-section" id="departments" aria-labelledby="departments-title">
+        <div class="section-wrap department-layout">
+          <div>
+            <p class="section-kicker">ĐƠN VỊ</p>
+            <h2 id="departments-title">Chuyên khoa</h2>
+            <p class="section-description">Chăm sóc sức khỏe toàn diện cho gia đình bạn</p>
+            <div class="department-list">
+              <button class="department-row" data-panel="departments">
+                <span>Nội tổng quát</span><span aria-hidden="true">→</span></button
+              ><button class="department-row" data-panel="departments">
+                <span>Tim mạch</span><span aria-hidden="true">→</span></button
+              ><button class="department-row" data-panel="departments">
+                <span>Da liễu</span><span aria-hidden="true">→</span></button
+              ><button class="department-row" data-panel="departments">
+                <span>Nhi</span><span aria-hidden="true">→</span></button
+              ><button class="department-row" data-panel="departments">
+                <span>Sản phụ khoa</span><span aria-hidden="true">→</span></button
+              ><button class="department-row" data-panel="departments" hidden>
+                <span>Tai Mũi Họng</span><span aria-hidden="true">→</span></button
+              ><button class="department-row" data-panel="departments" hidden>
+                <span>Mắt</span><span aria-hidden="true">→</span></button
+              ><button class="department-row" data-panel="departments" hidden>
+                <span>Răng Hàm Mặt</span><span aria-hidden="true">→</span></button
+              ><button class="department-row" data-panel="departments" hidden>
+                <span>Cơ Xương Khớp</span><span aria-hidden="true">→</span></button
+              ><button class="department-row" data-panel="departments" hidden>
+                <span>Thần kinh</span><span aria-hidden="true">→</span>
+              </button>
+            </div>
+            <button class="solid-button" id="all-departments" aria-expanded="false">
+              Xem tất cả
+            </button>
+          </div>
+          <div class="department-pictures">
+            <img
+              src="../../static/assets/clinic/nội_khoa.jpg"
+              alt="Không gian khám nội khoa"
+              loading="lazy"
+            /><img
+              src="../../static/assets/clinic/chụp_x_quang.jpg"
+              alt="Thiết bị chẩn đoán hình ảnh"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      </section>
+      <section class="booking-banner" aria-labelledby="booking-banner-title">
+        <div class="section-wrap booking-layout">
+          <div>
+            <img
+              class="banner-logo"
+              src="../../static/assets/logo_neu.png"
+              alt="NEU Medical"
+              loading="lazy"
+            />
+            <h2 id="booking-banner-title">LỊCH KHÁM,<br />TƯ VẤN THEO YÊU CẦU</h2>
+            <button class="solid-button" data-panel="booking">Xem lịch khám →</button>
+          </div>
+          <img
+            class="booking-photo"
+            src="../../static/assets/clinic/đa_khoa.jpg"
+            alt="Không gian khám bệnh"
+            loading="lazy"
+          />
+          <div class="booking-info">
+            <strong>NEU MEDICAL</strong>
+            <p>Lựa chọn bác sĩ<br />và ca khám phù hợp</p>
+            <button data-panel="booking">Đặt lịch khám →</button>
+          </div>
+        </div>
+      </section>
+      <section class="news-section" id="news" aria-labelledby="news-title">
+        <div class="section-wrap">
+          <div class="section-heading">
+            <div>
+              <p class="section-kicker">TIN TỨC &amp; SỰ KIỆN</p>
+              <h2 id="news-title">Tin tức</h2>
+            </div>
+            <div class="news-filters" role="group" aria-label="Lọc tin tức">
+              <button class="selected" data-filter="all" aria-pressed="true">
+                Tin tức mới nhất</button
+              ><button data-filter="training" aria-pressed="false">Đào tạo, chỉ đạo tuyến</button
+              ><button data-filter="health" aria-pressed="false">Y học thường thức</button
+              ><button data-filter="professional" aria-pressed="false">Bài viết chuyên môn</button
+              ><button data-filter="activity" aria-pressed="false">Tin hoạt động Bệnh viện</button>
+            </div>
+          </div>
+          <div class="news-grid">
+            <button class="article-card" data-panel="news" data-category="activity">
+              <img
+                src="../../static/assets/meetings/meetings_1.jpg"
+                alt="Hoạt động chuyên môn của đội ngũ y tế"
+                loading="lazy"
+              /><span class="article-body"
+                ><strong>Hoạt động chuyên môn của đội ngũ y tế</strong
+                ><span class="article-date">Bài viết minh họa</span></span
+              ></button
+            ><button class="article-card" data-panel="news" data-category="activity">
+              <img
+                src="../../static/assets/clinic/lễ_tân.jpg"
+                alt="Đặt lịch khám thuận tiện cùng NEU Medical"
+                loading="lazy"
+              /><span class="article-body"
+                ><strong>Đặt lịch khám thuận tiện cùng NEU Medical</strong
+                ><span class="article-date">Bài viết minh họa</span></span
+              ></button
+            ><button class="article-card" data-panel="news" data-category="training">
+              <img
+                src="../../static/assets/meetings/meetings_2.jpg"
+                alt="Chia sẻ kiến thức và trao đổi chuyên môn"
+                loading="lazy"
+              /><span class="article-body"
+                ><strong>Chia sẻ kiến thức và trao đổi chuyên môn</strong
+                ><span class="article-date">Bài viết minh họa</span></span
+              ></button
+            ><button class="article-card" data-panel="news" data-category="professional">
+              <img
+                src="../../static/assets/surgery/surgery_1.jpg"
+                alt="Tận tâm trong từng ca phẫu thuật"
+                loading="lazy"
+              /><span class="article-body"
+                ><strong>Tận tâm trong từng ca phẫu thuật</strong
+                ><span class="article-date">Bài viết minh họa</span></span
+              ></button
+            ><button class="article-card" data-panel="news" data-category="health">
+              <img
+                src="../../static/assets/diseases_and_methods/5_bệnh_giao_mùa.jpg"
+                alt="Chủ động chăm sóc sức khỏe khi giao mùa"
+                loading="lazy"
+              /><span class="article-body"
+                ><strong>Chủ động chăm sóc sức khỏe khi giao mùa</strong
+                ><span class="article-date">Bài viết minh họa</span></span
+              ></button
+            ><button class="article-card" data-panel="news" data-category="training">
+              <img
+                src="../../static/assets/nurses/nurses_1.jpg"
+                alt="Đồng hành cùng đội ngũ điều dưỡng"
+                loading="lazy"
+              /><span class="article-body"
+                ><strong>Đồng hành cùng đội ngũ điều dưỡng</strong
+                ><span class="article-date">Bài viết minh họa</span></span
+              >
+            </button>
+          </div>
+          <p class="sample-caption">Ảnh và nội dung minh họa cho giao diện.</p>
+        </div>
+      </section>
+      <section class="events-section" aria-labelledby="events-title">
+        <div class="section-wrap">
+          <p class="section-kicker">TIN TỨC &amp; SỰ KIỆN</p>
+          <h2 id="events-title">Sự kiện nổi bật</h2>
+          <div
+            class="event-track"
+            tabindex="0"
+            aria-label="Danh sách sự kiện, cuộn ngang để xem thêm"
+          >
+            <button class="article-card" data-panel="news">
+              <img
+                src="../../static/assets/surgery/surgery_2.jpg"
+                alt="Đồng hành cùng người bệnh trong từng ca khám"
+                loading="lazy"
+              /><span class="article-body"
+                ><strong>Đồng hành cùng người bệnh trong từng ca khám</strong
+                ><span class="article-date">Bài viết minh họa</span></span
+              ></button
+            ><button class="article-card" data-panel="news">
+              <img
+                src="../../static/assets/meetings/meetings_3.jpg"
+                alt="Gặp gỡ và trao đổi cùng đội ngũ y tế"
+                loading="lazy"
+              /><span class="article-body"
+                ><strong>Gặp gỡ và trao đổi cùng đội ngũ y tế</strong
+                ><span class="article-date">Bài viết minh họa</span></span
+              ></button
+            ><button class="article-card" data-panel="news">
+              <img
+                src="../../static/assets/nurses/nurses_2.jpg"
+                alt="Chăm sóc sức khỏe cho bạn và gia đình"
+                loading="lazy"
+              /><span class="article-body"
+                ><strong>Chăm sóc sức khỏe cho bạn và gia đình</strong
+                ><span class="article-date">Bài viết minh họa</span></span
+              ></button
+            ><button class="article-card" data-panel="news">
+              <img
+                src="../../static/assets/clinic/phòng_chờ.jpg"
+                alt="Không gian khám bệnh tại NEU Medical"
+                loading="lazy"
+              /><span class="article-body"
+                ><strong>Không gian khám bệnh tại NEU Medical</strong
+                ><span class="article-date">Bài viết minh họa</span></span
+              >
+            </button>
+          </div>
+        </div>
+      </section>
+      <section class="doctors-section" id="doctors" aria-labelledby="doctors-title">
+        <div class="section-wrap">
+          <p class="section-kicker">BÁC SĨ</p>
+          <div class="section-heading">
+            <div>
+              <h2 id="doctors-title">Đội ngũ chuyên gia</h2>
+              <p class="section-description">
+                Tìm hiểu đội ngũ bác sĩ và lựa chọn chuyên khoa phù hợp.<br />Ảnh và hồ sơ đang sử
+                dụng dữ liệu minh họa.
+              </p>
+            </div>
+            <button class="outline-button" data-panel="doctors">Tìm bác sĩ</button>
+          </div>
+          <div class="doctor-slider">
+            <button class="slider-prev" aria-label="Xem bác sĩ trước" aria-controls="doctor-track">
+              ‹
+            </button>
+            <div
+              class="doctor-track"
+              id="doctor-track"
+              tabindex="0"
+              aria-label="Danh sách bác sĩ, vuốt hoặc cuộn ngang để xem thêm"
+            >
+              <a class="doctor-card" href="doctor-detail.html?id=1"
+                ><img
+                  src="../../static/assets/doctors/doctors_1.jpg"
+                  alt="Ảnh bác sĩ minh họa 1"
+                  loading="lazy"
+                /><span>Hồ sơ minh họa</span><strong>Bác sĩ 01</strong></a
+              ><a class="doctor-card" href="doctor-detail.html?id=2"
+                ><img
+                  src="../../static/assets/doctors/doctors_2.jpg"
+                  alt="Ảnh bác sĩ minh họa 2"
+                  loading="lazy"
+                /><span>Hồ sơ minh họa</span><strong>Bác sĩ 02</strong></a
+              ><a class="doctor-card" href="doctor-detail.html?id=3"
+                ><img
+                  src="../../static/assets/doctors/doctors_3.jpg"
+                  alt="Ảnh bác sĩ minh họa 3"
+                  loading="lazy"
+                /><span>Hồ sơ minh họa</span><strong>Bác sĩ 03</strong></a
+              ><a class="doctor-card" href="doctor-detail.html?id=4"
+                ><img
+                  src="../../static/assets/doctors/doctors_4.jpg"
+                  alt="Ảnh bác sĩ minh họa 4"
+                  loading="lazy"
+                /><span>Hồ sơ minh họa</span><strong>Bác sĩ 04</strong></a
+              ><a class="doctor-card" href="doctor-detail.html?id=5"
+                ><img
+                  src="../../static/assets/doctors/doctors_5.jpg"
+                  alt="Ảnh bác sĩ minh họa 5"
+                  loading="lazy"
+                /><span>Hồ sơ minh họa</span><strong>Bác sĩ 05</strong></a
+              ><a class="doctor-card" href="doctor-detail.html?id=6"
+                ><img
+                  src="../../static/assets/doctors/doctors_6.jpg"
+                  alt="Ảnh bác sĩ minh họa 6"
+                  loading="lazy"
+                /><span>Hồ sơ minh họa</span><strong>Bác sĩ 06</strong></a
+              ><a class="doctor-card" href="doctor-detail.html?id=7"
+                ><img
+                  src="../../static/assets/doctors/doctors_7.jpg"
+                  alt="Ảnh bác sĩ minh họa 7"
+                  loading="lazy"
+                /><span>Hồ sơ minh họa</span><strong>Bác sĩ 07</strong></a
+              ><a class="doctor-card" href="doctor-detail.html?id=8"
+                ><img
+                  src="../../static/assets/doctors/doctors_8.jpg"
+                  alt="Ảnh bác sĩ minh họa 8"
+                  loading="lazy"
+                /><span>Hồ sơ minh họa</span><strong>Bác sĩ 08</strong></a
+              >
+            </div>
+            <button
+              class="slider-next"
+              aria-label="Xem bác sĩ tiếp theo"
+              aria-controls="doctor-track"
+            >
+              ›
+            </button>
+          </div>
+          <div class="slider-status" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+    <footer class="compact-footer">
+      <div class="compact-footer-wrap">
+        <div class="compact-footer-grid">
+          <div>
+            <a class="compact-brand" href="home.html"
+              ><img src="../../static/assets/logo_neu.png" alt="Logo NEU Medical" /><strong
+                >NEU Medical</strong
+              ></a
+            >
+            <p>
+              Đồng hành cùng sức khỏe của bạn và gia đình. Tìm hiểu chuyên khoa, lựa chọn bác sĩ và
+              đăng ký lịch khám thuận tiện.
+            </p>
+            <span class="footer-badge">Bản xem trước giao diện</span>
+          </div>
+          <div>
+            <h3>Địa chỉ &amp; Giờ khám bệnh</h3>
+            <p>
+              <span class="footer-symbol" aria-hidden="true">⌖</span> 207 đường Giải Phóng, phường
+              Bạch Mai, Hà Nội.
+            </p>
+            <p>
+              <span class="footer-symbol" aria-hidden="true">◷</span> Giờ khám bệnh: Đang cập nhật.
+            </p>
+            <a
+              href="https://www.google.com/maps/search/?api=1&amp;query=207+Giai+Phong+Ha+Noi"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Xem bản đồ →</a
+            >
+          </div>
+          <div>
+            <h3>Đường dây nóng</h3>
+            <div class="hotline-box">
+              <strong>LIÊN HỆ HỖ TRỢ</strong>
+              <p>Đang cập nhật</p>
+              <span>Số hotline chính thức sẽ được bổ sung.</span>
+            </div>
+          </div>
+        </div>
+        <div class="compact-footer-bottom">
+          <span>© 2026 NEU Medical. Tất cả quyền được bảo lưu.</span>
+          <div>
+            <button data-panel="privacy">Chính sách bảo mật</button
+            ><button data-panel="terms">Điều khoản sử dụng</button
+            ><button data-panel="guide">Quy trình khám chữa bệnh</button
+            ><button data-panel="insurance">Bảo hiểm y tế</button>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <dialog id="info-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-heading">
+        <h2 id="dialog-title"></h2>
+        <button class="dialog-close" aria-label="Đóng">×</button>
+      </div>
+      <div id="dialog-content"></div>
+      <form method="dialog"><button class="dialog-done">Đóng</button></form>
+    </dialog>
+  </body>
+</html>

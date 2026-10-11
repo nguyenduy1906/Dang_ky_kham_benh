@@ -1,3 +1,5 @@
+> Cập nhật 12/10/2026: người dùng đã đổi sang đặt khung giờ và phát phiếu, bỏ cấp số thứ tự. Quy tắc mới có ưu tiên hơn các nội dung cũ bên dưới: [THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md](THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md).
+
 # Kế hoạch API và phân công backend
 
 **Cấu trúc theo tầng mới nhất 11/10/2026:** đã thống nhất 12 nhóm ở `routes`, `schemas`, `services`, `models`, giữ hậu tố theo tầng. Xem [bảng file hiện tại](CAU_TRUC_BACKEND.md). 23/23 test hiện có và hai ca tích hợp bổ sung đạt trên PostgreSQL 18 tạm; đăng ký 98 rule Flask và 82 path Swagger giữ nguyên. Chi tiết/giới hạn xem mục 18 [báo cáo gộp](BAO_CAO_GOP_MODULE_ABC.md). Những đoạn ghi lịch sử A/B/C, D1/D2 bên dưới dùng tên ở thời điểm cũ; các mục File chính đã cập nhật vị trí hiện tại.

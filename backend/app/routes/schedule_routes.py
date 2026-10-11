@@ -131,6 +131,7 @@ def update_schedule(schedule_id):
             work_date: {type: string}
             start_time: {type: string}
             end_time: {type: string}
+            slot_minutes: {type: integer, enum: [15, 30], description: "Thời lượng khung giờ; mặc định theo khoa khi tạo ca"}
             max_quota: {type: integer}
             schedule_status: {type: string, example: CLOSED}
     responses:

@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS work_schedule (
     end_time              TIME NOT NULL,
     max_quota             integer NOT NULL CHECK (max_quota > 0),
     booked_count          integer NOT NULL DEFAULT 0,
-    last_queue_number     INTEGER NOT NULL DEFAULT 0 CHECK (last_queue_number >= 0),
+    slot_minutes          INTEGER NOT NULL DEFAULT 30 CHECK (slot_minutes IN (15,30)),
     schedule_status       text NOT NULL DEFAULT 'OPEN'
         CHECK (schedule_status IN ('OPEN','FULL','CLOSED','UNAVAILABLE')),
     unavailable_reason    text,
@@ -134,8 +134,9 @@ CREATE TABLE IF NOT EXISTS encounter (
     symptoms             text,
     encounter_status         text NOT NULL DEFAULT 'CONFIRMED'
         CHECK (encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED','CANCELLED','NO_SHOW','EXPIRED')),
-    queue_number         integer CHECK (queue_number > 0),
-    estimated_exam_at    TIMESTAMPTZ,
+    ticket_code          TEXT UNIQUE,
+    appointment_end_at   TIMESTAMPTZ NOT NULL,
+    estimated_exam_at    TIMESTAMPTZ NOT NULL,
     qr_code              text,
     hold_expires_at      TIMESTAMPTZ,
     checked_in_at        TIMESTAMPTZ,
@@ -148,12 +149,16 @@ CREATE TABLE IF NOT EXISTS encounter (
     updated_at           TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT encounter_snapshot_pair CHECK ((consultation_fee_snapshot IS NULL) = (deposit_amount_snapshot IS NULL)),
     CONSTRAINT encounter_deposit_limit CHECK (deposit_amount_snapshot <= consultation_fee_snapshot),
-    CONSTRAINT encounter_schedule_queue_unique UNIQUE (schedule_id, queue_number),
+    CONSTRAINT encounter_slot_order CHECK (appointment_end_at > estimated_exam_at),
     CONSTRAINT encounter_hold_online_only CHECK (hold_expires_at IS NULL OR encounter_type = 'ONLINE'),
     CONSTRAINT encounter_holding_expiry CHECK (
         encounter_status <> 'HOLDING' OR (encounter_type = 'ONLINE' AND hold_expires_at IS NOT NULL)
     )
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS encounter_active_slot_unique
+ON encounter(schedule_id, estimated_exam_at)
+WHERE encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED');
 
 -- 10. ENCOUNTER_STATUS_LOG (Lịch sử trạng thái lượt khám)
 CREATE TABLE IF NOT EXISTS encounter_status_log (

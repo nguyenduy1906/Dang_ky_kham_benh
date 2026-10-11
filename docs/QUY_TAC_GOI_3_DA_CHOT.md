@@ -1,3 +1,5 @@
+> Cập nhật 12/10/2026: người dùng đã đổi sang đặt khung giờ và phát phiếu, bỏ cấp số thứ tự. Quy tắc mới có ưu tiên hơn các nội dung cũ bên dưới: [THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md](THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md).
+
 # Quy tắc gói 3 đã chốt ngày 08/10/2026
 
 Quyết định của người dùng thay thế phương án demo/chưa chốt trong tài liệu cũ.

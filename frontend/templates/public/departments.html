@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Chuyên khoa | NEU Medical</title>
+    <link rel="stylesheet" href="../../static/css/home.css" />
+    <link rel="stylesheet" href="../../static/css/public-pages.css" />
+    <script src="../../static/js/core/public.js" defer></script>
+    <script src="../../static/js/pages/public-pages.js" defer></script>
+    <script src="../../static/js/pages/departments.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Đến nội dung chính</a>
+    <header>
+      <div class="topbar">
+        <div class="topbar-inner">
+          <span>Chào mừng bạn đến với Bệnh viện NEU Medical</span>
+          <div>
+            <a href="contact.html">Liên hệ hỗ trợ</a
+            ><a href="../(patient)/booking.html">Đặt lịch khám</a
+            ><span class="language" aria-label="Ngôn ngữ tiếng Việt">🇻🇳</span>
+          </div>
+        </div>
+      </div>
+      <div class="identity">
+        <a class="brand" href="home.html"
+          ><img
+            class="brand-logo"
+            src="../../static/assets/logo_neu.png"
+            alt="Logo NEU Medical"
+            width="68"
+            height="68"
+          /><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></a
+        >
+        <p class="motto">Vì sức khoẻ nhân dân</p>
+      </div>
+      <div class="navigation">
+        <button class="menu-toggle" aria-expanded="false" aria-controls="main-nav">
+          ☰ <span>Danh mục</span>
+        </button>
+        <nav id="main-nav" aria-label="Điều hướng chính">
+          <a href="home.html">Trang chủ</a><a href="about.html">Giới thiệu</a
+          ><a class="active" aria-current="page" href="departments.html">Chuyên khoa</a
+          ><a href="doctors.html">Đội ngũ bác sĩ</a
+          ><a href="../(patient)/booking.html">Đặt lịch khám</a><a href="news.html">Tin tức</a
+          ><a href="contact.html">Liên hệ</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="specialty-page">
+      <div class="section-wrap">
+        <section class="specialty-intro">
+          <p class="section-kicker">HỆ THỐNG CHUYÊN KHOA</p>
+          <h1>Các chuyên khoa tại <span>NEU Medical</span></h1>
+          <p>Tìm hiểu chuyên khoa và lựa chọn bác sĩ phù hợp với nhu cầu khám bệnh của bạn.</p>
+          <div class="specialty-controls">
+            <div>
+              <label class="visually-hidden" for="specialty-search">Tìm tên chuyên khoa</label
+              ><input id="specialty-search" type="search" placeholder="Tìm tên chuyên khoa" />
+            </div>
+            <div class="specialty-filters" role="group" aria-label="Lọc chuyên khoa">
+              <button data-specialty-filter="all" class="selected" aria-pressed="true">
+                Tất cả chuyên khoa</button
+              ><button data-specialty-filter="clinical" aria-pressed="false">Khối lâm sàng</button
+              ><button data-specialty-filter="support" aria-pressed="false">
+                Khối cận lâm sàng
+              </button>
+            </div>
+          </div>
+          <div class="specialty-overview">
+            <div><strong>10</strong><span>Chuyên khoa mẫu</span></div>
+            <div><strong>8</strong><span>Hồ sơ bác sĩ minh họa</span></div>
+            <div><strong>Một cơ sở</strong><span>NEU Medical · Hà Nội</span></div>
+            <div><strong>Online</strong><span>Giao diện đăng ký khám</span></div>
+          </div>
+        </section>
+        <div class="specialty-list-heading">
+          <div>
+            <h2>Danh mục chuyên khoa</h2>
+            <p>Lựa chọn khoa để xem danh sách bác sĩ.</p>
+          </div>
+          <span id="specialty-result" role="status"></span>
+        </div>
+        <div class="specialty-grid">
+          <article class="specialty-card" data-specialty="Nội tổng quát" data-group="clinical">
+            <span class="specialty-icon" aria-hidden="true">✚</span
+            ><span class="specialty-label">KHỐI LÂM SÀNG</span>
+            <h3>Khoa Nội tổng quát</h3>
+            <p>Khám và điều trị các bệnh nội khoa thông thường.</p>
+            <a href="doctors.html?department=0">Xem bác sĩ →</a>
+          </article>
+          <article class="specialty-card" data-specialty="Tim mạch" data-group="clinical">
+            <span class="specialty-icon" aria-hidden="true">♡</span
+            ><span class="specialty-label">KHỐI LÂM SÀNG</span>
+            <h3>Khoa Tim mạch</h3>
+            <p>Khám các bệnh lý tim và mạch máu.</p>
+            <a href="doctors.html?department=1">Xem bác sĩ →</a>
+          </article>
+          <article class="specialty-card" data-specialty="Da liễu" data-group="clinical">
+            <span class="specialty-icon" aria-hidden="true">◇</span
+            ><span class="specialty-label">KHỐI LÂM SÀNG</span>
+            <h3>Khoa Da liễu</h3>
+            <p>Khám các bệnh về da, tóc và móng.</p>
+            <a href="doctors.html?department=2">Xem bác sĩ →</a>
+          </article>
+          <article class="specialty-card" data-specialty="Nhi" data-group="clinical">
+            <span class="specialty-icon" aria-hidden="true">✚</span
+            ><span class="specialty-label">KHỐI LÂM SÀNG</span>
+            <h3>Khoa Nhi</h3>
+            <p>Khám cho trẻ em và thanh thiếu niên.</p>
+            <a href="doctors.html?department=3">Xem bác sĩ →</a>
+          </article>
+          <article class="specialty-card" data-specialty="Sản phụ khoa" data-group="clinical">
+            <span class="specialty-icon" aria-hidden="true">♧</span
+            ><span class="specialty-label">KHỐI LÂM SÀNG</span>
+            <h3>Khoa Sản phụ khoa</h3>
+            <p>Chăm sóc sức khỏe sản phụ khoa.</p>
+            <a href="doctors.html?department=4">Xem bác sĩ →</a>
+          </article>
+          <article class="specialty-card" data-specialty="Tai Mũi Họng" data-group="clinical">
+            <span class="specialty-icon" aria-hidden="true">◉</span
+            ><span class="specialty-label">KHỐI LÂM SÀNG</span>
+            <h3>Khoa Tai Mũi Họng</h3>
+            <p>Khám tai, mũi, họng và các bệnh liên quan.</p>
+            <a href="doctors.html?department=5">Xem bác sĩ →</a>
+          </article>
+          <article class="specialty-card" data-specialty="Mắt" data-group="clinical">
+            <span class="specialty-icon" aria-hidden="true">◎</span
+            ><span class="specialty-label">KHỐI LÂM SÀNG</span>
+            <h3>Khoa Mắt</h3>
+            <p>Khám các bệnh lý về mắt.</p>
+            <a href="doctors.html?department=6">Xem bác sĩ →</a>
+          </article>
+          <article class="specialty-card" data-specialty="Răng Hàm Mặt" data-group="clinical">
+            <span class="specialty-icon" aria-hidden="true">♢</span
+            ><span class="specialty-label">KHỐI LÂM SÀNG</span>
+            <h3>Khoa Răng Hàm Mặt</h3>
+            <p>Khám và điều trị răng, hàm, mặt.</p>
+            <a href="doctors.html?department=7">Xem bác sĩ →</a>
+          </article>
+          <article class="specialty-card" data-specialty="Cơ Xương Khớp" data-group="clinical">
+            <span class="specialty-icon" aria-hidden="true">▦</span
+            ><span class="specialty-label">KHỐI LÂM SÀNG</span>
+            <h3>Khoa Cơ Xương Khớp</h3>
+            <p>Khám cơ, xương, khớp và vận động.</p>
+            <a href="doctors.html?department=8">Xem bác sĩ →</a>
+          </article>
+          <article class="specialty-card" data-specialty="Thần kinh" data-group="clinical">
+            <span class="specialty-icon" aria-hidden="true">⌘</span
+            ><span class="specialty-label">KHỐI LÂM SÀNG</span>
+            <h3>Khoa Thần kinh</h3>
+            <p>Khám các bệnh lý hệ thần kinh.</p>
+            <a href="doctors.html?department=9">Xem bác sĩ →</a>
+          </article>
+        </div>
+        <p id="specialty-empty" class="text-block" hidden>
+          Chưa có chuyên khoa phù hợp trong dữ liệu mẫu. Hãy chọn bộ lọc khác hoặc đổi từ khóa.
+        </p>
+        <section class="equipment-section">
+          <h2>Trang thiết bị chẩn đoán hình ảnh</h2>
+          <p>Hình ảnh minh họa không gian và thiết bị hiện có trong bộ tài nguyên dự án.</p>
+          <div class="equipment-grid">
+            <article class="equipment-card">
+              <img
+                src="../../static/assets/clinic/chụp_x_quang.jpg"
+                alt="Chẩn đoán hình ảnh"
+                loading="lazy"
+              />
+              <div>
+                <h3>Chẩn đoán hình ảnh</h3>
+                <p>Thông tin thiết bị thực tế sẽ được bổ sung sau.</p>
+                <span>Ảnh minh họa</span>
+              </div>
+            </article>
+            <article class="equipment-card">
+              <img
+                src="../../static/assets/clinic/nội_khoa.jpg"
+                alt="Không gian khám nội khoa"
+                loading="lazy"
+              />
+              <div>
+                <h3>Không gian khám nội khoa</h3>
+                <p>Thông tin thiết bị thực tế sẽ được bổ sung sau.</p>
+                <span>Ảnh minh họa</span>
+              </div>
+            </article>
+            <article class="equipment-card">
+              <img
+                src="../../static/assets/clinic/hồi_sức.jpg"
+                alt="Khu vực hồi sức"
+                loading="lazy"
+              />
+              <div>
+                <h3>Khu vực hồi sức</h3>
+                <p>Thông tin thiết bị thực tế sẽ được bổ sung sau.</p>
+                <span>Ảnh minh họa</span>
+              </div>
+            </article>
+          </div>
+        </section>
+        <section class="specialty-guide">
+          <div>
+            <h3>Hướng dẫn chuẩn bị trước khi khám chuyên khoa</h3>
+            <p>
+              Mang theo giấy tờ cá nhân và kết quả khám trước đây. Với lịch online, đến check-in ít
+              nhất 30 phút trước giờ hẹn.
+            </p>
+          </div>
+          <a class="outline-button" href="../(patient)/booking.html">Xem giao diện đặt lịch →</a>
+        </section>
+        <p class="sample-caption">Dữ liệu minh họa · Chưa kết nối API.</p>
+      </div>
+    </main>
+    <footer class="compact-footer">
+      <div class="compact-footer-wrap">
+        <div class="compact-footer-grid">
+          <div>
+            <a class="compact-brand" href="home.html"
+              ><img src="../../static/assets/logo_neu.png" alt="Logo NEU Medical" /><strong
+                >NEU Medical</strong
+              ></a
+            >
+            <p>
+              Đồng hành cùng sức khỏe của bạn và gia đình. Tìm hiểu chuyên khoa, lựa chọn bác sĩ và
+              đăng ký lịch khám thuận tiện.
+            </p>
+            <span class="footer-badge">Bản xem trước giao diện</span>
+          </div>
+          <div>
+            <h3>Địa chỉ &amp; Giờ khám bệnh</h3>
+            <p>
+              <span class="footer-symbol" aria-hidden="true">⌖</span> 207 đường Giải Phóng, phường
+              Bạch Mai, Hà Nội.
+            </p>
+            <p>
+              <span class="footer-symbol" aria-hidden="true">◷</span> Giờ khám bệnh: Đang cập nhật.
+            </p>
+            <a
+              href="https://www.google.com/maps/search/?api=1&amp;query=207+Giai+Phong+Ha+Noi"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Xem bản đồ →</a
+            >
+          </div>
+          <div>
+            <h3>Đường dây nóng</h3>
+            <div class="hotline-box">
+              <strong>LIÊN HỆ HỖ TRỢ</strong>
+              <p>Đang cập nhật</p>
+              <span>Số hotline chính thức sẽ được bổ sung.</span>
+            </div>
+          </div>
+        </div>
+        <div class="compact-footer-bottom">
+          <span>© 2026 NEU Medical. Tất cả quyền được bảo lưu.</span>
+          <div>
+            <button data-panel="privacy">Chính sách bảo mật</button
+            ><button data-panel="terms">Điều khoản sử dụng</button
+            ><button data-panel="guide">Quy trình khám chữa bệnh</button
+            ><button data-panel="insurance">Bảo hiểm y tế</button>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <dialog id="info-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-heading">
+        <h2 id="dialog-title"></h2>
+        <button class="dialog-close" aria-label="Đóng">×</button>
+      </div>
+      <div id="dialog-content"></div>
+      <form method="dialog"><button class="dialog-done">Đóng</button></form>
+    </dialog>
+  </body>
+</html>

@@ -1,7 +1,9 @@
 """Đầu mối gói 3 cho quyền truy cập và transaction lượt khám."""
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
+from backend.app.services.appointment_slot_service import reserve_interval
 
-from backend.app.core.errors import conflict, forbidden, not_found
+from backend.app.core.errors import AppError, conflict, forbidden, not_found
 from backend.app.utils.date import VN_TZ
 from backend.app.db.database import get_db_connection
 from backend.app.models import encounter_model as model, configuration_model
@@ -34,6 +36,17 @@ def get_encounter(actor, encounter_id):
     with get_db_connection() as db:
         row = _visible(db, actor, encounter_id)
     return {'encounter': _present(row)}
+
+
+def get_ticket(actor, encounter_id):
+    with get_db_connection() as db:
+        row = _visible(db, actor, encounter_id)
+        if not row['ticket_code']:
+            raise conflict('Lượt khám chưa được phát phiếu', 'TICKET_NOT_ISSUED')
+        ticket = {key: row[key] for key in (
+            'encounter_id', 'ticket_code', 'patient_name', 'doctor_name', 'room_name',
+            'work_date', 'estimated_exam_at', 'appointment_end_at', 'encounter_status')}
+    return {'ticket': jsonable(ticket)}
 
 
 def history(actor, encounter_id, kind, page, page_size):
@@ -151,13 +164,14 @@ def create_online(actor, fields):
         doctor = _active_doctor(db, schedule)
         _reject_duplicate(db, fields['patient_id'], doctor['doctor_profile_id'], schedule['work_date'])
         # Quyết định mới: cọc bằng toàn bộ giá đăng ký khám của bác sĩ.
-        start, _ = schedule_bounds(schedule)
+        start, finish = reserve_interval(db, schedule, fields['appointment_time'])
+        booking_fields = {k: v for k, v in fields.items() if k != 'appointment_time'}
         row = model.create_encounter(db, {
-            **fields, 'encounter_type': 'ONLINE', 'encounter_status': 'HOLDING',
+            **booking_fields, 'encounter_type': 'ONLINE', 'encounter_status': 'HOLDING',
             'doctor_profile_id': doctor['doctor_profile_id'], 'room_id': schedule['room_id'],
             'created_by_id': actor['user_id'], 'consultation_fee_snapshot': doctor['consultation_fee'],
             'deposit_amount_snapshot': doctor['consultation_fee'],
-            'estimated_exam_at': start, 'hold_expires_at': now + timedelta(minutes=10)})
+            'estimated_exam_at': start, 'appointment_end_at': finish, 'hold_expires_at': now + timedelta(minutes=10)})
         _change_quota(db, schedule, 1)
         model.add_status(db, row['encounter_id'], None, 'HOLDING', actor['user_id'], 'Giữ chỗ online 10 phút')
         result = _present(_visible(db, actor, row['encounter_id']))
@@ -187,9 +201,9 @@ def confirm_paid_online(db, encounter_id, actor_id):
         return False
     if schedule['schedule_status'] in ('CLOSED', 'UNAVAILABLE'):
         raise conflict('Ca đã đóng hoặc báo nghỉ; cần điều phối lượt khám', 'SCHEDULE_UNAVAILABLE')
-    queue = model.next_queue_number(db, schedule['schedule_id'])
-    model.update_encounter(db, encounter_id, {'encounter_status': 'CONFIRMED', 'queue_number': queue})
-    model.add_status(db, encounter_id, 'HOLDING', 'CONFIRMED', actor_id, 'Đã thanh toán đủ tiền; cấp số ' + str(queue))
+    ticket = 'NEU-' + uuid4().hex.upper()
+    model.update_encounter(db, encounter_id, {'encounter_status': 'CONFIRMED', 'ticket_code': ticket})
+    model.add_status(db, encounter_id, 'HOLDING', 'CONFIRMED', actor_id, 'Đã thanh toán đủ tiền; phát phiếu ' + ticket)
     return True
 
 
@@ -258,7 +272,7 @@ def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIEN
         else:
             if status != 'CHECKED_IN':
                 raise conflict('Chỉ bắt đầu khám lượt đã check-in', 'INVALID_ENCOUNTER_STATUS')
-            if now < start or schedule['schedule_status'] in ('CLOSED', 'UNAVAILABLE'):
+            if now < encounter['estimated_exam_at'] or schedule['schedule_status'] in ('CLOSED', 'UNAVAILABLE'):
                 raise conflict('Ca chưa bắt đầu hoặc không hoạt động', 'SCHEDULE_UNAVAILABLE')
         model.update_encounter(db, encounter_id, fields)
         if operation == 'cancel':
@@ -303,12 +317,19 @@ def create_walk_in(actor, fields):
                                 'ORDER BY work_date,start_time,schedule_id',
                                 (fields['doctor_profile_id'], local.date(), local.date(), local.time().replace(tzinfo=None))).fetchall()
         schedule = None
+        interval = None
         locked_candidates = {row['schedule_id']: row for row in
                              model.lock_schedules(db, [c['schedule_id'] for c in candidates])} if candidates else {}
         for candidate in candidates:
             locked = locked_candidates[candidate['schedule_id']]
             # Sau khi chờ khóa, ca có thể đã hết chỗ; chọn ca tiếp theo.
             if locked['schedule_status'] == 'OPEN' and locked['booked_count'] < locked['max_quota']:
+                try:
+                    interval = reserve_interval(db, locked, now=now)
+                except AppError as error:
+                    if error.code == 'SLOT_UNAVAILABLE':
+                        continue
+                    raise
                 schedule = locked
                 break
         if schedule is None:
@@ -316,17 +337,17 @@ def create_walk_in(actor, fields):
         _require_available(schedule, now)
         doctor = _active_doctor(db, schedule)
         _reject_duplicate(db, fields['patient_id'], doctor['doctor_profile_id'], schedule['work_date'])
-        queue = model.next_queue_number(db, schedule['schedule_id'])
-        start, _ = schedule_bounds(schedule)
+        ticket = 'NEU-' + uuid4().hex.upper()
+        start, finish = interval
         row = model.create_encounter(db, {
             'patient_id': fields['patient_id'], 'symptoms': fields.get('symptoms'),
             'encounter_type': 'WALK_IN', 'encounter_status': 'CHECKED_IN',
             'doctor_profile_id': doctor['doctor_profile_id'], 'schedule_id': schedule['schedule_id'],
             'room_id': schedule['room_id'], 'created_by_id': actor['user_id'],
             'consultation_fee_snapshot': doctor['consultation_fee'], 'deposit_amount_snapshot': 0,
-            'queue_number': queue, 'estimated_exam_at': max(start, now), 'checked_in_at': now})
+            'ticket_code': ticket, 'estimated_exam_at': start, 'appointment_end_at': finish, 'checked_in_at': now})
         _change_quota(db, schedule, 1)
-        model.add_status(db, row['encounter_id'], None, 'CHECKED_IN', actor['user_id'], 'Tiếp nhận walk-in, cấp số ' + str(queue))
+        model.add_status(db, row['encounter_id'], None, 'CHECKED_IN', actor['user_id'], 'Tiếp nhận walk-in, phát phiếu ' + ticket)
         result = _present(_visible(db, actor, row['encounter_id']))
     return {'encounter': result}
 
@@ -386,6 +407,12 @@ def transfer_options(actor, encounter_id, page, page_size):
         rows = db.execute('SELECT s.*,u.full_name AS doctor_name,r.room_name ' + base +
                           ' ORDER BY s.work_date,s.start_time,s.schedule_id LIMIT %s OFFSET %s',
                           params + [page_size, (page - 1) * page_size]).fetchall()
+        from backend.app.services.appointment_slot_service import available_slots
+        now = utc_now()
+        for row in rows:
+            row['slots'] = [{'appointment_time': start.strftime('%H:%M'),
+                             'starts_at': start.isoformat(), 'ends_at': end.isoformat()}
+                            for start, end in available_slots(db, row) if start >= now]
     return _page(rows, total, {'page': page, 'page_size': page_size})
 
 
@@ -409,15 +436,14 @@ def transfer(actor, encounter_id, fields):
         if doctor['department_id'] != visible['department_id']:
             raise conflict('Chỉ chuyển bác sĩ cùng chuyên khoa', 'DEPARTMENT_MISMATCH')
         _reject_duplicate(db, encounter['patient_id'], doctor['doctor_profile_id'], target['work_date'])
-        queue = model.next_queue_number(db, target['schedule_id'])
-        start, _ = schedule_bounds(target)
+        start, finish = reserve_interval(db, target, fields['appointment_time'], now=utc_now())
         _change_quota(db, target, 1)
         _change_quota(db, old, -1)
         model.update_encounter(db, encounter_id, {'doctor_profile_id': doctor['doctor_profile_id'],
                                                 'schedule_id': target['schedule_id'], 'room_id': target['room_id'],
-                                                'queue_number': queue, 'estimated_exam_at': start})
+                                                'appointment_end_at': finish, 'estimated_exam_at': start})
         model.add_transfer(db, encounter_id, encounter['doctor_profile_id'], doctor['doctor_profile_id'], actor['user_id'], fields['reason'])
         model.add_status(db, encounter_id, encounter['encounter_status'], encounter['encounter_status'],
-                        actor['user_id'], 'Chuyển ca/bác sĩ; giữ giá đã chốt; cấp số ' + str(queue))
+                        actor['user_id'], 'Chuyển khung giờ/bác sĩ; giữ giá và mã phiếu đã phát')
         result = _present(_visible(db, actor, encounter_id))
     return {'encounter': result}

@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Đội ngũ bác sĩ | NEU Medical</title>
+    <link rel="stylesheet" href="../../static/css/home.css" />
+    <link rel="stylesheet" href="../../static/css/public-pages.css" />
+    <script src="../../static/js/core/public.js" defer></script>
+    <script src="../../static/js/pages/public-pages.js" defer></script>
+    <script src="../../static/js/pages/doctors.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Đến nội dung chính</a>
+    <header>
+      <div class="topbar">
+        <div class="topbar-inner">
+          <span>Chào mừng bạn đến với Bệnh viện NEU Medical</span>
+          <div>
+            <a href="contact.html">Liên hệ hỗ trợ</a
+            ><a href="../(patient)/booking.html">Đặt lịch khám</a
+            ><span class="language" aria-label="Ngôn ngữ tiếng Việt">🇻🇳</span>
+          </div>
+        </div>
+      </div>
+      <div class="identity">
+        <a class="brand" href="home.html"
+          ><img
+            class="brand-logo"
+            src="../../static/assets/logo_neu.png"
+            alt="Logo NEU Medical"
+            width="68"
+            height="68"
+          /><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></a
+        >
+        <p class="motto">Vì sức khoẻ nhân dân</p>
+      </div>
+      <div class="navigation">
+        <button class="menu-toggle" aria-expanded="false" aria-controls="main-nav">
+          ☰ <span>Danh mục</span>
+        </button>
+        <nav id="main-nav" aria-label="Điều hướng chính">
+          <a href="home.html">Trang chủ</a><a href="about.html">Giới thiệu</a
+          ><a href="departments.html">Chuyên khoa</a
+          ><a class="active" aria-current="page" href="doctors.html">Đội ngũ bác sĩ</a
+          ><a href="../(patient)/booking.html">Đặt lịch khám</a><a href="news.html">Tin tức</a
+          ><a href="contact.html">Liên hệ</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="doctor-directory">
+      <div class="section-wrap">
+        <p class="directory-breadcrumb"><a href="home.html">Trang chủ</a> / Đội ngũ bác sĩ</p>
+        <section class="directory-intro">
+          <div>
+            <p class="section-kicker">CHĂM SÓC SỨC KHỎE CÙNG NEU MEDICAL</p>
+            <h1>Đội ngũ Bác sĩ &amp; Chuyên gia Y khoa</h1>
+            <p>
+              Tìm hiểu đội ngũ bác sĩ và lựa chọn chuyên khoa phù hợp với nhu cầu khám bệnh.<br />Ảnh
+              và hồ sơ dưới đây dùng để minh họa giao diện.
+            </p>
+          </div>
+          <a class="directory-support" href="contact.html"
+            ><span aria-hidden="true">☎</span
+            ><span>Hỗ trợ lựa chọn chuyên khoa<strong>Liên hệ NEU Medical →</strong></span></a
+          >
+        </section>
+        <form class="directory-filter" id="directory-filter">
+          <div class="directory-inputs">
+            <div>
+              <label class="visually-hidden" for="directory-search">Tìm tên bác sĩ</label
+              ><input id="directory-search" type="search" placeholder="Nhập tên bác sĩ..." />
+            </div>
+            <div>
+              <label class="visually-hidden" for="directory-department">Chuyên khoa</label
+              ><select id="directory-department">
+                <option value="">Tất cả chuyên khoa</option>
+                <option value="0">Nội tổng quát</option>
+                <option value="1">Tim mạch</option>
+                <option value="2">Da liễu</option>
+                <option value="3">Nhi</option>
+                <option value="4">Sản phụ khoa</option>
+                <option value="5">Tai Mũi Họng</option>
+                <option value="6">Mắt</option>
+                <option value="7">Răng Hàm Mặt</option>
+                <option value="8">Cơ Xương Khớp</option>
+                <option value="9">Thần kinh</option>
+              </select>
+            </div>
+          </div>
+          <div class="directory-filter-bottom">
+            <div class="directory-chips">
+              <span>CHUYÊN KHOA NỔI BẬT:</span
+              ><button type="button" data-doctor-chip="" aria-pressed="true" class="selected">
+                Tất cả</button
+              ><button type="button" data-doctor-chip="1" aria-pressed="false" class="">
+                Tim mạch</button
+              ><button type="button" data-doctor-chip="8" aria-pressed="false" class="">
+                Cơ Xương Khớp</button
+              ><button type="button" data-doctor-chip="9" aria-pressed="false" class="">
+                Thần kinh</button
+              ><button type="button" data-doctor-chip="3" aria-pressed="false" class="">Nhi</button>
+            </div>
+            <span id="directory-result" role="status"></span>
+          </div>
+        </form>
+        <div class="directory-grid">
+          <article
+            class="directory-card"
+            data-directory-name="Bác sĩ 01"
+            data-directory-department="0"
+          >
+            <a class="directory-photo" href="doctor-detail.html?id=1"
+              ><img
+                src="../../static/assets/doctors/doctors_1.jpg"
+                alt="Xem hồ sơ bác sĩ minh họa 1"
+                loading="lazy"
+              /><span>Hồ sơ minh họa</span></a
+            >
+            <div class="directory-card-body">
+              <p class="directory-specialty">KHOA NỘI TỔNG QUÁT</p>
+              <h2><a href="doctor-detail.html?id=1">Bác sĩ 01</a></h2>
+              <ul>
+                <li>Thông tin chuyên môn đang cập nhật</li>
+                <li>Kinh nghiệm và đào tạo sẽ bổ sung từ hồ sơ chính thức</li>
+              </ul>
+              <a class="directory-schedule" href="../(patient)/booking.html?doctor=1"
+                >▦ Lịch khám: Chưa có lịch thực tế</a
+              ><a class="directory-detail" href="doctor-detail.html?id=1"
+                >Xem hồ sơ chi tiết <span aria-hidden="true">→</span></a
+              >
+            </div>
+          </article>
+          <article
+            class="directory-card"
+            data-directory-name="Bác sĩ 02"
+            data-directory-department="1"
+          >
+            <a class="directory-photo" href="doctor-detail.html?id=2"
+              ><img
+                src="../../static/assets/doctors/doctors_2.jpg"
+                alt="Xem hồ sơ bác sĩ minh họa 2"
+                loading="lazy"
+              /><span>Hồ sơ minh họa</span></a
+            >
+            <div class="directory-card-body">
+              <p class="directory-specialty">KHOA TIM MẠCH</p>
+              <h2><a href="doctor-detail.html?id=2">Bác sĩ 02</a></h2>
+              <ul>
+                <li>Thông tin chuyên môn đang cập nhật</li>
+                <li>Kinh nghiệm và đào tạo sẽ bổ sung từ hồ sơ chính thức</li>
+              </ul>
+              <a class="directory-schedule" href="../(patient)/booking.html?doctor=2"
+                >▦ Lịch khám: Chưa có lịch thực tế</a
+              ><a class="directory-detail" href="doctor-detail.html?id=2"
+                >Xem hồ sơ chi tiết <span aria-hidden="true">→</span></a
+              >
+            </div>
+          </article>
+          <article
+            class="directory-card"
+            data-directory-name="Bác sĩ 03"
+            data-directory-department="2"
+          >
+            <a class="directory-photo" href="doctor-detail.html?id=3"
+              ><img
+                src="../../static/assets/doctors/doctors_3.jpg"
+                alt="Xem hồ sơ bác sĩ minh họa 3"
+                loading="lazy"
+              /><span>Hồ sơ minh họa</span></a
+            >
+            <div class="directory-card-body">
+              <p class="directory-specialty">KHOA DA LIỄU</p>
+              <h2><a href="doctor-detail.html?id=3">Bác sĩ 03</a></h2>
+              <ul>
+                <li>Thông tin chuyên môn đang cập nhật</li>
+                <li>Kinh nghiệm và đào tạo sẽ bổ sung từ hồ sơ chính thức</li>
+              </ul>
+              <a class="directory-schedule" href="../(patient)/booking.html?doctor=3"
+                >▦ Lịch khám: Chưa có lịch thực tế</a
+              ><a class="directory-detail" href="doctor-detail.html?id=3"
+                >Xem hồ sơ chi tiết <span aria-hidden="true">→</span></a
+              >
+            </div>
+          </article>
+          <article
+            class="directory-card"
+            data-directory-name="Bác sĩ 04"
+            data-directory-department="3"
+          >
+            <a class="directory-photo" href="doctor-detail.html?id=4"
+              ><img
+                src="../../static/assets/doctors/doctors_4.jpg"
+                alt="Xem hồ sơ bác sĩ minh họa 4"
+                loading="lazy"
+              /><span>Hồ sơ minh họa</span></a
+            >
+            <div class="directory-card-body">
+              <p class="directory-specialty">KHOA NHI</p>
+              <h2><a href="doctor-detail.html?id=4">Bác sĩ 04</a></h2>
+              <ul>
+                <li>Thông tin chuyên môn đang cập nhật</li>
+                <li>Kinh nghiệm và đào tạo sẽ bổ sung từ hồ sơ chính thức</li>
+              </ul>
+              <a class="directory-schedule" href="../(patient)/booking.html?doctor=4"
+                >▦ Lịch khám: Chưa có lịch thực tế</a
+              ><a class="directory-detail" href="doctor-detail.html?id=4"
+                >Xem hồ sơ chi tiết <span aria-hidden="true">→</span></a
+              >
+            </div>
+          </article>
+          <article
+            class="directory-card"
+            data-directory-name="Bác sĩ 05"
+            data-directory-department="4"
+          >
+            <a class="directory-photo" href="doctor-detail.html?id=5"
+              ><img
+                src="../../static/assets/doctors/doctors_5.jpg"
+                alt="Xem hồ sơ bác sĩ minh họa 5"
+                loading="lazy"
+              /><span>Hồ sơ minh họa</span></a
+            >
+            <div class="directory-card-body">
+              <p class="directory-specialty">KHOA SẢN PHỤ KHOA</p>
+              <h2><a href="doctor-detail.html?id=5">Bác sĩ 05</a></h2>
+              <ul>
+                <li>Thông tin chuyên môn đang cập nhật</li>
+                <li>Kinh nghiệm và đào tạo sẽ bổ sung từ hồ sơ chính thức</li>
+              </ul>
+              <a class="directory-schedule" href="../(patient)/booking.html?doctor=5"
+                >▦ Lịch khám: Chưa có lịch thực tế</a
+              ><a class="directory-detail" href="doctor-detail.html?id=5"
+                >Xem hồ sơ chi tiết <span aria-hidden="true">→</span></a
+              >
+            </div>
+          </article>
+          <article
+            class="directory-card"
+            data-directory-name="Bác sĩ 06"
+            data-directory-department="5"
+          >
+            <a class="directory-photo" href="doctor-detail.html?id=6"
+              ><img
+                src="../../static/assets/doctors/doctors_6.jpg"
+                alt="Xem hồ sơ bác sĩ minh họa 6"
+                loading="lazy"
+              /><span>Hồ sơ minh họa</span></a
+            >
+            <div class="directory-card-body">
+              <p class="directory-specialty">KHOA TAI MŨI HỌNG</p>
+              <h2><a href="doctor-detail.html?id=6">Bác sĩ 06</a></h2>
+              <ul>
+                <li>Thông tin chuyên môn đang cập nhật</li>
+                <li>Kinh nghiệm và đào tạo sẽ bổ sung từ hồ sơ chính thức</li>
+              </ul>
+              <a class="directory-schedule" href="../(patient)/booking.html?doctor=6"
+                >▦ Lịch khám: Chưa có lịch thực tế</a
+              ><a class="directory-detail" href="doctor-detail.html?id=6"
+                >Xem hồ sơ chi tiết <span aria-hidden="true">→</span></a
+              >
+            </div>
+          </article>
+          <article
+            class="directory-card"
+            data-directory-name="Bác sĩ 07"
+            data-directory-department="6"
+          >
+            <a class="directory-photo" href="doctor-detail.html?id=7"
+              ><img
+                src="../../static/assets/doctors/doctors_7.jpg"
+                alt="Xem hồ sơ bác sĩ minh họa 7"
+                loading="lazy"
+              /><span>Hồ sơ minh họa</span></a
+            >
+            <div class="directory-card-body">
+              <p class="directory-specialty">KHOA MẮT</p>
+              <h2><a href="doctor-detail.html?id=7">Bác sĩ 07</a></h2>
+              <ul>
+                <li>Thông tin chuyên môn đang cập nhật</li>
+                <li>Kinh nghiệm và đào tạo sẽ bổ sung từ hồ sơ chính thức</li>
+              </ul>
+              <a class="directory-schedule" href="../(patient)/booking.html?doctor=7"
+                >▦ Lịch khám: Chưa có lịch thực tế</a
+              ><a class="directory-detail" href="doctor-detail.html?id=7"
+                >Xem hồ sơ chi tiết <span aria-hidden="true">→</span></a
+              >
+            </div>
+          </article>
+          <article
+            class="directory-card"
+            data-directory-name="Bác sĩ 08"
+            data-directory-department="7"
+          >
+            <a class="directory-photo" href="doctor-detail.html?id=8"
+              ><img
+                src="../../static/assets/doctors/doctors_8.jpg"
+                alt="Xem hồ sơ bác sĩ minh họa 8"
+                loading="lazy"
+              /><span>Hồ sơ minh họa</span></a
+            >
+            <div class="directory-card-body">
+              <p class="directory-specialty">KHOA RĂNG HÀM MẶT</p>
+              <h2><a href="doctor-detail.html?id=8">Bác sĩ 08</a></h2>
+              <ul>
+                <li>Thông tin chuyên môn đang cập nhật</li>
+                <li>Kinh nghiệm và đào tạo sẽ bổ sung từ hồ sơ chính thức</li>
+              </ul>
+              <a class="directory-schedule" href="../(patient)/booking.html?doctor=8"
+                >▦ Lịch khám: Chưa có lịch thực tế</a
+              ><a class="directory-detail" href="doctor-detail.html?id=8"
+                >Xem hồ sơ chi tiết <span aria-hidden="true">→</span></a
+              >
+            </div>
+          </article>
+        </div>
+        <p class="text-block" id="directory-empty" hidden>
+          Không tìm thấy bác sĩ phù hợp trong dữ liệu mẫu. Hãy đổi từ khóa hoặc chuyên khoa.
+        </p>
+        <nav class="directory-pagination" aria-label="Phân trang bác sĩ">
+          <button type="button" id="directory-prev" aria-label="Trang trước">‹</button>
+          <div id="directory-pages"></div>
+          <button type="button" id="directory-next">Tiếp theo ›</button>
+        </nav>
+        <section class="specialty-guide">
+          <div>
+            <h3>Bạn cần hỗ trợ lựa chọn chuyên khoa?</h3>
+            <p>Xem danh mục chuyên khoa hoặc hướng dẫn chuẩn bị trước khi đến khám.</p>
+          </div>
+          <a class="outline-button" href="departments.html">Xem chuyên khoa →</a>
+        </section>
+        <p class="sample-caption">Dữ liệu minh họa · Chưa kết nối API.</p>
+      </div>
+    </main>
+    <footer class="compact-footer">
+      <div class="compact-footer-wrap">
+        <div class="compact-footer-grid">
+          <div>
+            <a class="compact-brand" href="home.html"
+              ><img src="../../static/assets/logo_neu.png" alt="Logo NEU Medical" /><strong
+                >NEU Medical</strong
+              ></a
+            >
+            <p>
+              Đồng hành cùng sức khỏe của bạn và gia đình. Tìm hiểu chuyên khoa, lựa chọn bác sĩ và
+              đăng ký lịch khám thuận tiện.
+            </p>
+            <span class="footer-badge">Bản xem trước giao diện</span>
+          </div>
+          <div>
+            <h3>Địa chỉ &amp; Giờ khám bệnh</h3>
+            <p>
+              <span class="footer-symbol" aria-hidden="true">⌖</span> 207 đường Giải Phóng, phường
+              Bạch Mai, Hà Nội.
+            </p>
+            <p>
+              <span class="footer-symbol" aria-hidden="true">◷</span> Giờ khám bệnh: Đang cập nhật.
+            </p>
+            <a
+              href="https://www.google.com/maps/search/?api=1&amp;query=207+Giai+Phong+Ha+Noi"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Xem bản đồ →</a
+            >
+          </div>
+          <div>
+            <h3>Đường dây nóng</h3>
+            <div class="hotline-box">
+              <strong>LIÊN HỆ HỖ TRỢ</strong>
+              <p>Đang cập nhật</p>
+              <span>Số hotline chính thức sẽ được bổ sung.</span>
+            </div>
+          </div>
+        </div>
+        <div class="compact-footer-bottom">
+          <span>© 2026 NEU Medical. Tất cả quyền được bảo lưu.</span>
+          <div>
+            <button data-panel="privacy">Chính sách bảo mật</button
+            ><button data-panel="terms">Điều khoản sử dụng</button
+            ><button data-panel="guide">Quy trình khám chữa bệnh</button
+            ><button data-panel="insurance">Bảo hiểm y tế</button>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <dialog id="info-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-heading">
+        <h2 id="dialog-title"></h2>
+        <button class="dialog-close" aria-label="Đóng">×</button>
+      </div>
+      <div id="dialog-content"></div>
+      <form method="dialog"><button class="dialog-done">Đóng</button></form>
+    </dialog>
+  </body>
+</html>

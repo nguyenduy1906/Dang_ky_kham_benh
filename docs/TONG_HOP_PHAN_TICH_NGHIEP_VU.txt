@@ -1,3 +1,5 @@
+CẬP NHẬT 12/10/2026: Đặt theo khung giờ, phát phiếu, bỏ queue_number. Xem THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md; thay thế nội dung cấp số cũ bên dưới.
+
 TỔNG HỢP PHÂN TÍCH NGHIỆP VỤ
 
 CHUẨN HÓA THEO TẦNG ĐÃ DUYỆT 11/10/2026: giữ routes/schemas/services/models, thống nhất 12 tên nhóm với hậu tố theo tầng. Bác sĩ dùng doctor_schema; ca/phân công dùng schedule; tiếp nhận vào encounter_service; tài khoản/quản trị vào auth_routes; thanh toán dùng payment_schema; đánh giá dùng medical_record ở cả bốn tầng. Cấu trúc hiện tại: docs/CAU_TRUC_BACKEND.md; kiểm tra và giới hạn: mục 18 docs/BAO_CAO_GOP_MODULE_ABC.md. Ghi chú module bên dưới là lịch sử các đợt cũ. Hiện có 71 file Python ứng dụng; 23/23 test hiện có và hai ca tích hợp bổ sung đạt trên PostgreSQL 18 tạm. Không thay nghiệp vụ, SQL, schema, endpoint hoặc dữ liệu chính.

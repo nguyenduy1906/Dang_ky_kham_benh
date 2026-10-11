@@ -1,3 +1,5 @@
+> Cập nhật 12/10/2026: người dùng đã đổi sang đặt khung giờ và phát phiếu, bỏ cấp số thứ tự. Quy tắc mới có ưu tiên hơn các nội dung cũ bên dưới: [THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md](THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md).
+
 # Báo cáo nghiệp vụ — Đăng ký và đặt lịch khám bệnh
 
 **Chuẩn hóa theo tầng đã duyệt 11/10/2026:** cả `routes`, `schemas`, `services`, `models` có cùng 12 nhóm nghiệp vụ và hậu tố theo tầng. Bác sĩ dùng `doctor_schema`; ca/phân công dùng trọn nhóm `schedule`; tiếp nhận dùng `encounter_service`; tài khoản/quản trị dùng `auth_routes`; thanh toán dùng `payment_schema`; đánh giá dùng trọn nhóm `medical_record`. Cấu trúc hiện tại xem [CAU_TRUC_BACKEND.md](CAU_TRUC_BACKEND.md), bằng chứng kiểm tra xem mục 18 [BAO_CAO_GOP_MODULE_ABC.md](BAO_CAO_GOP_MODULE_ABC.md). Các ghi chú module phía dưới thuộc từng đợt cũ. Tổng mã ứng dụng hiện có 71 file Python; 23/23 test hiện có và hai ca tích hợp bổ sung đạt trên PostgreSQL 18 tạm. Không đổi nghiệp vụ, SQL, schema database, URL hoặc dữ liệu dịch vụ chính.
