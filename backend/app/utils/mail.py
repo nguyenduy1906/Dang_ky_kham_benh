@@ -22,5 +22,13 @@ def send_otp(to_email, otp):
     deliver(to_email, 'Mã OTP đặt lại mật khẩu', f'OTP của bạn là {otp}')
 
 
+def send_sms_otp(phone, otp):
+    """SMS giả lập cho đồ án; không gửi SMS thật hoặc trả OTP qua API."""
+    if os.environ.get('SEND_SMS', '0') == '1':
+        print(f'[SEND SMS] to={phone} | Mã OTP đặt lại mật khẩu: {otp}', flush=True)
+    else:
+        print('[SMS] Chưa cấu hình nhà cung cấp SMS, chưa gửi mã', flush=True)
+
+
 def send_email_verification(to_email, token):
     deliver(to_email, 'Xác minh email', f'Mã xác minh email: {token}')

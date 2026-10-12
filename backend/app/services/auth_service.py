@@ -73,7 +73,8 @@ def _usable(user):
 def forgot_password(data):
     outbox = None
     with get_db_connection() as db:
-        user = auth_model.get_user_by_email(db, data['email'])
+        user = (auth_model.get_user_by_email(db, data['email']) if data.get('email')
+                else auth_model.get_user_by_phone(db, data['phone']))
         if _usable(user):
             uid = user['user_id']
             auth_token_model.invalidate_unused(db, uid, constants.TOKEN_OTP)
@@ -81,16 +82,21 @@ def forgot_password(data):
             otp = generate_otp()
             auth_token_model.create_token(db, uid, constants.TOKEN_OTP,
                                           hash_token(otp, uid), constants.OTP_TTL_MINUTES)
-            outbox = (user['email'], otp)
+            outbox = (data.get('phone'), user['email'], otp)
     if outbox:
-        mail.send_otp(*outbox)
-    # Luôn trả cùng một thông báo để không lộ email nào đã đăng ký.
-    return {'message': 'Nếu email tồn tại, mã OTP đã được gửi'}
+        phone, email, otp = outbox
+        if phone:
+            mail.send_sms_otp(phone, otp)
+        else:
+            mail.send_otp(email, otp)
+    # Cùng một thông báo cho cả tài khoản tồn tại và không tồn tại.
+    return {'message': 'Nếu tài khoản tồn tại, mã OTP đã được gửi tới thông tin liên hệ đã cung cấp'}
 
 
 def verify_otp(data):
     with get_db_connection() as db:
-        user = auth_model.get_user_by_email(db, data['email'])
+        user = (auth_model.get_user_by_email(db, data['email']) if data.get('email')
+                else auth_model.get_user_by_phone(db, data['phone']))
         if not _usable(user):
             raise bad_request(_BAD_OTP, 'INVALID_OTP')
         uid = user['user_id']
@@ -164,9 +170,13 @@ def update_me(user, fields):
     if email_changed:
         updates['email_verified'] = 0
     with get_db_connection() as db:
+        if 'phone' in updates:
+            db.execute('SELECT pg_advisory_xact_lock(78124003)')
         _check_identity(db, updates, uid)
         try:
             auth_model.update_user(db, uid, updates)
+            if 'phone' in updates:
+                db.execute('UPDATE patient SET phone=%s WHERE user_id=%s', (updates['phone'], uid))
         except pg_errors.UniqueViolation:
             raise _duplicate() from None
         if email_changed:
@@ -245,6 +255,8 @@ def create_user(data):
 
 def update_user(admin, user_id, fields):
     with get_db_connection() as db:
+        if 'phone' in fields:
+            db.execute('SELECT pg_advisory_xact_lock(78124003)')
         target = _get_or_404(db, user_id)
         if target['deleted_at'] is not None:
             raise conflict('Người dùng đã bị xóa', 'USER_DELETED')
@@ -259,6 +271,8 @@ def update_user(admin, user_id, fields):
         _check_identity(db, updates, user_id)
         try:
             auth_model.update_user(db, user_id, updates)
+            if 'phone' in updates:
+                db.execute('UPDATE patient SET phone=%s WHERE user_id=%s', (updates['phone'], user_id))
         except pg_errors.UniqueViolation:
             raise _duplicate() from None
         user = auth_model.get_user_by_id(db, user_id)

@@ -23,7 +23,7 @@ def access_clause(actor):
     if role in ('ADMIN', 'RECEPTIONIST'):
         return 'TRUE', []
     if role == 'USER':
-        return 'p.user_id = %s', [actor['user_id']]
+        return '(p.user_id = %s OR e.created_by_id = %s)', [actor['user_id'], actor['user_id']]
     if role == 'DOCTOR':
         return 'd.user_id = %s', [actor['user_id']]
     if role == 'NURSE':

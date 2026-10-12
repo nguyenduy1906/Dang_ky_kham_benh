@@ -1,6 +1,6 @@
 {
   "files.exclude": {
-    "backend/tests": true,
+    "backend/tests": false,
     "**/__pycache__": true
   }
 }

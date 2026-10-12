@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lịch khám | NEU Medical</title>
+    <link rel="stylesheet" href="../../static/css/home.css?v=20261013-ui-only" />
+    <link rel="stylesheet" href="../../static/css/public-pages.css" />
+    <link rel="stylesheet" href="../../static/css/patient-pages.css" />
+    <script src="../../static/js/core/public.js?v=20261013-ui-only" defer></script>
+    <script src="../../static/js/pages/patient-pages.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Đến nội dung chính</a>
+    <header class="patient-header">
+      <div class="identity">
+        <a class="brand" href="portal.html">
+          <img class="brand-logo" src="../../static/assets/logo_neu.png" alt="Logo NEU Medical" width="68" height="68" />
+          <span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span>
+        </a>
+        <p class="patient-hotline">Hotline: <strong>Đang cập nhật</strong></p>
+      </div>
+    </header>
+    <main id="main" class="appointment-page">
+      <div class="patient-heading">
+        <nav class="patient-breadcrumb" aria-label="Đường dẫn trang">
+          <a href="portal.html">Trang chủ</a><span aria-hidden="true">/</span><span aria-current="page">Lịch khám</span>
+        </nav>
+        <h1>Lịch khám</h1>
+      </div>
+      <section class="patient-panel appointments-panel" aria-label="Danh sách lịch khám">
+        <div class="patient-tabs" role="tablist" aria-label="Loại lịch khám" data-tab-group>
+          <button type="button" role="tab" id="appointments-tab" aria-selected="true" aria-controls="appointments-panel">Lịch khám</button>
+          <button type="button" role="tab" id="followup-tab" aria-selected="false" aria-controls="followup-panel" tabindex="-1">Lịch tái khám</button>
+        </div>
+        <div id="appointments-panel" role="tabpanel" aria-labelledby="appointments-tab">
+          <div class="patient-empty appointments-empty">
+            <svg viewBox="0 0 100 120" fill="none" stroke-width="6" aria-hidden="true"><path d="M18 7h56v88l14 15H18z"/><path d="M30 25h15v19H30zM56 27h7M56 42h7M30 59h33M30 75h33M30 91h24"/></svg>
+            <p>Chưa có lịch khám nào</p>
+            <a class="solid-button" href="booking.html">Đặt lịch khám</a>
+          </div>
+        </div>
+        <div id="followup-panel" role="tabpanel" aria-labelledby="followup-tab" hidden>
+          <div class="patient-empty appointments-empty">
+            <svg viewBox="0 0 100 120" fill="none" stroke-width="6" aria-hidden="true"><path d="M18 7h56v88l14 15H18z"/><path d="M30 25h15v19H30zM56 27h7M56 42h7M30 59h33M30 75h33M30 91h24"/></svg>
+            <p>Chưa có lịch tái khám nào</p>
+            <a class="solid-button" href="booking.html">Đặt lịch khám</a>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="compact-footer">
+      <div class="compact-footer-wrap">
+        <div class="compact-footer-grid">
+          <div>
+            <a class="compact-brand" href="../public/home.html"
+              ><img src="../../static/assets/logo_neu.png" alt="Logo NEU Medical" /><strong
+                >NEU Medical</strong
+              ></a
+            >
+            <p>
+              Đồng hành cùng sức khỏe của bạn và gia đình. Tìm hiểu chuyên khoa, lựa chọn bác sĩ và
+              đăng ký lịch khám thuận tiện.
+            </p>
+            <span class="footer-badge">Bản xem trước giao diện</span>
+          </div>
+          <div>
+            <h3>Địa chỉ &amp; Giờ khám bệnh</h3>
+            <p>
+              <span class="footer-symbol" aria-hidden="true">⌖</span> 207 đường Giải Phóng, phường
+              Bạch Mai, Hà Nội.
+            </p>
+            <p>
+              <span class="footer-symbol" aria-hidden="true">◷</span> Giờ khám bệnh: Đang cập nhật.
+            </p>
+            <a
+              href="https://www.google.com/maps/search/?api=1&amp;query=207+Giai+Phong+Ha+Noi"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Xem bản đồ →</a
+            >
+          </div>
+          <div>
+            <h3>Đường dây nóng</h3>
+            <div class="hotline-box">
+              <strong>LIÊN HỆ HỖ TRỢ</strong>
+              <p>Đang cập nhật</p>
+              <span>Số hotline chính thức sẽ được bổ sung.</span>
+            </div>
+          </div>
+        </div>
+        <div class="compact-footer-bottom">
+          <span>© 2026 NEU Medical. Tất cả quyền được bảo lưu.</span>
+          <div>
+            <button data-panel="privacy">Chính sách bảo mật</button
+            ><button data-panel="terms">Điều khoản sử dụng</button
+            ><button data-panel="guide">Quy trình khám chữa bệnh</button
+            ><button data-panel="insurance">Bảo hiểm y tế</button>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <dialog id="info-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-heading">
+        <h2 id="dialog-title"></h2>
+        <button class="dialog-close" aria-label="Đóng">×</button>
+      </div>
+      <div id="dialog-content"></div>
+      <form method="dialog"><button class="dialog-done">Đóng</button></form>
+    </dialog>
+  </body>
+</html>

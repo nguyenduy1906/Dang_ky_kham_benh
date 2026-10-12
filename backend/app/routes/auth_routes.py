@@ -101,12 +101,13 @@ def forgot_password():
         required: true
         schema:
           type: object
-          required: [email]
           properties:
+            identifier: {type: string, description: Email hoặc số điện thoại, example: "0901234567"}
             email: {type: string, example: a@example.com}
+            phone: {type: string, example: "0901234567"}
     responses:
       200:
-        description: Luôn trả cùng một thông báo (OTP nằm trong log khi SEND_EMAIL=1)
+        description: Cung cấp một identifier/email/phone. OTP giả lập trong log khi SEND_EMAIL=1 hoặc SEND_SMS=1; không trả OTP qua API.
     """
     data = auth_schema.validate_forgot_password(_body())
     return jsonify(auth_service.forgot_password(data))
@@ -124,9 +125,11 @@ def verify_otp():
         required: true
         schema:
           type: object
-          required: [email, otp]
+          required: [otp]
           properties:
+            identifier: {type: string, description: Email hoặc số điện thoại đã yêu cầu OTP}
             email: {type: string, example: a@example.com}
+            phone: {type: string, example: "0901234567"}
             otp: {type: string, example: "123456"}
     responses:
       200:

@@ -1,5 +1,11 @@
 CẬP NHẬT 12/10/2026: Đặt theo khung giờ, phát phiếu, bỏ queue_number. Xem THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md; thay thế nội dung cấp số cũ bên dưới.
 
+FRONTEND 12/10/2026: mục Đặt lịch khám mở trang chọn chức năng mới theo ảnh tham khảo; các khối chỉ có chữ, không có icon. Giữ riêng giao diện đặt lịch cũ, chưa liên kết, chờ nhiệm vụ khác của người dùng. Chưa nối API. Chi tiết: FRONTEND_CONG_DAT_KHAM_12_10_2026.md.
+
+CẬP NHẬT TÀI KHOẢN/HỒ SƠ 12/10/2026: tự tạo/dùng lại USER theo số điện thoại người được khám; một số có nhiều hồ sơ gia đình, mỗi người một patient_id. Số người thân trùng người đặt cần xác nhận; lần đặt sau chọn lại hồ sơ đã lưu. Lễ tân tiếp nhận đúng hồ sơ, không ghép bệnh án theo số điện thoại. Khôi phục mật khẩu bằng OTP số điện thoại; SMS giả lập qua SEND_SMS=1. Schema 21 bảng có patient_delegate. Chi tiết và trạng thái UI: THAY_DOI_TAI_KHOAN_HO_SO_12_10_2026.md. Thay quy tắc sở hữu hồ sơ cũ trong các ghi chú sau.
+
+CẤU HÌNH DOCKER CHỐT 12/10/2026: chỉ db và backend. utils/server.py khởi tạo database/seed rồi chạy API và một tiến trình utils/worker.py cùng container backend; giữ tác vụ hết hạn giữ chỗ/nhắc lịch, không tạo scheduler trong mỗi Gunicorn worker. Hướng dẫn container encounter-worker riêng trong các ghi chú cũ đã được thay thế; xem HUONG_DAN_CHAY_DU_AN.md.
+
 TỔNG HỢP PHÂN TÍCH NGHIỆP VỤ
 
 CHUẨN HÓA THEO TẦNG ĐÃ DUYỆT 11/10/2026: giữ routes/schemas/services/models, thống nhất 12 tên nhóm với hậu tố theo tầng. Bác sĩ dùng doctor_schema; ca/phân công dùng schedule; tiếp nhận vào encounter_service; tài khoản/quản trị vào auth_routes; thanh toán dùng payment_schema; đánh giá dùng medical_record ở cả bốn tầng. Cấu trúc hiện tại: docs/CAU_TRUC_BACKEND.md; kiểm tra và giới hạn: mục 18 docs/BAO_CAO_GOP_MODULE_ABC.md. Ghi chú module bên dưới là lịch sử các đợt cũ. Hiện có 71 file Python ứng dụng; 23/23 test hiện có và hai ca tích hợp bổ sung đạt trên PostgreSQL 18 tạm. Không thay nghiệp vụ, SQL, schema, endpoint hoặc dữ liệu chính.

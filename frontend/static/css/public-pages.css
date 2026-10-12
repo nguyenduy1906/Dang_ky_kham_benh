@@ -1,22 +1,69 @@
 .page-title {
   background: #edf6ef;
   border-bottom: 1px solid #dce8df;
+  position: relative;
+  overflow: hidden;
+}
+.page-title-photo {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 60%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.page-title::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #edf6ef 0%, #edf6ef 38%, #edf6efbd 59%, #edf6ef00 100%);
 }
 .page-title .section-wrap {
-  padding-top: 30px;
-  padding-bottom: 35px;
+  position: relative;
+  z-index: 1;
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 28px;
+  padding-bottom: 28px;
 }
 .page-title p {
-  font-size: 14px;
+  font-size: 16px;
   color: #607167;
+  max-width: 58%;
+  line-height: 1.6;
+  margin: 14px 0 0;
+}
+.page-title p a {
+  color: var(--green);
 }
 .page-title h1 {
-  font:
-    700 46px Georgia,
-    serif;
+  font: 700 46px/1.3 var(--font-ui);
   letter-spacing: 0;
   color: var(--ink);
-  margin: 22px 0 0;
+  margin: 0;
+  max-width: 58%;
+}
+@media (max-width: 650px) {
+  .page-title-photo {
+    width: 80%;
+  }
+  .page-title::after {
+    background: linear-gradient(90deg, #edf6ef 0%, #edf6efe8 42%, #edf6ef80 75%, #edf6ef38 100%);
+  }
+  .page-title .section-wrap {
+    min-height: 150px;
+    padding: 24px 20px;
+  }
+  .page-title h1 {
+    font-size: 34px;
+    max-width: 85%;
+  }
+  .page-title p {
+    max-width: 85%;
+    font-size: 14px;
+  }
 }
 .page-content {
   background: white;
@@ -515,14 +562,14 @@ header .topbar a {
   background: white;
   padding: 32px;
 }
-.specialty-intro h1 {
+.specialty-intro h2 {
   font-size: 32px;
   color: var(--ink);
   letter-spacing: 0;
   margin: 12px 0;
   line-height: 1.4;
 }
-.specialty-intro h1 span {
+.specialty-intro h2 span {
   color: var(--green);
 }
 .specialty-intro > p:not(.section-kicker) {
@@ -742,7 +789,7 @@ header .topbar a {
   .specialty-intro {
     padding: 22px;
   }
-  .specialty-intro h1 {
+  .specialty-intro h2 {
     font-size: 27px;
   }
   .specialty-overview {
@@ -795,7 +842,7 @@ header .topbar a {
   border-bottom: 1px solid #dce5df;
   margin-bottom: 26px;
 }
-.directory-intro h1 {
+.directory-intro h2 {
   font-size: 33px;
   line-height: 1.4;
   color: var(--ink);
@@ -1006,7 +1053,7 @@ header .topbar a {
   .directory-intro {
     align-items: flex-start;
   }
-  .directory-intro h1 {
+  .directory-intro h2 {
     font-size: 29px;
   }
   .directory-filter-bottom {
@@ -1038,7 +1085,7 @@ header .topbar a {
   .directory-card ul {
     min-height: 110px;
   }
-  .directory-intro h1 {
+  .directory-intro h2 {
     font-size: 27px;
   }
 }

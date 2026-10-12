@@ -2,11 +2,13 @@
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 from backend.app.services.appointment_slot_service import reserve_interval
+from backend.app.services import patient_service
+from backend.app.schemas.auth_schema import normalize_phone
 
 from backend.app.core.errors import AppError, conflict, forbidden, not_found
 from backend.app.utils.date import VN_TZ
 from backend.app.db.database import get_db_connection
-from backend.app.models import encounter_model as model, configuration_model
+from backend.app.models import encounter_model as model, configuration_model, patient_model
 from backend.app.utils.database_helpers import jsonable
 
 
@@ -133,11 +135,21 @@ def _require_available(schedule, now, *, online=False):
 
 
 def _patient_for_booking(db, patient_id, actor, *, online):
+    if not online:
+        db.execute('SELECT pg_advisory_xact_lock(78124003)')
     patient = db.execute('SELECT * FROM patient WHERE patient_id=%s FOR UPDATE', (patient_id,)).fetchone()
-    if patient is None or (online and patient['user_id'] != actor['user_id']):
+    if patient is None or (online and not patient_model.can_book(db, patient_id, actor['user_id'])):
         raise not_found('Không tìm thấy hồ sơ bệnh nhân', 'PATIENT_NOT_FOUND')
     if patient['archived_at'] is not None:
         raise conflict('Hồ sơ đã lưu trữ, không thể tạo lượt khám mới', 'PATIENT_ARCHIVED')
+    if not online and patient['user_id'] is None:
+        if not patient['phone']:
+            raise conflict('Cần bổ sung số điện thoại cho hồ sơ trước khi tiếp nhận', 'PATIENT_PHONE_REQUIRED')
+        phone = normalize_phone(patient['phone'])
+        account, _ = patient_service._account_for_patient(db, {**patient, 'phone': phone})
+        db.execute('UPDATE patient SET user_id=%s,phone=%s WHERE patient_id=%s',
+                   (account['user_id'], phone, patient_id))
+        patient = patient_model.get_patient(db, patient_id)
     return patient
 
 

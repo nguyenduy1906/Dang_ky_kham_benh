@@ -1,7 +1,7 @@
 # Đăng ký và đặt lịch khám bệnh
 
-Backend Flask + Gunicorn và PostgreSQL 17 chạy bằng Docker Compose.
-Hiện có 20 bảng, dữ liệu mẫu và endpoint `/health`; chưa có giao diện hoặc API
+Backend Flask + Gunicorn và PostgreSQL 17 chạy bằng Docker Compose, chỉ có hai dịch vụ `db` và `backend`. Tác vụ hết hạn giữ chỗ và nhắc lịch chạy cùng container backend.
+Hiện có 21 bảng, dữ liệu mẫu và endpoint `/health`; chưa có giao diện hoặc API
 nghiệp vụ hoàn chỉnh.
 
 ## Chạy dự án
@@ -9,7 +9,7 @@ nghiệp vụ hoàn chỉnh.
 Mở Docker Desktop. Từ thư mục gốc, chạy:
 
 ```powershell
-docker compose up --build -d
+docker compose up --build -d --remove-orphans
 ```
 
 Cấu hình `docker-compose.yml` và mẫu `backend/.env.example` được chia sẻ cùng mã nguồn.
@@ -35,6 +35,7 @@ Danh sách API, phân công và vị trí viết code:
 | `backend/.env.example` | Mẫu cấu hình |
 | `backend/Dockerfile` | Build image, tạo bảng, seed vai trò và chạy backend |
 | `backend/app/main.py` | Tạo ứng dụng Flask |
+| `backend/app/utils/server.py` | Khởi tạo database, chạy API và một tiến trình tác vụ nền trong backend |
 | `database/init_db.sql` | Tạo cấu trúc database |
 | `database/sample_data.sql` | Nạp dữ liệu mẫu thủ công, xóa dữ liệu cũ trước khi nạp |
 | `database/erd.html` | Sơ đồ database |
@@ -57,3 +58,6 @@ Phạm vi nghiệp vụ và phân công theo 5 gói: [Kế hoạch backend](docs
 mẫu và `erd.html` mô tả schema. Dự án không sử dụng các file migration. Khi sửa
 cấu trúc, cập nhật đồng bộ ba file và tạo lại database theo hướng dẫn chạy.
 Khởi động lại backend không tự cập nhật cấu trúc bảng đã tồn tại.
+
+Quy tắc tài khoản tự tạo theo số điện thoại và hồ sơ từng thành viên gia đình:
+[Tài khoản và hồ sơ bệnh nhân](docs/THAY_DOI_TAI_KHOAN_HO_SO_12_10_2026.md).

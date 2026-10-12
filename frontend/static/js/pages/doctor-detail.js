@@ -19,4 +19,4 @@ photo.alt = `Ảnh minh họa ${doctorLabel}`;
 document.querySelector("#detail-specialty").textContent = detailDepartments[doctorId - 1];
 document.querySelector("#schedule-specialty").textContent = detailDepartments[doctorId - 1];
 for (const id of ["detail-booking", "schedule-booking"])
-  document.getElementById(id).href = `../(patient)/booking.html?doctor=${doctorId}`;
+  document.getElementById(id).href = `../(patient)/portal.html?doctor=${doctorId}`;

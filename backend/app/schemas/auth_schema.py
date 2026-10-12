@@ -38,6 +38,8 @@ def normalize_email(value, key='email'):
 
 def normalize_phone(value, key='phone'):
     value = re.sub(r'[\s.\-]', '', value)
+    if re.fullmatch(r'\+?84[35789]\d{8}', value):
+        value = '0' + value.lstrip('+')[2:]
     if not PHONE_RE.match(value):
         raise bad_request(f'{key} không hợp lệ (9-15 chữ số)')
     return value
@@ -86,12 +88,23 @@ def validate_login(data):
         raise bad_request('Thiếu hoặc sai định dạng mật khẩu')
     if '@' in identifier:
         return {'email': identifier.lower(), 'phone': None, 'password': password}
-    return {'email': None, 'phone': re.sub(r'[\s.\-]', '', identifier), 'password': password}
+    return {'email': None, 'phone': normalize_phone(identifier), 'password': password}
+
+
+def validate_recovery_identity(data):
+    data = ensure_object(data)
+    supplied = [text_field(data, key) for key in ('identifier', 'email', 'phone')]
+    identifiers = [value for value in supplied if value]
+    if len(identifiers) != 1:
+        raise bad_request('Cung cấp một email hoặc số điện thoại')
+    identifier = identifiers[0]
+    if '@' in identifier:
+        return {'email': normalize_email(identifier), 'phone': None}
+    return {'email': None, 'phone': normalize_phone(identifier)}
 
 
 def validate_forgot_password(data):
-    data = ensure_object(data)
-    return {'email': normalize_email(text_field(data, 'email', required=True))}
+    return validate_recovery_identity(data)
 
 
 def validate_verify_otp(data):
@@ -99,7 +112,7 @@ def validate_verify_otp(data):
     otp = text_field(data, 'otp', required=True, max_len=6)
     if not OTP_RE.match(otp):
         raise bad_request('OTP gồm 6 chữ số')
-    return {'email': normalize_email(text_field(data, 'email', required=True)), 'otp': otp}
+    return {**validate_recovery_identity(data), 'otp': otp}
 
 
 def validate_reset_password(data):

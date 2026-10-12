@@ -4,53 +4,33 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Đặt lịch khám | NEU Medical</title>
-    <link rel="stylesheet" href="../../static/css/home.css" />
+    <link rel="stylesheet" href="../../static/css/home.css?v=20261013-ui-only" />
     <link rel="stylesheet" href="../../static/css/public-pages.css" />
-    <script src="../../static/js/core/public.js" defer></script>
+    <link rel="stylesheet" href="../../static/css/patient-pages.css" />
+    <script src="../../static/js/core/public.js?v=20261013-ui-only" defer></script>
     <script src="../../static/js/pages/booking.js" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Đến nội dung chính</a>
-    <header>
-      <div class="topbar">
-        <div class="topbar-inner">
-          <span>Chào mừng bạn đến với Bệnh viện NEU Medical</span>
-          <div>
-            <a href="../public/contact.html">Liên hệ hỗ trợ</a
-            ><a class="active" aria-current="page" href="../(patient)/booking.html">Đặt lịch khám</a
-            ><span class="language" aria-label="Ngôn ngữ tiếng Việt">🇻🇳</span>
-          </div>
-        </div>
-      </div>
+    <header class="patient-header">
       <div class="identity">
-        <a class="brand" href="../public/home.html"
-          ><img
-            class="brand-logo"
-            src="../../static/assets/logo_neu.png"
-            alt="Logo NEU Medical"
-            width="68"
-            height="68"
-          /><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></a
-        >
-        <p class="motto">Vì sức khoẻ nhân dân</p>
-      </div>
-      <div class="navigation">
-        <button class="menu-toggle" aria-expanded="false" aria-controls="main-nav">
-          ☰ <span>Danh mục</span>
-        </button>
-        <nav id="main-nav" aria-label="Điều hướng chính">
-          <a href="../public/home.html">Trang chủ</a><a href="../public/about.html">Giới thiệu</a
-          ><a href="../public/departments.html">Chuyên khoa</a
-          ><a href="../public/doctors.html">Đội ngũ bác sĩ</a
-          ><a class="active" aria-current="page" href="../(patient)/booking.html">Đặt lịch khám</a
-          ><a href="../public/news.html">Tin tức</a><a href="../public/contact.html">Liên hệ</a>
-        </nav>
+        <a class="brand" href="portal.html">
+          <img class="brand-logo" src="../../static/assets/logo_neu.png" alt="Logo NEU Medical" width="68" height="68" />
+          <span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span>
+        </a>
+        <p class="patient-hotline">Hotline: <strong>Đang cập nhật</strong></p>
       </div>
     </header>
     <main id="main" class="appointment-page">
+      <div class="patient-heading">
+        <nav class="patient-breadcrumb" aria-label="Đường dẫn trang">
+          <a href="portal.html">Trang chủ</a><span aria-hidden="true">/</span><span aria-current="page">Đặt lịch khám</span>
+        </nav>
+        <h1>Đặt lịch khám</h1>
+      </div>
       <div class="appointment-layout">
         <aside class="appointment-sidebar">
-          <h1>▦ Thông tin đặt khám</h1>
+          <h2 class="booking-form-heading">▦ Thông tin đặt khám</h2>
           <form id="appointment-form">
             <div class="appointment-field">
               <label>Phương thức đặt khám</label>

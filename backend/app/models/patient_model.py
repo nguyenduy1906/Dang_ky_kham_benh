@@ -20,8 +20,9 @@ def nurse_can_view(db, patient_id, nurse_id):
 def list_patients(db, *, user_id=None, nurse_id=None, q=None, include_archived=False, limit=20, offset=0):
     where, params = ['TRUE'], []
     if user_id is not None:
-        where.append('user_id = %s')
-        params.append(user_id)
+        where.append('(user_id = %s OR EXISTS (SELECT 1 FROM patient_delegate pd '
+                     'WHERE pd.patient_id=patient.patient_id AND pd.user_id=%s))')
+        params.extend([user_id, user_id])
     if nurse_id is not None:
         where.append(_nurse_scope('patient.patient_id'))
         params.append(nurse_id)
@@ -42,6 +43,26 @@ def get_patient(db, patient_id):
     return db.execute('SELECT * FROM patient WHERE patient_id = %s', (patient_id,)).fetchone()
 
 
+def can_book(db, patient_id, user_id):
+    return db.execute('SELECT 1 FROM patient p WHERE p.patient_id=%s AND '
+                      '(p.user_id=%s OR EXISTS (SELECT 1 FROM patient_delegate pd '
+                      'WHERE pd.patient_id=p.patient_id AND pd.user_id=%s))',
+                      (patient_id, user_id, user_id)).fetchone() is not None
+
+
+def add_delegate(db, patient_id, user_id, relationship):
+    db.execute('INSERT INTO patient_delegate(patient_id,user_id,relationship) VALUES (%s,%s,%s) '
+               'ON CONFLICT(patient_id,user_id) DO NOTHING', (patient_id, user_id, relationship))
+
+
+def find_identity(db, fields):
+    return db.execute("SELECT * FROM patient WHERE (id_card IS NOT NULL AND id_card=%s) OR "
+                      "(phone=%s AND lower(regexp_replace(trim(full_name), '\\s+', ' ', 'g'))=%s "
+                      "AND dob=%s) ORDER BY patient_id FOR UPDATE",
+                      (fields.get('id_card'), fields['phone'],
+                       ' '.join(fields['full_name'].split()).lower(), fields.get('dob'))).fetchall()
+
+
 def create_patient(db, fields):
     return insert_row(db, 'patient', fields, _COLUMNS)
 
@@ -57,8 +78,12 @@ def archive_patient(db, patient_id):
                       (patient_id,)).fetchone()
 
 
-def list_encounters(db, patient_id, limit, offset, *, nurse_id=None):
+def list_encounters(db, patient_id, limit, offset, *, nurse_id=None, user_id=None):
     clause, params = 'e.patient_id = %s', [patient_id]
+    if user_id is not None:
+        clause += (' AND (EXISTS (SELECT 1 FROM patient p WHERE p.patient_id=e.patient_id '
+                   'AND p.user_id=%s) OR e.created_by_id=%s)')
+        params.extend([user_id, user_id])
     if nurse_id is not None:
         clause += (' AND EXISTS (SELECT 1 FROM nurse_assignment na WHERE na.schedule_id = e.schedule_id '
                    'AND na.nurse_id = %s AND na.revoked_at IS NULL)')

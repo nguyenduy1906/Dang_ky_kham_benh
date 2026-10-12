@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hồ sơ sức khỏe | NEU Medical</title>
+    <link rel="stylesheet" href="../../static/css/home.css?v=20261013-ui-only" />
+    <link rel="stylesheet" href="../../static/css/public-pages.css" />
+    <link rel="stylesheet" href="../../static/css/patient-pages.css" />
+    <script src="../../static/js/core/public.js?v=20261013-ui-only" defer></script>
+    <script src="../../static/js/pages/patient-pages.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Đến nội dung chính</a>
+    <header class="patient-header">
+      <div class="identity">
+        <a class="brand" href="portal.html">
+          <img class="brand-logo" src="../../static/assets/logo_neu.png" alt="Logo NEU Medical" width="68" height="68" />
+          <span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span>
+        </a>
+        <p class="patient-hotline">Hotline: <strong>Đang cập nhật</strong></p>
+      </div>
+    </header>
+    <main id="main" class="appointment-page">
+      <div class="patient-heading">
+        <nav class="patient-breadcrumb" aria-label="Đường dẫn trang">
+          <a href="portal.html">Trang chủ</a><span aria-hidden="true">/</span><span aria-current="page">Hồ sơ sức khỏe</span>
+        </nav>
+        <h1>Hồ sơ sức khỏe</h1>
+      </div>
+      <div class="records-layout">
+        <aside class="records-sidebar" aria-label="Hồ sơ bệnh nhân">
+          <button type="button" class="outline-button record-lookup-trigger" data-open-record-lookup>
+            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M10 5h18l7 7v17M10 5v37h15M28 5v8h7M17 21h11M17 28h6"/><circle cx="31" cy="32" r="7"/><path d="m36 37 7 7"/></svg>
+            Tra cứu kết quả khám bệnh
+          </button>
+          <div class="patient-panel records-profile-placeholder">
+            <h2>Hồ sơ bệnh nhân</h2>
+            <p>Danh sách người bệnh sẽ hiển thị sau khi kết nối tài khoản.</p>
+          </div>
+        </aside>
+        <section class="records-welcome" aria-labelledby="records-welcome-title">
+          <svg class="records-illustration" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="4" aria-hidden="true"><path d="M60 101 20 63C-5 37 35 7 60 36c25-29 65 1 40 27Z"/><path d="M27 62h17l9-20 14 37 9-17h18"/></svg>
+          <h2 id="records-welcome-title">Xem và lưu trữ kết quả khám trực tuyến</h2>
+          <p>BỆNH VIỆN NEU MEDICAL</p>
+          <button type="button" class="outline-button" data-open-record-lookup>Tra cứu kết quả khám bệnh</button>
+        </section>
+      </div>
+    </main>
+    <dialog id="record-lookup-dialog" class="record-lookup-dialog" aria-labelledby="record-lookup-title">
+      <div class="dialog-heading">
+        <h2 id="record-lookup-title">Tra cứu kết quả khám bệnh</h2>
+        <button type="button" class="dialog-close" id="record-lookup-close" aria-label="Đóng tra cứu kết quả">×</button>
+      </div>
+      <div class="patient-tabs" role="tablist" aria-label="Cách tra cứu kết quả" data-tab-group>
+        <button type="button" role="tab" id="lookup-cccd-tab" aria-selected="true" aria-controls="lookup-cccd-panel" data-lookup-method="cccd">Theo số CCCD</button>
+        <button type="button" role="tab" id="lookup-code-tab" aria-selected="false" aria-controls="lookup-code-panel" tabindex="-1" data-lookup-method="code">Theo mã người bệnh</button>
+      </div>
+      <div id="lookup-cccd-panel" role="tabpanel" aria-labelledby="lookup-cccd-tab">
+        <p class="lookup-instructions">Vui lòng nhập thông tin trùng khớp với các thông tin đã khai báo tại bệnh viện.</p>
+      </div>
+      <div id="lookup-code-panel" role="tabpanel" aria-labelledby="lookup-code-tab" hidden>
+        <p class="lookup-instructions">Tra cứu bằng mã người bệnh đã được cấp khi tiếp nhận tại bệnh viện.</p>
+      </div>
+      <form id="record-lookup-form">
+        <label for="lookup-patient">Họ và tên của bệnh nhân *</label>
+        <select id="lookup-patient" required>
+          <option value="">Chọn hồ sơ bệnh nhân</option>
+          <option value="preview">Bản thân (hồ sơ minh họa)</option>
+        </select>
+        <div id="lookup-identifier-field" hidden>
+          <label for="lookup-identifier" id="lookup-identifier-label">Số CCCD *</label>
+          <input id="lookup-identifier" inputmode="numeric" maxlength="12" pattern="(?:[0-9]{9}|[0-9]{12})" title="CCCD gồm 9 hoặc 12 chữ số" />
+        </div>
+        <p id="record-lookup-status" class="lookup-status" role="status"></p>
+        <button type="submit" class="solid-button lookup-submit">Tra cứu</button>
+      </form>
+    </dialog>
+    <footer class="compact-footer">
+      <div class="compact-footer-wrap">
+        <div class="compact-footer-grid">
+          <div>
+            <a class="compact-brand" href="../public/home.html"
+              ><img src="../../static/assets/logo_neu.png" alt="Logo NEU Medical" /><strong
+                >NEU Medical</strong
+              ></a
+            >
+            <p>
+              Đồng hành cùng sức khỏe của bạn và gia đình. Tìm hiểu chuyên khoa, lựa chọn bác sĩ và
+              đăng ký lịch khám thuận tiện.
+            </p>
+            <span class="footer-badge">Bản xem trước giao diện</span>
+          </div>
+          <div>
+            <h3>Địa chỉ &amp; Giờ khám bệnh</h3>
+            <p>
+              <span class="footer-symbol" aria-hidden="true">⌖</span> 207 đường Giải Phóng, phường
+              Bạch Mai, Hà Nội.
+            </p>
+            <p>
+              <span class="footer-symbol" aria-hidden="true">◷</span> Giờ khám bệnh: Đang cập nhật.
+            </p>
+            <a
+              href="https://www.google.com/maps/search/?api=1&amp;query=207+Giai+Phong+Ha+Noi"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Xem bản đồ →</a
+            >
+          </div>
+          <div>
+            <h3>Đường dây nóng</h3>
+            <div class="hotline-box">
+              <strong>LIÊN HỆ HỖ TRỢ</strong>
+              <p>Đang cập nhật</p>
+              <span>Số hotline chính thức sẽ được bổ sung.</span>
+            </div>
+          </div>
+        </div>
+        <div class="compact-footer-bottom">
+          <span>© 2026 NEU Medical. Tất cả quyền được bảo lưu.</span>
+          <div>
+            <button data-panel="privacy">Chính sách bảo mật</button
+            ><button data-panel="terms">Điều khoản sử dụng</button
+            ><button data-panel="guide">Quy trình khám chữa bệnh</button
+            ><button data-panel="insurance">Bảo hiểm y tế</button>
+          </div>
+        </div>
+      </div>
+    </footer>
+    <dialog id="info-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-heading">
+        <h2 id="dialog-title"></h2>
+        <button class="dialog-close" aria-label="Đóng">×</button>
+      </div>
+      <div id="dialog-content"></div>
+      <form method="dialog"><button class="dialog-done">Đóng</button></form>
+    </dialog>
+  </body>
+</html>

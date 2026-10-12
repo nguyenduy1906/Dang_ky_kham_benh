@@ -41,7 +41,7 @@ if (doctorFilter) {
       text.textContent = `Chuyên khoa: ${button.dataset.specialty}. Đây là hồ sơ minh họa, thông tin chuyên môn thực tế sẽ được bổ sung sau.`;
       const link = document.createElement("a");
       link.className = "solid-button";
-      link.href = `../(patient)/booking.html?doctor=${button.dataset.doctor}`;
+      link.href = `../(patient)/portal.html?doctor=${button.dataset.doctor}`;
       link.textContent = "Xem giao diện đặt lịch";
       content.append(text, link);
       dialog.showModal();
@@ -63,15 +63,6 @@ document.querySelectorAll("[data-news-filter]").forEach((button) =>
             button.dataset.newsFilter !== "all" &&
             card.dataset.newsCategory !== button.dataset.newsFilter),
       );
-  }),
-);
-document.querySelectorAll("[data-article]").forEach((button) =>
-  button.addEventListener("click", () => {
-    document.querySelector("#dialog-title").textContent =
-      button.querySelector("strong").textContent;
-    document.querySelector("#dialog-content").textContent =
-      "Đây là bài viết minh họa dùng để xem bố cục. Nội dung chính thức sẽ được bổ sung sau.";
-    dialog.showModal();
   }),
 );
 const bookingForm = document.querySelector("#booking-form");

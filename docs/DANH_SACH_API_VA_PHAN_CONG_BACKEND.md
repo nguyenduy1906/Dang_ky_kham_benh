@@ -2,6 +2,8 @@
 
 # Kế hoạch API và phân công backend
 
+**Frontend 12/10/2026:** người dùng yêu cầu trang chọn chức năng riêng cho liên kết Đặt lịch khám, các khối chỉ có chữ. Giao diện đặt lịch cũ giữ riêng, chưa nối vào trang này. Chưa tích hợp API hoặc bổ sung API truyền hóa chất. Chi tiết: [FRONTEND_CONG_DAT_KHAM_12_10_2026.md](FRONTEND_CONG_DAT_KHAM_12_10_2026.md). Quyết định này mở phạm vi frontend theo yêu cầu mới, giữ các đường dẫn API trực tiếp đã chốt.
+
 **Cấu trúc theo tầng mới nhất 11/10/2026:** đã thống nhất 12 nhóm ở `routes`, `schemas`, `services`, `models`, giữ hậu tố theo tầng. Xem [bảng file hiện tại](CAU_TRUC_BACKEND.md). 23/23 test hiện có và hai ca tích hợp bổ sung đạt trên PostgreSQL 18 tạm; đăng ký 98 rule Flask và 82 path Swagger giữ nguyên. Chi tiết/giới hạn xem mục 18 [báo cáo gộp](BAO_CAO_GOP_MODULE_ABC.md). Những đoạn ghi lịch sử A/B/C, D1/D2 bên dưới dùng tên ở thời điểm cũ; các mục File chính đã cập nhật vị trí hiện tại.
 
 **Tiện ích dùng chung cập nhật 11/10/2026:** thời gian ở `utils/date.py`; kiểm tra dữ liệu và phân trang tổng quát ở `utils/validation.py`; xử lý avatar ở `utils/uploads.py`; adapter email giả lập ở `utils/mail.py`. Các đường dẫn thuộc `backend/app`; import ứng dụng và kiểm thử đã cập nhật. Các schema/service nghiệp vụ tiếp tục ở folder hiện tại; chưa tách thêm hàm. Đợt chuyển vị trí xem mục 15; lần đổi tên mới nhất xem mục 17 `BAO_CAO_GOP_MODULE_ABC.md`.
@@ -102,7 +104,9 @@ models/{patient,catalog,doctor,schedule}_model.py;
 schemas/{patient,catalog,doctor,schedule}_schema.py. Phân công y tá dùng
 trọn nhóm schedule; hồ sơ bác sĩ có doctor_schema riêng. Dùng thư mục backend/app/.
 
-**Nghiệm thu:** USER chỉ quản lý hồ sơ mình sở hữu; walk-in không cần tài khoản;
+**Nghiệm thu cập nhật 12/10/2026:** họ tên/số điện thoại và CCCD hoặc ngày sinh xác định hồ sơ; tự tạo/dùng lại tài khoản USER theo số điện thoại, không báo mật khẩu ngẫu nhiên. Số gia đình dùng chung có xác nhận và nhiều patient_id riêng; chọn lại hồ sơ đã lưu. Người đặt hộ khác số chỉ xem các lượt mình đặt. Khôi phục mật khẩu nhận email hoặc số điện thoại và phải xác minh OTP. Quy tắc mới thay phần sở hữu cũ: [THAY_DOI_TAI_KHOAN_HO_SO_12_10_2026.md](THAY_DOI_TAI_KHOAN_HO_SO_12_10_2026.md).
+
+**Nghiệm thu khác:** USER sửa hồ sơ mình sở hữu; walk-in không yêu cầu bệnh nhân tự đăng ký trước;
 archive không mất bệnh án; BHYT được lưu/cập nhật; bác sĩ/phòng không chồng ca;
 không hạ quota dưới booked_count; y tá được giao phải có vai trò NURSE.
 Upload avatar kiểm tra nội dung/kích thước, sinh tên file, lưu bền vững qua volume.
@@ -171,7 +175,7 @@ Người đã đặt online đến check-in vẫn dùng encounter cũ, không t�
 cùng transaction với quota và log; check-in lặp không cấp thêm số; chuyển bác sĩ
 khóa ca cũ/mới theo thứ tự cố định và không vượt quota. Gói 3 sở hữu mọi thay đổi
 encounter_status/booked_count; các gói khác gọi service, không tự UPDATE các trường đó.
-Job nền chạy worker riêng, không tạo scheduler trong mỗi Gunicorn worker.
+Job nền chạy một tiến trình worker riêng bên trong container backend qua utils/server.py, không tạo scheduler trong mỗi Gunicorn worker. Docker Compose chỉ có db/backend theo yêu cầu 12/10/2026.
 
 ### Gói 4 — Thanh toán giả lập và thông báo
 

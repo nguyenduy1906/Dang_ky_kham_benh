@@ -43,6 +43,10 @@ const panels = {
 const dialog = document.querySelector("#info-dialog");
 document.querySelectorAll("[data-panel]").forEach((button) => {
   button.addEventListener("click", () => {
+    if (button.dataset.panel === "booking") {
+      location.href = "../(patient)/portal.html";
+      return;
+    }
     const [title, content] = panels[button.dataset.panel];
     document.querySelector("#dialog-title").textContent = title;
     document.querySelector("#dialog-content").innerHTML =
@@ -50,7 +54,7 @@ document.querySelectorAll("[data-panel]").forEach((button) => {
     dialog.showModal();
   });
 });
-document.querySelector(".dialog-close").addEventListener("click", () => dialog.close());
+dialog.querySelector(".dialog-close").addEventListener("click", () => dialog.close());
 dialog.addEventListener("click", (event) => {
   if (event.target === dialog) {
     const rect = dialog.getBoundingClientRect();
@@ -64,55 +68,17 @@ dialog.addEventListener("click", (event) => {
   }
 });
 const toggle = document.querySelector(".menu-toggle");
-toggle.addEventListener("click", () => {
+toggle?.addEventListener("click", () => {
   const open = toggle.getAttribute("aria-expanded") !== "true";
   toggle.setAttribute("aria-expanded", String(open));
   document.querySelector("#main-nav").classList.toggle("open", open);
 });
 
-// Preview sign-in state only; this is not authentication or an access check.
-const previewSessionKey = "neu-medical-preview-signed-in";
-let previewSignedIn = false;
-try {
-  previewSignedIn = sessionStorage.getItem(previewSessionKey) === "true";
-} catch {}
-const pageHeader = document.querySelector("body > header");
-const previewLoginButton = document.createElement("button");
-previewLoginButton.type = "button";
-previewLoginButton.className = "preview-login-toggle";
-const compactAccountHeader = document.createElement("div");
-compactAccountHeader.className = "compact-account-header";
-compactAccountHeader.hidden = true;
-const compactHospitalLink = document.createElement("a");
-const currentHomeLink = document.querySelector(".brand");
-compactHospitalLink.href = currentHomeLink.getAttribute("href");
-compactHospitalLink.textContent = "BỆNH VIỆN NEU MEDICAL";
-const compactGreeting = document.createElement("span");
-compactGreeting.className = "compact-account-greeting";
-compactGreeting.textContent = "Xin chào, TÀI KHOẢN MẪU";
-const previewBadge = document.createElement("small");
-previewBadge.textContent = "Đăng nhập mô phỏng";
-compactGreeting.append(previewBadge);
-compactAccountHeader.append(compactHospitalLink, compactGreeting);
-document.body.append(compactAccountHeader);
-document.querySelector(".topbar-inner > div").prepend(previewLoginButton);
-function updateCompactAccountHeader() {
-  const show = previewSignedIn && pageHeader.getBoundingClientRect().bottom <= 0;
-  compactAccountHeader.hidden = !show;
-  document.body.classList.toggle("has-compact-account-header", show);
+// Open the sign-in interface; authentication will be connected separately.
+const accountActions = document.querySelector(".topbar-inner > div");
+if (accountActions) {
+  const signIn = document.createElement("a");
+  signIn.href = "../auth/login.html";
+  signIn.textContent = "Đăng nhập";
+  accountActions.prepend(signIn);
 }
-function updatePreviewSession() {
-  previewLoginButton.textContent = previewSignedIn ? "Thoát đăng nhập mẫu" : "Thử đăng nhập mẫu";
-  previewLoginButton.setAttribute("aria-pressed", String(previewSignedIn));
-  updateCompactAccountHeader();
-}
-previewLoginButton.addEventListener("click", () => {
-  previewSignedIn = !previewSignedIn;
-  try {
-    sessionStorage.setItem(previewSessionKey, String(previewSignedIn));
-  } catch {}
-  updatePreviewSession();
-});
-window.addEventListener("scroll", updateCompactAccountHeader, { passive: true });
-window.addEventListener("resize", updateCompactAccountHeader);
-updatePreviewSession();

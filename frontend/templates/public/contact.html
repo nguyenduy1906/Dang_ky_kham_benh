@@ -4,10 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Liên hệ | NEU Medical</title>
-    <link rel="stylesheet" href="../../static/css/home.css" />
-    <link rel="stylesheet" href="../../static/css/public-pages.css" />
-    <script src="../../static/js/core/public.js" defer></script>
-    <script src="../../static/js/pages/public-pages.js" defer></script>
+    <link rel="stylesheet" href="../../static/css/home.css?v=20261013-ui-only" />
+    <link rel="stylesheet" href="../../static/css/public-pages.css?v=20261012-compact-banner" />
+    <script src="../../static/js/core/public.js?v=20261013-ui-only" defer></script>
+    <link rel="stylesheet" href="../../static/css/contact.css" />
+    <script src="../../static/js/pages/contact.js" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Đến nội dung chính</a>
@@ -17,7 +18,7 @@
           <span>Chào mừng bạn đến với Bệnh viện NEU Medical</span>
           <div>
             <a class="active" aria-current="page" href="contact.html">Liên hệ hỗ trợ</a
-            ><a href="../(patient)/booking.html">Đặt lịch khám</a
+            ><a href="../(patient)/portal.html">Đặt lịch khám</a
             ><span class="language" aria-label="Ngôn ngữ tiếng Việt">🇻🇳</span>
           </div>
         </div>
@@ -41,46 +42,65 @@
         <nav id="main-nav" aria-label="Điều hướng chính">
           <a href="home.html">Trang chủ</a><a href="about.html">Giới thiệu</a
           ><a href="departments.html">Chuyên khoa</a><a href="doctors.html">Đội ngũ bác sĩ</a
-          ><a href="../(patient)/booking.html">Đặt lịch khám</a><a href="news.html">Tin tức</a
+          ><a href="../(patient)/portal.html">Đặt lịch khám</a><a href="news.html">Tin tức</a
           ><a class="active" aria-current="page" href="contact.html">Liên hệ</a>
         </nav>
       </div>
     </header>
-    <main id="main">
+    <main id="main" class="contact-page">
       <div class="page-title">
+        <img class="page-title-photo" src="../../static/assets/clinic/lễ_tân.jpg" alt="" aria-hidden="true" />
         <div class="section-wrap">
-          <p><a href="home.html">Trang chủ</a> / Liên hệ</p>
           <h1>Liên hệ</h1>
+          <p><a href="home.html">Trang chủ</a> / Liên hệ</p>
         </div>
       </div>
-      <div class="section-wrap page-content">
-        <div class="content-split">
-          <div class="text-block">
-            <p class="section-kicker">MỘT CƠ SỞ · NEU MEDICAL</p>
-            <h2>Thông tin liên hệ</h2>
-            <p>
-              <strong>Địa chỉ:</strong> 207 đường Giải Phóng, phường Bạch Mai, Hà Nội, Việt Nam.
-            </p>
-            <p>Thông tin hotline và email bệnh viện sẽ được bổ sung khi có thông tin chính thức.</p>
-            <a
-              class="solid-button"
-              href="https://www.google.com/maps/search/?api=1&amp;query=207+Giai+Phong+Ha+Noi"
-              target="_blank"
-              rel="noopener noreferrer"
-              >Xem vị trí trên bản đồ ↗</a
-            >
+      <div class="contact-content">
+        <div class="contact-layout">
+          <div>
+            <section class="contact-card" aria-labelledby="contact-hospital-title">
+              <h2 id="contact-hospital-title">BỆNH VIỆN NEU MEDICAL</h2>
+              <div class="contact-information">
+                <div><p><strong>Tên đơn vị:</strong> Bệnh viện NEU Medical</p><p><strong>Giờ khám bệnh:</strong> Đang cập nhật.</p><p>Đồng hành cùng sức khỏe của bạn và gia đình.</p></div>
+                <div>
+                  <div class="contact-method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m6 3 3 5-2 2c2 4 3 5 7 7l2-2 5 3c0 4-4 5-7 3C5 17 1 8 3 5z"/></svg><p><strong>Hotline:</strong> Đang cập nhật</p></div>
+                  <div class="contact-method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M3 5h18v14H3zM3 5l9 8 9-8"/></svg><p><strong>Email:</strong> Đang cập nhật</p></div>
+                  <div class="contact-method"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M19 10c0 6-7 11-7 11S5 16 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></svg><p><strong>Địa chỉ:</strong> 207 đường Giải Phóng, phường Bạch Mai, Hà Nội.</p></div>
+                </div>
+              </div>
+            </section>
+            <div class="contact-view-tabs" role="tablist" aria-label="Xem cơ sở khám bệnh">
+              <button type="button" role="tab" id="contact-list-tab" aria-selected="true" aria-controls="contact-list-panel" data-contact-view="list">Danh sách</button>
+              <button type="button" role="tab" id="contact-map-tab" aria-selected="false" aria-controls="contact-map-panel" tabindex="-1" data-contact-view="map">Bản đồ</button>
+            </div>
+            <div id="contact-list-panel" role="tabpanel" aria-labelledby="contact-list-tab">
+              <article class="contact-location">
+                <img src="../../static/assets/clinic/đa_khoa.jpg" alt="Ảnh minh họa cơ sở khám bệnh NEU Medical" loading="lazy" />
+                <div><h3>Bệnh viện NEU Medical</h3><p>Tìm hiểu chuyên khoa, lựa chọn bác sĩ và đăng ký lịch khám cho bản thân hoặc người thân tại cơ sở NEU Medical.</p>
+                  <div class="contact-location-address"><p><strong>Địa chỉ:</strong> 207 đường Giải Phóng, phường Bạch Mai, Hà Nội, Việt Nam.</p><p><strong>Hotline:</strong> Đang cập nhật</p><a href="https://www.google.com/maps/search/?api=1&amp;query=207+Giai+Phong+Ha+Noi" target="_blank" rel="noopener noreferrer">Xem vị trí trên bản đồ ↗</a></div>
+                </div>
+              </article>
+            </div>
+            <div class="contact-map" id="contact-map-panel" role="tabpanel" aria-labelledby="contact-map-tab" hidden>
+              <iframe title="Vị trí NEU Medical tại 207 Giải Phóng, Hà Nội" src="https://maps.google.com/maps?q=207%20Giai%20Phong%20Ha%20Noi&amp;output=embed" loading="lazy" referrerpolicy="no-referrer"></iframe>
+              <p>207 đường Giải Phóng, phường Bạch Mai, Hà Nội. <a href="https://www.google.com/maps/search/?api=1&amp;query=207+Giai+Phong+Ha+Noi" target="_blank" rel="noopener noreferrer">Mở trên Google Maps ↗</a></p>
+            </div>
           </div>
-          <img src="../../static/assets/clinic/lễ_tân.jpg" alt="Ảnh minh họa khu vực tiếp đón" />
+          <aside class="contact-side" aria-label="Liên hệ hỗ trợ và tư vấn">
+            <section class="contact-card"><h3>Liên hệ</h3><p class="contact-support"><span>Chăm sóc khách hàng:</span><strong>Đang cập nhật</strong></p></section>
+            <section class="contact-card consultation-card" aria-labelledby="consultation-title">
+              <h3 id="consultation-title">Đăng ký tư vấn</h3>
+              <form id="consultation-form">
+                <div class="consultation-field"><label for="consultation-name">Họ và tên của bạn *</label><input id="consultation-name" name="full_name" autocomplete="name" required maxlength="150" placeholder="Nhập họ tên của bạn" /></div>
+                <div class="consultation-field"><label for="consultation-phone">Số điện thoại của bạn *</label><input id="consultation-phone" name="phone" type="tel" autocomplete="tel" required maxlength="20" placeholder="Nhập số điện thoại của bạn" /></div>
+                <div class="consultation-field"><label for="consultation-note">Ghi chú</label><textarea id="consultation-note" name="note" maxlength="1000" placeholder="Yêu cầu của bạn"></textarea></div>
+                <button type="submit" class="solid-button">Đăng ký tư vấn</button>
+                <p class="consultation-status" id="consultation-status" role="status"></p>
+              </form>
+            </section>
+          </aside>
         </div>
-        <div class="text-block contact-guide">
-          <h3>Chuẩn bị trước khi đến khám</h3>
-          <p>
-            Mang theo giấy tờ cá nhân, thông tin người được khám và kết quả khám trước đây nếu có.
-            Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn.
-          </p>
-          <a href="../(patient)/booking.html">Xem giao diện đặt lịch →</a>
-        </div>
-        <p class="sample-caption">Bản xem trước giao diện · Dữ liệu minh họa · Chưa kết nối API.</p>
+        <p class="sample-caption">Bản xem trước giao diện · Biểu mẫu tư vấn chưa kết nối chức năng gửi thông tin.</p>
       </div>
     </main>
     <footer class="compact-footer">

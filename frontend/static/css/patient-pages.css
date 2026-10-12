@@ -1,0 +1,256 @@
+/* Layout for the four patient pages; use existing colors, fonts and square panels. */
+.patient-header {
+  background: white;
+}
+.patient-header .identity {
+  max-width: 1660px;
+  margin: auto;
+  justify-content: space-between;
+  gap: 24px;
+}
+.patient-hotline {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.5;
+  text-align: right;
+}
+.patient-hotline strong {
+  color: var(--green);
+}
+.patient-heading {
+  max-width: 1660px;
+  margin: 0 auto 30px;
+}
+.patient-breadcrumb {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: baseline;
+  flex-wrap: wrap;
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.patient-breadcrumb a {
+  color: var(--green);
+  display: inline;
+  padding: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+.patient-breadcrumb a:hover {
+  text-decoration: underline;
+}
+.patient-heading h1 {
+  margin: 20px 0 0;
+  color: var(--deep);
+  font-size: clamp(26px, 3vw, 36px);
+  line-height: 1.3;
+}
+.patient-panel {
+  max-width: 1660px;
+  margin: auto;
+  background: white;
+  border: 1px solid #dce5df;
+  padding: 28px;
+}
+.patient-panel h2 {
+  margin: 0;
+  font-size: 23px;
+  line-height: 1.4;
+}
+.appointment-sidebar .booking-form-heading {
+  font: 700 21px Arial, sans-serif;
+  color: var(--deep);
+  letter-spacing: 0;
+  border-bottom: 1px solid #dce5df;
+  padding-bottom: 20px;
+  margin: 0 0 25px;
+}
+.patient-empty {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 22px;
+  text-align: center;
+  color: var(--muted);
+}
+.patient-empty svg {
+  width: 54px;
+  height: 54px;
+  stroke: currentColor;
+  opacity: .45;
+  flex-shrink: 0;
+}
+.patient-empty p {
+  margin: 0;
+  line-height: 1.6;
+}
+@media (max-width: 700px) {
+  .patient-header .identity {
+    padding: 18px 20px;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .patient-header .brand {
+    min-width: 0;
+  }
+  .patient-header .brand strong {
+    font-size: 19px;
+  }
+  .patient-header .brand small {
+    font-size: 12px;
+  }
+  .patient-hotline {
+    font-size: 14px;
+    text-align: left;
+  }
+  .patient-panel {
+    padding: 22px;
+  }
+  .patient-panel h2 {
+    font-size: 20px;
+  }
+}
+.records-layout {
+  max-width: 1400px;
+  margin: auto;
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  gap: 55px;
+  padding: 16px 0 45px;
+}
+.record-lookup-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  text-align: center;
+  font-size: 15px;
+}
+.record-lookup-trigger svg {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+.records-profile-placeholder {
+  padding: 22px;
+  margin-top: 18px;
+}
+.records-profile-placeholder h2 {
+  font-size: 18px;
+}
+.records-profile-placeholder p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.records-welcome {
+  min-height: 340px;
+  text-align: center;
+  padding: 12px 20px;
+}
+.records-illustration {
+  width: 150px;
+  height: 150px;
+  color: var(--green);
+}
+.records-welcome h2 {
+  color: var(--deep);
+  font-size: 25px;
+  line-height: 1.4;
+}
+.records-welcome p {
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 25px;
+}
+.patient-tabs {
+  display: flex;
+  border-bottom: 1px solid #dce5df;
+}
+.patient-tabs [role="tab"] {
+  flex: 1;
+  min-width: 0;
+  padding: 19px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: white;
+  color: var(--ink);
+  line-height: 1.5;
+}
+.patient-tabs [aria-selected="true"] {
+  color: var(--green);
+  border-bottom-color: var(--green);
+}
+.record-lookup-dialog {
+  width: min(520px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 32px;
+}
+.record-lookup-dialog .dialog-heading h2 {
+  font-size: 25px;
+  line-height: 1.3;
+  color: var(--deep);
+}
+.lookup-instructions {
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.6;
+  margin: 30px 0;
+}
+.lookup-status {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.lookup-submit {
+  width: 100%;
+  margin-top: 12px;
+}
+#lookup-identifier-field {
+  margin-top: 20px;
+}
+.appointments-panel {
+  padding: 0;
+}
+.appointments-empty {
+  min-height: 420px;
+  padding: 32px;
+}
+.appointments-empty svg {
+  width: 160px;
+  height: 190px;
+}
+@media (max-width: 850px) {
+  .records-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .records-sidebar {
+    max-width: 560px;
+    width: 100%;
+    margin: auto;
+  }
+}
+@media (max-width: 480px) {
+  .record-lookup-dialog {
+    padding: 22px;
+  }
+  .record-lookup-dialog .dialog-heading h2 {
+    font-size: 22px;
+  }
+  .patient-tabs [role="tab"] {
+    padding: 14px 8px;
+    font-size: 14px;
+  }
+}

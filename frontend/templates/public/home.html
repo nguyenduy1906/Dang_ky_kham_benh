@@ -4,12 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Trang chủ | NEU Medical</title>
-    <link rel="stylesheet" href="../../static/css/home.css" />
-    <link rel="stylesheet" href="../../static/css/public-pages.css" />
-    <script src="../../static/js/core/public.js" defer></script>
-    <script src="../../static/js/pages/home.js" defer></script>
+    <link rel="stylesheet" href="../../static/css/home.css?v=20261013-ui-only" />
+    <link rel="stylesheet" href="../../static/css/public-pages.css?v=20261012-font" />
+    <script src="../../static/js/core/public.js?v=20261013-ui-only" defer></script>
+    <script src="../../static/js/pages/home.js?v=20261013-carousel" defer></script>
   </head>
-  <body>
+  <body class="home-page">
     <a class="skip-link" href="#main">Đến nội dung chính</a>
     <header>
       <div class="topbar">
@@ -17,7 +17,7 @@
           <span>Chào mừng bạn đến với Bệnh viện NEU Medical</span>
           <div>
             <a href="contact.html">Liên hệ hỗ trợ</a
-            ><a href="../(patient)/booking.html">Đặt lịch khám</a
+            ><a href="../(patient)/portal.html">Đặt lịch khám</a
             ><span class="language" aria-label="Ngôn ngữ tiếng Việt">🇻🇳</span>
           </div>
         </div>
@@ -42,18 +42,22 @@
           <a class="active" href="home.html" aria-current="page">Trang chủ</a
           ><a href="about.html">Giới thiệu</a><a href="departments.html">Chuyên khoa</a
           ><a href="doctors.html">Đội ngũ bác sĩ</a
-          ><a href="../(patient)/booking.html">Đặt lịch khám</a><a href="news.html">Tin tức</a
+          ><a href="../(patient)/portal.html">Đặt lịch khám</a><a href="news.html">Tin tức</a
           ><a href="contact.html">Liên hệ</a>
         </nav>
       </div>
     </header>
     <main id="main">
-      <section class="hero" aria-label="Giới thiệu dịch vụ khám bệnh">
-        <img
-          class="hero-photo"
-          src="../../static/assets/clinic/lễ_tân.jpg"
-          alt="Không gian tiếp đón tại cơ sở khám bệnh"
-        />
+      <div class="home-intro">
+      <section class="hero" aria-label="Giới thiệu dịch vụ khám bệnh, kéo hoặc vuốt để chuyển ảnh" tabindex="0">
+        <div class="hero-carousel" id="hero-carousel" aria-label="Ảnh giới thiệu cơ sở khám bệnh" aria-roledescription="trình chiếu">
+          <div class="hero-slides" id="hero-slides">
+            <div class="hero-slide"><img class="hero-photo" src="../../static/assets/clinic/lễ_tân.jpg" alt="Không gian tiếp đón tại cơ sở khám bệnh" /></div>
+            <div class="hero-slide" aria-hidden="true"><img class="hero-photo" src="../../static/assets/clinic/nội_khoa.jpg" alt="Không gian phòng khám nội khoa" /></div>
+            <div class="hero-slide" aria-hidden="true"><img class="hero-photo" src="../../static/assets/clinic/phòng_chờ.jpg" alt="Khu vực chờ khám bệnh" /></div>
+            <div class="hero-slide" aria-hidden="true"><img class="hero-photo" src="../../static/assets/clinic/đa_khoa.jpg" alt="Không gian cơ sở khám đa khoa" /></div>
+          </div>
+        </div>
         <div class="hero-shade"></div>
         <div class="hero-inner">
           <div class="hero-copy">
@@ -121,6 +125,7 @@
           ><span class="service-arrow" aria-hidden="true">↗</span>
         </button>
       </section>
+      </div>
       <section class="departments-section" id="departments" aria-labelledby="departments-title">
         <div class="section-wrap department-layout">
           <div>
@@ -209,7 +214,7 @@
             </div>
           </div>
           <div class="news-grid">
-            <button class="article-card" data-panel="news" data-category="activity">
+            <a href="article.html?id=home-0" data-article="home-0" class="article-card"  data-category="activity">
               <img
                 src="../../static/assets/meetings/meetings_1.jpg"
                 alt="Hoạt động chuyên môn của đội ngũ y tế"
@@ -217,8 +222,7 @@
               /><span class="article-body"
                 ><strong>Hoạt động chuyên môn của đội ngũ y tế</strong
                 ><span class="article-date">Bài viết minh họa</span></span
-              ></button
-            ><button class="article-card" data-panel="news" data-category="activity">
+              ></a><a href="article.html?id=home-1" data-article="home-1" class="article-card"  data-category="activity">
               <img
                 src="../../static/assets/clinic/lễ_tân.jpg"
                 alt="Đặt lịch khám thuận tiện cùng NEU Medical"
@@ -226,8 +230,7 @@
               /><span class="article-body"
                 ><strong>Đặt lịch khám thuận tiện cùng NEU Medical</strong
                 ><span class="article-date">Bài viết minh họa</span></span
-              ></button
-            ><button class="article-card" data-panel="news" data-category="training">
+              ></a><a href="article.html?id=home-2" data-article="home-2" class="article-card"  data-category="training">
               <img
                 src="../../static/assets/meetings/meetings_2.jpg"
                 alt="Chia sẻ kiến thức và trao đổi chuyên môn"
@@ -235,8 +238,7 @@
               /><span class="article-body"
                 ><strong>Chia sẻ kiến thức và trao đổi chuyên môn</strong
                 ><span class="article-date">Bài viết minh họa</span></span
-              ></button
-            ><button class="article-card" data-panel="news" data-category="professional">
+              ></a><a href="article.html?id=home-3" data-article="home-3" class="article-card"  data-category="professional">
               <img
                 src="../../static/assets/surgery/surgery_1.jpg"
                 alt="Tận tâm trong từng ca phẫu thuật"
@@ -244,8 +246,7 @@
               /><span class="article-body"
                 ><strong>Tận tâm trong từng ca phẫu thuật</strong
                 ><span class="article-date">Bài viết minh họa</span></span
-              ></button
-            ><button class="article-card" data-panel="news" data-category="health">
+              ></a><a href="article.html?id=home-4" data-article="home-4" class="article-card"  data-category="health">
               <img
                 src="../../static/assets/diseases_and_methods/5_bệnh_giao_mùa.jpg"
                 alt="Chủ động chăm sóc sức khỏe khi giao mùa"
@@ -253,8 +254,7 @@
               /><span class="article-body"
                 ><strong>Chủ động chăm sóc sức khỏe khi giao mùa</strong
                 ><span class="article-date">Bài viết minh họa</span></span
-              ></button
-            ><button class="article-card" data-panel="news" data-category="training">
+              ></a><a href="article.html?id=home-5" data-article="home-5" class="article-card"  data-category="training">
               <img
                 src="../../static/assets/nurses/nurses_1.jpg"
                 alt="Đồng hành cùng đội ngũ điều dưỡng"
@@ -263,7 +263,7 @@
                 ><strong>Đồng hành cùng đội ngũ điều dưỡng</strong
                 ><span class="article-date">Bài viết minh họa</span></span
               >
-            </button>
+            </a>
           </div>
           <p class="sample-caption">Ảnh và nội dung minh họa cho giao diện.</p>
         </div>
@@ -277,7 +277,7 @@
             tabindex="0"
             aria-label="Danh sách sự kiện, cuộn ngang để xem thêm"
           >
-            <button class="article-card" data-panel="news">
+            <a href="article.html?id=home-6" data-article="home-6" class="article-card" >
               <img
                 src="../../static/assets/surgery/surgery_2.jpg"
                 alt="Đồng hành cùng người bệnh trong từng ca khám"
@@ -285,8 +285,7 @@
               /><span class="article-body"
                 ><strong>Đồng hành cùng người bệnh trong từng ca khám</strong
                 ><span class="article-date">Bài viết minh họa</span></span
-              ></button
-            ><button class="article-card" data-panel="news">
+              ></a><a href="article.html?id=home-7" data-article="home-7" class="article-card" >
               <img
                 src="../../static/assets/meetings/meetings_3.jpg"
                 alt="Gặp gỡ và trao đổi cùng đội ngũ y tế"
@@ -294,8 +293,7 @@
               /><span class="article-body"
                 ><strong>Gặp gỡ và trao đổi cùng đội ngũ y tế</strong
                 ><span class="article-date">Bài viết minh họa</span></span
-              ></button
-            ><button class="article-card" data-panel="news">
+              ></a><a href="article.html?id=home-8" data-article="home-8" class="article-card" >
               <img
                 src="../../static/assets/nurses/nurses_2.jpg"
                 alt="Chăm sóc sức khỏe cho bạn và gia đình"
@@ -303,8 +301,7 @@
               /><span class="article-body"
                 ><strong>Chăm sóc sức khỏe cho bạn và gia đình</strong
                 ><span class="article-date">Bài viết minh họa</span></span
-              ></button
-            ><button class="article-card" data-panel="news">
+              ></a><a href="article.html?id=home-9" data-article="home-9" class="article-card" >
               <img
                 src="../../static/assets/clinic/phòng_chờ.jpg"
                 alt="Không gian khám bệnh tại NEU Medical"
@@ -313,7 +310,7 @@
                 ><strong>Không gian khám bệnh tại NEU Medical</strong
                 ><span class="article-date">Bài viết minh họa</span></span
               >
-            </button>
+            </a>
           </div>
         </div>
       </section>

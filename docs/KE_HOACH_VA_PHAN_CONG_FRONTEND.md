@@ -1,4 +1,5 @@
 > Cập nhật 12/10/2026: người dùng đã đổi sang đặt khung giờ và phát phiếu, bỏ cấp số thứ tự. Quy tắc mới có ưu tiên hơn các nội dung cũ bên dưới: [THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md](THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md).
+> Cập nhật nghiệp vụ 12/10/2026: [THAY_DOI_TAI_KHOAN_HO_SO_12_10_2026.md](THAY_DOI_TAI_KHOAN_HO_SO_12_10_2026.md). Mục “Đăng ký khám cho ai” phải tải GET /patients, lưu/chọn patient_id riêng từng thành viên, không tạo lại hồ sơ mỗi lần. Cùng số người đặt cần xác nhận confirm_shared_phone; số khác có tài khoản riêng tự tạo/dùng lại. Quên mật khẩu hỗ trợ OTP số điện thoại. Backend đã có hợp đồng này; UI hiện vẫn preview chưa tích hợp các API trên.
 
 # Phân công frontend theo vai trò
 

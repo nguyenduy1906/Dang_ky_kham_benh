@@ -35,7 +35,7 @@ def list_patients():
 @patient_bp.post('')
 @login_required
 def create_patient():
-    """Tạo hồ sơ (USER tạo cho mình, ADMIN hoặc RECEPTIONIST tạo hồ sơ walk-in không cần tài khoản)
+    """Tạo/tìm hồ sơ theo thông tin người khám; tự tạo hoặc dùng lại tài khoản theo số điện thoại
     ---
     tags:
       - Patients
@@ -47,7 +47,7 @@ def create_patient():
         required: true
         schema:
           type: object
-          required: [full_name]
+          required: [full_name, phone]
           properties:
             full_name: {type: string, example: Nguyen Van B}
             dob: {type: string, example: "1990-05-20"}
@@ -57,15 +57,21 @@ def create_patient():
             phone: {type: string}
             health_insurance: {type: string}
             relationship: {type: string, example: SELF}
-            user_id: {type: integer, description: Chỉ ADMIN hoặc RECEPTIONIST, bỏ trống nếu walk-in}
+            confirm_shared_phone: {type: boolean, description: Xác nhận lưu hồ sơ người thân vào tài khoản người đặt khi trùng số điện thoại}
+            user_id: {type: integer, description: Chỉ ADMIN hoặc RECEPTIONIST; nếu gửi phải khớp tài khoản của số điện thoại}
     responses:
       201:
         description: Đã tạo
+      200:
+        description: Dùng lại hồ sơ đúng người bệnh; account_exists báo tài khoản đã tồn tại
+      409:
+        description: CONFIRM_SHARED_PHONE yêu cầu xác nhận hoặc thông tin hồ sơ mâu thuẫn
     """
     actor = current_user()
     allow_user_id = actor['role_name'] in patient_service.STAFF_WRITE
     fields = patient_schema.validate_create(request.get_json(silent=True), allow_user_id)
-    return jsonify(patient_service.create_patient(actor, fields)), 201
+    result = patient_service.create_patient(actor, fields)
+    return jsonify(result), 200 if result['patient_reused'] else 201
 
 
 @patient_bp.get('/<int:patient_id>')

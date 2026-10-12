@@ -1,4 +1,4 @@
--- Schema PostgreSQL cuối cùng cho khởi tạo mới (20 bảng).
+-- Schema PostgreSQL cuối cùng cho khởi tạo mới (21 bảng).
 -- Mọi thay đổi cấu trúc được cập nhật trực tiếp trong file này.
 -- IF NOT EXISTS chỉ cho phép khởi động lại cùng schema; không nâng cấp database cũ.
 
@@ -60,6 +60,17 @@ CREATE TABLE IF NOT EXISTS patient (
     created_at          TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Người đặt hộ được chọn lại hồ sơ đã thêm và đặt lượt mới, không tự có quyền
+-- xem toàn bộ lịch sử của tài khoản bệnh nhân. Lượt họ tạo lưu created_by_id.
+CREATE TABLE IF NOT EXISTS patient_delegate (
+    patient_id INTEGER NOT NULL REFERENCES patient(patient_id),
+    user_id INTEGER NOT NULL REFERENCES users(user_id),
+    relationship TEXT NOT NULL CHECK (relationship IN ('PARENT','CHILD','SPOUSE','OTHER')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (patient_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS idx_patient_delegate_user ON patient_delegate(user_id);
 
 -- 5. DEPARTMENT (Chuyên khoa)
 CREATE TABLE IF NOT EXISTS department (

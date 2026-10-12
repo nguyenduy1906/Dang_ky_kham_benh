@@ -1,8 +1,9 @@
--- Dữ liệu giả lập cho schema 20 bảng. File này xóa toàn bộ dữ liệu cũ.
+-- Dữ liệu giả lập cho schema 21 bảng. File này xóa toàn bộ dữ liệu cũ.
 BEGIN;
 
 -- Xóa dữ liệu cũ để có thể chạy lại file seed nhiều lần.
 TRUNCATE TABLE
+    patient_delegate,
     nurse_assignment,
     role_request,
     article,
@@ -86,6 +87,15 @@ VALUES
 (9, NULL, 'Đặng Thu Phương', '1996-10-29', 'Nữ', '001196000009', 'Hà Đông, Hà Nội', '0911000009', 'HN401000009', 'OTHER', '2026-09-10 09:20:00+07', '2026-09-10 09:20:00+07', NULL),
 (10, NULL, 'Nguyễn Gia Bảo', '2008-04-11', 'Nam', '001208000010', 'Tây Hồ, Hà Nội', '0911000010', 'HS401000010', 'CHILD', '2026-09-10 09:30:00+07', '2026-09-10 09:30:00+07', '2026-10-01 09:00:00+07');
 
+-- Mẫu tài khoản bệnh nhân theo số điện thoại; mật khẩu demo chung chỉ dùng cho bộ seed.
+-- Tài khoản tự sinh qua API dùng mật khẩu ngẫu nhiên và không trả mật khẩu cho client.
+UPDATE users u SET phone=p.phone FROM patient p WHERE p.user_id=u.user_id;
+INSERT INTO users(user_id,role_id,full_name,phone,password_hash,approval_status)
+SELECT 15+p.patient_id-2, 1, p.full_name, p.phone,
+       (SELECT password_hash FROM users WHERE user_id=4), 'APPROVED'
+FROM patient p WHERE p.user_id IS NULL;
+UPDATE patient p SET user_id=u.user_id FROM users u WHERE p.user_id IS NULL AND p.phone=u.phone;
+
 -- 5. DEPARTMENT
 INSERT INTO department
 (department_id, name, description, is_active, created_at, updated_at)
@@ -163,6 +173,13 @@ VALUES
 (8, 'WALK_IN', 8, 8, 8, 8, 2, 320000, 0, 'Đau răng hàm dưới bên phải', 'COMPLETED', 'NEU-SAMPLE-008', '2026-09-27 15:00:00+07', '2026-09-27 15:00:00+07'::timestamptz + interval '15 minutes', NULL, NULL, '2026-09-27 14:35:00+07', NULL, NULL, NULL, '2026-09-27 14:30:00+07', '2026-09-27 15:50:00+07'),
 (9, 'ONLINE', 9, 9, 9, 9, 5, 360000, 108000, 'Đau khớp gối khi đi lại', 'COMPLETED', 'NEU-SAMPLE-009', '2026-09-28 09:00:00+07', '2026-09-28 09:00:00+07'::timestamptz + interval '30 minutes', 'QR-ENCOUNTER-009', NULL, '2026-09-28 08:50:00+07', NULL, NULL, NULL, '2026-09-27 18:30:00+07', '2026-09-28 10:00:00+07'),
 (10, 'WALK_IN', 10, 10, 10, 10, 2, 400000, 0, 'Đau đầu kèm mất ngủ', 'COMPLETED', 'NEU-SAMPLE-010', '2026-09-29 14:30:00+07', '2026-09-29 14:30:00+07'::timestamptz + interval '30 minutes', NULL, NULL, '2026-09-29 14:05:00+07', NULL, NULL, NULL, '2026-09-29 14:00:00+07', '2026-09-29 15:20:00+07');
+
+-- Lưu quan hệ đặt hộ để có thể chọn lại hồ sơ; chỉ xem lịch sử lượt chính mình đặt.
+INSERT INTO patient_delegate(patient_id,user_id,relationship)
+SELECT DISTINCT e.patient_id,e.created_by_id,COALESCE(NULLIF(p.relationship,'SELF'),'OTHER')
+FROM encounter e JOIN patient p ON p.patient_id=e.patient_id
+JOIN users u ON u.user_id=e.created_by_id JOIN role r ON r.role_id=u.role_id
+WHERE r.role_name='USER' AND e.created_by_id<>p.user_id;
 
 -- 10. ENCOUNTER_STATUS_LOG
 INSERT INTO encounter_status_log
@@ -372,6 +389,7 @@ SELECT 'role' AS table_name, COUNT(*) AS row_count FROM role
 UNION ALL SELECT 'users', COUNT(*) FROM users
 UNION ALL SELECT 'auth_token', COUNT(*) FROM auth_token
 UNION ALL SELECT 'patient', COUNT(*) FROM patient
+UNION ALL SELECT 'patient_delegate', COUNT(*) FROM patient_delegate
 UNION ALL SELECT 'department', COUNT(*) FROM department
 UNION ALL SELECT 'doctor_profile', COUNT(*) FROM doctor_profile
 UNION ALL SELECT 'room', COUNT(*) FROM room

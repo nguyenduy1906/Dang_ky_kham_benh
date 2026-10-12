@@ -37,7 +37,7 @@ class PostgresTests(unittest.TestCase):
     def test_erd_repeat_and_health(self):
         html = (Path(__file__).resolve().parents[2] / 'database/erd.html').read_text(encoding='utf-8')
         entities = re.findall(r'^    ([A-Z_]+) \{\n(.*?)^    \}', html, re.M | re.S)
-        self.assertEqual(len(entities), 20)
+        self.assertEqual(len(entities), 21)
         with get_db_connection() as db:
             for name, body in entities:
                 expected = set(re.findall(r'^\s+\w+ (\w+)', body, re.M))
@@ -110,7 +110,7 @@ class PostgresTests(unittest.TestCase):
         with get_db_connection() as db:
             db.execute(sample)
             db.execute(sample)
-            self.assertEqual(db.execute('SELECT count(*) AS n FROM users').fetchone()['n'], 15)
+            self.assertEqual(db.execute('SELECT count(*) AS n FROM users').fetchone()['n'], 23)
             self.assertEqual(db.execute('SELECT count(*) AS n FROM encounter').fetchone()['n'], 10)
             self.assertEqual(db.execute("SELECT count(*) AS n FROM encounter WHERE schedule_id IS NULL").fetchone()['n'], 0)
             for row in db.execute('SELECT password_hash FROM users'):

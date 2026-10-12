@@ -77,6 +77,13 @@ erDiagram
         timestamptz updated_at "NOT NULL"
     }
 
+    PATIENT_DELEGATE {
+        integer patient_id PK, FK "NOT NULL"
+        integer user_id PK, FK "NOT NULL"
+        text relationship "NOT NULL; PARENT, CHILD, SPOUSE, OTHER"
+        timestamptz created_at "NOT NULL"
+    }
+
     %% ===== 3. BÁC SĨ, KHOA, PHÒNG =====
 
     DEPARTMENT {
@@ -315,6 +322,8 @@ erDiagram
     USERS ||--o{ AUTH_TOKEN : "co_token"
     USERS ||--o| DOCTOR_PROFILE : "co_ho_so_bac_si"
     USERS |o--o{ PATIENT : "so_huu_ho_so"
+    PATIENT ||--o{ PATIENT_DELEGATE : "duoc_dat_ho"
+    USERS ||--o{ PATIENT_DELEGATE : "chon_lai_nguoi_than"
 
     DEPARTMENT ||--o{ DOCTOR_PROFILE : "co_bac_si"
     DEPARTMENT ||--o{ ROOM : "co_phong_kham"
