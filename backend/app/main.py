@@ -2,6 +2,7 @@
 from flask import Flask
 from flasgger import Swagger
 from backend.app.core.errors import register_error_handlers
+from backend.app.core.cors import register_cors
 from backend.app.core.security import get_secret_key
 from backend.app.db.database import get_db_connection
 from backend.app.routes import health_routes
@@ -28,6 +29,7 @@ def create_app():
     get_secret_key()  # báo lỗi sớm nếu thiếu SECRET_KEY và mật khẩu DB
     app = Flask(__name__)
     register_error_handlers(app)
+    register_cors(app)
     app.register_blueprint(health_routes)
     for blueprint in (auth_bp, user_admin_bp, department_bp, room_bp, doctor_bp,
                       patient_bp, schedule_bp, nurse_assignment_bp, encounter_bp, payment_bp, notification_bp,

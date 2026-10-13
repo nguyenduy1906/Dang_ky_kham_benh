@@ -4,16 +4,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Bài viết | NEU Medical</title>
-    <link rel="stylesheet" href="../../static/css/home.css?v=20261013-ui-only" />
+    <link rel="stylesheet" href="../../static/css/home.css?v=20261013-smooth-nav2" />
     <link rel="stylesheet" href="../../static/css/public-pages.css?v=20261012-font" />
-    <script src="../../static/js/core/public.js?v=20261013-ui-only" defer></script>
-    <link rel="stylesheet" href="../../static/css/article.css" />
-    <script src="../../static/js/data/article-previews.js" defer></script>
-    <script src="../../static/js/pages/article.js" defer></script>
+    <script src="../../static/js/core/navigation.js?v=20261013-auth1" defer></script>
+    <script src="../../static/js/core/public.js?v=20261013-patient-auth" defer></script>
+    <link rel="stylesheet" href="../../static/css/news.css?v=20261013-articles" />
+    <link rel="stylesheet" href="../../static/css/article.css?v=20261013-editorial" />
+    <script src="../../static/js/pages/article.js?v=20261013-editorial" type="module"></script>
+    <script src="../../static/js/pages/doctor-images.js?v=20261013-media" type="module"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Đến nội dung chính</a>
-    <header>
+    <header class="site-header">
       <div class="topbar">
         <div class="topbar-inner">
           <span>Chào mừng bạn đến với Bệnh viện NEU Medical</span>
@@ -44,7 +46,7 @@
           <a href="home.html">Trang chủ</a><a href="about.html">Giới thiệu</a
           ><a href="departments.html">Chuyên khoa</a><a href="doctors.html">Đội ngũ bác sĩ</a
           ><a href="../(patient)/portal.html">Đặt lịch khám</a
-          ><a class="active" aria-current="page" href="news.html">Tin tức</a
+          ><a class="active" aria-current="page" href="news.html">Tin tức<span class="nav-indicator" aria-hidden="true"></span></a
           ><a href="contact.html">Liên hệ</a>
         </nav>
       </div>
@@ -54,14 +56,16 @@
         <p class="article-breadcrumb"><a href="home.html">Trang chủ</a> / <a href="news.html">Tin tức</a> / <span aria-current="page">Bài viết</span></p>
         <div class="article-layout">
           <article class="article-detail" aria-labelledby="article-title">
-            <h1 id="article-title">Nội dung bài viết</h1>
-            <div class="article-metadata" id="article-metadata">
-              <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 6v6h5"/></svg>Ngày đăng: Đang cập nhật</span>
+            <h1 id="article-title">Đang tải bài viết…</h1>
+            <div class="article-metadata" id="article-metadata" hidden>
+              <span id="article-date-wrap">Ngày đăng: <time id="article-date"></time></span>
               <span class="article-category" id="article-category"></span>
             </div>
-            <p class="article-preview" id="article-preview">Bài viết minh họa cho giao diện, chưa phải thông báo chính thức.</p>
-            <div class="article-content" id="article-content"></div>
-            <p class="article-author" id="article-author">NEU Medical · Nội dung minh họa</p>
+            <p class="news-status" id="article-status" role="status" aria-live="polite">Đang tải bài viết…</p>
+            <button class="news-retry" id="article-retry" type="button" hidden>Thử lại</button>
+            <div class="article-content" id="article-content" aria-busy="true"></div>
+            <p class="article-author" id="article-author" hidden></p>
+            <noscript>Vui lòng bật JavaScript để đọc bài viết.</noscript>
           </article>
           <aside class="article-sidebar" aria-label="Tiện ích bệnh viện">
             <section class="article-promotion">
@@ -72,7 +76,7 @@
               </div>
             </section>
             <section class="article-promotion">
-              <img src="../../static/assets/doctors/doctors_1.jpg" alt="Ảnh minh họa đội ngũ bác sĩ" loading="lazy" />
+              <img src="../../static/assets/doctors/doctors_1.jpg" data-doctor-photo="1" alt="Ảnh minh họa đội ngũ bác sĩ" loading="lazy" />
               <div class="article-promotion-content">
                 <h2>Đội ngũ bác sĩ</h2><p>Tìm hiểu thông tin bác sĩ và chuyên khoa phù hợp.</p>
                 <a class="solid-button" href="doctors.html">Xem đội ngũ bác sĩ</a>
@@ -80,8 +84,10 @@
             </section>
           </aside>
         </div>
-        <section class="related-news" id="related-news" aria-labelledby="related-title">
+        <section class="related-news" id="related-news" aria-labelledby="related-title" hidden>
           <h2 id="related-title">Tin tức cùng chuyên mục</h2>
+          <p class="news-status" id="related-status" role="status" aria-live="polite"></p>
+          <button class="news-retry" id="related-retry" type="button" hidden>Thử lại</button>
           <div class="related-layout"><div id="related-feature"></div><div class="related-list" id="related-list"></div></div>
         </section>
       </div>

@@ -54,6 +54,7 @@
 .recovery-heading h2 { font-size: 24px; line-height: 1.4; color: var(--deep); margin: 0; }
 .recovery-heading button { border: 0; background: transparent; width: 36px; height: 36px; flex-shrink: 0; font-size: 26px; }
 .recovery-dialog [hidden] { display: none; }
+#recovery-restart:not([hidden]) { display: block; margin: 18px auto 0; }
 @media (max-width: 1000px) { .auth-panel { padding-left: 28px; padding-right: 28px; } .auth-visual-copy { padding: 28px; } }
 @media (max-width: 760px) {
   .auth-page { grid-template-rows: 76px minmax(0, 1fr) 76px; }

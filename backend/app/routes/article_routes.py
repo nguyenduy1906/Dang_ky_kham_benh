@@ -1,9 +1,11 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, make_response, request, send_from_directory
 from flasgger import swag_from
 from backend.app.core.security import current_user, roles_required
 from backend.app.schemas.article_schema import parse_query, validate_article
 from backend.app.services import article_service as service
 from backend.app.utils.swagger_helpers import spec, path, body, PAGE
+from backend.app.utils import uploads
+from backend.app.core.errors import not_found
 
 article_bp = Blueprint('article', __name__)
 FILTERS = PAGE + [{'in': 'query', 'name': 'q', 'type': 'string'}, {'in': 'query', 'name': 'category', 'type': 'string'}]
@@ -46,3 +48,27 @@ def create():
 @swag_from(spec('Articles Admin', 'Sửa bài/ẩn bài/xuất bản; không đổi tác giả', [path('article_id'), body(FIELDS)]))
 def update(article_id):
     return jsonify(service.update(current_user(), article_id, validate_article(request.get_json(silent=True), partial=True)))
+
+
+@article_bp.post('/admin/articles/images')
+@roles_required('ADMIN')
+@swag_from({
+    'tags': ['Articles Admin'], 'summary': 'Tải ảnh đại diện hoặc ảnh trong bài (JPEG/PNG/WebP, tối đa 5 MB)',
+    'security': [{'Bearer': []}], 'consumes': ['multipart/form-data'],
+    'parameters': [{'in': 'formData', 'name': 'file', 'type': 'file', 'required': True}],
+    'responses': {201: {'description': 'URL ảnh để dùng trong thumbnail_url hoặc content'},
+                  400: {'description': 'File ảnh không hợp lệ'}, 403: {'description': 'Chỉ ADMIN được phép'}},
+})
+def upload_image():
+    return jsonify(service.upload_image(current_user(), request.files.get('file'))), 201
+
+
+@article_bp.get('/uploads/articles/<filename>')
+@swag_from(spec('Articles', 'Xem ảnh bài viết', [path('filename', type_name='string')], public=True))
+def image(filename):
+    if not uploads.FILENAME_RE.fullmatch(filename):
+        raise not_found('Không tìm thấy ảnh')
+    response = make_response(send_from_directory(uploads.article_dir(), filename))
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Cache-Control'] = 'public, max-age=86400'
+    return response

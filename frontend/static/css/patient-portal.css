@@ -1,4 +1,8 @@
 /* Content layout follows the reference; header, footer and palette use the public site. */
+.auth-pending .portal-page { display: none; }
+.portal-auth-status { padding-top: 48px; padding-bottom: 48px; }
+.portal-auth-status[hidden] { display: none; }
+.portal-auth-status button { padding: 10px 22px; background: var(--green); color: white; border: 0; }
 .portal-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;

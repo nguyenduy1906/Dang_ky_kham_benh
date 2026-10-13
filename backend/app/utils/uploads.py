@@ -1,27 +1,38 @@
-"""Lưu ảnh đại diện: xác minh và giải mã ảnh, giới hạn dung lượng, đặt tên ngẫu nhiên.
+"""Lưu ảnh bác sĩ và bài viết: giải mã ảnh, giới hạn dung lượng, đặt tên ngẫu nhiên.
 
-Thư mục lưu nằm trong volume Docker (uploads_data) nên không mất khi tạo lại container.
+Docker gắn backend/uploads vào /app/uploads; ảnh không mất khi tạo lại container.
 """
 import os
 import re
 import uuid
 import warnings
 from io import BytesIO
+from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError
 
 from backend.app.core.errors import bad_request
 
 MAX_AVATAR_BYTES = 2 * 1024 * 1024
+MAX_ARTICLE_BYTES = 5 * 1024 * 1024
 URL_PREFIX = '/uploads/avatars/'
+ARTICLE_URL_PREFIX = '/uploads/articles/'
 FILENAME_RE = re.compile(r'^[0-9a-f]{32}\.(jpg|png|webp)$')
 
 
-def avatar_dir():
-    root = os.environ.get('UPLOAD_DIR', '/app/uploads')
-    path = os.path.join(root, 'avatars')
+def _image_dir(folder):
+    root = os.environ.get('UPLOAD_DIR', str(Path(__file__).resolve().parents[2] / 'uploads'))
+    path = os.path.join(root, folder)
     os.makedirs(path, exist_ok=True)
     return path
+
+
+def avatar_dir():
+    return _image_dir('avatars')
+
+
+def article_dir():
+    return _image_dir('articles')
 
 
 def detect_image_type(data):
@@ -44,19 +55,29 @@ def detect_image_type(data):
         return None
 
 
-def save_avatar(file_storage):
-    data = file_storage.stream.read(MAX_AVATAR_BYTES + 1)
+def _save_image(file_storage, maximum, folder, prefix):
+    if file_storage is None or not file_storage.filename:
+        raise bad_request("Thiếu file ảnh (trường form 'file')", 'MISSING_FILE')
+    data = file_storage.stream.read(maximum + 1)
     if not data:
         raise bad_request('File rỗng', 'EMPTY_FILE')
-    if len(data) > MAX_AVATAR_BYTES:
-        raise bad_request('Ảnh tối đa 2 MB', 'FILE_TOO_LARGE')
+    if len(data) > maximum:
+        raise bad_request(f'Ảnh tối đa {maximum // (1024 * 1024)} MB', 'FILE_TOO_LARGE')
     ext = detect_image_type(data)
     if ext is None:
         raise bad_request('Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP', 'INVALID_IMAGE')
     filename = f'{uuid.uuid4().hex}.{ext}'
-    with open(os.path.join(avatar_dir(), filename), 'wb') as handle:
+    with open(os.path.join(_image_dir(folder), filename), 'xb') as handle:
         handle.write(data)
-    return URL_PREFIX + filename
+    return prefix + filename
+
+
+def save_avatar(file_storage):
+    return _save_image(file_storage, MAX_AVATAR_BYTES, 'avatars', URL_PREFIX)
+
+
+def save_article_image(file_storage):
+    return _save_image(file_storage, MAX_ARTICLE_BYTES, 'articles', ARTICLE_URL_PREFIX)
 
 
 def delete_avatar(url):

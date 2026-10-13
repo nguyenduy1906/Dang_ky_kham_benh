@@ -4,14 +4,16 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Tin tức | NEU Medical</title>
-    <link rel="stylesheet" href="../../static/css/home.css?v=20261013-ui-only" />
+    <link rel="stylesheet" href="../../static/css/home.css?v=20261013-smooth-nav2" />
     <link rel="stylesheet" href="../../static/css/public-pages.css?v=20261012-compact-banner" />
-    <script src="../../static/js/core/public.js?v=20261013-ui-only" defer></script>
-    <script src="../../static/js/pages/public-pages.js" defer></script>
+    <script src="../../static/js/core/navigation.js?v=20261013-auth1" defer></script>
+    <script src="../../static/js/core/public.js?v=20261013-patient-auth" defer></script>
+    <link rel="stylesheet" href="../../static/css/news.css?v=20261013-articles" />
+    <script src="../../static/js/pages/news.js?v=20261013-articles" type="module"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Đến nội dung chính</a>
-    <header>
+    <header class="site-header">
       <div class="topbar">
         <div class="topbar-inner">
           <span>Chào mừng bạn đến với Bệnh viện NEU Medical</span>
@@ -42,7 +44,7 @@
           <a href="home.html">Trang chủ</a><a href="about.html">Giới thiệu</a
           ><a href="departments.html">Chuyên khoa</a><a href="doctors.html">Đội ngũ bác sĩ</a
           ><a href="../(patient)/portal.html">Đặt lịch khám</a
-          ><a class="active" aria-current="page" href="news.html">Tin tức</a
+          ><a class="active" aria-current="page" href="news.html">Tin tức<span class="nav-indicator" aria-hidden="true"></span></a
           ><a href="contact.html">Liên hệ</a>
         </nav>
       </div>
@@ -55,56 +57,20 @@
           <p><a href="home.html">Trang chủ</a> / Tin tức</p>
         </div>
       </div>
-      <div class="section-wrap page-content">
-        <div class="news-filters" role="group" aria-label="Nhóm bài viết">
-          <button class="selected" data-news-filter="all" aria-pressed="true">Tất cả</button
-          ><button data-news-filter="activity" aria-pressed="false">Hoạt động bệnh viện</button
-          ><button data-news-filter="health" aria-pressed="false">Y học thường thức</button
-          ><button data-news-filter="training" aria-pressed="false">Đào tạo</button>
-        </div>
-        <div class="news-grid">
-          <a href="article.html?id=0" class="article-card" data-article="0" data-news-category="activity">
-            <img
-              src="../../static/assets/meetings/meetings_1.jpg"
-              alt="Ảnh minh họa bài viết"
-            /><span class="article-body"
-              ><strong>Hoạt động của đội ngũ y tế</strong
-              ><span class="article-date">Bài viết minh họa</span></span
-            ></a><a href="article.html?id=1" class="article-card" data-article="1" data-news-category="activity">
-            <img src="../../static/assets/clinic/đa_khoa.jpg" alt="Ảnh minh họa bài viết" /><span
-              class="article-body"
-              ><strong>Không gian khám bệnh tại NEU Medical</strong
-              ><span class="article-date">Bài viết minh họa</span></span
-            ></a><a href="article.html?id=2" class="article-card" data-article="2" data-news-category="training">
-            <img
-              src="../../static/assets/meetings/meetings_2.jpg"
-              alt="Ảnh minh họa bài viết"
-            /><span class="article-body"
-              ><strong>Chia sẻ và trao đổi chuyên môn</strong
-              ><span class="article-date">Bài viết minh họa</span></span
-            ></a><a href="article.html?id=3" class="article-card" data-article="3" data-news-category="health">
-            <img
-              src="../../static/assets/diseases_and_methods/5_bệnh_giao_mùa.jpg"
-              alt="Ảnh minh họa bài viết"
-            /><span class="article-body"
-              ><strong>Chủ động chăm sóc sức khỏe</strong
-              ><span class="article-date">Bài viết minh họa</span></span
-            ></a><a href="article.html?id=4" class="article-card" data-article="4" data-news-category="activity">
-            <img src="../../static/assets/nurses/nurses_1.jpg" alt="Ảnh minh họa bài viết" /><span
-              class="article-body"
-              ><strong>Đồng hành cùng đội ngũ điều dưỡng</strong
-              ><span class="article-date">Bài viết minh họa</span></span
-            ></a><a href="article.html?id=5" class="article-card" data-article="5" data-news-category="training">
-            <img
-              src="../../static/assets/meetings/meetings_3.jpg"
-              alt="Ảnh minh họa bài viết"
-            /><span class="article-body"
-              ><strong>Gặp gỡ đội ngũ chuyên môn</strong
-              ><span class="article-date">Bài viết minh họa</span></span
-            >
-          </a>
-        </div>
-        <p class="sample-caption">Bản xem trước giao diện · Dữ liệu minh họa · Chưa kết nối API.</p>
+      <div class="section-wrap page-content" data-article-feed="news">
+        <form id="news-filter-form" class="news-search" role="search" aria-label="Tìm bài viết">
+          <label for="news-query">Tìm kiếm<input id="news-query" name="q" maxlength="255" placeholder="Nhập tiêu đề hoặc nội dung" /></label>
+          <label for="news-category">Chuyên mục<input id="news-category" name="category" maxlength="100" list="news-category-options" placeholder="Chọn hoặc nhập chuyên mục" /><datalist id="news-category-options"></datalist></label>
+          <button type="submit">Tìm kiếm</button>
+          <button type="button" id="news-clear" class="news-clear">Xóa bộ lọc</button>
+        </form>
+        <p class="news-status" id="news-status" role="status" aria-live="polite">Đang tải bài viết…</p>
+        <button class="news-retry" id="news-retry" type="button" hidden>Thử lại</button>
+        <div class="news-grid" id="news-grid" aria-busy="true"></div>
+        <nav class="news-pagination" id="news-pagination" aria-label="Phân trang tin tức" hidden>
+          <button type="button" id="news-prev">Trang trước</button><span id="news-page" aria-live="polite"></span><button type="button" id="news-next">Trang sau</button>
+        </nav>
+        <noscript>Vui lòng bật JavaScript để xem tin tức.</noscript>
       </div>
     </main>
     <footer class="compact-footer">

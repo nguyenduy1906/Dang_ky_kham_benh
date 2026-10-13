@@ -48,23 +48,6 @@ if (doctorFilter) {
     }),
   );
 }
-document.querySelectorAll("[data-news-filter]").forEach((button) =>
-  button.addEventListener("click", () => {
-    document.querySelectorAll("[data-news-filter]").forEach((item) => {
-      const active = item === button;
-      item.classList.toggle("selected", active);
-      item.setAttribute("aria-pressed", String(active));
-    });
-    document
-      .querySelectorAll("[data-news-category]")
-      .forEach(
-        (card) =>
-          (card.hidden =
-            button.dataset.newsFilter !== "all" &&
-            card.dataset.newsCategory !== button.dataset.newsFilter),
-      );
-  }),
-);
 const bookingForm = document.querySelector("#booking-form");
 if (bookingForm) {
   const doctor = document.querySelector("#booking-doctor");

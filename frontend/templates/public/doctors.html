@@ -4,15 +4,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Đội ngũ bác sĩ | NEU Medical</title>
-    <link rel="stylesheet" href="../../static/css/home.css?v=20261013-ui-only" />
+    <script src="../../static/js/pages/doctor-images.js?v=20261013-media" type="module"></script>
+    <link rel="stylesheet" href="../../static/css/home.css?v=20261013-smooth-nav2" />
     <link rel="stylesheet" href="../../static/css/public-pages.css?v=20261012-compact-banner" />
-    <script src="../../static/js/core/public.js?v=20261013-ui-only" defer></script>
+    <script src="../../static/js/core/navigation.js?v=20261013-auth1" defer></script>
+    <script src="../../static/js/core/public.js?v=20261013-patient-auth" defer></script>
     <script src="../../static/js/pages/public-pages.js" defer></script>
     <script src="../../static/js/pages/doctors.js" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Đến nội dung chính</a>
-    <header>
+    <header class="site-header">
       <div class="topbar">
         <div class="topbar-inner">
           <span>Chào mừng bạn đến với Bệnh viện NEU Medical</span>
@@ -42,7 +44,7 @@
         <nav id="main-nav" aria-label="Điều hướng chính">
           <a href="home.html">Trang chủ</a><a href="about.html">Giới thiệu</a
           ><a href="departments.html">Chuyên khoa</a
-          ><a class="active" aria-current="page" href="doctors.html">Đội ngũ bác sĩ</a
+          ><a class="active" aria-current="page" href="doctors.html">Đội ngũ bác sĩ<span class="nav-indicator" aria-hidden="true"></span></a
           ><a href="../(patient)/portal.html">Đặt lịch khám</a><a href="news.html">Tin tức</a
           ><a href="contact.html">Liên hệ</a>
         </nav>

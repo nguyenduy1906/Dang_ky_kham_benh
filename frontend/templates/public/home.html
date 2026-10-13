@@ -4,14 +4,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Trang chủ | NEU Medical</title>
-    <link rel="stylesheet" href="../../static/css/home.css?v=20261013-ui-only" />
+    <link rel="stylesheet" href="../../static/css/home.css?v=20261013-smooth-nav2" />
     <link rel="stylesheet" href="../../static/css/public-pages.css?v=20261012-font" />
-    <script src="../../static/js/core/public.js?v=20261013-ui-only" defer></script>
+    <script src="../../static/js/core/navigation.js?v=20261013-auth1" defer></script>
+    <script src="../../static/js/core/public.js?v=20261013-patient-auth" defer></script>
     <script src="../../static/js/pages/home.js?v=20261013-carousel" defer></script>
+    <link rel="stylesheet" href="../../static/css/news.css?v=20261013-articles" />
+    <script src="../../static/js/pages/news.js?v=20261013-articles" type="module"></script>
+    <script src="../../static/js/pages/doctor-images.js?v=20261013-media" type="module"></script>
   </head>
   <body class="home-page">
     <a class="skip-link" href="#main">Đến nội dung chính</a>
-    <header>
+    <header class="site-header">
       <div class="topbar">
         <div class="topbar-inner">
           <span>Chào mừng bạn đến với Bệnh viện NEU Medical</span>
@@ -39,7 +43,7 @@
           ☰ <span>Danh mục</span>
         </button>
         <nav id="main-nav" aria-label="Điều hướng chính">
-          <a class="active" href="home.html" aria-current="page">Trang chủ</a
+          <a class="active" href="home.html" aria-current="page">Trang chủ<span class="nav-indicator" aria-hidden="true"></span></a
           ><a href="about.html">Giới thiệu</a><a href="departments.html">Chuyên khoa</a
           ><a href="doctors.html">Đội ngũ bác sĩ</a
           ><a href="../(patient)/portal.html">Đặt lịch khám</a><a href="news.html">Tin tức</a
@@ -93,7 +97,6 @@
             <div class="gallery-caption">Tận tâm chăm sóc · Thuận tiện đặt lịch</div>
           </div>
         </div>
-        <div class="hero-bottom" aria-hidden="true"></div>
       </section>
       <section class="services" aria-label="Tiện ích dành cho bệnh nhân">
         <button class="service" data-panel="contact">
@@ -197,121 +200,30 @@
           </div>
         </div>
       </section>
-      <section class="news-section" id="news" aria-labelledby="news-title">
+      <section class="news-section" id="news" aria-labelledby="news-title" data-article-feed="home">
         <div class="section-wrap">
           <div class="section-heading">
-            <div>
-              <p class="section-kicker">TIN TỨC &amp; SỰ KIỆN</p>
-              <h2 id="news-title">Tin tức</h2>
-            </div>
-            <div class="news-filters" role="group" aria-label="Lọc tin tức">
-              <button class="selected" data-filter="all" aria-pressed="true">
-                Tin tức mới nhất</button
-              ><button data-filter="training" aria-pressed="false">Đào tạo, chỉ đạo tuyến</button
-              ><button data-filter="health" aria-pressed="false">Y học thường thức</button
-              ><button data-filter="professional" aria-pressed="false">Bài viết chuyên môn</button
-              ><button data-filter="activity" aria-pressed="false">Tin hoạt động Bệnh viện</button>
+            <div><p class="section-kicker">TIN TỨC</p><h2 id="news-title">Tin tức</h2></div>
+            <div class="news-filters" id="news-filters" role="group" aria-label="Lọc tin tức">
+              <button type="button" class="selected" data-article-category="" aria-pressed="true">Tin tức mới nhất</button>
             </div>
           </div>
-          <div class="news-grid">
-            <a href="article.html?id=home-0" data-article="home-0" class="article-card"  data-category="activity">
-              <img
-                src="../../static/assets/meetings/meetings_1.jpg"
-                alt="Hoạt động chuyên môn của đội ngũ y tế"
-                loading="lazy"
-              /><span class="article-body"
-                ><strong>Hoạt động chuyên môn của đội ngũ y tế</strong
-                ><span class="article-date">Bài viết minh họa</span></span
-              ></a><a href="article.html?id=home-1" data-article="home-1" class="article-card"  data-category="activity">
-              <img
-                src="../../static/assets/clinic/lễ_tân.jpg"
-                alt="Đặt lịch khám thuận tiện cùng NEU Medical"
-                loading="lazy"
-              /><span class="article-body"
-                ><strong>Đặt lịch khám thuận tiện cùng NEU Medical</strong
-                ><span class="article-date">Bài viết minh họa</span></span
-              ></a><a href="article.html?id=home-2" data-article="home-2" class="article-card"  data-category="training">
-              <img
-                src="../../static/assets/meetings/meetings_2.jpg"
-                alt="Chia sẻ kiến thức và trao đổi chuyên môn"
-                loading="lazy"
-              /><span class="article-body"
-                ><strong>Chia sẻ kiến thức và trao đổi chuyên môn</strong
-                ><span class="article-date">Bài viết minh họa</span></span
-              ></a><a href="article.html?id=home-3" data-article="home-3" class="article-card"  data-category="professional">
-              <img
-                src="../../static/assets/surgery/surgery_1.jpg"
-                alt="Tận tâm trong từng ca phẫu thuật"
-                loading="lazy"
-              /><span class="article-body"
-                ><strong>Tận tâm trong từng ca phẫu thuật</strong
-                ><span class="article-date">Bài viết minh họa</span></span
-              ></a><a href="article.html?id=home-4" data-article="home-4" class="article-card"  data-category="health">
-              <img
-                src="../../static/assets/diseases_and_methods/5_bệnh_giao_mùa.jpg"
-                alt="Chủ động chăm sóc sức khỏe khi giao mùa"
-                loading="lazy"
-              /><span class="article-body"
-                ><strong>Chủ động chăm sóc sức khỏe khi giao mùa</strong
-                ><span class="article-date">Bài viết minh họa</span></span
-              ></a><a href="article.html?id=home-5" data-article="home-5" class="article-card"  data-category="training">
-              <img
-                src="../../static/assets/nurses/nurses_1.jpg"
-                alt="Đồng hành cùng đội ngũ điều dưỡng"
-                loading="lazy"
-              /><span class="article-body"
-                ><strong>Đồng hành cùng đội ngũ điều dưỡng</strong
-                ><span class="article-date">Bài viết minh họa</span></span
-              >
-            </a>
-          </div>
-          <p class="sample-caption">Ảnh và nội dung minh họa cho giao diện.</p>
+          <p class="news-status" id="news-status" role="status" aria-live="polite">Đang tải bài viết…</p>
+          <button class="news-retry" id="news-retry" type="button" hidden>Thử lại</button>
+          <div class="news-grid" id="news-grid" aria-busy="true"></div>
+          <nav class="news-pagination" id="news-pagination" aria-label="Phân trang tin tức" hidden>
+            <button type="button" id="news-prev">Trang trước</button><span id="news-page" aria-live="polite"></span><button type="button" id="news-next">Trang sau</button>
+          </nav>
+          <a class="news-all-link" href="news.html">Xem tất cả tin tức →</a>
+          <noscript>Vui lòng bật JavaScript để xem tin tức.</noscript>
         </div>
       </section>
-      <section class="events-section" aria-labelledby="events-title">
+      <section class="events-section" id="other-news" aria-labelledby="events-title">
         <div class="section-wrap">
-          <p class="section-kicker">TIN TỨC &amp; SỰ KIỆN</p>
-          <h2 id="events-title">Sự kiện nổi bật</h2>
-          <div
-            class="event-track"
-            tabindex="0"
-            aria-label="Danh sách sự kiện, cuộn ngang để xem thêm"
-          >
-            <a href="article.html?id=home-6" data-article="home-6" class="article-card" >
-              <img
-                src="../../static/assets/surgery/surgery_2.jpg"
-                alt="Đồng hành cùng người bệnh trong từng ca khám"
-                loading="lazy"
-              /><span class="article-body"
-                ><strong>Đồng hành cùng người bệnh trong từng ca khám</strong
-                ><span class="article-date">Bài viết minh họa</span></span
-              ></a><a href="article.html?id=home-7" data-article="home-7" class="article-card" >
-              <img
-                src="../../static/assets/meetings/meetings_3.jpg"
-                alt="Gặp gỡ và trao đổi cùng đội ngũ y tế"
-                loading="lazy"
-              /><span class="article-body"
-                ><strong>Gặp gỡ và trao đổi cùng đội ngũ y tế</strong
-                ><span class="article-date">Bài viết minh họa</span></span
-              ></a><a href="article.html?id=home-8" data-article="home-8" class="article-card" >
-              <img
-                src="../../static/assets/nurses/nurses_2.jpg"
-                alt="Chăm sóc sức khỏe cho bạn và gia đình"
-                loading="lazy"
-              /><span class="article-body"
-                ><strong>Chăm sóc sức khỏe cho bạn và gia đình</strong
-                ><span class="article-date">Bài viết minh họa</span></span
-              ></a><a href="article.html?id=home-9" data-article="home-9" class="article-card" >
-              <img
-                src="../../static/assets/clinic/phòng_chờ.jpg"
-                alt="Không gian khám bệnh tại NEU Medical"
-                loading="lazy"
-              /><span class="article-body"
-                ><strong>Không gian khám bệnh tại NEU Medical</strong
-                ><span class="article-date">Bài viết minh họa</span></span
-              >
-            </a>
-          </div>
+          <p class="section-kicker">TIN TỨC</p><h2 id="events-title">Tin tức khác</h2>
+          <p class="news-status" id="other-news-status" role="status" aria-live="polite">Đang tải bài viết…</p>
+          <button class="news-retry" id="other-news-retry" type="button" hidden>Thử lại</button>
+          <div class="event-track" tabindex="0" aria-label="Bài viết khác, cuộn ngang để xem thêm"></div>
         </div>
       </section>
       <section class="doctors-section" id="doctors" aria-labelledby="doctors-title">

@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Đăng nhập | NEU Medical</title>
     <link rel="stylesheet" href="../../static/css/home.css?v=20261012-layout-fix" />
-    <link rel="stylesheet" href="../../static/css/auth.css?v=20261013-fit" />
-    <script src="../../static/js/pages/auth.js?v=20261013-preview" defer></script>
+    <link rel="stylesheet" href="../../static/css/auth.css?v=20261013-auth1" />
+    <script src="../../static/js/pages/auth.js?v=20261013-patient-auth" type="module"></script>
   </head>
   <body class="auth-page">
     <a class="skip-link" href="#main">Đến nội dung chính</a>
@@ -20,13 +20,13 @@
           <div class="auth-form-wrap">
             <p class="auth-eyebrow">CHÀO MỪNG TRỞ LẠI</p>
             <h1 id="login-title" tabindex="-1">Đăng nhập</h1>
-            <p class="auth-intro">Đăng nhập để đặt lịch và theo dõi thông tin khám bệnh của bạn.</p>
-            <form id="login-form">
+            <p class="auth-intro">Đăng nhập bằng tài khoản bệnh nhân để đặt lịch và theo dõi thông tin khám bệnh của bạn.</p>
+            <form id="login-form" method="post">
               <div class="auth-field"><label for="login-identifier">Số điện thoại hoặc email</label><input id="login-identifier" name="identifier" autocomplete="username" maxlength="255" required placeholder="Nhập số điện thoại hoặc email" /></div>
               <div class="auth-field"><label for="login-password">Mật khẩu</label><div class="password-field"><input id="login-password" name="password" type="password" autocomplete="current-password" maxlength="128" required placeholder="Nhập mật khẩu" /><button type="button" class="password-toggle" data-password="login-password" aria-label="Hiện mật khẩu" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
               <div class="auth-form-options"><button type="button" class="auth-text-button" id="forgot-password">Quên mật khẩu?</button></div>
               <p class="auth-status" id="login-status" role="status" aria-live="polite"></p>
-              <button type="submit" class="auth-submit">Đăng nhập</button>
+              <button type="submit" class="auth-submit" disabled>Đăng nhập</button>
             </form>
             <p class="auth-switch">Chưa có tài khoản? <button type="button" class="auth-text-button" data-auth-mode="register">Đăng ký ngay</button></p>
           </div>
@@ -36,7 +36,7 @@
             <p class="auth-eyebrow">ĐỒNG HÀNH CÙNG NEU MEDICAL</p>
             <h1 id="register-title" tabindex="-1">Tạo tài khoản</h1>
             <p class="auth-intro">Đặt khám thuận tiện cho cả gia đình.</p>
-            <form id="register-form">
+            <form id="register-form" method="post">
               <div class="auth-field"><label for="register-name">Họ và tên</label><input id="register-name" name="full_name" autocomplete="name" maxlength="150" required placeholder="Nhập họ và tên của bạn" /></div>
               <div class="auth-form-row">
                 <div class="auth-field"><label for="register-phone">Số điện thoại</label><input id="register-phone" name="phone" type="tel" autocomplete="tel" maxlength="20" placeholder="Số điện thoại" /></div>
@@ -49,7 +49,7 @@
               </div>
               <p class="auth-field-note" id="password-hint">Từ 8 đến 128 ký tự, gồm chữ và số.</p>
               <p class="auth-status" id="register-status" role="status" aria-live="polite"></p>
-              <button type="submit" class="auth-submit">Đăng ký</button>
+              <button type="submit" class="auth-submit" disabled>Đăng ký</button>
             </form>
             <p class="auth-switch">Đã có tài khoản? <button type="button" class="auth-text-button" data-auth-mode="login">Đăng nhập</button></p>
           </div>
@@ -61,16 +61,18 @@
         </aside>
       </div>
     </main>
+    <noscript><p class="auth-status">Vui lòng bật JavaScript để đăng nhập, đăng ký và lấy lại mật khẩu.</p></noscript>
     <footer class="auth-footer">© 2026 NEU Medical. Đồng hành cùng sức khỏe của bạn.</footer>
     <dialog id="recovery-dialog" class="recovery-dialog" aria-labelledby="recovery-title">
       <div class="recovery-heading"><h2 id="recovery-title">Lấy lại mật khẩu</h2><button type="button" id="recovery-close" aria-label="Đóng lấy lại mật khẩu">×</button></div>
       <p class="auth-intro">Khôi phục tài khoản bằng số điện thoại hoặc email đã đăng ký.</p>
-      <form id="recovery-form">
+      <form id="recovery-form" method="post">
         <div class="auth-field" id="recovery-identity-field"><label for="recovery-identifier">Số điện thoại hoặc email</label><input id="recovery-identifier" autocomplete="username" maxlength="255" required /></div>
         <div class="auth-field" id="recovery-otp-field" hidden><label for="recovery-otp">Mã xác minh</label><input id="recovery-otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="Nhập 6 chữ số" /></div>
         <div class="auth-field" id="recovery-password-field" hidden><label for="recovery-password">Mật khẩu mới</label><input id="recovery-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" aria-describedby="recovery-password-hint" /><p class="auth-field-note" id="recovery-password-hint">Từ 8 đến 128 ký tự, gồm chữ và số.</p></div>
         <p class="auth-status" id="recovery-status" role="status" aria-live="polite"></p>
-        <button type="submit" class="auth-submit">Tiếp tục</button>
+        <button type="submit" class="auth-submit" disabled>Tiếp tục</button>
+        <button type="button" class="auth-text-button" id="recovery-restart" hidden>Nhập lại thông tin / Gửi lại mã</button>
       </form>
     </dialog>
   </body>

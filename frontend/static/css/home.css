@@ -264,14 +264,6 @@ h1 {
   font-size: 14px;
   padding: 12px;
 }
-.hero-bottom {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  height: 55px;
-  background: linear-gradient(110deg, var(--deep), #199c56);
-  border-top: 6px solid var(--gold);
-}
 .services {
   position: relative;
   z-index: 1;
@@ -1219,10 +1211,6 @@ dialog::backdrop {
   .home-intro .services { width: min(1280px, calc(100% - 64px)); margin: -44px auto 0; padding: 24px 16px; }
 }
 @media (min-width: 1101px) and (max-height: 700px) {
-  .home-page .topbar-inner { min-height: 38px; padding-top: 4px; padding-bottom: 4px; }
-  .home-page .identity { min-height: 84px; padding-top: 12px; padding-bottom: 12px; }
-  .home-page .brand-logo { width: 52px; height: 52px; }
-  .home-page nav a { padding-top: 16px; padding-bottom: 16px; }
   .home-intro .hero-inner { padding-top: 16px; padding-bottom: 48px; }
 }
 .hero-carousel { position: absolute; inset: 0; overflow: hidden; }
@@ -1231,14 +1219,56 @@ dialog::backdrop {
 .hero-slide { position: relative; flex: 0 0 100%; height: 100%; }
 @media (prefers-reduced-motion: reduce) { .hero-slides { transition: none; } }
 
-/* Compact header makes room for full-size, clear banner photographs. */
-.home-page .topbar-inner { min-height: 38px; padding-top: 4px; padding-bottom: 4px; }
-.home-page .identity { min-height: 76px; padding-top: 10px; padding-bottom: 10px; }
-.home-page .brand-logo { width: 52px; height: 52px; }
-.home-page .brand small { font-size: 14px; }
-.home-page .motto { font-size: 36px; }
-.home-page #main-nav { min-height: 46px; }
-.home-page #main-nav > a { padding-top: 12px; padding-bottom: 12px; }
+/* Use the homepage header dimensions on every page with the public navigation. */
+.site-header .topbar-inner { min-height: 38px; padding-top: 4px; padding-bottom: 4px; }
+.site-header .identity { min-height: 76px; padding-top: 10px; padding-bottom: 10px; }
+.site-header .brand-logo { width: 52px; height: 52px; }
+.site-header .brand small { font-size: 14px; }
+.site-header .motto { font-size: 36px; }
+.site-header #main-nav { min-height: 46px; }
+.site-header #main-nav > a { padding-top: 12px; padding-bottom: 12px; }
+
+.site-header #main-nav > a.active {
+  position: relative;
+  border-bottom: 0;
+}
+.nav-indicator {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--green);
+  pointer-events: none;
+}
+.site-header #main-nav.nav-sliding { position: relative; }
+.nav-sliding > .nav-indicator {
+  width: var(--nav-width);
+  transform: translate3d(var(--nav-x), 0, 0);
+}
+.site-header #main-nav.is-navigating > a.active { color: #202922; }
+.site-header #main-nav > a.nav-pending { color: var(--green); }
+
+/* Keep motion consistent without browser-specific document snapshots. */
+@media (prefers-reduced-motion: no-preference) {
+  .nav-sliding:not(.nav-static) > .nav-indicator {
+    transition: transform 220ms cubic-bezier(.22, 1, .36, 1),
+                width 220ms cubic-bezier(.22, 1, .36, 1);
+  }
+  main { transition: opacity 140ms ease-out, transform 140ms ease-out; }
+  main.page-leaving { opacity: .9; transform: translateY(-2px); }
+  main.page-entering { animation: page-content-in 180ms ease-out both; }
+}
+@media (max-width: 760px) {
+  .site-header #main-nav > a.active { border-bottom: 3px solid var(--green); }
+  .nav-indicator { display: none; }
+}
+@keyframes page-content-in {
+  from { opacity: .9; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Keep the homepage photograph and overlay cards in their existing positions. */
 .home-page .hero-shade { display: none; }
 .home-page .hero-gallery { display: none; }
 .home-page .hero-inner { pointer-events: none; }
@@ -1251,13 +1281,13 @@ dialog::backdrop {
   .home-intro .hero-copy { flex: 0 1 430px; }
 }
 @media (max-width: 1100px) {
-  .home-page .identity { gap: 12px; }
-  .home-page .motto { font-size: 28px; }
+  .site-header .identity { gap: 12px; }
+  .site-header .motto { font-size: 28px; }
   .home-page .hero-inner { display: flex; align-items: center; justify-content: flex-start; padding: 24px 30px 70px; }
 }
 @media (max-width: 760px) {
-  .home-page .brand-logo { width: 44px; height: 44px; }
-  .home-page .motto { font-size: 24px; }
+  .site-header .brand-logo { width: 44px; height: 44px; }
+  .site-header .motto { font-size: 24px; }
   .home-page .hero { min-height: 430px; }
   .home-page .hero-inner { padding: 24px 20px 70px; }
   .home-page .hero-copy { padding: 20px; }

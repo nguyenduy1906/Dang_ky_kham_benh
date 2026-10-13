@@ -14,22 +14,6 @@ allDepartments.addEventListener("click", () => {
   allDepartments.setAttribute("aria-expanded", String(expanded));
   allDepartments.textContent = expanded ? "Thu gọn" : "Xem tất cả";
 });
-document.querySelectorAll("[data-filter]").forEach((button) =>
-  button.addEventListener("click", () => {
-    document.querySelectorAll("[data-filter]").forEach((item) => {
-      const active = item === button;
-      item.classList.toggle("selected", active);
-      item.setAttribute("aria-pressed", String(active));
-    });
-    document
-      .querySelectorAll("[data-category]")
-      .forEach(
-        (card) =>
-          (card.hidden =
-            button.dataset.filter !== "all" && card.dataset.category !== button.dataset.filter),
-      );
-  }),
-);
 const doctorTrack = document.querySelector("#doctor-track");
 const previousDoctor = document.querySelector(".slider-prev");
 const nextDoctor = document.querySelector(".slider-next");

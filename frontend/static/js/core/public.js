@@ -44,7 +44,10 @@ const dialog = document.querySelector("#info-dialog");
 document.querySelectorAll("[data-panel]").forEach((button) => {
   button.addEventListener("click", () => {
     if (button.dataset.panel === "booking") {
-      location.href = "../(patient)/portal.html";
+      const request = new CustomEvent("neu:navigate", {
+        detail: { href: "../(patient)/portal.html" }, cancelable: true,
+      });
+      if (document.dispatchEvent(request)) location.href = "../(patient)/portal.html";
       return;
     }
     const [title, content] = panels[button.dataset.panel];
@@ -74,11 +77,34 @@ toggle?.addEventListener("click", () => {
   document.querySelector("#main-nav").classList.toggle("open", open);
 });
 
-// Open the sign-in interface; authentication will be connected separately.
+// Only sign-in/sign-out actions for now; a personal page will be added later.
 const accountActions = document.querySelector(".topbar-inner > div");
 if (accountActions) {
   const signIn = document.createElement("a");
   signIn.href = "../auth/login.html";
   signIn.textContent = "Đăng nhập";
   accountActions.prepend(signIn);
+  import("./session.js").then(auth => {
+    const signOut = document.createElement("button");
+    signOut.type = "button";
+    signOut.textContent = "Đăng xuất";
+    const renderAccount = () => {
+      if (auth.hasSession()) signIn.replaceWith(signOut);
+      else signOut.replaceWith(signIn);
+    };
+    renderAccount();
+    window.addEventListener("neu:auth-change", renderAccount);
+    window.addEventListener("pageshow", renderAccount);
+    // Clear a previously saved staff session without blocking access to public pages.
+    if (auth.hasSession()) auth.verifySession().catch(() => {});
+    signOut.addEventListener("click", async () => {
+      signOut.disabled = true;
+      try { await auth.signOut(); }
+      catch { /* The local session is cleared even when the backend is offline. */ }
+      finally {
+        signOut.disabled = false;
+        if (auth.isPortal(new URL(location.href))) location.replace(auth.loginUrl().href);
+      }
+    });
+  }).catch(() => { /* Keep the sign-in link available if modules cannot load. */ });
 }

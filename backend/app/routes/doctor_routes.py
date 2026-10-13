@@ -209,3 +209,27 @@ def get_avatar(filename):
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Cache-Control'] = 'public, max-age=86400'
     return response
+
+
+@doctor_bp.post('/admin/doctors/<int:doctor_profile_id>/avatar')
+@roles_required(constants.ROLE_ADMIN)
+def upload_admin_avatar(doctor_profile_id):
+    """ADMIN tải ảnh cho một bác sĩ (JPEG/PNG/WebP, tối đa 2 MB)
+    ---
+    tags:
+      - Doctors Admin
+    security:
+      - Bearer: []
+    consumes:
+      - multipart/form-data
+    parameters:
+      - {in: path, name: doctor_profile_id, type: integer, required: true}
+      - {in: formData, name: file, type: file, required: true}
+    responses:
+      200: {description: Đã lưu ảnh và cập nhật avatar_url}
+      400: {description: File ảnh không hợp lệ}
+      403: {description: Chỉ ADMIN được phép}
+      404: {description: Không tìm thấy bác sĩ}
+    """
+    return jsonify(doctor_service.upload_admin_avatar(
+        current_user(), doctor_profile_id, request.files.get('file')))

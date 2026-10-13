@@ -14,6 +14,7 @@ const doctorLabel = `Bác sĩ ${String(doctorId).padStart(2, "0")}`;
 document.querySelector("#detail-name").textContent = doctorLabel;
 document.title = `${doctorLabel} | NEU Medical`;
 const photo = document.querySelector("#detail-photo");
+photo.dataset.doctorPhoto = String(doctorId);
 photo.src = `../../static/assets/doctors/doctors_${doctorId}.jpg`;
 photo.alt = `Ảnh minh họa ${doctorLabel}`;
 document.querySelector("#detail-specialty").textContent = detailDepartments[doctorId - 1];

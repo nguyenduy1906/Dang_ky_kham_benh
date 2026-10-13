@@ -26,6 +26,7 @@
 }
 .article-detail {
   min-width: 0;
+  max-width: 900px;
 }
 .article-detail h1 {
   font: 700 clamp(27px, 2.8vw, 34px)/1.35 var(--font-ui);
@@ -67,24 +68,48 @@
 }
 .article-content {
   color: var(--ink);
-  font-size: 17px;
-  line-height: 1.85;
+  font-size: 18px;
+  line-height: 1.7;
   overflow-wrap: anywhere;
 }
 .article-content p {
   margin: 0 0 23px;
+  white-space: pre-wrap;
 }
+.article-content a { color: var(--green); text-decoration: underline; }
+.article-content ul, .article-content ol { padding-inline-start: 28px; margin: 18px 0 24px; }
+.article-content ul { list-style-type: circle; }
+.article-content ol { list-style-type: decimal; }
+.article-content li { margin-bottom: 14px; }
+.article-content blockquote { margin: 24px 0; padding-left: 20px; border-left: 3px solid var(--green); white-space: pre-wrap; }
+.article-content pre { max-width: 100%; overflow-x: auto; background: #f1f6f3; padding: 18px; }
+.article-figure .article-thumbnail { height: auto; min-height: 240px; }
+.article-figure .article-thumbnail img { position: static; height: auto; }
+.article-content .article-figure img { object-fit: contain; }
+.related-feature .article-thumbnail { position: absolute; inset: 0; height: 100%; }
+.related-list time { color: var(--muted); font-size: 14px; }
 .article-content .article-lead {
   font-style: italic;
+  margin-bottom: 26px;
 }
-.article-content h2 {
-  color: var(--deep);
-  font-size: 24px;
-  line-height: 1.45;
-  margin: 32px 0 16px;
+.article-content h2, .article-content h3 {
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.65;
+  margin: 28px 0 18px;
+}
+.article-content .article-source {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+  border-top: 1px solid #dce5df;
+  padding-top: 20px;
+  margin-top: 32px;
 }
 .article-figure {
-  margin: 32px 0;
+  width: 88%;
+  margin: 28px auto;
 }
 .article-figure img {
   display: block;
@@ -94,8 +119,8 @@
   object-fit: cover;
 }
 .article-figure figcaption {
-  color: var(--muted);
-  font-size: 13px;
+  color: var(--green);
+  font-size: 14px;
   text-align: center;
   line-height: 1.6;
   margin-top: 10px;
@@ -228,8 +253,9 @@
     padding: 25px 20px 40px;
   }
   .article-content {
-    font-size: 16px;
+    font-size: 17px;
   }
+  .article-figure { width: 100%; }
   .article-sidebar {
     grid-template-columns: 1fr;
   }

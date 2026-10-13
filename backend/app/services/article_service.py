@@ -4,6 +4,7 @@ from backend.app.db.database import get_db_connection
 from backend.app.models import article_model as model
 from backend.app.utils.database_helpers import jsonable
 from backend.app.services import encounter_service as encounters
+from backend.app.utils import uploads
 
 
 def _public(row, *, summary=False, admin=False):
@@ -27,6 +28,11 @@ def detail(slug):
         row = db.execute(model.SELECT + ' WHERE a.slug=%s AND a.is_active=1 AND a.published_at<=CURRENT_TIMESTAMP', (slug,)).fetchone()
         if row is None: raise not_found('Không tìm thấy bài viết', 'ARTICLE_NOT_FOUND')
     return {'article': _public(row)}
+
+
+def upload_image(actor, file_storage):
+    encounters.require_role(actor, 'ADMIN')
+    return {'url': uploads.save_article_image(file_storage)}
 
 
 def create(actor, fields):
