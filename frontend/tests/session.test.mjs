@@ -77,6 +77,10 @@ test("next preserves a chosen doctor and rejects external/unsupported destinatio
   const portal = new URL(session.portalUrl); portal.searchParams.set("doctor", "7");
   assert.equal(session.returnUrl(portal.href).href, portal.href);
   assert.equal(session.loginUrl(portal).searchParams.get("next"), portal.href);
+  const booking = new URL(session.bookingUrl); booking.searchParams.set("encounter", "42");
+  assert.equal(session.loginUrl(booking).searchParams.get("next"), booking.href);
+  const appointments = new URL(session.appointmentsUrl); appointments.searchParams.set("view", "history");
+  assert.equal(session.loginUrl(appointments).searchParams.get("next"), appointments.href);
   for (const value of ["https://unlisted.example/", "javascript:alert(1)", "../auth/login.html", "//unlisted.example"]) {
     assert.equal(session.returnUrl(value).href, session.homeUrl.href);
   }

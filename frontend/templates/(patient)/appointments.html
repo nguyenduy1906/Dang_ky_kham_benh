@@ -6,11 +6,11 @@
     <title>Lịch khám | NEU Medical</title>
     <link rel="stylesheet" href="../../static/css/home.css?v=20261013-ui-only" />
     <link rel="stylesheet" href="../../static/css/public-pages.css" />
-    <link rel="stylesheet" href="../../static/css/patient-pages.css" />
+    <link rel="stylesheet" href="../../static/css/patient-pages.css?v=20261013-appointments-api" />
     <script src="../../static/js/core/public.js?v=20261013-patient-auth" defer></script>
-    <script src="../../static/js/pages/patient-pages.js" defer></script>
+    <script type="module" src="../../static/js/pages/appointments.js?v=20261013-appointments-api"></script>
   </head>
-  <body>
+  <body class="auth-pending">
     <a class="skip-link" href="#main">Đến nội dung chính</a>
     <header class="patient-header">
       <div class="identity">
@@ -21,7 +21,12 @@
         <p class="patient-hotline">Hotline: <strong>Đang cập nhật</strong></p>
       </div>
     </header>
-    <main id="main" class="appointment-page">
+    <div id="appointments-auth-status" class="section-wrap booking-auth-status" role="status">
+      <p>Đang kiểm tra đăng nhập…</p>
+      <button type="button" class="solid-button" hidden>Thử lại</button>
+      <noscript>Bạn cần bật JavaScript để xem lịch khám.</noscript>
+    </div>
+    <main id="main" class="appointment-page" inert>
       <div class="patient-heading">
         <nav class="patient-breadcrumb" aria-label="Đường dẫn trang">
           <a href="portal.html">Trang chủ</a><span aria-hidden="true">/</span><span aria-current="page">Lịch khám</span>
@@ -30,25 +35,38 @@
       </div>
       <section class="patient-panel appointments-panel" aria-label="Danh sách lịch khám">
         <div class="patient-tabs" role="tablist" aria-label="Loại lịch khám" data-tab-group>
-          <button type="button" role="tab" id="appointments-tab" aria-selected="true" aria-controls="appointments-panel">Lịch khám</button>
-          <button type="button" role="tab" id="followup-tab" aria-selected="false" aria-controls="followup-panel" tabindex="-1">Lịch tái khám</button>
+          <button type="button" role="tab" id="appointments-tab" aria-selected="true" aria-controls="appointments-panel" data-view="upcoming">Sắp tới</button>
+          <button type="button" role="tab" id="history-tab" aria-selected="false" aria-controls="appointments-panel" data-view="history" tabindex="-1">Lịch sử</button>
         </div>
-        <div id="appointments-panel" role="tabpanel" aria-labelledby="appointments-tab">
-          <div class="patient-empty appointments-empty">
-            <svg viewBox="0 0 100 120" fill="none" stroke-width="6" aria-hidden="true"><path d="M18 7h56v88l14 15H18z"/><path d="M30 25h15v19H30zM56 27h7M56 42h7M30 59h33M30 75h33M30 91h24"/></svg>
-            <p>Chưa có lịch khám nào</p>
-            <a class="solid-button" href="booking.html">Đặt lịch khám</a>
-          </div>
+        <div class="appointments-toolbar">
+          <div><label for="appointments-patient">Người khám</label><select id="appointments-patient"><option value="">Tất cả hồ sơ</option></select></div>
+          <div><label for="appointments-status-filter">Trạng thái</label><select id="appointments-status-filter"><option value="">Tất cả trạng thái</option></select></div>
+          <button id="appointments-refresh" class="outline-button" type="button">Tải lại</button>
+          <a class="solid-button" href="booking.html">Đặt lịch khám</a>
         </div>
-        <div id="followup-panel" role="tabpanel" aria-labelledby="followup-tab" hidden>
-          <div class="patient-empty appointments-empty">
-            <svg viewBox="0 0 100 120" fill="none" stroke-width="6" aria-hidden="true"><path d="M18 7h56v88l14 15H18z"/><path d="M30 25h15v19H30zM56 27h7M56 42h7M30 59h33M30 75h33M30 91h24"/></svg>
-            <p>Chưa có lịch tái khám nào</p>
-            <a class="solid-button" href="booking.html">Đặt lịch khám</a>
-          </div>
+        <p id="appointments-status" class="appointments-notice" role="status">Đang tải lịch đã đăng ký…</p>
+        <button id="appointments-retry" class="add-relative-button" type="button" hidden>Thử lại</button>
+        <div id="appointments-panel" role="tabpanel" aria-labelledby="appointments-tab" tabindex="0">
+          <div id="appointments-list" class="appointments-list" aria-busy="true"></div>
+          <p id="appointments-empty" class="appointments-notice" hidden></p>
+          <nav id="appointments-pagination" class="appointments-pagination" aria-label="Phân trang lịch khám" hidden>
+            <button id="appointments-prev" type="button" class="outline-button">Trang trước</button>
+            <span id="appointments-page"></span>
+            <button id="appointments-next" type="button" class="outline-button">Trang sau</button>
+          </nav>
         </div>
       </section>
     </main>
+    <dialog id="appointment-detail-dialog" class="booking-confirm-dialog" aria-labelledby="appointment-detail-title">
+      <div class="dialog-heading">
+        <h2 id="appointment-detail-title">Thông tin lịch khám</h2>
+        <button id="appointment-detail-close" type="button" class="dialog-close" aria-label="Đóng thông tin lịch khám">×</button>
+      </div>
+      <div id="appointment-detail-content"></div>
+      <p id="appointment-detail-status" role="status"></p>
+      <button id="appointment-detail-retry" type="button" class="outline-button" hidden>Thử lại</button>
+      <a id="appointment-detail-action" class="solid-button" hidden></a>
+    </dialog>
     <footer class="compact-footer">
       <div class="compact-footer-wrap">
         <div class="compact-footer-grid">
@@ -62,7 +80,7 @@
               Đồng hành cùng sức khỏe của bạn và gia đình. Tìm hiểu chuyên khoa, lựa chọn bác sĩ và
               đăng ký lịch khám thuận tiện.
             </p>
-            <span class="footer-badge">Bản xem trước giao diện</span>
+            <span class="footer-badge">Đặt khám trực tuyến</span>
           </div>
           <div>
             <h3>Địa chỉ &amp; Giờ khám bệnh</h3>

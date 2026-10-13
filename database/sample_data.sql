@@ -126,14 +126,14 @@ INSERT INTO doctor_profile
 VALUES
 (1, 6, 1, 'Thạc sĩ', 'Nội khoa', 12, 'Bác sĩ chuyên khám nội tổng quát.', 250000, '/uploads/avatars/966fa3079f664b08b1c977ccb6915d3a.jpg', 1, '2026-09-04 08:00:00+07', '2026-09-04 08:00:00+07'),
 (2, 7, 2, 'Tiến sĩ', 'Tim mạch', 15, 'Bác sĩ chuyên khoa tim mạch.', 350000, '/uploads/avatars/260d30cd4d96400f9023e7fd71af8382.jpg', 1, '2026-09-04 08:10:00+07', '2026-09-04 08:10:00+07'),
-(3, 8, 3, 'Chuyên khoa I', 'Da liễu', 9, 'Bác sĩ chuyên điều trị bệnh da.', 280000, '/uploads/doctors/doctor_03.jpg', 1, '2026-09-04 08:20:00+07', '2026-09-04 08:20:00+07'),
-(4, 9, 4, 'Thạc sĩ', 'Nhi khoa', 11, 'Bác sĩ chuyên khám và điều trị trẻ em.', 300000, '/uploads/doctors/doctor_04.jpg', 1, '2026-09-04 08:30:00+07', '2026-09-04 08:30:00+07'),
-(5, 10, 5, 'Chuyên khoa II', 'Sản phụ khoa', 14, 'Bác sĩ chuyên sản phụ khoa.', 380000, '/uploads/doctors/doctor_05.jpg', 1, '2026-09-04 08:40:00+07', '2026-09-04 08:40:00+07'),
-(6, 11, 6, 'Thạc sĩ', 'Tai Mũi Họng', 10, 'Bác sĩ chuyên tai mũi họng.', 270000, '/uploads/doctors/doctor_06.jpg', 1, '2026-09-04 08:50:00+07', '2026-09-04 08:50:00+07'),
-(7, 12, 7, 'Chuyên khoa I', 'Nhãn khoa', 8, 'Bác sĩ chuyên khám và điều trị mắt.', 260000, '/uploads/doctors/doctor_07.jpg', 1, '2026-09-04 09:00:00+07', '2026-09-04 09:00:00+07'),
-(8, 13, 8, 'Thạc sĩ', 'Răng Hàm Mặt', 13, 'Bác sĩ chuyên răng hàm mặt.', 320000, '/uploads/doctors/doctor_08.jpg', 1, '2026-09-04 09:10:00+07', '2026-09-04 09:10:00+07'),
-(9, 14, 9, 'Tiến sĩ', 'Cơ Xương Khớp', 16, 'Bác sĩ chuyên cơ xương khớp.', 360000, '/uploads/doctors/doctor_09.jpg', 1, '2026-09-04 09:20:00+07', '2026-09-04 09:20:00+07'),
-(10, 15, 10, 'Chuyên khoa II', 'Thần kinh', 17, 'Bác sĩ chuyên thần kinh.', 400000, '/uploads/doctors/doctor_10.jpg', 1, '2026-09-04 09:30:00+07', '2026-09-04 09:30:00+07');
+(3, 8, 3, 'Chuyên khoa I', 'Da liễu', 9, 'Bác sĩ chuyên điều trị bệnh da.', 280000, '/uploads/avatars/8de4ec4fc6554aa3bddb589395ab2e1b.jpg', 1, '2026-09-04 08:20:00+07', '2026-09-04 08:20:00+07'),
+(4, 9, 4, 'Thạc sĩ', 'Nhi khoa', 11, 'Bác sĩ chuyên khám và điều trị trẻ em.', 300000, '/uploads/avatars/6b172a558f0648a5b9786daed64bcec4.jpg', 1, '2026-09-04 08:30:00+07', '2026-09-04 08:30:00+07'),
+(5, 10, 5, 'Chuyên khoa II', 'Sản phụ khoa', 14, 'Bác sĩ chuyên sản phụ khoa.', 380000, '/uploads/avatars/a93fef9e21064a9ba42a14f147b181dd.jpg', 1, '2026-09-04 08:40:00+07', '2026-09-04 08:40:00+07'),
+(6, 11, 6, 'Thạc sĩ', 'Tai Mũi Họng', 10, 'Bác sĩ chuyên tai mũi họng.', 270000, '/uploads/avatars/f234bc8cf1aa43cfb57cac0978fb6905.jpg', 1, '2026-09-04 08:50:00+07', '2026-09-04 08:50:00+07'),
+(7, 12, 7, 'Chuyên khoa I', 'Nhãn khoa', 8, 'Bác sĩ chuyên khám và điều trị mắt.', 260000, '/uploads/avatars/932e24ee2e0949ccbf1247748057a403.jpg', 1, '2026-09-04 09:00:00+07', '2026-09-04 09:00:00+07'),
+(8, 13, 8, 'Thạc sĩ', 'Răng Hàm Mặt', 13, 'Bác sĩ chuyên răng hàm mặt.', 320000, '/uploads/avatars/5ea9f58dc38049afa23aeddf8251adce.jpg', 1, '2026-09-04 09:10:00+07', '2026-09-04 09:10:00+07'),
+(9, 14, 9, 'Tiến sĩ', 'Cơ Xương Khớp', 16, 'Bác sĩ chuyên cơ xương khớp.', 360000, '/uploads/avatars/36ea98ff447b4c7ea4e242a3df829f41.jpg', 1, '2026-09-04 09:20:00+07', '2026-09-04 09:20:00+07'),
+(10, 15, 10, 'Chuyên khoa II', 'Thần kinh', 17, 'Bác sĩ chuyên thần kinh.', 400000, '/uploads/avatars/eeffdcdd8a30437fbb64e429d83aa1ad.jpg', 1, '2026-09-04 09:30:00+07', '2026-09-04 09:30:00+07');
 
 -- 7. ROOM
 INSERT INTO room
@@ -164,6 +164,31 @@ VALUES
 (8, 8, 8, '2026-09-27', '13:30', '17:00', 14, 1, 15, 'OPEN', NULL, '2026-09-10 10:35:00+07', '2026-09-10 10:35:00+07'),
 (9, 9, 9, '2026-09-28', '08:00', '11:30', 7, 1, 30, 'OPEN', NULL, '2026-09-10 10:40:00+07', '2026-09-10 10:40:00+07'),
 (10, 10, 10, '2026-09-29', '13:30', '17:00', 7, 1, 30, 'OPEN', NULL, '2026-09-10 10:45:00+07', '2026-09-10 10:45:00+07');
+
+-- Lịch đặt mới phục vụ demo: sáng/chiều cho 10 bác sĩ trong một tháng tới.
+-- Tính theo ngày nạp mẫu tại Việt Nam; không sửa các ca/lượt khám lịch sử tháng 09.
+-- Mỗi lần nạp mẫu đều có lịch từ ngày mai đến cùng ngày của tháng kế tiếp.
+WITH demo_window AS (
+    SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date AS first_day
+), demo_days AS (
+    SELECT first_day + day_offset AS work_date
+    FROM demo_window
+    CROSS JOIN LATERAL generate_series(
+        1, (first_day + INTERVAL '1 month')::date - first_day
+    ) AS day_offset
+), demo_shifts(start_time, end_time) AS (
+    VALUES ('08:00'::time, '11:30'::time), ('13:30'::time, '17:00'::time)
+)
+INSERT INTO work_schedule
+(schedule_id, doctor_profile_id, room_id, work_date, start_time, end_time,
+ max_quota, booked_count, slot_minutes, schedule_status)
+SELECT 10 + ROW_NUMBER() OVER (ORDER BY day.work_date, template.doctor_profile_id, shift.start_time),
+       template.doctor_profile_id, template.room_id, day.work_date, shift.start_time, shift.end_time,
+       210 / template.slot_minutes, 0, template.slot_minutes, 'OPEN'
+FROM work_schedule template
+CROSS JOIN demo_days day
+CROSS JOIN demo_shifts shift
+WHERE template.schedule_id BETWEEN 1 AND 10;
 
 -- 9. ENCOUNTER
 -- Các lượt mẫu không bị hủy: cancel_origin/refund_reference_at mặc định NULL.

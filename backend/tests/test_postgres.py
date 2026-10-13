@@ -113,6 +113,21 @@ class PostgresTests(unittest.TestCase):
             self.assertEqual(db.execute('SELECT count(*) AS n FROM users').fetchone()['n'], 23)
             self.assertEqual(db.execute('SELECT count(*) AS n FROM encounter').fetchone()['n'], 10)
             self.assertEqual(db.execute("SELECT count(*) AS n FROM encounter WHERE schedule_id IS NULL").fetchone()['n'], 0)
+            demo = db.execute("""
+                WITH demo_dates AS (
+                    SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date AS today
+                )
+                SELECT count(*) AS n, min(work_date) AS first_day, max(work_date) AS last_day,
+                       bool_and(booked_count=0 AND schedule_status='OPEN' AND max_quota=210/slot_minutes) AS available,
+                       (SELECT today+1 FROM demo_dates) AS expected_first,
+                       (SELECT (today+INTERVAL '1 month')::date FROM demo_dates) AS expected_last
+                FROM work_schedule WHERE schedule_id > 10
+            """).fetchone()
+            self.assertEqual(demo['first_day'], demo['expected_first'])
+            self.assertEqual(demo['last_day'], demo['expected_last'])
+            self.assertEqual(demo['n'], ((demo['last_day'] - demo['first_day']).days + 1) * 20)
+            self.assertTrue(demo['available'])
+            self.assertEqual(db.execute("SELECT count(*) AS n FROM work_schedule WHERE schedule_id<=10 AND work_date BETWEEN '2026-09-20' AND '2026-09-29'").fetchone()['n'], 10)
             for row in db.execute('SELECT password_hash FROM users'):
                 self.assertTrue(check_password_hash(row['password_hash'], 'Demo-password-123!'))
             for kind in ('ONLINE', 'WALK_IN'):

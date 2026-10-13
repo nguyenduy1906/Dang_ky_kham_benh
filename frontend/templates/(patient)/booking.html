@@ -6,11 +6,11 @@
     <title>Đặt lịch khám | NEU Medical</title>
     <link rel="stylesheet" href="../../static/css/home.css?v=20261013-ui-only" />
     <link rel="stylesheet" href="../../static/css/public-pages.css" />
-    <link rel="stylesheet" href="../../static/css/patient-pages.css" />
+    <link rel="stylesheet" href="../../static/css/patient-pages.css?v=20261013-booking-api" />
     <script src="../../static/js/core/public.js?v=20261013-patient-auth" defer></script>
-    <script src="../../static/js/pages/booking.js" defer></script>
+    <script type="module" src="../../static/js/pages/booking.js?v=20261013-booking-api"></script>
   </head>
-  <body>
+  <body class="auth-pending">
     <a class="skip-link" href="#main">Đến nội dung chính</a>
     <header class="patient-header">
       <div class="identity">
@@ -21,12 +21,18 @@
         <p class="patient-hotline">Hotline: <strong>Đang cập nhật</strong></p>
       </div>
     </header>
-    <main id="main" class="appointment-page">
+    <div id="booking-auth-status" class="section-wrap booking-auth-status" role="status">
+      <p>Đang kiểm tra đăng nhập…</p>
+      <button type="button" class="solid-button" hidden>Thử lại</button>
+      <noscript>Bạn cần bật JavaScript để đặt lịch khám.</noscript>
+    </div>
+    <main id="main" class="appointment-page" inert>
       <div class="patient-heading">
         <nav class="patient-breadcrumb" aria-label="Đường dẫn trang">
           <a href="portal.html">Trang chủ</a><span aria-hidden="true">/</span><span aria-current="page">Đặt lịch khám</span>
         </nav>
         <h1>Đặt lịch khám</h1>
+        <a class="booking-history-link outline-button" href="appointments.html">Lịch đã đăng ký</a>
       </div>
       <div class="appointment-layout">
         <aside class="appointment-sidebar">
@@ -50,9 +56,9 @@
             <div class="appointment-field">
               <label for="appointment-patient">Người tới khám *</label
               ><select id="appointment-patient" required>
-                <option value="self">Bản thân</option></select
+                <option value="">Đang tải hồ sơ…</option></select
               ><button type="button" class="add-relative-button" id="add-relative">
-                ＋ Thêm người thân
+                ＋ Thêm hồ sơ người khám
               </button>
               <p class="field-note" id="relative-status" role="status"></p>
             </div>
@@ -67,14 +73,6 @@
               <label for="appointment-department">Chọn chuyên khoa</label
               ><select id="appointment-department">
                 <option value="">Tất cả chuyên khoa</option>
-                <option value="0">Nội tổng quát</option>
-                <option value="1">Tim mạch</option>
-                <option value="2">Da liễu</option>
-                <option value="3">Nhi</option>
-                <option value="4">Sản phụ khoa</option>
-                <option value="5">Tai Mũi Họng</option>
-                <option value="6">Mắt</option>
-                <option value="7">Răng Hàm Mặt</option>
               </select>
             </div>
             <div class="appointment-field">
@@ -126,19 +124,20 @@
             aria-labelledby="chosen-schedule-title"
           >
             <h2 id="chosen-schedule-title">Chọn ngày khám</h2>
+            <p id="schedule-status" role="status"></p>
+            <button id="schedule-retry" type="button" class="add-relative-button" hidden>Tải lại lịch khám</button>
             <div
               id="appointment-day-buttons"
               class="appointment-day-buttons"
               role="group"
               aria-label="Chọn ngày khám"
             ></div>
-            <div class="booking-date-range visually-hidden">
+            <div class="booking-date-range visually-hidden" hidden>
               <div>
                 <label class="visually-hidden" for="appointment-date">Ngày khám *</label
                 ><select
                   id="appointment-date"
                   form="appointment-form"
-                  required
                   class="visually-hidden"
                   tabindex="-1"
                 >
@@ -150,179 +149,21 @@
                 ><select
                   id="appointment-shift"
                   form="appointment-form"
-                  required
                   class="visually-hidden"
                   tabindex="-1"
                 >
                   <option value="">Chọn ca khám</option>
-                  <option>Ca sáng</option>
-                  <option>Ca chiều</option>
+
                 </select>
               </div>
             </div>
+            <div id="booking-slots"></div>
           </section>
-          <div class="booking-doctor-list">
-            <article class="booking-doctor" data-booking-id="1" data-name="Bác sĩ 01" data-khoa="0">
-              <img
-                src="../../static/assets/doctors/doctors_1.jpg"
-                alt="Ảnh minh họa bác sĩ 1"
-                loading="lazy"
-              />
-              <div class="booking-doctor-info">
-                <h2>Bác sĩ 01</h2>
-                <p>Chuyên khoa: Nội tổng quát</p>
-              </div>
-              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
-              <button
-                type="button"
-                class="solid-button"
-                data-select-doctor="1"
-                aria-pressed="false"
-              >
-                Chọn
-              </button>
-            </article>
-            <article class="booking-doctor" data-booking-id="2" data-name="Bác sĩ 02" data-khoa="1">
-              <img
-                src="../../static/assets/doctors/doctors_2.jpg"
-                alt="Ảnh minh họa bác sĩ 2"
-                loading="lazy"
-              />
-              <div class="booking-doctor-info">
-                <h2>Bác sĩ 02</h2>
-                <p>Chuyên khoa: Tim mạch</p>
-              </div>
-              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
-              <button
-                type="button"
-                class="solid-button"
-                data-select-doctor="2"
-                aria-pressed="false"
-              >
-                Chọn
-              </button>
-            </article>
-            <article class="booking-doctor" data-booking-id="3" data-name="Bác sĩ 03" data-khoa="2">
-              <img
-                src="../../static/assets/doctors/doctors_3.jpg"
-                alt="Ảnh minh họa bác sĩ 3"
-                loading="lazy"
-              />
-              <div class="booking-doctor-info">
-                <h2>Bác sĩ 03</h2>
-                <p>Chuyên khoa: Da liễu</p>
-              </div>
-              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
-              <button
-                type="button"
-                class="solid-button"
-                data-select-doctor="3"
-                aria-pressed="false"
-              >
-                Chọn
-              </button>
-            </article>
-            <article class="booking-doctor" data-booking-id="4" data-name="Bác sĩ 04" data-khoa="3">
-              <img
-                src="../../static/assets/doctors/doctors_4.jpg"
-                alt="Ảnh minh họa bác sĩ 4"
-                loading="lazy"
-              />
-              <div class="booking-doctor-info">
-                <h2>Bác sĩ 04</h2>
-                <p>Chuyên khoa: Nhi</p>
-              </div>
-              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
-              <button
-                type="button"
-                class="solid-button"
-                data-select-doctor="4"
-                aria-pressed="false"
-              >
-                Chọn
-              </button>
-            </article>
-            <article class="booking-doctor" data-booking-id="5" data-name="Bác sĩ 05" data-khoa="4">
-              <img
-                src="../../static/assets/doctors/doctors_5.jpg"
-                alt="Ảnh minh họa bác sĩ 5"
-                loading="lazy"
-              />
-              <div class="booking-doctor-info">
-                <h2>Bác sĩ 05</h2>
-                <p>Chuyên khoa: Sản phụ khoa</p>
-              </div>
-              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
-              <button
-                type="button"
-                class="solid-button"
-                data-select-doctor="5"
-                aria-pressed="false"
-              >
-                Chọn
-              </button>
-            </article>
-            <article class="booking-doctor" data-booking-id="6" data-name="Bác sĩ 06" data-khoa="5">
-              <img
-                src="../../static/assets/doctors/doctors_6.jpg"
-                alt="Ảnh minh họa bác sĩ 6"
-                loading="lazy"
-              />
-              <div class="booking-doctor-info">
-                <h2>Bác sĩ 06</h2>
-                <p>Chuyên khoa: Tai Mũi Họng</p>
-              </div>
-              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
-              <button
-                type="button"
-                class="solid-button"
-                data-select-doctor="6"
-                aria-pressed="false"
-              >
-                Chọn
-              </button>
-            </article>
-            <article class="booking-doctor" data-booking-id="7" data-name="Bác sĩ 07" data-khoa="6">
-              <img
-                src="../../static/assets/doctors/doctors_7.jpg"
-                alt="Ảnh minh họa bác sĩ 7"
-                loading="lazy"
-              />
-              <div class="booking-doctor-info">
-                <h2>Bác sĩ 07</h2>
-                <p>Chuyên khoa: Mắt</p>
-              </div>
-              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
-              <button
-                type="button"
-                class="solid-button"
-                data-select-doctor="7"
-                aria-pressed="false"
-              >
-                Chọn
-              </button>
-            </article>
-            <article class="booking-doctor" data-booking-id="8" data-name="Bác sĩ 08" data-khoa="7">
-              <img
-                src="../../static/assets/doctors/doctors_8.jpg"
-                alt="Ảnh minh họa bác sĩ 8"
-                loading="lazy"
-              />
-              <div class="booking-doctor-info">
-                <h2>Bác sĩ 08</h2>
-                <p>Chuyên khoa: Răng Hàm Mặt</p>
-              </div>
-              <div class="booking-price"><span>Giá khám</span><strong>Đang cập nhật</strong></div>
-              <button
-                type="button"
-                class="solid-button"
-                data-select-doctor="8"
-                aria-pressed="false"
-              >
-                Chọn
-              </button>
-            </article>
+          <div class="booking-data-status" role="status">
+            <p id="booking-data-status">Đang tải bác sĩ và hồ sơ người khám…</p>
+            <button id="booking-data-retry" type="button" class="add-relative-button" hidden>Tải lại dữ liệu</button>
           </div>
+          <div class="booking-doctor-list" aria-busy="true"></div>
           <p id="appointment-empty" class="text-block" hidden>
             Không tìm thấy bác sĩ phù hợp. Hãy thay đổi từ khóa hoặc chuyên khoa.
           </p>
@@ -335,11 +176,7 @@
           </div>
           <div id="appointment-summary-content" hidden>
             <div class="summary-doctor">
-              <img
-                id="summary-doctor-photo"
-                src="../../static/assets/doctors/doctors_1.jpg"
-                alt="Ảnh bác sĩ mẫu"
-              />
+<span id="summary-doctor-photo"></span>
               <div>
                 <strong id="summary-doctor-name"></strong
                 ><span id="summary-doctor-specialty"></span>
@@ -379,7 +216,7 @@
               Đồng hành cùng sức khỏe của bạn và gia đình. Tìm hiểu chuyên khoa, lựa chọn bác sĩ và
               đăng ký lịch khám thuận tiện.
             </p>
-            <span class="footer-badge">Bản xem trước giao diện</span>
+            <span class="footer-badge">Đặt khám trực tuyến</span>
           </div>
           <div>
             <h3>Địa chỉ &amp; Giờ khám bệnh</h3>
@@ -425,9 +262,38 @@
       <div id="dialog-content"></div>
       <form method="dialog"><button class="dialog-done">Đóng</button></form>
     </dialog>
+    <dialog id="booking-dialog" class="booking-confirm-dialog" aria-labelledby="booking-dialog-title">
+      <div class="dialog-heading">
+        <h2 id="booking-dialog-title">Xác nhận thông tin đặt khám</h2>
+        <button id="booking-dialog-close" type="button" class="dialog-close" aria-label="Đóng xác nhận">×</button>
+      </div>
+      <div id="booking-review"></div>
+      <p id="booking-confirm-note">Giữ chỗ trong 10 phút. Cần thanh toán 100% giá khám để được xác nhận và cấp phiếu.</p>
+      <button id="booking-confirm" type="button" class="solid-button">Xác nhận giữ chỗ</button>
+      <div id="booking-payment" hidden>
+        <p id="booking-countdown" role="status"></p>
+        <label for="booking-payment-method">Phương thức thanh toán</label>
+        <select id="booking-payment-method">
+          <option value="BANK">Chuyển khoản</option>
+          <option value="EWALLET">Ví điện tử</option>
+          <option value="CARD">Thẻ</option>
+        </select>
+        <button id="booking-payment-create" type="button" class="solid-button">Tạo phiên thanh toán</button>
+        <div id="booking-payment-result" hidden>
+          <p>Thanh toán demo: các nút dưới đây gửi kết quả tới API mô phỏng của backend, không thu tiền thật.</p>
+          <button id="booking-payment-success" type="button" class="solid-button">Mô phỏng thanh toán thành công</button>
+          <button id="booking-payment-failed" type="button" class="outline-button">Mô phỏng thanh toán thất bại</button>
+        </div>
+      </div>
+      <p id="booking-dialog-status" role="status"></p>
+      <div class="booking-dialog-actions">
+        <button id="booking-refresh" type="button" class="outline-button" hidden>Cập nhật trạng thái</button>
+        <button id="booking-cancel" type="button" class="outline-button" hidden>Hủy giữ chỗ</button>
+      </div>
+    </dialog>
     <dialog id="relative-dialog" aria-labelledby="relative-title">
       <div class="dialog-heading">
-        <h2 id="relative-title">Thêm người thân</h2>
+        <h2 id="relative-title">Thêm hồ sơ người khám</h2>
         <button
           type="button"
           id="relative-close"
@@ -451,8 +317,8 @@
             />
           </div>
           <div>
-            <label for="relative-phone">Số điện thoại</label
-            ><input id="relative-phone" name="phone" type="tel" maxlength="20" />
+            <label for="relative-phone">Số điện thoại *</label
+            ><input id="relative-phone" name="phone" type="tel" required autocomplete="tel" maxlength="20" />
           </div>
           <div>
             <label for="relative-dob">Ngày sinh</label
@@ -471,6 +337,7 @@
             <label for="relative-relationship">Quan hệ *</label
             ><select id="relative-relationship" name="relationship" required>
               <option value="">Chọn quan hệ</option>
+              <option value="SELF">Bản thân</option>
               <option value="PARENT">Cha / Mẹ</option>
               <option value="CHILD">Con</option>
               <option value="SPOUSE">Vợ / Chồng</option>
@@ -503,7 +370,13 @@
             ><input id="relative-address" name="address" maxlength="255" />
           </div>
         </div>
-        <button type="submit" class="solid-button relative-submit">Thêm người thân</button>
+        <p class="field-note">Cung cấp ngày sinh hoặc CCCD / mã định danh để phân biệt hồ sơ.</p>
+        <label id="shared-phone-confirmation" class="booking-shared-phone" hidden>
+          <input id="confirm-shared-phone" type="checkbox" />
+          Tôi xác nhận hồ sơ này dùng chung số điện thoại với tài khoản đang đăng nhập.
+        </label>
+        <p id="relative-form-status" role="status"></p>
+        <button type="submit" class="solid-button relative-submit">Lưu hồ sơ</button>
       </form>
     </dialog>
     <dialog id="insurance-dialog" aria-labelledby="insurance-title">
@@ -520,42 +393,12 @@
       </div>
 
       <form id="insurance-form">
-        <fieldset class="insurance-entry-method">
-          <legend>Nhập thông tin từ</legend>
-          <label><input type="radio" name="document-method" value="cccd" checked /> CCCD</label
-          ><label><input type="radio" name="document-method" value="bhyt" /> Thẻ BHYT</label>
-        </fieldset>
-        <div class="relative-form-grid">
-          <div>
-            <label for="insurance-document" id="insurance-document-label">Số CCCD *</label
-            ><input
-              id="insurance-document"
-              required
-              inputmode="numeric"
-              pattern="(?:[0-9]{9}|[0-9]{12})"
-              maxlength="12"
-              title="CCCD gồm 9 hoặc 12 chữ số"
-            />
-          </div>
-          <div>
-            <label for="insurance-full-name">Họ và tên *</label
-            ><input id="insurance-full-name" required maxlength="150" />
-          </div>
-          <div>
-            <label for="insurance-gender">Giới tính</label
-            ><select id="insurance-gender">
-              <option value="">Chưa cung cấp</option>
-              <option>Nam</option>
-              <option>Nữ</option>
-              <option>Khác</option>
-            </select>
-          </div>
-          <div>
-            <label for="insurance-dob">Ngày sinh *</label
-            ><input id="insurance-dob" type="date" required />
-          </div>
-        </div>
-        <button type="submit" class="solid-button relative-submit">Kiểm tra thông tin</button>
+        <label for="insurance-document">Mã thẻ BHYT</label>
+        <input id="insurance-document" pattern="[A-Za-z0-9]{10,15}" maxlength="15"
+          title="Nhập 10–15 chữ hoặc số; để trống nếu muốn xóa mã thẻ" />
+        <p class="field-note">Lưu mã thẻ vào hồ sơ người khám. Mã thẻ chưa được đối chiếu quyền lợi bảo hiểm.</p>
+        <p id="insurance-form-status" role="status"></p>
+        <button type="submit" class="solid-button relative-submit">Lưu mã thẻ</button>
       </form>
     </dialog>
   </body>
