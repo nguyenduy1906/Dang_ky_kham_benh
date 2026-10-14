@@ -7,7 +7,7 @@ import { createIntent, listEncounterPayments, setDemoResult } from "../api/payme
 import { getMe } from "../api/auth.js";
 import { verifySession, hasSession, clearSession, loginUrl } from "../core/session.js";
 import { thumbnailUrl } from "../core/articles.js";
-import { allPages, availableSchedules, money, clock, dateLabel, todayVN, matchingBooking, patientPayload } from "../core/booking.js";
+import { allPages, availableSchedules, money, clock, dateLabel, todayVN, matchingBooking, patientPayload, enableDragScroll } from "../core/booking.js";
 
 const $ = selector => document.querySelector(selector);
 function el(tag, text = "", className = "") {
@@ -29,6 +29,7 @@ const ui = {
   paymentCreate: $("#booking-payment-create"), paymentResult: $("#booking-payment-result"),
   refresh: $("#booking-refresh"), cancel: $("#booking-cancel"),
 };
+enableDragScroll(ui.days);
 let doctors = [], patients = [], schedules = [], selectedDoctor, selectedDate = "", selectedSlot, actor;
 let loading = false, checking = false, scheduleVersion = 0, scheduleAbort, busy = false;
 let encounter, payment, ticket, countdown, reviewRequest, requestedEncounterId, submissionUncertain = false;
@@ -103,13 +104,23 @@ function renderDoctors() {
     const info = el("div", "", "booking-doctor-info");
     info.append(el("h2", doctor.full_name), el("p", `Chuyên khoa: ${doctor.department_name}`));
     if (doctor.specialization) info.append(el("span", doctor.specialization));
+    const profileUrl = `../public/doctor-detail.html?id=${encodeURIComponent(doctor.doctor_profile_id)}`;
+    const profile = el("a", "Xem hồ sơ bác sĩ →", "booking-profile-link");
+    profile.href = profileUrl;
+    info.append(profile);
+    const photoLink = el("a", "", "booking-portrait-link");
+    photoLink.href = profileUrl;
+    photoLink.setAttribute("aria-label", `Xem hồ sơ ${doctor.full_name}`);
+    photoLink.append(portrait(doctor));
     const price = el("div", "", "booking-price");
     price.append(el("span", "Giá khám"), el("strong", money(doctor.consultation_fee)));
-    const button = el("button", chosen ? "Đã chọn" : "Chọn", "solid-button");
+    const button = el("button", chosen ? "Bỏ chọn" : "Chọn", "solid-button");
     button.type = "button";
     button.setAttribute("aria-pressed", String(chosen));
+    button.setAttribute("aria-expanded", String(chosen));
+    if (chosen) button.setAttribute("aria-controls", "chosen-schedule");
     button.addEventListener("click", () => selectDoctor(doctor));
-    card.append(portrait(doctor), info, price, button);
+    card.append(photoLink, info, price, button);
     if (chosen) card.append(ui.schedule);
     ui.doctors.append(card);
   }
@@ -127,17 +138,38 @@ function clearDoctor() {
   scheduleVersion++;
   scheduleAbort?.abort();
   selectedDoctor = undefined;
+  selectedDate = "";
+  $("#appointment-date").value = "";
+  schedules = [];
+  ui.days.replaceChildren();
+  ui.slots.replaceChildren();
+  ui.days.scrollLeft = 0;
   clearSlot();
   ui.schedule.hidden = true;
+  ui.schedule.setAttribute("aria-busy", "false");
 }
-function selectDoctor(doctor) {
-  if (selectedDoctor?.doctor_profile_id === doctor.doctor_profile_id) return;
+async function selectDoctor(doctor, { scrollToDoctor = false } = {}) {
+  if (selectedDoctor?.doctor_profile_id === doctor.doctor_profile_id) {
+    clearDoctor();
+    renderDoctors();
+    ui.doctors.querySelector(`[data-booking-id="${doctor.doctor_profile_id}"] > button`).focus({ preventScroll: true });
+    return;
+  }
   selectedDoctor = doctor;
   selectedDate = "";
+  ui.days.scrollLeft = 0;
   clearSlot();
   ui.schedule.hidden = false;
   renderDoctors();
-  loadSchedules();
+  await loadSchedules();
+  if (scrollToDoctor && selectedDoctor?.doctor_profile_id === doctor.doctor_profile_id && !ui.main.inert) {
+    // Wait until the selected card includes its loaded days and time slots.
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    if (selectedDoctor?.doctor_profile_id === doctor.doctor_profile_id && !ui.main.inert) {
+      ui.doctors.querySelector(`[data-booking-id="${doctor.doctor_profile_id}"]`)
+        ?.scrollIntoView({ block: "start", behavior: "instant" });
+    }
+  }
 }
 async function loadSchedules() {
   if (!selectedDoctor) return;
@@ -254,7 +286,7 @@ async function loadData() {
     $("#add-relative").disabled = false;
     const query = new URLSearchParams(location.search);
     const doctor = doctors.find(d => String(d.doctor_profile_id) === query.get("doctor"));
-    if (doctor) selectDoctor(doctor);
+    if (doctor) await selectDoctor(doctor, { scrollToDoctor: !query.get("encounter") });
     const id = query.get("encounter");
     if (id && /^[1-9]\d*$/.test(id)) {
       $("#booking-dialog-title").textContent = "Thông tin lịch khám";

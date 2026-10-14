@@ -79,6 +79,8 @@ class Package2FixTests(unittest.TestCase):
 
     def test_public_schedules_filter_before_pagination(self):
         with get_db_connection() as db:
+            # Isolate the schedule fixture from rolling future shifts in sample_data.sql.
+            db.execute('DELETE FROM work_schedule WHERE doctor_profile_id=1 AND work_date>=%s', (today_vn(),))
             for offset, status in enumerate(('CLOSED', 'OPEN', 'FULL'), 1):
                 db.execute('INSERT INTO work_schedule (doctor_profile_id,room_id,work_date,start_time,end_time,max_quota,schedule_status) '
                            "VALUES (1,1,%s,'08:00','09:00',5,%s)", (today_vn() + timedelta(days=offset), status))

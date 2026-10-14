@@ -3,7 +3,9 @@ from backend.app.utils.database_helpers import insert_row, update_row
 
 SELECT = '''SELECT e.*, p.full_name AS patient_name, p.user_id AS owner_id,
  d.department_id, u.full_name AS doctor_name, d.user_id AS doctor_user_id,
- s.work_date, s.start_time, s.end_time, s.schedule_status, r.room_name
+ s.work_date, s.start_time, s.end_time, s.schedule_status, r.room_name,
+ EXISTS (SELECT 1 FROM medical_record mr JOIN review rv ON rv.record_id=mr.record_id
+         WHERE mr.encounter_id=e.encounter_id) AS has_review
  FROM encounter e JOIN patient p ON p.patient_id=e.patient_id
  JOIN doctor_profile d ON d.doctor_profile_id=e.doctor_profile_id
  JOIN users u ON u.user_id=d.user_id JOIN work_schedule s ON s.schedule_id=e.schedule_id

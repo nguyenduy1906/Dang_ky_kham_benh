@@ -9,6 +9,12 @@ from backend.app.utils.swagger_helpers import spec, path, body, PAGE
 configuration_bp = Blueprint('configuration', __name__)
 
 
+@configuration_bp.get('/contact-info')
+@swag_from(spec('Configurations', 'Thông tin liên hệ công khai: tên cơ sở, số hỗ trợ, email và giờ khám', public=True))
+def contact_info():
+    return jsonify(service.public_contact())
+
+
 @configuration_bp.get('/admin/configurations')
 @roles_required('ADMIN')
 @swag_from(spec('Configurations', 'Danh sách cấu hình; read_only và effective_value chỉ rõ chính sách đang áp dụng', PAGE))
@@ -18,7 +24,7 @@ def listing():
 
 @configuration_bp.patch('/admin/configurations/<string:key>')
 @roles_required('ADMIN')
-@swag_from(spec('Configurations', 'Cập nhật HOSPITAL_NAME, SUPPORT_PHONE, REMINDER_BEFORE_HOURS hoặc ALLOW_WALK_IN',
+@swag_from(spec('Configurations', 'Cập nhật HOSPITAL_NAME, SUPPORT_PHONE, SUPPORT_EMAIL, EXAM_HOURS, REMINDER_BEFORE_HOURS hoặc ALLOW_WALK_IN',
                 [path('key', type_name='string'), body({'config_value': {'type': 'string'}}, ('config_value',))]))
 def update(key):
     return jsonify(service.update(current_user(), key, validate_configuration(key, request.get_json(silent=True))))

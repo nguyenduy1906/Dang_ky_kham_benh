@@ -57,7 +57,7 @@ review_bp = Blueprint('review', __name__)
 
 @review_bp.post('/encounters/<int:encounter_id>/review')
 @roles_required('USER')
-@swag_from(spec('Reviews', 'USER sở hữu đánh giá lượt COMPLETED, tối đa một đánh giá/lượt', [path('encounter_id'), body({
+@swag_from(spec('Reviews', 'USER đánh giá lượt COMPLETED trong phạm vi được phép; mỗi lần gửi tạo một đánh giá mới', [path('encounter_id'), body({
     'rating': {'type': 'integer', 'minimum': 1, 'maximum': 5}, 'comment': {'type': 'string'}}, ('rating',))]))
 def create(encounter_id):
     result, created = service.create_review(current_user(), encounter_id, medical_record_schema.validate_review(request.get_json(silent=True)))

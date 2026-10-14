@@ -2,6 +2,13 @@ def get(db, key, *, lock=False):
     return db.execute('SELECT * FROM system_configuration WHERE config_key=%s' + (' FOR UPDATE' if lock else ''), (key,)).fetchone()
 
 
+def contact_values(db):
+    return db.execute(
+        'SELECT config_key, config_value FROM system_configuration '
+        'WHERE config_key IN (%s, %s, %s, %s)',
+        ('HOSPITAL_NAME', 'SUPPORT_PHONE', 'SUPPORT_EMAIL', 'EXAM_HOURS')).fetchall()
+
+
 def reminder_hours(db):
     row = get(db, 'REMINDER_BEFORE_HOURS')
     value = int(row['config_value']) if row else 24

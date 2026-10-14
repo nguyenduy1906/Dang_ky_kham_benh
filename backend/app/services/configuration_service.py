@@ -19,6 +19,14 @@ def listing(actor, page, size):
     return {'items': [_present(r) for r in rows], 'total': total, 'page': page, 'page_size': size}
 
 
+def public_contact():
+    with get_db_connection() as db:
+        values = {row['config_key']: row['config_value'] for row in model.contact_values(db)}
+    return {field: values.get(key, '').strip() or None for field, key in (
+        ('hospital_name', 'HOSPITAL_NAME'), ('support_phone', 'SUPPORT_PHONE'),
+        ('support_email', 'SUPPORT_EMAIL'), ('exam_hours', 'EXAM_HOURS'))}
+
+
 def update(actor, key, value):
     require_role(actor, 'ADMIN')
     value = validate_configuration(key, {'config_value': value})

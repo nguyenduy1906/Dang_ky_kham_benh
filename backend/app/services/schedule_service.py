@@ -30,14 +30,20 @@ def list_schedules(query):
 
 
 def list_doctor_public(doctor_profile_id, query):
-    """Lịch của một bác sĩ cho người dùng thường: chỉ từ hôm nay, không lộ ca đã đóng."""
+    """Lịch công khai từ hôm nay, hoặc tuần hiện tại để trình bày hồ sơ; luôn bỏ ca đã đóng."""
     with get_db_connection() as db:
         doctor = doctor_model.get_by_id(db, doctor_profile_id)
         if doctor is None or not doctor['is_active'] or not doctor['account_ok']:
             raise not_found('Không tìm thấy bác sĩ', 'DOCTOR_NOT_FOUND')
-        start = max(query['from_date'] or today_vn(), today_vn())
+        today = today_vn()
+        start = max(query['from_date'] or today, today)
+        end = query['to_date']
+        if query.get('current_week'):
+            from datetime import timedelta
+            start = today - timedelta(days=today.weekday())
+            end = start + timedelta(days=6)
         rows, total = schedule_model.list_schedules(
-            db, doctor_profile_id=doctor_profile_id, from_date=start, to_date=query['to_date'],
+            db, doctor_profile_id=doctor_profile_id, from_date=start, to_date=end,
             status=query['status'], exclude_closed=True, limit=query['page_size'],
             offset=(query['page'] - 1) * query['page_size'])
         from backend.app.services.appointment_slot_service import available_slots

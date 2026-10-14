@@ -313,8 +313,9 @@ h1 {
   margin-left: auto;
 }
 footer {
-  background: white;
-  border-top: 1px solid #dce6dd;
+  background: var(--green);
+  color: white;
+  border-top: 1px solid var(--deep);
 }
 .footer-inner,
 .footer-bottom {
@@ -327,12 +328,12 @@ footer {
   align-items: center;
 }
 .footer-inner strong {
-  color: var(--green);
+  color: white;
   font-size: 18px;
 }
 .footer-inner p {
   font-size: 14px;
-  color: var(--muted);
+  color: white;
   margin: 10px 0 0;
 }
 .footer-links {
@@ -342,18 +343,18 @@ footer {
 .footer-links button {
   background: none;
   border: 0;
-  color: #46584d;
+  color: white;
   padding: 8px 0;
   font-size: 14px;
 }
 .footer-links button:hover {
-  color: var(--green);
+  text-decoration: underline;
 }
 .footer-bottom {
-  border-top: 1px solid #edf0ec;
+  border-top: 1px solid #ffffff59;
   padding-top: 16px;
   padding-bottom: 16px;
-  color: var(--muted);
+  color: white;
   font-size: 12px;
 }
 dialog {
@@ -771,7 +772,8 @@ dialog::backdrop {
 .booking-info p {
   line-height: 1.8;
 }
-.booking-info button {
+.booking-info .consultation-link {
+  display: inline-block;
   border: 0;
   background: var(--green);
   color: white;

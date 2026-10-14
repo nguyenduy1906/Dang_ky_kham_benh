@@ -127,11 +127,6 @@ def create_review(actor, encounter_id, fields):
         record = db.execute('SELECT record_id FROM medical_record WHERE encounter_id=%s FOR UPDATE', (encounter_id,)).fetchone()
         if record is None:
             raise conflict('Lượt khám chưa có bệnh án', 'MEDICAL_RECORD_REQUIRED')
-        existing = db.execute('SELECT * FROM review WHERE record_id=%s', (record['record_id'],)).fetchone()
-        if existing:
-            if existing['rating'] == fields['rating'] and existing['comment'] == fields['comment']:
-                return {'review': jsonable(existing)}, False
-            raise conflict('Lượt khám đã được đánh giá; không ghi đè đánh giá cũ', 'REVIEW_ALREADY_EXISTS')
         row = records.create(db, record['record_id'], fields)
     return {'review': jsonable(row)}, True
 

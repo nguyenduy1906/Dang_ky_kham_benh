@@ -135,6 +135,122 @@ VALUES
 (9, 14, 9, 'Tiến sĩ', 'Cơ Xương Khớp', 16, 'Bác sĩ chuyên cơ xương khớp.', 360000, '/uploads/avatars/36ea98ff447b4c7ea4e242a3df829f41.jpg', 1, '2026-09-04 09:20:00+07', '2026-09-04 09:20:00+07'),
 (10, 15, 10, 'Chuyên khoa II', 'Thần kinh', 17, 'Bác sĩ chuyên thần kinh.', 400000, '/uploads/avatars/eeffdcdd8a30437fbb64e429d83aa1ad.jpg', 1, '2026-09-04 09:30:00+07', '2026-09-04 09:30:00+07');
 
+-- Hồ sơ đào tạo/công tác minh họa cho 10 bác sĩ mẫu, không thay phí khám hoặc ảnh.
+UPDATE doctor_profile SET introduction='Bác sĩ chuyên khám nội tổng quát.
+
+Quá trình đào tạo:
+- 2018: Thạc sĩ chuyên ngành Nội khoa, Đại học Y Hà Nội.
+- 2014: Tốt nghiệp Bác sĩ đa khoa, Đại học Y Hà Nội.
+
+Quá trình công tác:
+- 2020–nay: Bác sĩ chuyên ngành Nội khoa tại Bệnh viện NEU Medical.
+- 2014–2020: Khám, điều trị và theo dõi người bệnh trong lĩnh vực Nội khoa.
+
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.' WHERE doctor_profile_id=1 AND user_id=6;
+UPDATE doctor_profile SET introduction='Bác sĩ chuyên khoa tim mạch.
+
+Quá trình đào tạo:
+- 2019: Tiến sĩ Y học chuyên ngành Tim mạch, Đại học Y Hà Nội.
+- 2015: Thạc sĩ chuyên ngành Tim mạch, Đại học Y Hà Nội.
+- 2011: Tốt nghiệp Bác sĩ đa khoa, Đại học Y Hà Nội.
+
+Quá trình công tác:
+- 2020–nay: Bác sĩ chuyên ngành Tim mạch tại Bệnh viện NEU Medical.
+- 2011–2020: Khám, điều trị và theo dõi người bệnh trong lĩnh vực Tim mạch.
+
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.' WHERE doctor_profile_id=2 AND user_id=7;
+UPDATE doctor_profile SET introduction='Bác sĩ chuyên điều trị bệnh da.
+
+Quá trình đào tạo:
+- 2020: Bác sĩ chuyên khoa I chuyên ngành Da liễu, Đại học Y Hà Nội.
+- 2017: Tốt nghiệp Bác sĩ đa khoa, Đại học Y Hà Nội.
+
+Quá trình công tác:
+- 2020–nay: Bác sĩ chuyên ngành Da liễu tại Bệnh viện NEU Medical.
+- 2017–2020: Khám, điều trị và theo dõi người bệnh trong lĩnh vực Da liễu.
+
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.' WHERE doctor_profile_id=3 AND user_id=8;
+UPDATE doctor_profile SET introduction='Bác sĩ chuyên khám và điều trị trẻ em.
+
+Quá trình đào tạo:
+- 2019: Thạc sĩ chuyên ngành Nhi khoa, Đại học Y Hà Nội.
+- 2015: Tốt nghiệp Bác sĩ đa khoa, Đại học Y Hà Nội.
+
+Quá trình công tác:
+- 2020–nay: Bác sĩ chuyên ngành Nhi khoa tại Bệnh viện NEU Medical.
+- 2015–2020: Khám, điều trị và theo dõi người bệnh trong lĩnh vực Nhi khoa.
+
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.' WHERE doctor_profile_id=4 AND user_id=9;
+UPDATE doctor_profile SET introduction='Bác sĩ chuyên sản phụ khoa.
+
+Quá trình đào tạo:
+- 2020: Bác sĩ chuyên khoa II chuyên ngành Sản phụ khoa, Đại học Y Hà Nội.
+- 2015: Bác sĩ chuyên khoa I chuyên ngành Sản phụ khoa, Đại học Y Hà Nội.
+- 2012: Tốt nghiệp Bác sĩ đa khoa, Đại học Y Hà Nội.
+
+Quá trình công tác:
+- 2020–nay: Bác sĩ chuyên ngành Sản phụ khoa tại Bệnh viện NEU Medical.
+- 2012–2020: Khám, điều trị và theo dõi người bệnh trong lĩnh vực Sản phụ khoa.
+
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.' WHERE doctor_profile_id=5 AND user_id=10;
+UPDATE doctor_profile SET introduction='Bác sĩ chuyên tai mũi họng.
+
+Quá trình đào tạo:
+- 2020: Thạc sĩ chuyên ngành Tai Mũi Họng, Đại học Y Hà Nội.
+- 2016: Tốt nghiệp Bác sĩ đa khoa, Đại học Y Hà Nội.
+
+Quá trình công tác:
+- 2020–nay: Bác sĩ chuyên ngành Tai Mũi Họng tại Bệnh viện NEU Medical.
+- 2016–2020: Khám, điều trị và theo dõi người bệnh trong lĩnh vực Tai Mũi Họng.
+
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.' WHERE doctor_profile_id=6 AND user_id=11;
+UPDATE doctor_profile SET introduction='Bác sĩ chuyên khám và điều trị mắt.
+
+Quá trình đào tạo:
+- 2021: Bác sĩ chuyên khoa I chuyên ngành Nhãn khoa, Đại học Y Hà Nội.
+- 2018: Tốt nghiệp Bác sĩ đa khoa, Đại học Y Hà Nội.
+
+Quá trình công tác:
+- 2020–nay: Bác sĩ chuyên ngành Nhãn khoa tại Bệnh viện NEU Medical.
+- 2018–2020: Khám, điều trị và theo dõi người bệnh trong lĩnh vực Nhãn khoa.
+
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.' WHERE doctor_profile_id=7 AND user_id=12;
+UPDATE doctor_profile SET introduction='Bác sĩ chuyên răng hàm mặt.
+
+Quá trình đào tạo:
+- 2017: Thạc sĩ chuyên ngành Răng Hàm Mặt, Đại học Y Hà Nội.
+- 2013: Tốt nghiệp Bác sĩ đa khoa, Đại học Y Hà Nội.
+
+Quá trình công tác:
+- 2020–nay: Bác sĩ chuyên ngành Răng Hàm Mặt tại Bệnh viện NEU Medical.
+- 2013–2020: Khám, điều trị và theo dõi người bệnh trong lĩnh vực Răng Hàm Mặt.
+
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.' WHERE doctor_profile_id=8 AND user_id=13;
+UPDATE doctor_profile SET introduction='Bác sĩ chuyên cơ xương khớp.
+
+Quá trình đào tạo:
+- 2018: Tiến sĩ Y học chuyên ngành Cơ Xương Khớp, Đại học Y Hà Nội.
+- 2014: Thạc sĩ chuyên ngành Cơ Xương Khớp, Đại học Y Hà Nội.
+- 2010: Tốt nghiệp Bác sĩ đa khoa, Đại học Y Hà Nội.
+
+Quá trình công tác:
+- 2020–nay: Bác sĩ chuyên ngành Cơ Xương Khớp tại Bệnh viện NEU Medical.
+- 2010–2020: Khám, điều trị và theo dõi người bệnh trong lĩnh vực Cơ Xương Khớp.
+
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.' WHERE doctor_profile_id=9 AND user_id=14;
+UPDATE doctor_profile SET introduction='Bác sĩ chuyên thần kinh.
+
+Quá trình đào tạo:
+- 2017: Bác sĩ chuyên khoa II chuyên ngành Thần kinh, Đại học Y Hà Nội.
+- 2012: Bác sĩ chuyên khoa I chuyên ngành Thần kinh, Đại học Y Hà Nội.
+- 2009: Tốt nghiệp Bác sĩ đa khoa, Đại học Y Hà Nội.
+
+Quá trình công tác:
+- 2020–nay: Bác sĩ chuyên ngành Thần kinh tại Bệnh viện NEU Medical.
+- 2009–2020: Khám, điều trị và theo dõi người bệnh trong lĩnh vực Thần kinh.
+
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.' WHERE doctor_profile_id=10 AND user_id=15;
+
 -- 7. ROOM
 INSERT INTO room
 (room_id, department_id, room_name, description, is_active, created_at, updated_at)
@@ -791,8 +907,10 @@ VALUES
 ('CANCEL_REFUND_PERCENT', '50', 'Hoàn 50% cọc khi hủy đủ hạn; lỗi bệnh viện hoàn 100%', '2026-10-09 00:00:00+07'),
 ('REMINDER_BEFORE_HOURS', '24', 'Gửi thông báo nhắc lịch trước giờ khám', '2026-10-01 08:00:00+07'),
 ('MAX_REVIEW_RATING', '5', 'Điểm đánh giá tối đa', '2026-10-01 08:00:00+07'),
-('HOSPITAL_NAME', 'Medicare Demo Clinic', 'Tên cơ sở khám bệnh hiển thị trên hệ thống', '2026-10-01 08:00:00+07'),
+('HOSPITAL_NAME', 'Bệnh viện NEU Medical', 'Tên cơ sở khám bệnh hiển thị trên hệ thống', '2026-10-01 08:00:00+07'),
 ('SUPPORT_PHONE', '19001234', 'Số điện thoại hỗ trợ khách hàng', '2026-10-01 08:00:00+07'),
+('SUPPORT_EMAIL', '', 'Email hỗ trợ công khai, để trống khi chưa có thông tin', '2026-10-01 08:00:00+07'),
+('EXAM_HOURS', E'Sáng: 07:00–12:00\nChiều: 13:30–16:30', 'Giờ khám tham khảo cho đồ án từ thông báo MEDLATEC ngày 16/03/2026', '2026-10-14 08:00:00+07'),
 ('ALLOW_WALK_IN', 'true', 'Cho phép lễ tân tạo lượt khám trực tiếp', '2026-10-01 08:00:00+07');
 
 -- 19. ROLE_REQUEST (Yêu cầu đổi vai trò)

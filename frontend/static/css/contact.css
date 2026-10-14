@@ -64,13 +64,37 @@
 }
 .contact-support {
   display: flex;
-  justify-content: space-between;
-  gap: 20px;
+  justify-content: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: baseline;
   font-size: 15px;
+}
+.contact-support [data-contact-field="support_phone"] {
+  margin-left: 0;
+}
+.contact-information [data-contact-field="exam_hours"] {
+  display: block;
+  margin-top: 5px;
 }
 .consultation-card h3 {
   color: var(--deep);
   text-align: center;
+}
+.consultation-card {
+  scroll-margin-top: 24px;
+}
+.consultation-intro {
+  margin: 0 0 24px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.consultation-field input,
+.consultation-field select,
+.consultation-field textarea {
+  min-width: 0;
+  font-size: 15px;
 }
 .consultation-field {
   margin-bottom: 22px;

@@ -1,3 +1,5 @@
+import("./contact-info.js").then(module => module.initContactInfo());
+
 const panels = {
   privacy: [
     "Chính sách bảo mật",

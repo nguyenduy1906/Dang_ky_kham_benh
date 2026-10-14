@@ -1,12 +1,12 @@
 from backend.app.core.errors import bad_request, conflict
-from backend.app.schemas.auth_schema import ensure_object, text_field
+from backend.app.schemas.auth_schema import ensure_object, text_field, normalize_email
 
 # Các quy tắc đã chốt với chủ đồ án không bị đổi qua API cấu hình tổng quát.
 FIXED = {'APPOINTMENT_HOLD_MINUTES': '10', 'DEFAULT_DEPOSIT_PERCENT': '100',
          'NO_SHOW_FORFEIT_DEPOSIT': 'true', 'CHECKIN_EARLY_MINUTES': '30',
          'CHECKIN_LATE_MINUTES': '0', 'MAX_REVIEW_RATING': '5',
          'CANCEL_HOURS_LIMIT': '12', 'CANCEL_REFUND_PERCENT': '50', 'NO_SHOW_GRACE_MINUTES': '15'}
-EDITABLE = {'HOSPITAL_NAME', 'SUPPORT_PHONE', 'REMINDER_BEFORE_HOURS', 'ALLOW_WALK_IN'}
+EDITABLE = {'HOSPITAL_NAME', 'SUPPORT_PHONE', 'SUPPORT_EMAIL', 'EXAM_HOURS', 'REMINDER_BEFORE_HOURS', 'ALLOW_WALK_IN'}
 
 
 def validate_configuration(key, data):
@@ -26,4 +26,6 @@ def validate_configuration(key, data):
         value = str(int(value))
     if key == 'SUPPORT_PHONE' and len(value) > 30:
         raise bad_request('SUPPORT_PHONE tối đa 30 ký tự')
+    if key == 'SUPPORT_EMAIL':
+        value = normalize_email(value, key)
     return value

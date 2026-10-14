@@ -1,5 +1,45 @@
 import { ApiError } from "./api.js";
 
+// Mouse dragging scrolls the day strip without accidentally selecting a day.
+// Touch scrolling and keyboard activation keep their native behavior.
+export function enableDragScroll(strip) {
+  let drag, suppressClick = false;
+  strip.addEventListener("pointerdown", event => {
+    if (event.pointerType !== "mouse" || event.button !== 0 || strip.scrollWidth <= strip.clientWidth) return;
+    if (event.clientY - strip.getBoundingClientRect().top >= strip.clientHeight) return;
+    suppressClick = false;
+    drag = { id: event.pointerId, x: event.clientX, scroll: strip.scrollLeft, moved: false };
+  });
+  window.addEventListener("pointermove", event => {
+    if (!drag || event.pointerId !== drag.id) return;
+    const distance = event.clientX - drag.x;
+    if (!drag.moved && Math.abs(distance) < 6) return;
+    if (!drag.moved) {
+      drag.moved = true;
+      strip.setPointerCapture(drag.id);
+      strip.classList.add("is-dragging");
+    }
+    event.preventDefault();
+    strip.scrollLeft = drag.scroll - distance;
+  }, { passive: false });
+  function finish(event) {
+    if (!drag || event.pointerId !== drag.id) return;
+    const id = drag.id;
+    suppressClick = drag.moved;
+    drag = undefined;
+    strip.classList.remove("is-dragging");
+    if (strip.hasPointerCapture(id)) strip.releasePointerCapture(id);
+  }
+  window.addEventListener("pointerup", finish);
+  window.addEventListener("pointercancel", finish);
+  strip.addEventListener("lostpointercapture", finish);
+  strip.addEventListener("click", event => {
+    if (!suppressClick || event.detail === 0) return;
+    suppressClick = false;
+    event.preventDefault(); event.stopPropagation();
+  }, true);
+}
+
 // Read every backend page so a doctor's later shifts and a patient's profiles are not lost.
 export async function allPages(load, params = {}, options = {}) {
   const items = [];

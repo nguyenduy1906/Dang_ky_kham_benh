@@ -241,7 +241,7 @@ erDiagram
 
     REVIEW {
         integer review_id PK "NOT NULL"
-        integer record_id FK "NOT NULL; UNIQUE"
+        integer record_id FK "NOT NULL"
         integer rating "NOT NULL; 1-5"
         text comment
         timestamptz created_at "NOT NULL"
@@ -353,7 +353,7 @@ erDiagram
 
     ENCOUNTER ||--o| MEDICAL_RECORD : "tao_ho_so_kham"
     MEDICAL_RECORD ||--o{ PRESCRIPTION_ITEM : "co_thuoc"
-    MEDICAL_RECORD ||--o| REVIEW : "co_danh_gia"
+    MEDICAL_RECORD ||--o{ REVIEW : "co_danh_gia"
 
     USERS ||--o{ NOTIFICATION : "nhan_thong_bao"
     USERS ||--o{ ARTICLE : "dang_bai"
