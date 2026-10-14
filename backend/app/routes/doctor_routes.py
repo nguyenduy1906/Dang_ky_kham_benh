@@ -2,11 +2,12 @@
 
 from flask import Blueprint, jsonify, make_response, request, send_from_directory
 
-from backend.app.core import constants, uploads
+from backend.app.core import constants
+from backend.app.utils import uploads
 from backend.app.core.errors import not_found
 from backend.app.core.security import current_user, is_admin, optional_user, roles_required
 from backend.app.schemas import doctor_schema
-from backend.app.schemas.common_schema import bool_arg, optional_int_arg, page_params
+from backend.app.utils.validation import bool_arg, optional_int_arg, page_params
 from backend.app.services import doctor_service
 
 doctor_bp = Blueprint('doctor', __name__)
@@ -204,7 +205,32 @@ def get_avatar(filename):
     """
     if not uploads.FILENAME_RE.match(filename):
         raise not_found('Không tìm thấy ảnh')
-    response = make_response(send_from_directory(uploads.avatar_dir(), filename))
+    mime = {'jpg': 'image/jpeg', 'png': 'image/png', 'webp': 'image/webp'}[filename.rsplit('.', 1)[1]]
+    response = make_response(send_from_directory(uploads.avatar_dir(), filename, mimetype=mime))
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Cache-Control'] = 'public, max-age=86400'
     return response
+
+
+@doctor_bp.post('/admin/doctors/<int:doctor_profile_id>/avatar')
+@roles_required(constants.ROLE_ADMIN)
+def upload_admin_avatar(doctor_profile_id):
+    """ADMIN tải ảnh cho một bác sĩ (JPEG/PNG/WebP, tối đa 2 MB)
+    ---
+    tags:
+      - Doctors Admin
+    security:
+      - Bearer: []
+    consumes:
+      - multipart/form-data
+    parameters:
+      - {in: path, name: doctor_profile_id, type: integer, required: true}
+      - {in: formData, name: file, type: file, required: true}
+    responses:
+      200: {description: Đã lưu ảnh và cập nhật avatar_url}
+      400: {description: File ảnh không hợp lệ}
+      403: {description: Chỉ ADMIN được phép}
+      404: {description: Không tìm thấy bác sĩ}
+    """
+    return jsonify(doctor_service.upload_admin_avatar(
+        current_user(), doctor_profile_id, request.files.get('file')))

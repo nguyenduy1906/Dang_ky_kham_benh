@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Xem lại thông tin | NEU Medical</title>
+    <link rel="stylesheet" href="../../static/css/home.css?v=20261014-banner-sharp" />
+    <link rel="stylesheet" href="../../static/css/public-pages.css?v=20261014-interface-update" />
+    <link rel="stylesheet" href="../../static/css/patient-pages.css?v=20261014-review-modal" />
+    <script src="../../static/js/core/public.js?v=20261014-interface-update" defer></script>
+    <script type="module" src="../../static/js/pages/booking-review.js?v=20261014-interface-update"></script>
+  </head>
+  <body class="auth-pending booking-review-body">
+    <a class="skip-link" href="#main">Đến nội dung chính</a>
+    <header class="patient-header">
+      <div class="identity">
+        <a class="brand" href="portal.html">
+          <img class="brand-logo" src="../../static/assets/logo_neu.png" alt="Logo NEU Medical" width="68" height="68" />
+          <span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span>
+        </a>
+        <p class="patient-hotline">Hotline: <strong data-contact-field="support_phone">Đang tải…</strong></p>
+      </div>
+    </header>
+    <div id="booking-auth-status" class="section-wrap booking-auth-status" role="status">
+      <p>Đang kiểm tra đăng nhập…</p>
+      <button type="button" class="solid-button" hidden>Thử lại</button>
+      <noscript>Bạn cần bật JavaScript để xem lại thông tin đặt khám.</noscript>
+    </div>
+    <main id="main" class="booking-review-main">
+      <nav class="patient-breadcrumb" aria-label="Đường dẫn trang"><a href="booking.html">Đặt lịch khám</a><span aria-hidden="true">/</span><span aria-current="page">Xem lại thông tin</span></nav>
+    <section id="booking-review-page" class="booking-confirm-dialog booking-review-page" aria-labelledby="booking-dialog-title" hidden>
+      <div class="dialog-heading">
+        <h1 id="booking-dialog-title">Xem lại thông tin đặt khám</h1>
+      </div>
+      <div class="booking-review-grid">
+        <section class="booking-review-panel" aria-labelledby="booking-patient-title">
+          <h3 id="booking-patient-title"><span>1</span> Thông tin người khám &amp; triệu chứng</h3>
+          <div id="booking-review-patient"></div>
+        </section>
+        <div class="booking-review-right">
+          <section class="booking-review-panel" aria-labelledby="booking-visit-title">
+            <h3 id="booking-visit-title"><span>2</span> Thông tin lượt khám</h3>
+            <div id="booking-review"></div>
+          </section>
+
+        </div>
+      </div>
+      <p id="booking-dialog-status" role="status"></p>
+      <footer class="booking-review-footer">
+        <div class="booking-dialog-actions">
+          <button id="booking-back" type="button" class="outline-button">← Quay lại chọn lịch</button>
+          <button id="booking-refresh" type="button" class="outline-button" hidden>Cập nhật trạng thái</button>
+          <button id="booking-cancel" type="button" class="outline-button" hidden>Hủy giữ chỗ</button>
+        </div>
+        <div class="booking-review-checkout">
+          <div><span>Tổng tiền khám</span><strong id="booking-review-total"></strong></div>
+          <button id="booking-confirm" type="button" class="solid-button">Thanh toán →</button>
+        </div>
+        <p id="booking-confirm-note">Khi bấm thanh toán, lịch được giữ trong 10 phút. Thanh toán 100% giá khám để xác nhận lịch.</p>
+      </footer>
+    </section>
+    </main>
+    <dialog id="booking-payment-modal" class="booking-payment-modal" aria-labelledby="booking-payment-modal-title">
+      <div class="dialog-heading">
+        <h2 id="booking-payment-modal-title">Thanh toán lịch khám</h2>
+        <button id="booking-payment-close" type="button" class="dialog-close" aria-label="Đóng thanh toán">×</button>
+      </div>
+      <section id="booking-payment" class="booking-review-panel" aria-labelledby="booking-payment-title" hidden>
+        <h3 id="booking-payment-title">Thông tin thanh toán</h3>
+        <p id="booking-countdown" role="status"></p>
+        <div id="booking-qr" class="booking-qr" hidden></div>
+        <label for="booking-payment-method">Phương thức thanh toán</label>
+        <select id="booking-payment-method">
+          <option value="BANK">Chuyển khoản</option>
+          <option value="EWALLET">Ví điện tử</option>
+          <option value="CARD">Thẻ</option>
+        </select>
+        <button id="booking-payment-create" type="button" class="solid-button">Tạo phiên thanh toán</button>
+        <div id="booking-payment-result" hidden>
+          <p>Chọn kết quả để cập nhật trạng thái giao dịch trên hệ thống.</p>
+          <button id="booking-payment-success" type="button" class="solid-button">Xác nhận thanh toán thành công</button>
+          <button id="booking-payment-failed" type="button" class="outline-button">Thanh toán không thành công</button>
+        </div>
+      </section>
+      <section id="booking-success" class="booking-success" aria-labelledby="booking-success-title" hidden>
+        <span class="booking-success-icon" aria-hidden="true">✓</span>
+        <h3 id="booking-success-title">Đăng ký khám thành công</h3>
+        <p>Thanh toán đã được hệ thống xác nhận và lịch khám đã được đăng ký. Bạn có thể xem mã phiếu trong lịch đã đăng ký.</p>
+        <div class="booking-success-actions">
+          <a class="outline-button" href="portal.html">Quay lại trang chủ</a>
+          <a class="solid-button" href="appointments.html">Kiểm tra lịch khám →</a>
+        </div>
+      </section>
+      <p id="booking-payment-status" role="status"></p>
+    </dialog>
+    <footer class="compact-footer">
+      <div class="compact-footer-wrap">
+        <div class="compact-footer-grid">
+          <section class="footer-column footer-hospital" aria-label="Thông tin bệnh viện">
+            <h3 data-contact-field="hospital_name">Bệnh viện NEU Medical</h3>
+            <div class="footer-contact-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M19 10c0 6-7 11-7 11S5 16 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></svg><span>207 đường Giải Phóng, phường Bạch Mai, Hà Nội.</span></div>
+            <div class="footer-contact-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 3 3 5-2 2c2 4 3 5 7 7l2-2 5 3c0 4-4 5-7 3C5 17 1 8 3 5z"/></svg><span data-contact-field="support_phone">Đang tải…</span></div>
+            <div class="footer-contact-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 5h18v14H3zM3 5l9 8 9-8"/></svg><span data-contact-field="support_email">Đang tải…</span></div>
+            <div class="footer-contact-row" id="footer-hours"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div><strong>Giờ khám bệnh</strong><span data-contact-field="exam_hours">Đang tải…</span></div></div>
+          </section>
+          <section class="footer-column" aria-label="Về chúng tôi">
+            <h3>Về chúng tôi</h3>
+            <nav class="footer-nav" aria-label="Tìm hiểu bệnh viện">
+              <a href="../public/about.html">Giới thiệu bệnh viện</a>
+              <a href="../public/departments.html">Chuyên khoa</a>
+              <a href="../public/doctors.html">Đội ngũ bác sĩ</a>
+              <a href="../public/news.html">Tin tức sức khỏe</a>
+              <button type="button" data-panel="guide">Hướng dẫn khám bệnh</button>
+            </nav>
+          </section>
+          <section class="footer-column" aria-label="Chăm sóc khách hàng">
+            <h3>Chăm sóc khách hàng</h3>
+            <nav class="footer-nav" aria-label="Hỗ trợ người bệnh">
+              <a href="portal.html">Đặt lịch khám</a>
+              <a href="../public/contact.html#consultation">Đăng ký tư vấn</a>
+              <a href="../public/contact.html">Liên hệ hỗ trợ</a>
+              <button type="button" data-panel="privacy">Chính sách bảo mật</button>
+              <button type="button" data-panel="terms">Điều khoản sử dụng</button>
+              <button type="button" data-panel="insurance">Thông tin bảo hiểm y tế</button>
+            </nav>
+          </section>
+          <section class="footer-column footer-location" aria-label="Vị trí bệnh viện">
+            <h3>Kết nối với chúng tôi</h3>
+            <a class="footer-map-link" href="https://www.google.com/maps/search/?api=1&amp;query=207+Giai+Phong+Ha+Noi" target="_blank" rel="noopener noreferrer">Mở trên Google Maps ↗</a>
+            <iframe class="footer-map" title="Bản đồ NEU Medical tại 207 Giải Phóng, Hà Nội" src="https://maps.google.com/maps?q=207%20Giai%20Phong%20Ha%20Noi&amp;output=embed" loading="lazy" referrerpolicy="no-referrer"></iframe>
+          </section>
+        </div>
+        <p class="contact-info-status" data-contact-status role="status" hidden></p>
+        <button type="button" class="contact-info-retry" data-contact-retry hidden>Thử lại thông tin liên hệ</button>
+        <div class="compact-footer-bottom"><span>© 2026 NEU Medical. Tất cả quyền được bảo lưu.</span></div>
+      </div>
+    </footer>
+    <dialog id="info-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-heading">
+        <h2 id="dialog-title"></h2>
+        <button class="dialog-close" aria-label="Đóng">×</button>
+      </div>
+      <div id="dialog-content"></div>
+      <form method="dialog"><button class="dialog-done">Đóng</button></form>
+    </dialog>
+  </body>
+</html>

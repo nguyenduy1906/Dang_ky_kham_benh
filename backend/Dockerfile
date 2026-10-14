@@ -8,4 +8,4 @@ COPY backend backend
 COPY database database
 USER appuser
 EXPOSE 5000
-CMD ["sh", "-c", "python -m backend.app.db.init_db && python -m backend.app.db.seed_db && exec gunicorn --bind 0.0.0.0:5000 --workers 2 --access-logfile - --error-logfile - 'backend.app.main:create_app()'"]
+CMD ["python", "-m", "backend.app.utils.server"]

@@ -1,8 +1,31 @@
+> Cập nhật 12/10/2026: người dùng đã đổi sang đặt khung giờ và phát phiếu, bỏ cấp số thứ tự. Quy tắc mới có ưu tiên hơn các nội dung cũ bên dưới: [THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md](THAY_DOI_PHIEU_KHUNG_GIO_12_10_2026.md).
+
 # Kế hoạch API và phân công backend
+
+**Frontend 12/10/2026:** người dùng yêu cầu trang chọn chức năng riêng cho liên kết Đặt lịch khám, các khối chỉ có chữ. Giao diện đặt lịch cũ giữ riêng, chưa nối vào trang này. Chưa tích hợp API hoặc bổ sung API truyền hóa chất. Chi tiết: [FRONTEND_CONG_DAT_KHAM_12_10_2026.md](FRONTEND_CONG_DAT_KHAM_12_10_2026.md). Quyết định này mở phạm vi frontend theo yêu cầu mới, giữ các đường dẫn API trực tiếp đã chốt.
+
+**Cấu trúc theo tầng mới nhất 11/10/2026:** đã thống nhất 12 nhóm ở `routes`, `schemas`, `services`, `models`, giữ hậu tố theo tầng. Xem [bảng file hiện tại](CAU_TRUC_BACKEND.md). 23/23 test hiện có và hai ca tích hợp bổ sung đạt trên PostgreSQL 18 tạm; đăng ký 98 rule Flask và 82 path Swagger giữ nguyên. Chi tiết/giới hạn xem mục 18 [báo cáo gộp](BAO_CAO_GOP_MODULE_ABC.md). Những đoạn ghi lịch sử A/B/C, D1/D2 bên dưới dùng tên ở thời điểm cũ; các mục File chính đã cập nhật vị trí hiện tại.
+
+**Tiện ích dùng chung cập nhật 11/10/2026:** thời gian ở `utils/date.py`; kiểm tra dữ liệu và phân trang tổng quát ở `utils/validation.py`; xử lý avatar ở `utils/uploads.py`; adapter email giả lập ở `utils/mail.py`. Các đường dẫn thuộc `backend/app`; import ứng dụng và kiểm thử đã cập nhật. Các schema/service nghiệp vụ tiếp tục ở folder hiện tại; chưa tách thêm hàm. Đợt chuyển vị trí xem mục 15; lần đổi tên mới nhất xem mục 17 `BAO_CAO_GOP_MODULE_ABC.md`.
+
+**Vị trí module cập nhật 11/10/2026:** model tài khoản/token là `models/auth_model.py`; SQL/JSON dùng chung là `utils/database_helpers.py`; helper Swagger gói 5 là `utils/swagger_helpers.py` (đều trong `backend/app`, tên helper cũ là `package5_docs.py`). Các import đã chuyển theo vị trí mới; chức năng và đường dẫn API giữ nguyên. Kết quả kiểm tra đổi vị trí xem mục 14; đổi tên Swagger xem mục 16; đổi tên SQL/email/thời gian xem mục 17 của `BAO_CAO_GOP_MODULE_ABC.md`.
+
+**Kiểm thử sau gộp module 10/10/2026:** 23/23 test đạt trên PostgreSQL 17 tạm.
+Bao gồm hồi quy lượt khám/quota/log/quyền, luồng bệnh án–thuốc–hoàn tất–bổ sung
+với version và lịch sử trước/sau, CRUD danh mục chuyên khoa/phòng và quyền xem
+ngừng hoạt động, nhắc lịch lặp không tạo thêm thông báo, kiểm tra đầu vào admin
+và seed không ghi đè tài khoản. Bộ test hiện có chưa bao phủ mọi tiêu chí của cả
+5 gói. Không reset database hoặc rebuild dịch vụ chính trong lần này.
+
+**Database 09/10/2026:** schema 20 bảng của cả 5 gói đã gộp đầy đủ vào database/init_db.sql; không còn ALTER TABLE nâng cấp bảng cũ. Người dùng chọn khởi tạo lại từ đầu theo [hướng dẫn chạy](HUONG_DAN_CHAY_DU_AN.md). Lần sửa file này chưa reset, nạp mẫu hay rebuild.
+
+**Gói 3:** 14 route đã được triển khai theo [quy tắc đã chốt](QUY_TAC_GOI_3_DA_CHOT.md). Thanh toán xác nhận dùng adapter cùng transaction cho gói 4; bệnh án/hoàn tất thuộc gói 5. Trạng thái xác minh xem [báo cáo triển khai gói 3](BAO_CAO_TRIEN_KHAI_GOI_3.md), không suy ra nghiệm thu chỉ từ việc có route.
 
 Hiện đã có khởi tạo/seed PostgreSQL, 20 bảng, GET /health và Swagger /docs/.
 Các API dưới đây là kế hoạch cần triển khai, chưa phải chức năng đã hoàn thành.
-Chỉ làm backend và database. Mọi đường dẫn nghiệp vụ dùng tiền tố /api/v1.
+Chỉ làm backend và database. Cả 5 gói dùng trực tiếp các đường dẫn nghiệp vụ
+ghi bên dưới (ví dụ /auth/login, /me, /patients, /encounters), không thêm tiền tố
+/api/v1 hoặc /v1. Đây là quy ước đã chốt ngày 08/10/2026.
 
 ## 1. Phạm vi đã thống nhất
 
@@ -14,6 +37,7 @@ Chỉ làm backend và database. Mọi đường dẫn nghiệp vụ dùng tiề
   Chỉ bác sĩ có avatar. Hồ sơ bệnh nhân là patient, khác hồ sơ tài khoản.
 - BHYT chỉ lưu mã thẻ trong patient.health_insurance, không tính quyền lợi BHYT.
 - Thanh toán, hoàn tiền, email/OTP là giả lập; không tích hợp ngân hàng/email thật.
+- Cấu hình thống nhất 10/10/2026: `SEND_EMAIL=1` bật log email/OTP và API kết quả thanh toán giả lập. Mẫu `.env.example` đặt `1`; thiếu biến hoặc khác `1` thì tắt. Worker dùng email riêng `medical_booking@gmail.com` (LOCKED, không đăng nhập).
 - encounter là lượt khám chung cho ONLINE và WALK_IN; hai luồng xử lý riêng.
 
 ## 2. Cách chia việc
@@ -42,9 +66,10 @@ Các file ghi bên dưới là vị trí cần tạo, không có nghĩa file/API
 - PATCH /admin/users/{id}/account-status; DELETE /admin/users/{id} (soft delete).
 - GET /admin/roles. Thêm /auth/refresh nếu nhóm chọn cơ chế refresh token.
 
-**File chính:** routes/auth_routes.py, routes/user_admin_routes.py;
-services/auth_service.py, user_admin_service.py; models/user_model.py,
-auth_token_model.py; schemas/auth_schema.py, user_admin_schema.py.
+**File chính:** routes/auth_routes.py (xác thực, /me và quản trị tài khoản);
+services/auth_service.py (xác thực, hồ sơ và quản trị tài khoản);
+models/auth_model.py (users, role và auth_token); schemas/auth_schema.py
+(xác thực, hồ sơ và quản trị tài khoản).
 Các đường dẫn này nằm trong backend/app/.
 
 **Phần dùng chung do gói 1 tích hợp:** core/security.py, core/errors.py,
@@ -73,16 +98,50 @@ Cung cấp adapter giả lập chỉ dùng môi trường demo để lấy mã/l
 - GET/POST /admin/nurse-assignments; POST /admin/nurse-assignments/{id}/revoke.
 - GET /nurse/assignments.
 
-**File chính:** routes/{patient,department,doctor,room,schedule,nurse_assignment}_routes.py;
-services/{patient,department,doctor,room,schedule,nurse_assignment}_service.py;
-models/{patient,department,doctor,room,schedule,nurse_assignment}_model.py;
-schemas tương ứng. Dùng thư mục backend/app/.
+**File chính:** routes/{patient,catalog,doctor,schedule}_routes.py;
+services/{patient,catalog,doctor,schedule}_service.py;
+models/{patient,catalog,doctor,schedule}_model.py;
+schemas/{patient,catalog,doctor,schedule}_schema.py. Phân công y tá dùng
+trọn nhóm schedule; hồ sơ bác sĩ có doctor_schema riêng. Dùng thư mục backend/app/.
 
-**Nghiệm thu:** USER chỉ quản lý hồ sơ mình sở hữu; walk-in không cần tài khoản;
+**Nghiệm thu cập nhật 12/10/2026:** họ tên/số điện thoại và CCCD hoặc ngày sinh xác định hồ sơ; tự tạo/dùng lại tài khoản USER theo số điện thoại, không báo mật khẩu ngẫu nhiên. Số gia đình dùng chung có xác nhận và nhiều patient_id riêng; chọn lại hồ sơ đã lưu. Người đặt hộ khác số chỉ xem các lượt mình đặt. Khôi phục mật khẩu nhận email hoặc số điện thoại và phải xác minh OTP. Quy tắc mới thay phần sở hữu cũ: [THAY_DOI_TAI_KHOAN_HO_SO_12_10_2026.md](THAY_DOI_TAI_KHOAN_HO_SO_12_10_2026.md).
+
+**Nghiệm thu khác:** USER sửa hồ sơ mình sở hữu; walk-in không yêu cầu bệnh nhân tự đăng ký trước;
 archive không mất bệnh án; BHYT được lưu/cập nhật; bác sĩ/phòng không chồng ca;
 không hạ quota dưới booked_count; y tá được giao phải có vai trò NURSE.
 Upload avatar kiểm tra nội dung/kích thước, sinh tên file, lưu bền vững qua volume.
 Ca có lượt khám không được sửa tùy ý làm sai lịch; phối hợp gói 3 xử lý ca báo nghỉ.
+
+**Trạng thái đối chiếu ngày 08/10/2026:** đã có route cho đủ 30 API gói 2.
+Nhóm phân công y tá đã bổ sung route/service/model/schema và kiểm thử PostgreSQL:
+ADMIN tạo/xem/thu hồi; chỉ nhận tài khoản NURSE đang hoạt động, đã duyệt;
+phân công đang hiệu lực trùng trả 409 kể cả hai yêu cầu đồng thời; thu hồi giữ
+người/thời điểm và cho phép tạo phân công mới. NURSE chỉ xem phân công của mình,
+mặc định chưa thu hồi; include_revoked=true cho phép xem lịch sử.
+Kiểm thử: backend/tests/test_nurse_assignment.py và bộ hồi quy test_postgres.py,
+7 test đạt trên PostgreSQL tạm. Chưa nghiệm thu toàn bộ 30 API: còn cần kiểm tra
+quyền xem bệnh nhân/lịch sử theo phân công, phân trang lịch công khai, xác minh
+ảnh avatar hợp lệ và tích hợp xử lý ca báo nghỉ với gói 3.
+
+Cập nhật sau kiểm thử Swagger: đã sửa quyền NURSE theo ca chưa thu hồi (cả
+danh sách/chi tiết patient và lịch sử encounter), tổng số/phân trang lịch công
+khai bỏ CLOSED trong SQL, và xác minh/giải mã avatar bằng Pillow. 10 test hồi quy
+đạt; thử lại Swagger lần lượt trả 404 khi hết quyền, total=0 khi lọc CLOSED,
+400 INVALID_IMAGE với PNG giả. Mục tham số page/page_size trong Swagger lịch
+công khai chưa sửa theo yêu cầu người dùng. Chi tiết và giới hạn còn lại xem
+BAO_CAO_KIEM_THU_GOI_2_SWAGGER.md; chưa nghiệm thu tích hợp ca báo nghỉ gói 3.
+
+Ví dụ body POST /admin/nurse-assignments (Bearer token ADMIN):
+`{"nurse_id": 12, "schedule_id": 1, "note": "Hỗ trợ trong ca"}`.
+ID phải lấy từ dữ liệu thực tế; assigned_by_id/assigned_at/revoked_by_id/revoked_at
+do server xác định, không nhận từ body. Thu hồi dùng
+POST /admin/nurse-assignments/{id}/revoke, không cần body; thu hồi lặp trả 409.
+Danh sách hỗ trợ schedule_id, page, page_size, include_revoked; ADMIN lọc thêm
+nurse_id. GET /nurse/assignments luôn dùng ID y tá đăng nhập.
+
+Chạy toàn bộ kiểm thử trong môi trường Docker đã có backend và PostgreSQL:
+`docker compose exec -e RUN_POSTGRES_TESTS=1 backend python -m unittest discover -s backend/tests -v`.
+Kiểm thử dùng schema tạm và tự dọn; không cần thay schema chính để thêm các API này.
 
 ### Gói 3 — Đặt lịch và tiếp nhận
 
@@ -97,13 +156,15 @@ Ca có lượt khám không được sửa tùy ý làm sai lịch; phối hợp
 - GET /staff/schedules/{id}/affected-encounters.
 - POST /doctor/encounters/{id}/start (dùng chung với gói 5).
 
-**File chính:** routes/encounter_routes.py, reception_routes.py;
-services/encounter_service.py, reception_service.py; models/encounter_model.py,
-encounter_log_model.py; schemas/encounter_schema.py, reception_schema.py;
-jobs/encounter_jobs.py. Tất cả nằm trong backend/app/.
+**File chính:** routes/encounter_routes.py;
+services/encounter_service.py (đặt online, tiếp nhận và điều phối); models/encounter_model.py
+(gồm SQL lượt khám và log trạng thái/chuyển bác sĩ); schemas/encounter_schema.py
+(gồm online, walk-in và chuyển bác sĩ); utils/worker.py.
+Tất cả nằm trong backend/app/.
 
 **Luồng online:** HOLDING → thanh toán cọc giả lập → CONFIRMED → CHECKED_IN
 → IN_PROGRESS → COMPLETED. HOLDING quá hạn → EXPIRED, trả chỗ đúng một lần.
+Lịch gồm ca sáng/chiều; POST /encounters/online chỉ nhận khi còn ít nhất 5 giờ trước giờ bắt đầu ca (Asia/Saigon), đúng mốc được nhận, sau mốc và trong ca trả 409/SCHEDULE_TOO_LATE. Lượt đã HOLDING vẫn có 10 phút thanh toán. Cập nhật này theo quyết định 09/10/2026.
 
 **Luồng trực tiếp:** bệnh nhân không tự chọn ca; lễ tân/hệ thống chọn ca còn chỗ,
 tạo WALK_IN với CHECKED_IN và số sau các lịch online đã dành trong ca
@@ -114,9 +175,11 @@ Người đã đặt online đến check-in vẫn dùng encounter cũ, không t�
 cùng transaction với quota và log; check-in lặp không cấp thêm số; chuyển bác sĩ
 khóa ca cũ/mới theo thứ tự cố định và không vượt quota. Gói 3 sở hữu mọi thay đổi
 encounter_status/booked_count; các gói khác gọi service, không tự UPDATE các trường đó.
-Job nền chạy worker riêng, không tạo scheduler trong mỗi Gunicorn worker.
+Job nền chạy một tiến trình worker riêng bên trong container backend qua utils/server.py, không tạo scheduler trong mỗi Gunicorn worker. Docker Compose chỉ có db/backend theo yêu cầu 12/10/2026.
 
 ### Gói 4 — Thanh toán giả lập và thông báo
+
+**Trạng thái code:** đã triển khai 10 API, Swagger, xử lý tiền cùng transaction gói 3 và thông báo/nhắc lịch chống lặp. Người dùng chốt: hủy trước từ 12 giờ hoàn 50% cọc, dưới 12 giờ mất cọc; nguyên nhân bệnh viện/bác sĩ hoàn toàn bộ. Đối chiếu [báo cáo gói 4](BAO_CAO_TRIEN_KHAI_GOI_4.md). Chưa chạy kiểm thử theo yêu cầu chỉ viết code.
 
 **API:**
 
@@ -131,8 +194,9 @@ Job nền chạy worker riêng, không tạo scheduler trong mỗi Gunicorn work
 
 **File chính:** routes/payment_routes.py, notification_routes.py;
 services/payment_service.py, notification_service.py; models/payment_model.py,
-notification_model.py; schemas/payment_schema.py, notification_schema.py;
-jobs/payment_jobs.py nếu cần tác vụ mô phỏng. Dùng backend/app/.
+notification_model.py; validator thanh toán dùng schemas/payment_schema.py,
+thông báo dùng schemas/notification_schema.py;
+utils/worker.py để tạo thông báo nhắc lịch. Dùng backend/app/.
 
 **Nghiệm thu:** server chốt tiền, lưu snapshot; deposit + EXAM_FEE phần còn lại
 bằng giá khám; walk-in deposit = 0; mô phỏng kết quả lặp không thu hai lần hoặc
@@ -142,6 +206,8 @@ người dùng chỉ đọc thông báo của mình; nhắc lịch không gửi 
 Không xây webhook ngân hàng hay kết nối nhà cung cấp email thật.
 
 ### Gói 5 — Khám, nội dung và thống kê
+
+**Trạng thái code:** đã triển khai 18 API, Swagger và tích hợp complete với gói 3. Người dùng đồng ý bổ sung/sửa bệnh án đã hoàn tất trên cùng bệnh án, bắt buộc lý do/lịch sử trước-sau, giữ COMPLETED; lần khám mới tạo encounter mới. Version chống sửa từ dữ liệu cũ; thống kê tiền dùng số REFUND thực tế. Xem [báo cáo gói 5](BAO_CAO_TRIEN_KHAI_GOI_5.md). Chưa kiểm thử/rebuild theo yêu cầu chỉ viết code.
 
 **API:**
 
@@ -157,10 +223,33 @@ Không xây webhook ngân hàng hay kết nối nhà cung cấp email thật.
 - GET /admin/statistics/encounters, /admin/statistics/payments,
   /admin/statistics/reviews, /admin/audit/encounters.
 
-**File chính:** routes/{medical_record,review,article,configuration,statistics}_routes.py;
-services và schemas tương ứng; models/medical_record_model.py,
-prescription_model.py, review_model.py, article_model.py, configuration_model.py,
+**File chính:** routes/{medical_record,article,configuration,statistics}_routes.py;
+services và schemas tương ứng; models/medical_record_model.py (gồm bệnh án, thuốc và đánh giá),
+article_model.py, configuration_model.py,
 statistics_model.py. Dùng backend/app/.
+
+**Lịch sử gộp A/B/C ngày 11/10/2026, trước lần chuẩn hóa theo tầng:** tài khoản/token dùng model `auth_model` (trước đây `user_model`), dữ liệu
+xác thực/quản trị dùng schema `auth_schema`, nghiệp vụ xác thực/quản trị dùng
+service `auth_service`. Phân công y tá dùng chung route/service `schedule`,
+model/schema phân công vẫn riêng. SQL và validator đánh giá đặt trong
+`medical_record_model.py` và `medical_record_schema.py`, service/route đánh giá
+vẫn riêng. Chỉ chuyển nguyên hàm và cập nhật import/đăng ký Blueprint; giữ nguyên
+tên hàm, SQL, quyền, transaction và endpoint. Không thay schema database.
+
+**Lịch sử gộp D1/D2 ngày 11/10/2026, trước lần chuẩn hóa theo tầng:** hồ sơ bác sĩ
+và phân công y tá dùng `staff_schema.py`; validator thanh toán đặt trong
+`encounter_schema.py` cùng validator lượt khám. Giữ nguyên nội dung hàm và các
+giá trị cấu hình; chỉ cập nhật import. Service/model/route giữ như trước.
+
+**Gộp file 10/10/2026:** SQL bệnh án/thuốc dùng chung `medical_record_model.py`,
+kiểm tra body bệnh án/thuốc dùng `medical_record_schema.py`; SQL lượt khám/log dùng
+`encounter_model.py`, kiểm tra body online/walk-in/chuyển bác sĩ dùng
+`encounter_schema.py`. Giữ nguyên API, schema database, quyền, transaction,
+version và lịch sử sửa. Chuyên khoa/phòng dùng các module `catalog_*` tương ứng
+trong routes/services/models/schemas. Tác vụ hết hạn giữ chỗ và nhắc lịch gộp vào
+`utils/worker.py`; worker vẫn chạy process riêng, mỗi tác vụ giữ transaction riêng.
+Tạo admin ban đầu dùng `python -m backend.app.db.seed_db --admin`, xử lý trong
+`db/db_service.py`, không ghi đè tài khoản đã có.
 
 **Nghiệm thu:** bác sĩ chỉ sửa lượt khám được giao; mỗi encounter có một bệnh án;
 thuốc có số lượng dương; complete qua service của gói 3; chỉ đánh giá sau hoàn tất;
@@ -210,14 +299,13 @@ job chạy lặp không trả quota hoặc gửi thông báo nhiều lần.
 ## 5. Quy tắc cần nhóm chốt trước khi code
 
 - Mức cọc: dữ liệu mẫu dùng 30%, chưa coi là chính sách bắt buộc của hệ thống.
-- Hủy trước bao lâu được hoàn cọc; no-show có mất cọc không.
+- Hoàn cọc đã chốt ở gói 4: bệnh nhân hủy từ 12 giờ trước giờ hẹn hoàn 50%; dưới 12 giờ/no-show không hoàn; nguyên nhân bệnh viện/bác sĩ hoàn toàn bộ. Giờ tham chiếu lưu tại thời điểm hủy.
 - Check-in sớm/trễ và thời điểm tính no-show.
 - Walk-in đã chốt được hệ thống gắn ca. Online dành số khi xác nhận, check-in giữ
   số đó. Cần chốt việc chuyển người đang chờ sang ca sau và nhận online muộn.
   Schema bắt buộc schedule_id NOT NULL; API mới phải gắn ca theo luồng đã chốt.
 - Y tá được sửa những trường/thao tác nào; chưa cho sửa chẩn đoán và đơn thuốc.
-- Bệnh án được bổ sung/sửa sau hoàn tất theo yêu cầu người dùng; cần chốt cách
-  mở lại lượt khám hoặc tạo lượt mới và lưu lịch sử thay đổi.
+- Bệnh án đã chốt ở gói 5: bác sĩ phụ trách bổ sung/sửa cùng record, có lý do/version và lưu trước-sau; không mở lại COMPLETED. Lần khám mới tạo encounter mới.
 - Chuyển bác sĩ khác giá: đề xuất giữ giá đã chốt cho phạm vi đồ án.
 - Job tự động dùng danh tính hệ thống thế nào: changed_by_id hiện bắt buộc users;
   chưa có tài khoản hệ thống trong dữ liệu mẫu. Không giả danh người thao tác.

@@ -1,0 +1,8 @@
+# Quy tắc làm việc trong dự án
+
+- Trước khi thay đổi bất kỳ phần nào, đọc và đối chiếu các báo cáo, tài liệu nghiệp vụ trong `docs/`, đặc biệt `BAO_CAO_NGHIEP_VU.md`, `TONG_HOP_PHAN_TICH_NGHIEP_VU.txt` và `DANH_SACH_API_VA_PHAN_CONG_BACKEND.md`. Đọc thêm `HUONG_DAN_CHAY_DU_AN.md` khi liên quan cấu hình chạy, database hoặc tích hợp.
+- Xác định yêu cầu nghiệp vụ và tiêu chí nghiệm thu liên quan trước khi sửa; đối chiếu code/schema thực tế với tài liệu, không coi chức năng đã hoàn thành chỉ vì có file, bảng hoặc route.
+- Sau khi sửa, kiểm thử phù hợp với các quy tắc nghiệp vụ và tiêu chí nghiệm thu trong `docs/`. Báo rõ phần đã kiểm thử và phần chưa thể xác minh; không khẳng định hoàn thành nếu còn kiểm tra bắt buộc chưa thực hiện.
+- Yêu cầu mới của người dùng có ưu tiên cao hơn tài liệu cũ. Theo lựa chọn ngày 12/10/2026, từ các lần làm việc sau không tự cập nhật file trong `docs/`; chỉ sửa tài liệu khi người dùng yêu cầu rõ. Vẫn đọc tài liệu để đối chiếu, nhưng áp dụng yêu cầu mới khi có mâu thuẫn và báo thay đổi trong kết quả công việc.
+- Cả 5 gói API dùng đường dẫn trực tiếp như `/auth/login`, `/me`, `/admin/users`, `/patients`, `/encounters`; không thêm tiền tố `/api/v1` hoặc `/v1`.
+- Giai đoạn frontend hiện tại chỉ làm giao diện và tương tác trình bày. Giữ các trang, HTML/CSS và hiệu ứng đã làm; không tự nối API, thêm API giả lập, tạo phiên đăng nhập hoặc áp dụng luồng nghiệp vụ. Chỉ làm phần đó khi người dùng giao yêu cầu riêng.

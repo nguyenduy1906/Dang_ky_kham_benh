@@ -9,6 +9,7 @@ import psycopg
 from psycopg import sql
 from werkzeug.security import check_password_hash
 from backend.app.core.config import postgres_options
+from backend.app.core.errors import AppError
 from backend.app.db.database import get_db_connection
 from backend.app.db.db_service import init_database, seed_database
 from backend.app.main import create_app
@@ -36,7 +37,7 @@ class PostgresTests(unittest.TestCase):
     def test_erd_repeat_and_health(self):
         html = (Path(__file__).resolve().parents[2] / 'database/erd.html').read_text(encoding='utf-8')
         entities = re.findall(r'^    ([A-Z_]+) \{\n(.*?)^    \}', html, re.M | re.S)
-        self.assertEqual(len(entities), 20)
+        self.assertEqual(len(entities), 22)
         with get_db_connection() as db:
             for name, body in entities:
                 expected = set(re.findall(r'^\s+\w+ (\w+)', body, re.M))
@@ -72,6 +73,21 @@ class PostgresTests(unittest.TestCase):
             self.assertEqual(db.execute("SELECT password_hash FROM users WHERE email='admin@example.test'").fetchone()['password_hash'], original)
             self.assertEqual(db.execute('SELECT title FROM article').fetchone()['title'], 'Edited')
 
+    def test_seed_admin_validates_before_writing(self):
+        options = dict(admin_email='admin@example.test', admin_name='Admin', admin_password='Valid-password-123')
+        for invalid in ({'admin_email': 'invalid'}, {'admin_name': ' '},
+                        {'admin_password': 'Short123'}, {'admin_password': '123456789012'}):
+            with self.subTest(invalid=invalid), self.assertRaises((AppError, ValueError)):
+                seed_database(**{**options, **invalid})
+        with get_db_connection() as db:
+            self.assertEqual(db.execute('SELECT COUNT(*) n FROM users').fetchone()['n'], 0)
+        seed_database(**options)
+        with get_db_connection() as db:
+            user = db.execute("SELECT u.*,r.role_name FROM users u JOIN role r ON r.role_id=u.role_id WHERE email='admin@example.test'").fetchone()
+            self.assertEqual(user['role_name'], 'ADMIN')
+            self.assertEqual(user['approval_status'], 'APPROVED')
+            self.assertEqual(user['email_verified'], 0)
+
     def test_constraints_and_update_trigger(self):
         with get_db_connection() as db:
             department = db.execute("INSERT INTO department(name,updated_at) VALUES ('Test','2000-01-01') RETURNING department_id").fetchone()['department_id']
@@ -94,9 +110,24 @@ class PostgresTests(unittest.TestCase):
         with get_db_connection() as db:
             db.execute(sample)
             db.execute(sample)
-            self.assertEqual(db.execute('SELECT count(*) AS n FROM users').fetchone()['n'], 15)
+            self.assertEqual(db.execute('SELECT count(*) AS n FROM users').fetchone()['n'], 39)
             self.assertEqual(db.execute('SELECT count(*) AS n FROM encounter').fetchone()['n'], 10)
             self.assertEqual(db.execute("SELECT count(*) AS n FROM encounter WHERE schedule_id IS NULL").fetchone()['n'], 0)
+            demo = db.execute("""
+                WITH demo_dates AS (
+                    SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date AS today
+                )
+                SELECT count(*) AS n, min(work_date) AS first_day, max(work_date) AS last_day,
+                       bool_and(booked_count=0 AND schedule_status='OPEN' AND max_quota=210/slot_minutes) AS available,
+                       (SELECT today+1 FROM demo_dates) AS expected_first,
+                       (SELECT (today+INTERVAL '1 month')::date FROM demo_dates) AS expected_last
+                FROM work_schedule WHERE schedule_id > 10 AND doctor_profile_id<=10
+            """).fetchone()
+            self.assertEqual(demo['first_day'], demo['expected_first'])
+            self.assertEqual(demo['last_day'], demo['expected_last'])
+            self.assertEqual(demo['n'], ((demo['last_day'] - demo['first_day']).days + 1) * 20)
+            self.assertTrue(demo['available'])
+            self.assertEqual(db.execute("SELECT count(*) AS n FROM work_schedule WHERE schedule_id<=10 AND work_date BETWEEN '2026-09-20' AND '2026-09-29'").fetchone()['n'], 10)
             for row in db.execute('SELECT password_hash FROM users'):
                 self.assertTrue(check_password_hash(row['password_hash'], 'Demo-password-123!'))
             for kind in ('ONLINE', 'WALK_IN'):

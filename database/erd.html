@@ -77,6 +77,13 @@ erDiagram
         timestamptz updated_at "NOT NULL"
     }
 
+    PATIENT_DELEGATE {
+        integer patient_id PK, FK "NOT NULL"
+        integer user_id PK, FK "NOT NULL"
+        text relationship "NOT NULL; PARENT, CHILD, SPOUSE, OTHER"
+        timestamptz created_at "NOT NULL"
+    }
+
     %% ===== 3. BÁC SĨ, KHOA, PHÒNG =====
 
     DEPARTMENT {
@@ -86,6 +93,30 @@ erDiagram
         integer is_active "NOT NULL; 0 hoặc 1"
         timestamptz created_at "NOT NULL"
         timestamptz updated_at "NOT NULL"
+        text overview
+        text mission
+        text cover_image_url
+        text group_type
+        jsonb specialties
+        jsonb clinical_services
+        jsonb equipment
+        jsonb achievements
+        jsonb patient_guide
+        jsonb gallery
+        jsonb extra_sections
+        integer content_is_demo
+        integer version
+    }
+
+    DEPARTMENT_LEADERSHIP {
+        integer leadership_id PK
+        integer department_id FK
+        integer doctor_profile_id FK
+        text position
+        timestamptz appointed_at
+        integer appointed_by_id FK
+        timestamptz ended_at
+        integer ended_by_id FK
     }
 
     DOCTOR_PROFILE {
@@ -126,6 +157,7 @@ erDiagram
         time end_time "NOT NULL"
         integer max_quota "NOT NULL"
         integer booked_count "NOT NULL; cập nhật trong transaction"
+        integer slot_minutes "NOT NULL; 15 hoặc 30"
         text schedule_status "NOT NULL; OPEN, FULL, CLOSED, UNAVAILABLE"
         text unavailable_reason
         timestamptz created_at "NOT NULL"
@@ -133,7 +165,7 @@ erDiagram
     }
 
     %% ===== 5. LƯỢT KHÁM (gộp online + walk-in) =====
-    %% UNIQUE (schedule_id, queue_number)
+    %% UNIQUE active (schedule_id, estimated_exam_at)
     %% department suy ra từ doctor_profile
 
     ENCOUNTER {
@@ -148,13 +180,16 @@ erDiagram
         bigint deposit_amount_snapshot "VND; NULL với dữ liệu cũ chưa rõ giá"
         text symptoms
         text encounter_status "NOT NULL; HOLDING, CONFIRMED, CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW, EXPIRED"
-        integer queue_number
+        text ticket_code "UNIQUE; phát sau thanh toán"
+        timestamptz appointment_end_at "NOT NULL"
         timestamptz estimated_exam_at
         text qr_code
         timestamptz hold_expires_at "chỉ online"
         timestamptz checked_in_at
         integer cancelled_by_id FK
         text cancel_reason
+        text cancel_origin "PATIENT hoặc HOSPITAL; nguyên nhân hủy đã chốt"
+        timestamptz refund_reference_at "Giờ hẹn tại thời điểm hủy để tính hoàn cọc"
         timestamptz cancelled_at
         timestamptz created_at "NOT NULL"
         timestamptz updated_at "NOT NULL"
@@ -190,6 +225,12 @@ erDiagram
         text payment_method "NOT NULL; CASH, BANK, EWALLET, CARD"
         text transaction_status "NOT NULL; PENDING, SUCCESS, FAILED, REFUNDED"
         text transaction_code UK
+        integer original_payment_id FK "Giao dịch thu được hoàn; UNIQUE có điều kiện khi payment_type=REFUND"
+        integer created_by_id FK
+        integer processed_by_id FK
+        text reason
+        text failure_reason
+        timestamptz result_received_at
         timestamptz paid_at
         timestamptz refunded_at
         timestamptz created_at "NOT NULL"
@@ -205,6 +246,8 @@ erDiagram
         text treatment
         text doctor_notes
         timestamptz examined_at
+        integer version "NOT NULL; mặc định 0, không âm; chống ghi từ phiên bệnh án cũ"
+        jsonb revision_history "NOT NULL; mặc định mảng rỗng; lý do, người sửa, snapshot trước/sau"
         timestamptz created_at "NOT NULL"
         timestamptz updated_at "NOT NULL"
     }
@@ -222,7 +265,7 @@ erDiagram
 
     REVIEW {
         integer review_id PK "NOT NULL"
-        integer record_id FK "NOT NULL; UNIQUE"
+        integer record_id FK "NOT NULL"
         integer rating "NOT NULL; 1-5"
         text comment
         timestamptz created_at "NOT NULL"
@@ -234,6 +277,7 @@ erDiagram
     NOTIFICATION {
         integer notification_id PK "NOT NULL"
         integer user_id FK "NOT NULL"
+        text event_key "UNIQUE cùng user_id; chống thông báo lặp"
         text notification_type "NOT NULL"
         text title "NOT NULL"
         text content "NOT NULL"
@@ -302,8 +346,13 @@ erDiagram
     USERS ||--o{ AUTH_TOKEN : "co_token"
     USERS ||--o| DOCTOR_PROFILE : "co_ho_so_bac_si"
     USERS |o--o{ PATIENT : "so_huu_ho_so"
+    PATIENT ||--o{ PATIENT_DELEGATE : "duoc_dat_ho"
+    USERS ||--o{ PATIENT_DELEGATE : "chon_lai_nguoi_than"
 
     DEPARTMENT ||--o{ DOCTOR_PROFILE : "co_bac_si"
+    DEPARTMENT ||--o{ DEPARTMENT_LEADERSHIP : "lanh_dao_va_lich_su"
+    DOCTOR_PROFILE ||--o{ DEPARTMENT_LEADERSHIP : "duoc_bo_nhiem"
+    USERS ||--o{ DEPARTMENT_LEADERSHIP : "phan_cong_thu_hoi"
     DEPARTMENT ||--o{ ROOM : "co_phong_kham"
 
     DOCTOR_PROFILE ||--o{ WORK_SCHEDULE : "co_lich_lam_viec"
@@ -311,7 +360,7 @@ erDiagram
 
     PATIENT ||--o{ ENCOUNTER : "co_luot_kham"
     DOCTOR_PROFILE ||--o{ ENCOUNTER : "phu_trach_kham"
-    WORK_SCHEDULE |o--o{ ENCOUNTER : "thuoc_ca_kham"
+    WORK_SCHEDULE ||--o{ ENCOUNTER : "thuoc_ca_kham"
     ROOM |o--o{ ENCOUNTER : "kham_tai_phong"
     USERS |o--o{ ENCOUNTER : "tao_boi"
     USERS |o--o{ ENCOUNTER : "huy_boi"
@@ -325,10 +374,13 @@ erDiagram
     USERS ||--o{ ENCOUNTER_TRANSFER_LOG : "nguoi_chuyen"
 
     ENCOUNTER ||--o{ PAYMENT : "co_giao_dich"
+    PAYMENT |o--o{ PAYMENT : "hoan_giao_dich_goc"
+    USERS |o--o{ PAYMENT : "tao_giao_dich"
+    USERS |o--o{ PAYMENT : "xu_ly_giao_dich"
 
     ENCOUNTER ||--o| MEDICAL_RECORD : "tao_ho_so_kham"
     MEDICAL_RECORD ||--o{ PRESCRIPTION_ITEM : "co_thuoc"
-    MEDICAL_RECORD ||--o| REVIEW : "co_danh_gia"
+    MEDICAL_RECORD ||--o{ REVIEW : "co_danh_gia"
 
     USERS ||--o{ NOTIFICATION : "nhan_thong_bao"
     USERS ||--o{ ARTICLE : "dang_bai"

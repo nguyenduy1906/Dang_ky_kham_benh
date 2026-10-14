@@ -1,0 +1,401 @@
+import { listDoctors } from "../api/doctor.js";
+import { listDepartments } from "../api/catalog.js";
+import { listDoctorSchedules } from "../api/schedule.js";
+import { listPatients, createPatient, updatePatient } from "../api/patient.js";
+import { getMe } from "../api/auth.js";
+import { verifySession, hasSession, clearSession, loginUrl } from "../core/session.js";
+import { thumbnailUrl } from "../core/articles.js";
+import { allPages, availableSchedules, money, clock, dateLabel, todayVN, patientPayload, enableDragScroll } from "../core/booking.js";
+import { readDraft, saveDraft } from "../core/booking-draft.js";
+
+const $ = selector => document.querySelector(selector);
+function el(tag, text = "", className = "") {
+  const node = document.createElement(tag);
+  node.textContent = text;
+  if (className) node.className = className;
+  return node;
+}
+const ui = {
+  main: $("#main"), auth: $("#booking-auth-status"), form: $("#appointment-form"),
+  patients: $("#appointment-patient"), departments: $("#appointment-department"),
+  doctors: $(".booking-doctor-list"), count: $("#appointment-count"),
+  data: $("#booking-data-status"), retry: $("#booking-data-retry"),
+  schedule: $("#chosen-schedule"), scheduleStatus: $("#schedule-status"),
+  days: $("#appointment-day-buttons"), slots: $("#booking-slots"),
+  from: $("#schedule-from"), to: $("#schedule-to"), reviewSubmit: $("#appointment-review-submit"),
+};
+enableDragScroll(ui.days);
+let doctors = [], patients = [], schedules = [], selectedDoctor, selectedDate = "", selectedSlot, actor;
+let loading = false, checking = false, scheduleVersion = 0, scheduleAbort;
+function errorMessage(error) {
+  if (error.status === 401) {
+    for (const dialog of document.querySelectorAll("dialog[open]")) dialog.close();
+    clearSession();
+    location.replace(loginUrl(new URL(location.href)).href);
+    return "Phiên đăng nhập đã hết hạn.";
+  }
+  return error.message || "Không thể kết nối hệ thống. Vui lòng thử lại.";
+}
+function portrait(doctor) {
+  const holder = el("span", "", "booking-portrait");
+  const fallback = el("span", "Chưa có ảnh", "booking-portrait-missing");
+  holder.append(fallback);
+  const src = thumbnailUrl(doctor.avatar_url);
+  if (src) {
+    const image = el("img");
+    image.alt = `Ảnh ${doctor.full_name}`;
+    image.loading = "lazy";
+    image.addEventListener("load", () => { fallback.hidden = true; });
+    image.addEventListener("error", () => { image.remove(); fallback.hidden = false; });
+    image.src = src;
+    holder.append(image);
+  }
+  return holder;
+}
+const selectedPatient = () => patients.find(p => String(p.patient_id) === ui.patients.value);
+function renderPatients(preferred = ui.patients.value) {
+  ui.patients.replaceChildren(new Option(patients.length ? "Chọn người tới khám" : "Chưa có hồ sơ người khám", ""));
+  for (const p of patients) {
+    ui.patients.add(new Option(`${p.full_name}${p.dob ? ` — ${dateLabel(p.dob)}` : ""}${p.relationship === "SELF" ? " (Bản thân)" : ""}`, p.patient_id));
+  }
+  if (patients.some(p => String(p.patient_id) === String(preferred))) ui.patients.value = String(preferred);
+  else if (patients.length === 1) ui.patients.value = String(patients[0].patient_id);
+  $("#relative-status").textContent = patients.length ? "" : "Thêm hồ sơ bản thân hoặc người thân để đặt lịch khám.";
+  updateInsurance();
+}
+function updateInsurance() {
+  const patient = selectedPatient();
+  $("#appointment-insurance-code").value = patient?.health_insurance || "";
+  $("#edit-insurance").disabled = !patient || patient.user_id !== actor?.user_id;
+  $("#insurance-local-status").textContent = patient && patient.user_id !== actor?.user_id
+    ? "Bạn có quyền đặt khám cho hồ sơ này. Chỉ chủ hồ sơ có thể cập nhật thông tin BHYT."
+    : "Mã thẻ được lưu trong hồ sơ; quyền lợi BHYT cần được bệnh viện đối chiếu.";
+  updateReviewState();
+}
+function renderDoctors() {
+  $(".appointment-results").prepend(ui.schedule);
+  const normalize = value => value.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
+  const term = normalize($("#appointment-search").value.trim());
+  const department = ui.departments.value;
+  const visible = doctors.filter(d => (!department || String(d.department_id) === department) && normalize(d.full_name).includes(term));
+  ui.doctors.replaceChildren();
+  for (const doctor of visible) {
+    const chosen = doctor.doctor_profile_id === selectedDoctor?.doctor_profile_id;
+    const card = el("article", "", `booking-doctor${chosen ? " selected" : ""}`);
+    card.dataset.bookingId = doctor.doctor_profile_id;
+    const info = el("div", "", "booking-doctor-info");
+    info.append(el("h2", doctor.full_name), el("p", `Chuyên khoa: ${doctor.department_name}`));
+    if (doctor.specialization) info.append(el("span", doctor.specialization));
+    const profileUrl = `../public/doctor-detail.html?id=${encodeURIComponent(doctor.doctor_profile_id)}`;
+    const profile = el("a", "Xem hồ sơ bác sĩ →", "booking-profile-link");
+    profile.href = profileUrl;
+    info.append(profile);
+    const photoLink = el("a", "", "booking-portrait-link");
+    photoLink.href = profileUrl;
+    photoLink.setAttribute("aria-label", `Xem hồ sơ ${doctor.full_name}`);
+    photoLink.append(portrait(doctor));
+    const price = el("div", "", "booking-price");
+    price.append(el("span", "Giá khám"), el("strong", money(doctor.consultation_fee)));
+    const button = el("button", chosen ? "Bỏ chọn" : "Chọn", "solid-button");
+    button.type = "button";
+    button.setAttribute("aria-pressed", String(chosen));
+    button.setAttribute("aria-expanded", String(chosen));
+    if (chosen) button.setAttribute("aria-controls", "chosen-schedule");
+    button.addEventListener("click", () => selectDoctor(doctor));
+    card.append(photoLink, info, price, button);
+    if (chosen) card.append(ui.schedule);
+    ui.doctors.append(card);
+  }
+  if (selectedDoctor && !visible.includes(selectedDoctor)) clearDoctor();
+  ui.count.textContent = `${visible.length} bác sĩ`;
+  $("#appointment-empty").hidden = visible.length > 0;
+}
+function clearSlot() {
+  selectedSlot = undefined;
+  $("#appointment-shift").value = "";
+  $("#appointment-status").textContent = "";
+  updateReviewState();
+}
+function clearDoctor() {
+  scheduleVersion++;
+  scheduleAbort?.abort();
+  selectedDoctor = undefined;
+  selectedDate = "";
+  $("#appointment-date").value = "";
+  schedules = [];
+  ui.days.replaceChildren();
+  ui.slots.replaceChildren();
+  ui.days.scrollLeft = 0;
+  clearSlot();
+  ui.schedule.hidden = true;
+  ui.schedule.setAttribute("aria-busy", "false");
+}
+async function selectDoctor(doctor, { scrollToDoctor = false } = {}) {
+  if (selectedDoctor?.doctor_profile_id === doctor.doctor_profile_id) {
+    clearDoctor();
+    renderDoctors();
+    ui.doctors.querySelector(`[data-booking-id="${doctor.doctor_profile_id}"] > button`).focus({ preventScroll: true });
+    return;
+  }
+  selectedDoctor = doctor;
+  selectedDate = "";
+  ui.days.scrollLeft = 0;
+  clearSlot();
+  ui.schedule.hidden = false;
+  renderDoctors();
+  await loadSchedules();
+  if (scrollToDoctor && selectedDoctor?.doctor_profile_id === doctor.doctor_profile_id && !ui.main.inert) {
+    // Wait until the selected card includes its loaded days and time slots.
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    if (selectedDoctor?.doctor_profile_id === doctor.doctor_profile_id && !ui.main.inert) {
+      ui.doctors.querySelector(`[data-booking-id="${doctor.doctor_profile_id}"]`)
+        ?.scrollIntoView({ block: "start", behavior: "instant" });
+    }
+  }
+}
+async function loadSchedules() {
+  if (!selectedDoctor) return;
+  scheduleAbort?.abort();
+  scheduleAbort = new AbortController();
+  const version = ++scheduleVersion, doctorId = selectedDoctor.doctor_profile_id;
+  clearSlot();
+  schedules = [];
+  ui.days.replaceChildren();
+  ui.slots.replaceChildren();
+  $("#appointment-date").replaceChildren(new Option("Chọn ngày khám", ""));
+  ui.scheduleStatus.textContent = "Đang tải lịch khám còn trống…";
+  $("#schedule-retry").hidden = true;
+  ui.schedule.setAttribute("aria-busy", "true");
+  try {
+    const rows = await allPages((params, options) => listDoctorSchedules(doctorId, params, options),
+      { from_date: ui.from.value, to_date: ui.to.value }, { signal: scheduleAbort.signal });
+    if (version !== scheduleVersion) return;
+    schedules = availableSchedules(rows);
+    const dates = [...new Set(schedules.map(s => s.work_date))];
+    if (!dates.includes(selectedDate)) selectedDate = dates[0] || "";
+    const dateSelect = $("#appointment-date");
+    for (const day of dates) dateSelect.add(new Option(dateLabel(day), day));
+    dateSelect.value = selectedDate;
+    ui.scheduleStatus.textContent = dates.length
+      ? "Chọn ngày và khung giờ còn trống. Đặt online cần trước giờ bắt đầu ca ít nhất 5 tiếng."
+      : "Chưa có khung giờ có thể đặt online trong khoảng ngày này. Bạn có thể đổi ngày hoặc chọn bác sĩ khác.";
+    renderDays();
+    renderSlots();
+  } catch (error) {
+    if (version !== scheduleVersion) return;
+    ui.scheduleStatus.textContent = errorMessage(error);
+    $("#schedule-retry").hidden = false;
+  } finally { if (version === scheduleVersion) ui.schedule.setAttribute("aria-busy", "false"); }
+}
+function renderDays() {
+  ui.days.replaceChildren();
+  for (const day of [...new Set(schedules.map(s => s.work_date))]) {
+    const date = new Date(`${day}T12:00:00+07:00`);
+    const button = el("button", "", day === selectedDate ? "selected" : "");
+    button.type = "button";
+    button.setAttribute("aria-pressed", String(day === selectedDate));
+    button.append(el("strong", new Intl.DateTimeFormat("vi-VN", { weekday: "short", timeZone: "Asia/Saigon" }).format(date)), el("span", dateLabel(day)));
+    button.addEventListener("click", () => {
+      if (selectedDate === day) return;
+      selectedDate = day;
+      $("#appointment-date").value = day;
+      clearSlot(); renderDays(); renderSlots();
+    });
+    ui.days.append(button);
+  }
+}
+function renderSlots() {
+  ui.slots.replaceChildren();
+  const shift = $("#appointment-shift");
+  shift.replaceChildren(new Option("Chọn khung giờ", ""));
+  for (const schedule of schedules.filter(s => s.work_date === selectedDate)) {
+    const group = el("div", "", "booking-time-slots");
+    group.append(el("h3", `${schedule.start_time.slice(0, 5)}–${schedule.end_time.slice(0, 5)} · ${schedule.room_name}`));
+    const grid = el("div", "", "time-slot-grid");
+    for (const slot of schedule.slots) {
+      const key = `${schedule.schedule_id}/${slot.appointment_time}`;
+      const active = selectedSlot?.key === key;
+      const button = el("button", `${clock(slot.starts_at)}–${clock(slot.ends_at)}`, active ? "selected" : "");
+      button.type = "button";
+      button.setAttribute("aria-pressed", String(active));
+      shift.add(new Option(button.textContent, key));
+      button.addEventListener("click", () => { selectedSlot = { schedule, slot, key }; renderSlots(); updateReviewState(); });
+      grid.append(button);
+    }
+    group.append(grid);
+    ui.slots.append(group);
+  }
+  shift.value = selectedSlot?.key || "";
+}
+function updateReviewState() {
+  ui.reviewSubmit.disabled = !selectedSlot;
+}
+async function loadData() {
+  if (loading) return;
+  loading = true;
+  clearDoctor();
+  ui.doctors.replaceChildren();
+  ui.doctors.setAttribute("aria-busy", "true");
+  ui.data.textContent = "Đang tải bác sĩ và hồ sơ người khám…";
+  ui.retry.hidden = true;
+  ui.patients.disabled = true;
+  $("#add-relative").disabled = true;
+  const results = await Promise.allSettled([
+    allPages(listDoctors, {}, { auth: false }), allPages(listPatients), listDepartments({}, { auth: false }), getMe(),
+  ]);
+  try {
+    const failed = results.find(result => result.status === "rejected");
+    if (failed) throw failed.reason;
+    doctors = results[0].value; patients = results[1].value; actor = results[3].value.user;
+    ui.departments.replaceChildren(new Option("Tất cả chuyên khoa", ""));
+    for (const department of results[2].value.items) ui.departments.add(new Option(department.name, department.department_id));
+    renderPatients(); renderDoctors();
+    ui.data.textContent = "Thông tin bác sĩ, giá khám và hồ sơ được lấy từ hệ thống.";
+    ui.patients.disabled = false;
+    $("#add-relative").disabled = false;
+    const query = new URLSearchParams(location.search);
+    if (!query.get("doctor") && results[2].value.items.some(department => String(department.department_id) === query.get("department"))) {
+      ui.departments.value = query.get("department");
+      document.querySelector('[data-booking-mode="department"]').click();
+      renderDoctors();
+    }
+    const key = query.get("draft"), draft = readDraft(key, actor.user_id);
+    if (draft) { ui.from.value = draft.from_date || draft.work_date; ui.to.value = draft.to_date || ""; }
+    const doctor = doctors.find(d => String(d.doctor_profile_id) === query.get("doctor"));
+    if (doctor) await selectDoctor(doctor, { scrollToDoctor: !query.get("encounter") });
+    if (draft && doctor && String(draft.doctor_profile_id) === String(doctor.doctor_profile_id)) {
+      renderPatients(draft.patient_id); $("#appointment-symptoms").value = draft.symptoms;
+      const schedule = schedules.find(s => String(s.schedule_id) === String(draft.schedule_id));
+      const slot = schedule?.slots.find(s => s.appointment_time === draft.appointment_time);
+      if (slot) { selectedDate = schedule.work_date; selectedSlot = { schedule, slot, key: `${schedule.schedule_id}/${slot.appointment_time}` }; renderDays(); renderSlots(); updateReviewState(); }
+    }
+  } catch (error) { ui.data.textContent = errorMessage(error); ui.retry.hidden = false; }
+  finally { loading = false; ui.doctors.setAttribute("aria-busy", "false"); }
+}
+async function checkAccess() {
+  if (checking) return;
+  checking = true;
+  document.body.classList.add("auth-pending");
+  ui.main.inert = true;
+  ui.auth.hidden = false;
+  ui.auth.querySelector("button").hidden = true;
+  try {
+    if (!await verifySession()) { location.replace(loginUrl(new URL(location.href)).href); return; }
+    document.body.classList.remove("auth-pending"); ui.main.inert = false; ui.auth.hidden = true;
+    await loadData();
+  } catch (error) { ui.auth.querySelector("p").textContent = errorMessage(error); ui.auth.querySelector("button").hidden = false; }
+  finally { checking = false; }
+}
+
+ui.form.addEventListener("submit", event => {
+  event.preventDefault();
+  if (loading) return;
+  const patient = selectedPatient(), symptoms = $("#appointment-symptoms").value.trim();
+  if (!patient || !selectedSlot || !symptoms) { $("#appointment-status").textContent = "Vui lòng chọn người khám, khung giờ và mô tả vấn đề sức khỏe."; return; }
+  try {
+    const key = saveDraft({ user_id: actor.user_id, patient_id: patient.patient_id,
+      doctor_profile_id: selectedDoctor.doctor_profile_id, schedule_id: selectedSlot.schedule.schedule_id,
+      work_date: selectedSlot.schedule.work_date, from_date: ui.from.value, to_date: ui.to.value,
+      appointment_time: selectedSlot.slot.appointment_time, symptoms });
+    location.assign(`booking-review.html?draft=${encodeURIComponent(key)}`);
+  } catch { $("#appointment-status").textContent = "Trình duyệt không cho phép lưu thông tin tạm. Vui lòng bật lưu trữ để tiếp tục."; }
+});
+
+$("#add-relative").addEventListener("click", () => {
+  $("#relative-form").reset(); $("#relative-form-status").textContent = "";
+  $("#shared-phone-confirmation").hidden = true; $("#relative-dob").max = todayVN();
+  $("#relative-dialog").showModal();
+});
+$("#relative-close").addEventListener("click", () => { if (!$("#relative-form").dataset.busy) $("#relative-dialog").close(); });
+$("#relative-dialog").addEventListener("cancel", event => { if ($("#relative-form").dataset.busy) event.preventDefault(); });
+$("#relative-form").addEventListener("input", event => {
+  if (event.target.id !== "confirm-shared-phone") {
+    $("#shared-phone-confirmation").hidden = true; $("#confirm-shared-phone").checked = false;
+  }
+});
+$("#relative-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const form = event.currentTarget, status = $("#relative-form-status");
+  if (form.dataset.busy) return;
+  let payload;
+  try {
+    if (!$("#shared-phone-confirmation").hidden && !$("#confirm-shared-phone").checked) throw new Error("Vui lòng xác nhận dùng chung số điện thoại trước khi lưu.");
+    payload = patientPayload(new FormData(form), !$("#shared-phone-confirmation").hidden && $("#confirm-shared-phone").checked);
+  } catch (error) { status.textContent = error.message; return; }
+  form.dataset.busy = "true";
+  form.querySelectorAll("input,select,button").forEach(node => { node.disabled = true; });
+  status.textContent = "Đang lưu hồ sơ…";
+  try {
+    const result = await createPatient(payload);
+    patients = await allPages(listPatients); renderPatients(result.patient.patient_id);
+    $("#relative-dialog").close(); $("#relative-status").textContent = "Đã lưu hồ sơ người khám.";
+  } catch (error) {
+    status.textContent = errorMessage(error);
+    if (error.code === "CONFIRM_SHARED_PHONE") $("#shared-phone-confirmation").hidden = false;
+  } finally { delete form.dataset.busy; form.querySelectorAll("input,select,button").forEach(node => { node.disabled = false; }); }
+});
+$("#edit-insurance").addEventListener("click", () => {
+  const patient = selectedPatient();
+  if (!patient || patient.user_id !== actor.user_id) return;
+  $("#insurance-form").dataset.patientId = patient.patient_id;
+  $("#insurance-document").value = patient.health_insurance || "";
+  $("#insurance-form-status").textContent = ""; $("#insurance-dialog").showModal();
+});
+$("#insurance-close").addEventListener("click", () => { if (!$("#insurance-form").dataset.busy) $("#insurance-dialog").close(); });
+$("#insurance-dialog").addEventListener("cancel", event => { if ($("#insurance-form").dataset.busy) event.preventDefault(); });
+$("#insurance-form").addEventListener("submit", async event => {
+  event.preventDefault();
+  const form = event.currentTarget;
+  if (form.dataset.busy) return;
+  form.dataset.busy = "true"; form.querySelector("button").disabled = true;
+  const code = $("#insurance-document").value.trim().toUpperCase() || null;
+  $("#insurance-form-status").textContent = "Đang lưu mã thẻ…";
+  try {
+    await updatePatient(form.dataset.patientId, { health_insurance: code });
+    patients = await allPages(listPatients); renderPatients(); $("#insurance-dialog").close();
+  } catch (error) { $("#insurance-form-status").textContent = errorMessage(error); }
+  finally { delete form.dataset.busy; form.querySelector("button").disabled = false; }
+});
+ui.patients.addEventListener("change", updateInsurance);
+document.querySelectorAll('[name="insurance"]').forEach(radio => radio.addEventListener("change", () => {
+  $("#insurance-field").hidden = $('[name="insurance"]:checked').value !== "yes";
+}));
+document.querySelectorAll("[data-booking-mode]").forEach(button => button.addEventListener("click", () => {
+  const departmentMode = button.dataset.bookingMode === "department";
+  document.querySelectorAll("[data-booking-mode]").forEach(item => {
+    const active = item === button; item.classList.toggle("selected", active); item.setAttribute("aria-pressed", String(active));
+  });
+  $("#appointment-department-field").hidden = !departmentMode;
+  if (!departmentMode) { ui.departments.value = ""; renderDoctors(); }
+}));
+$("#appointment-search").addEventListener("input", renderDoctors);
+ui.departments.addEventListener("change", renderDoctors);
+function changeRange() {
+  const invalid = ui.from.value && ui.to.value && ui.from.value > ui.to.value;
+  $("#schedule-range-error").textContent = invalid ? "Ngày kết thúc phải từ ngày bắt đầu trở đi." : "";
+  if (invalid || !ui.from.validity.valid || !ui.to.validity.valid) {
+    scheduleVersion++; scheduleAbort?.abort(); clearSlot();
+    ui.days.replaceChildren(); ui.slots.replaceChildren(); ui.scheduleStatus.textContent = "Vui lòng chọn khoảng ngày hợp lệ.";
+    return;
+  }
+  selectedDate = ""; loadSchedules();
+}
+ui.from.min = ui.to.min = todayVN(); ui.from.value = todayVN();
+ui.from.addEventListener("change", changeRange); ui.to.addEventListener("change", changeRange);
+$("#schedule-retry").addEventListener("click", loadSchedules);
+ui.retry.addEventListener("click", loadData); ui.auth.querySelector("button").addEventListener("click", checkAccess);
+window.addEventListener("neu:auth-change", () => {
+  if (!hasSession()) {
+    for (const dialog of document.querySelectorAll("dialog[open]")) dialog.close();
+    ui.main.inert = true; document.body.classList.add("auth-pending");
+    location.replace(loginUrl(new URL(location.href)).href);
+  }
+});
+window.addEventListener("pagehide", () => {
+  ui.main.inert = true; document.body.classList.add("auth-pending");
+  scheduleVersion++; scheduleAbort?.abort();
+});
+window.addEventListener("pageshow", event => { if (event.persisted) checkAccess(); });
+const resumeId = new URLSearchParams(location.search).get("encounter");
+if (resumeId && /^[1-9]\d*$/.test(resumeId)) location.replace(`booking-review.html?encounter=${resumeId}`);
+else checkAccess();

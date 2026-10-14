@@ -1,6 +1,6 @@
 from backend.app.core.errors import bad_request
 from backend.app.schemas.auth_schema import ensure_object, text_field
-from backend.app.schemas.common_schema import (date_range, int_field, optional_int_arg,
+from backend.app.utils.validation import (bool_arg, date_range, int_field, optional_int_arg,
                                                page_params, parse_date, parse_time)
 
 SCHEDULE_STATUSES = ('OPEN', 'FULL', 'CLOSED', 'UNAVAILABLE')
@@ -18,6 +18,7 @@ def validate_create(data):
             'room_id': int_field(data, 'room_id', required=True, minimum=1),
             'work_date': parse_date(data.get('work_date'), 'work_date'),
             'start_time': start, 'end_time': end,
+            'slot_minutes': validate_slot_minutes(data['slot_minutes']) if 'slot_minutes' in data else None,
             'max_quota': int_field(data, 'max_quota', required=True, minimum=1, maximum=MAX_QUOTA)}
 
 
@@ -32,6 +33,8 @@ def validate_update(data):
         fields['start_time'] = parse_time(data['start_time'], 'start_time')
     if 'end_time' in data:
         fields['end_time'] = parse_time(data['end_time'], 'end_time')
+    if 'slot_minutes' in data:
+        fields['slot_minutes'] = validate_slot_minutes(data['slot_minutes'])
     if 'max_quota' in data:
         fields['max_quota'] = int_field(data, 'max_quota', required=True, minimum=1,
                                         maximum=MAX_QUOTA)
@@ -60,3 +63,27 @@ def parse_list_query(args):
             'department_id': optional_int_arg(args, 'department_id'),
             'from_date': start, 'to_date': end, 'status': status or None,
             'page': page, 'page_size': page_size}
+
+
+def validate_assignment_create(data):
+    data = ensure_object(data)
+    if set(data) - {'nurse_id', 'schedule_id', 'note'}:
+        raise bad_request('Chỉ chấp nhận nurse_id, schedule_id và note')
+    return {'nurse_id': int_field(data, 'nurse_id', required=True, minimum=1),
+            'schedule_id': int_field(data, 'schedule_id', required=True, minimum=1),
+            'note': text_field(data, 'note', max_len=1000)}
+
+
+def parse_assignment_query(args):
+    page, page_size = page_params(args)
+    filters = {key: optional_int_arg(args, key) for key in ('nurse_id', 'schedule_id')}
+    if any(value is not None and value < 1 for value in filters.values()):
+        raise bad_request('nurse_id và schedule_id phải là số nguyên dương')
+    return {**filters, 'include_revoked': bool_arg(args, 'include_revoked'),
+            'page': page, 'page_size': page_size}
+
+
+def validate_slot_minutes(value):
+    if type(value) is not int or value not in (15, 30):
+        raise bad_request('slot_minutes phải là 15 hoặc 30')
+    return value

@@ -3,3 +3,4 @@ Werkzeug==3.0.3
 psycopg[binary]==3.2.10
 gunicorn==23.0.0
 flasgger==0.9.7.1
+Pillow==12.3.0

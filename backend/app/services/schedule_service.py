@@ -1,12 +1,13 @@
 from psycopg import errors as pg_errors
 
+from backend.app.core import constants
 from backend.app.core.errors import bad_request, conflict, forbidden, not_found
-from backend.app.core.utils import today_vn
+from backend.app.utils.date import today_vn
 from backend.app.db.database import get_db_connection
-from backend.app.models import doctor_model, room_model, schedule_model
-from backend.app.models._sql import jsonable
+from backend.app.models import doctor_model, catalog_model, schedule_model
+from backend.app.utils.database_helpers import jsonable
 
-_CHANGES_TIME_OR_ROOM = ('room_id', 'work_date', 'start_time', 'end_time')
+_CHANGES_TIME_OR_ROOM = ('room_id', 'work_date', 'start_time', 'end_time', 'slot_minutes')
 
 
 def _present(row):
@@ -29,17 +30,31 @@ def list_schedules(query):
 
 
 def list_doctor_public(doctor_profile_id, query):
-    """Lịch của một bác sĩ cho người dùng thường: chỉ từ hôm nay, không lộ ca đã đóng."""
+    """Lịch công khai từ hôm nay, hoặc tuần hiện tại để trình bày hồ sơ; luôn bỏ ca đã đóng."""
     with get_db_connection() as db:
         doctor = doctor_model.get_by_id(db, doctor_profile_id)
         if doctor is None or not doctor['is_active'] or not doctor['account_ok']:
             raise not_found('Không tìm thấy bác sĩ', 'DOCTOR_NOT_FOUND')
-        start = max(query['from_date'] or today_vn(), today_vn())
+        today = today_vn()
+        start = max(query['from_date'] or today, today)
+        end = query['to_date']
+        if query.get('current_week'):
+            from datetime import timedelta
+            start = today - timedelta(days=today.weekday())
+            end = start + timedelta(days=6)
         rows, total = schedule_model.list_schedules(
-            db, doctor_profile_id=doctor_profile_id, from_date=start, to_date=query['to_date'],
-            status=query['status'], limit=query['page_size'],
+            db, doctor_profile_id=doctor_profile_id, from_date=start, to_date=end,
+            status=query['status'], exclude_closed=True, limit=query['page_size'],
             offset=(query['page'] - 1) * query['page_size'])
-    rows = [r for r in rows if r['schedule_status'] != 'CLOSED']
+        from backend.app.services.appointment_slot_service import available_slots
+        from backend.app.services.encounter_service import utc_now, schedule_bounds
+        from datetime import timedelta
+        for row in rows:
+            allowed = (row['schedule_status'] == 'OPEN' and row['remaining'] > 0
+                       and utc_now() <= schedule_bounds(row)[0] - timedelta(hours=5))
+            row['slots'] = [{'appointment_time': start.strftime('%H:%M'),
+                             'starts_at': start.isoformat(), 'ends_at': end.isoformat()}
+                            for start, end in available_slots(db, row)] if allowed else []
     return _page(rows, total, query)
 
 
@@ -63,7 +78,7 @@ def _check_free(db, doctor_id, room_id, work_date, start, end, exclude_id=None):
 
 
 def _active_room(db, room_id):
-    room = room_model.get_room(db, room_id)
+    room = catalog_model.get_room(db, room_id)
     if room is None or not room['is_active']:
         raise bad_request('Phòng không tồn tại hoặc đã ngưng hoạt động', 'ROOM_INVALID')
     return room
@@ -76,6 +91,12 @@ def create_schedule(fields):
         doctor = doctor_model.get_by_id(db, fields['doctor_profile_id'])
         if doctor is None or not doctor['is_active'] or not doctor['account_ok']:
             raise bad_request('Bác sĩ không tồn tại hoặc đã ngưng hoạt động', 'DOCTOR_INVALID')
+        fields = dict(fields)
+        if fields.get('slot_minutes') is None:
+            department = db.execute('SELECT dep.name FROM department dep JOIN doctor_profile d '
+                                    'ON d.department_id=dep.department_id WHERE d.doctor_profile_id=%s',
+                                    (fields['doctor_profile_id'],)).fetchone()
+            fields['slot_minutes'] = 15 if department['name'] in ('Da liễu', 'Tai Mũi Họng', 'Mắt', 'Răng Hàm Mặt') else 30
         _active_room(db, fields['room_id'])
         schedule_model.lock_doctor_and_room(db, fields['doctor_profile_id'], fields['room_id'])
         _check_free(db, fields['doctor_profile_id'], fields['room_id'], fields['work_date'],
@@ -149,3 +170,45 @@ def report_unavailable(user, schedule_id, reason):
         row = schedule_model.get_schedule(db, schedule_id)
     # Việc huỷ/chuyển các lượt khám bị ảnh hưởng, hoàn cọc và thông báo do Gói 3 xử lý.
     return {'schedule': _present(row), 'affected_encounters': affected}
+
+
+def list_assignments(query, nurse_id=None):
+    with get_db_connection() as db:
+        rows, total = schedule_model.list_assignments(
+            db, nurse_id=nurse_id if nurse_id is not None else query['nurse_id'],
+            schedule_id=query['schedule_id'], include_revoked=query['include_revoked'],
+            limit=query['page_size'], offset=(query['page'] - 1) * query['page_size'])
+    return {'items': [jsonable(dict(row)) for row in rows], 'total': total,
+            'page': query['page'], 'page_size': query['page_size']}
+
+
+def create_assignment(actor, fields):
+    with get_db_connection() as db:
+        # Khóa tài khoản để vai trò/trạng thái không đổi trong lúc phân công.
+        nurse = db.execute('SELECT u.*, r.role_name FROM users u JOIN role r ON r.role_id = u.role_id '
+                           'WHERE u.user_id = %s FOR UPDATE OF u', (fields['nurse_id'],)).fetchone()
+        if nurse is None or nurse['deleted_at'] is not None:
+            raise not_found('Không tìm thấy tài khoản y tá', 'NURSE_NOT_FOUND')
+        if nurse['role_name'] != constants.ROLE_NURSE:
+            raise bad_request('Tài khoản phải có vai trò NURSE', 'NOT_A_NURSE')
+        if (nurse['account_status'] != constants.ACCOUNT_ACTIVE
+                or nurse['approval_status'] != constants.APPROVAL_APPROVED):
+            raise bad_request('Tài khoản y tá chưa được duyệt hoặc bị khóa', 'NURSE_INACTIVE')
+        if schedule_model.get_for_update(db, fields['schedule_id']) is None:
+            raise not_found('Không tìm thấy ca làm việc', 'SCHEDULE_NOT_FOUND')
+        try:
+            assignment_id = schedule_model.create_assignment(db, actor['user_id'], fields)
+        except pg_errors.UniqueViolation:
+            raise conflict('Y tá đã được phân công trong ca này', 'DUPLICATE_NURSE_ASSIGNMENT') from None
+        row = schedule_model.get_assignment(db, assignment_id)
+    return {'assignment': jsonable(dict(row))}
+
+
+def revoke_assignment(actor, assignment_id):
+    with get_db_connection() as db:
+        if schedule_model.revoke_assignment(db, assignment_id, actor['user_id']) is None:
+            if schedule_model.get_assignment(db, assignment_id) is None:
+                raise not_found('Không tìm thấy phân công', 'ASSIGNMENT_NOT_FOUND')
+            raise conflict('Phân công đã được thu hồi', 'ASSIGNMENT_ALREADY_REVOKED')
+        row = schedule_model.get_assignment(db, assignment_id)
+    return {'assignment': jsonable(dict(row))}

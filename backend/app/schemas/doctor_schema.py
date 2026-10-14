@@ -1,6 +1,6 @@
 from backend.app.core.errors import bad_request
 from backend.app.schemas.auth_schema import ensure_object, text_field
-from backend.app.schemas.common_schema import flag_field, int_field
+from backend.app.utils.validation import flag_field, int_field
 
 
 def _profile_fields(data, fields):
