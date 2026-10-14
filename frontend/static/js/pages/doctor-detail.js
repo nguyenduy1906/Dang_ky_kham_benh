@@ -143,7 +143,6 @@ async function load() {
     $("#detail-introduction").textContent = sections.introduction.join("\n");
     $("#detail-education").replaceChildren(...(sections.education.length ? sections.education : ["Thông tin đào tạo đang cập nhật."]).map(line => element("li", line)));
     $("#detail-work").replaceChildren(...(sections.work.length ? sections.work : [experience(doctor)]).map(line => element("li", line)));
-    $("#detail-sample-note").hidden = !sections.sample;
     $("#detail-fee").textContent = `Phí khám: ${money(doctor.consultation_fee)}`;
     $("#detail-booking").href = `../(patient)/booking.html?doctor=${encodeURIComponent(id)}`;
     status.textContent = ""; $("#detail-feedback").hidden = true; layout.hidden = false;

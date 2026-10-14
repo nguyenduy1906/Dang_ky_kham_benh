@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Hồ sơ chuyên khoa | NEU Medical</title>
+    <link rel="stylesheet" href="../../static/css/home.css?v=20261014-banner-sharp" />
+    <link rel="stylesheet" href="../../static/css/public-pages.css?v=20261014-interface-update" />
+    <script src="../../static/js/core/navigation.js?v=20261013-auth1" defer></script>
+    <script src="../../static/js/core/public.js?v=20261014-interface-update" defer></script>
+    <script src="../../static/js/pages/department-detail.js?v=20261014-interface-update" type="module"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Đến nội dung chính</a>
+    <header class="site-header">
+      <div class="topbar">
+        <div class="topbar-inner">
+          <span>Chào mừng bạn đến với Bệnh viện NEU Medical</span>
+          <div>
+            <a href="contact.html">Liên hệ hỗ trợ</a
+            ><a href="../(patient)/portal.html">Đặt lịch khám</a
+            ><span class="language" aria-label="Ngôn ngữ tiếng Việt">🇻🇳</span>
+          </div>
+        </div>
+      </div>
+      <div class="identity">
+        <a class="brand" href="home.html"
+          ><img
+            class="brand-logo"
+            src="../../static/assets/logo_neu.png"
+            alt="Logo NEU Medical"
+            width="68"
+            height="68"
+          /><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></a
+        >
+        <p class="motto">Vì sức khoẻ nhân dân</p>
+      </div>
+      <div class="navigation">
+        <button class="menu-toggle" aria-expanded="false" aria-controls="main-nav">
+          ☰ <span>Danh mục</span>
+        </button>
+        <nav id="main-nav" aria-label="Điều hướng chính">
+          <a href="home.html">Trang chủ</a><a href="about.html">Giới thiệu</a
+          ><a class="active" aria-current="page" href="departments.html">Chuyên khoa<span class="nav-indicator" aria-hidden="true"></span></a
+          ><a href="doctors.html">Đội ngũ bác sĩ</a
+          ><a href="../(patient)/portal.html">Đặt lịch khám</a><a href="news.html">Tin tức</a
+          ><a href="contact.html">Liên hệ</a>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="department-profile-page">
+      <div class="page-title"><div class="section-wrap"><h1 id="department-page-title">Hồ sơ chuyên khoa</h1><p><a href="home.html">Trang chủ</a> / <a href="departments.html">Chuyên khoa</a> / Chi tiết khoa</p></div></div>
+      <div class="section-wrap department-profile-wrap">
+        <p id="department-status" role="status" aria-live="polite">Đang tải hồ sơ chuyên khoa…</p>
+        <button id="department-retry" type="button" class="solid-button" hidden>Thử lại</button>
+        <div id="department-content" hidden>
+          <section class="department-profile-hero" aria-labelledby="department-name">
+            <div><p class="section-kicker" id="department-group"></p><h2 id="department-name"></h2><p id="department-description"></p><p id="department-doctor-count"></p>
+              <div class="department-actions"><a id="department-booking" class="solid-button">Đặt lịch khám tại khoa →</a><a id="department-directory" class="outline-button">Xem bác sĩ</a></div>
+            </div><div class="department-hero-photo" id="department-cover"></div>
+          </section>
+          <section class="department-panel" id="department-overview"><h2>Giới thiệu khoa</h2><div id="department-overview-text"></div><div class="department-mission"><h3>Định hướng phát triển</h3><p id="department-mission-text"></p></div></section>
+          <section class="department-panel" id="department-leadership"><h2>Lãnh đạo khoa</h2><p>Đội ngũ phụ trách và phối hợp hoạt động chuyên môn của khoa.</p><div class="department-leaders" id="department-leaders"></div></section>
+          <section class="department-panel" id="department-professional"><h2>Chuyên môn và dịch vụ</h2><div class="department-facts-grid" id="department-facts"></div></section>
+          <div id="department-extra-sections"></div>
+          <section class="department-panel" id="department-gallery-section"><h2>Hình ảnh của khoa</h2><div class="department-gallery" id="department-gallery" tabindex="0" aria-label="Thư viện ảnh khoa, kéo hoặc cuộn ngang để xem thêm"></div></section>
+          <section class="department-panel" id="department-team-section"><h2>Đội ngũ bác sĩ</h2><div class="directory-grid" id="department-team"></div></section>
+          <section class="department-panel" id="department-guide-section"><h2>Hướng dẫn trước khi khám</h2><ul class="department-guide" id="department-guide"></ul><a href="contact.html">Liên hệ hỗ trợ lựa chọn chuyên khoa →</a></section>
+        </div>
+      </div>
+    </main>
+    <footer class="compact-footer">
+      <div class="compact-footer-wrap">
+        <div class="compact-footer-grid">
+          <section class="footer-column footer-hospital" aria-label="Thông tin bệnh viện">
+            <h3 data-contact-field="hospital_name">Bệnh viện NEU Medical</h3>
+            <div class="footer-contact-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M19 10c0 6-7 11-7 11S5 16 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2"/></svg><span>207 đường Giải Phóng, phường Bạch Mai, Hà Nội.</span></div>
+            <div class="footer-contact-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 3 3 5-2 2c2 4 3 5 7 7l2-2 5 3c0 4-4 5-7 3C5 17 1 8 3 5z"/></svg><span data-contact-field="support_phone">Đang tải…</span></div>
+            <div class="footer-contact-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 5h18v14H3zM3 5l9 8 9-8"/></svg><span data-contact-field="support_email">Đang tải…</span></div>
+            <div class="footer-contact-row" id="footer-hours"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div><strong>Giờ khám bệnh</strong><span data-contact-field="exam_hours">Đang tải…</span></div></div>
+          </section>
+          <section class="footer-column" aria-label="Về chúng tôi">
+            <h3>Về chúng tôi</h3>
+            <nav class="footer-nav" aria-label="Tìm hiểu bệnh viện">
+              <a href="about.html">Giới thiệu bệnh viện</a>
+              <a href="departments.html">Chuyên khoa</a>
+              <a href="doctors.html">Đội ngũ bác sĩ</a>
+              <a href="news.html">Tin tức sức khỏe</a>
+              <button type="button" data-panel="guide">Hướng dẫn khám bệnh</button>
+            </nav>
+          </section>
+          <section class="footer-column" aria-label="Chăm sóc khách hàng">
+            <h3>Chăm sóc khách hàng</h3>
+            <nav class="footer-nav" aria-label="Hỗ trợ người bệnh">
+              <a href="../(patient)/portal.html">Đặt lịch khám</a>
+              <a href="contact.html#consultation">Đăng ký tư vấn</a>
+              <a href="contact.html">Liên hệ hỗ trợ</a>
+              <button type="button" data-panel="privacy">Chính sách bảo mật</button>
+              <button type="button" data-panel="terms">Điều khoản sử dụng</button>
+              <button type="button" data-panel="insurance">Thông tin bảo hiểm y tế</button>
+            </nav>
+          </section>
+          <section class="footer-column footer-location" aria-label="Vị trí bệnh viện">
+            <h3>Kết nối với chúng tôi</h3>
+            <a class="footer-map-link" href="https://www.google.com/maps/search/?api=1&amp;query=207+Giai+Phong+Ha+Noi" target="_blank" rel="noopener noreferrer">Mở trên Google Maps ↗</a>
+            <iframe class="footer-map" title="Bản đồ NEU Medical tại 207 Giải Phóng, Hà Nội" src="https://maps.google.com/maps?q=207%20Giai%20Phong%20Ha%20Noi&amp;output=embed" loading="lazy" referrerpolicy="no-referrer"></iframe>
+          </section>
+        </div>
+        <p class="contact-info-status" data-contact-status role="status" hidden></p>
+        <button type="button" class="contact-info-retry" data-contact-retry hidden>Thử lại thông tin liên hệ</button>
+        <div class="compact-footer-bottom"><span>© 2026 NEU Medical. Tất cả quyền được bảo lưu.</span></div>
+      </div>
+    </footer>
+    <dialog id="info-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-heading">
+        <h2 id="dialog-title"></h2>
+        <button class="dialog-close" aria-label="Đóng">×</button>
+      </div>
+      <div id="dialog-content"></div>
+      <form method="dialog"><button class="dialog-done">Đóng</button></form>
+    </dialog>
+  </body>
+</html>
+

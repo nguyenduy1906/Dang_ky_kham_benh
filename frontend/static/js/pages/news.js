@@ -2,6 +2,8 @@ import { articlePage, articleCategories, articleCard } from "../core/articles.js
 
 const root = document.querySelector("[data-article-feed]");
 const home = root.dataset.articleFeed === "home";
+// Three columns: the news directory shows four rows instead of two.
+const pageSize = home ? 6 : 12;
 const grid = document.querySelector("#news-grid");
 const status = document.querySelector("#news-status");
 const retry = document.querySelector("#news-retry");
@@ -39,7 +41,7 @@ async function load() {
   grid.replaceChildren(); grid.setAttribute("aria-busy", "true");
   status.textContent = "Đang tải bài viết…"; retry.hidden = true; pager.hidden = true;
   try {
-    const result = await articlePage({ page, page_size: 6, q: query, category }, { signal: request.signal });
+    const result = await articlePage({ page, page_size: pageSize, q: query, category }, { signal: request.signal });
     if (current !== version) return;
     const lastPage = Math.max(1, Math.ceil(result.total / result.page_size));
     // A removed article or an old bookmark can leave the requested page out of range.

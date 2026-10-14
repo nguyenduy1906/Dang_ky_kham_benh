@@ -1,6 +1,7 @@
 import { getBySlug } from "../api/article.js";
 import { articlePage, articleUrl, articleThumbnail, articleContent, publishedDate } from "../core/articles.js";
 import { ApiError } from "../core/api.js";
+import { displayText } from "../core/display-text.js";
 
 const slug = new URLSearchParams(location.search).get("slug");
 const title = document.querySelector("#article-title");
@@ -78,7 +79,7 @@ async function loadArticle() {
       throw new ApiError("Phản hồi nội dung bài viết không hợp lệ.", { code: "CLIENT_INVALID_RESPONSE" });
     }
     currentArticle = article;
-    title.textContent = article.title; document.title = `${article.title} | NEU Medical`;
+    title.textContent = displayText(article.title); document.title = `${displayText(article.title)} | NEU Medical`;
     const date = document.querySelector("#article-date");
     date.textContent = publishedDate(article.published_at);
     if (date.textContent) date.dateTime = article.published_at;

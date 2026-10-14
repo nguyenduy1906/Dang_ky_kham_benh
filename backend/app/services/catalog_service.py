@@ -2,26 +2,42 @@ from psycopg import errors as pg_errors
 
 from backend.app.core.errors import bad_request, conflict, not_found
 from backend.app.db.database import get_db_connection
-from backend.app.models import catalog_model
+from backend.app.models import catalog_model, doctor_model
+from backend.app.utils import uploads
 from backend.app.utils.database_helpers import flags, jsonable
 
 
 def _present(row):
-    return jsonable(flags(row, 'is_active'))
+    return jsonable(flags(row, 'is_active', 'content_is_demo'))
+
+
+def _department(db, row, admin=False):
+    data=_present(row)
+    doctors=catalog_model.department_doctors(db,row['department_id'],include_inactive=admin)
+    data['doctor_count']=len(doctors)
+    leaders=catalog_model.department_leaders(db,row['department_id'],include_inactive=admin)
+    if not admin:
+        keys={'doctor_profile_id','department_id','position','appointed_at','full_name','avatar_url','academic_degree','specialization','experience_years','is_active'}
+        leaders=[{k:v for k,v in leader.items() if k in keys} for leader in leaders]
+    data['leadership']={'head':next((_present(r) for r in leaders if r['position']=='HEAD'),None),
+                        'deputies':[_present(r) for r in leaders if r['position']=='DEPUTY']}
+    return data,[_present(r) for r in doctors]
 
 
 def list_departments(include_inactive):
     with get_db_connection() as db:
         rows = catalog_model.list_departments(db, include_inactive)
-    return {'items': [_present(r) for r in rows]}
+        items=[_department(db,row,include_inactive)[0] for row in rows]
+    return {'items': items}
 
 
 def get_department(department_id, include_inactive):
     with get_db_connection() as db:
         row = catalog_model.get_department(db, department_id)
-    if row is None or (not row['is_active'] and not include_inactive):
-        raise not_found('Không tìm thấy chuyên khoa', 'DEPARTMENT_NOT_FOUND')
-    return {'department': _present(row)}
+        if row is None or (not row['is_active'] and not include_inactive):
+            raise not_found('Không tìm thấy chuyên khoa', 'DEPARTMENT_NOT_FOUND')
+        data,doctors=_department(db,row,include_inactive)
+    return {'department': data,'doctors':doctors}
 
 
 def create_department(fields):
@@ -37,12 +53,59 @@ def create_department(fields):
 
 def update_department(department_id, fields):
     with get_db_connection() as db:
-        if catalog_model.get_department(db, department_id) is None:
+        current=db.execute('SELECT * FROM department WHERE department_id=%s FOR UPDATE',(department_id,)).fetchone()
+        if current is None:
             raise not_found('Không tìm thấy chuyên khoa', 'DEPARTMENT_NOT_FOUND')
+        if 'expected_version' in fields and fields['expected_version']!=current['version']:
+            raise conflict('Khoa đã được thay đổi, hãy tải lại trước khi lưu','DEPARTMENT_VERSION_CONFLICT')
         if 'name' in fields and catalog_model.department_name_exists(db, fields['name'], department_id):
             raise conflict('Tên chuyên khoa đã tồn tại', 'DUPLICATE_DEPARTMENT')
-        row = catalog_model.update_department(db, department_id, fields)
+        try:
+            row = catalog_model.update_department(db, department_id, fields)
+        except pg_errors.UniqueViolation:
+            raise conflict('Tên chuyên khoa đã tồn tại','DUPLICATE_DEPARTMENT') from None
     return {'department': _present(row)}
+
+
+def leadership_history(department_id):
+    with get_db_connection() as db:
+        department=catalog_model.get_department(db,department_id)
+        if not department: raise not_found('Không tìm thấy chuyên khoa','DEPARTMENT_NOT_FOUND')
+        rows=catalog_model.department_leaders(db,department_id,history=True,include_inactive=True)
+    return {'items':[_present(row) for row in rows],'version':department['version']}
+
+
+def replace_leadership(user, department_id, fields):
+    with get_db_connection() as db:
+        department=db.execute('SELECT * FROM department WHERE department_id=%s FOR UPDATE',(department_id,)).fetchone()
+        if not department: raise not_found('Không tìm thấy chuyên khoa','DEPARTMENT_NOT_FOUND')
+        if fields['expected_version']!=department['version']:
+            raise conflict('Khoa đã được thay đổi, hãy tải lại trước khi phân công','DEPARTMENT_VERSION_CONFLICT')
+        desired={did:'DEPUTY' for did in fields['deputy_doctor_ids']}
+        if fields['head_doctor_id'] is not None: desired[fields['head_doctor_id']]='HEAD'
+        for did in sorted(desired):
+            identity=db.execute('SELECT r.role_name FROM doctor_profile d JOIN users u USING(user_id) JOIN role r USING(role_id) WHERE doctor_profile_id=%s FOR UPDATE OF d',(did,)).fetchone()
+            doctor=doctor_model.get_by_id(db,did)
+            if not doctor or not identity or identity['role_name']!='DOCTOR' or doctor['department_id']!=department_id or not doctor['is_active'] or not doctor['account_ok']:
+                raise bad_request('Lãnh đạo phải là bác sĩ đang hoạt động, đã duyệt và thuộc khoa này','DEPARTMENT_LEADER_INVALID')
+        current=catalog_model.department_leaders(db,department_id,include_inactive=True)
+        existing={row['doctor_profile_id']:row['position'] for row in current}
+        if existing!=desired:
+            for row in current:
+                if desired.get(row['doctor_profile_id'])!=row['position']:
+                    db.execute('UPDATE department_leadership SET ended_at=CURRENT_TIMESTAMP,ended_by_id=%s WHERE leadership_id=%s', (user['user_id'],row['leadership_id']))
+            for did,position in desired.items():
+                if existing.get(did)!=position:
+                    db.execute('INSERT INTO department_leadership(department_id,doctor_profile_id,position,appointed_by_id) VALUES(%s,%s,%s,%s)',(department_id,did,position,user['user_id']))
+            department=db.execute('UPDATE department SET version=version+1,updated_at=CURRENT_TIMESTAMP WHERE department_id=%s RETURNING *',(department_id,)).fetchone()
+        data,doctors=_department(db,department,True)
+    return {'department':data,'doctors':doctors}
+
+
+def upload_department_image(department_id,file_storage):
+    with get_db_connection() as db:
+        if not catalog_model.get_department(db,department_id): raise not_found('Không tìm thấy chuyên khoa','DEPARTMENT_NOT_FOUND')
+    return {'url':uploads.save_article_image(file_storage)}
 
 
 def _check_department(db, department_id):

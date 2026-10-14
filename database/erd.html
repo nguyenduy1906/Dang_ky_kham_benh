@@ -93,6 +93,30 @@ erDiagram
         integer is_active "NOT NULL; 0 hoặc 1"
         timestamptz created_at "NOT NULL"
         timestamptz updated_at "NOT NULL"
+        text overview
+        text mission
+        text cover_image_url
+        text group_type
+        jsonb specialties
+        jsonb clinical_services
+        jsonb equipment
+        jsonb achievements
+        jsonb patient_guide
+        jsonb gallery
+        jsonb extra_sections
+        integer content_is_demo
+        integer version
+    }
+
+    DEPARTMENT_LEADERSHIP {
+        integer leadership_id PK
+        integer department_id FK
+        integer doctor_profile_id FK
+        text position
+        timestamptz appointed_at
+        integer appointed_by_id FK
+        timestamptz ended_at
+        integer ended_by_id FK
     }
 
     DOCTOR_PROFILE {
@@ -326,6 +350,9 @@ erDiagram
     USERS ||--o{ PATIENT_DELEGATE : "chon_lai_nguoi_than"
 
     DEPARTMENT ||--o{ DOCTOR_PROFILE : "co_bac_si"
+    DEPARTMENT ||--o{ DEPARTMENT_LEADERSHIP : "lanh_dao_va_lich_su"
+    DOCTOR_PROFILE ||--o{ DEPARTMENT_LEADERSHIP : "duoc_bo_nhiem"
+    USERS ||--o{ DEPARTMENT_LEADERSHIP : "phan_cong_thu_hoi"
     DEPARTMENT ||--o{ ROOM : "co_phong_kham"
 
     DOCTOR_PROFILE ||--o{ WORK_SCHEDULE : "co_lich_lam_viec"

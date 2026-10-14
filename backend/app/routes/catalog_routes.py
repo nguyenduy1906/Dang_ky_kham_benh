@@ -2,7 +2,9 @@
 from flask import Blueprint, jsonify, request
 
 from backend.app.core import constants
-from backend.app.core.security import is_admin, optional_user, roles_required
+from backend.app.core.security import is_admin, optional_user, roles_required, current_user
+from flasgger import swag_from
+from backend.app.utils.swagger_helpers import spec, path, body
 from backend.app.schemas import catalog_schema
 from backend.app.utils.validation import bool_arg, optional_int_arg
 from backend.app.services import catalog_service
@@ -66,6 +68,18 @@ def create_department():
           properties:
             name: {type: string, example: Nội tổng quát}
             description: {type: string}
+            overview: {type: string, maxLength: 12000}
+            mission: {type: string, maxLength: 4000}
+            cover_image_url: {type: string}
+            group_type: {type: string, enum: [CLINICAL, PARACLINICAL]}
+            content_is_demo: {type: boolean}
+            specialties: {type: array, items: {type: string}}
+            clinical_services: {type: array, items: {type: string}}
+            equipment: {type: array, items: {type: string}}
+            achievements: {type: array, items: {type: string}}
+            patient_guide: {type: array, items: {type: string}}
+            gallery: {type: array, items: {type: object, properties: {url: {type: string}, caption: {type: string}}}}
+            extra_sections: {type: array, items: {type: object, properties: {title: {type: string}, content: {type: string}}}}
             is_active: {type: boolean}
     responses:
       201:
@@ -95,7 +109,20 @@ def update_department(department_id):
           type: object
           properties:
             name: {type: string}
+            expected_version: {type: integer, minimum: 1, description: 'Phiên bản từ GET; PATCH trả 409 khi phiên bản đã đổi'}
             description: {type: string}
+            overview: {type: string, maxLength: 12000}
+            mission: {type: string, maxLength: 4000}
+            cover_image_url: {type: string}
+            group_type: {type: string, enum: [CLINICAL, PARACLINICAL]}
+            content_is_demo: {type: boolean}
+            specialties: {type: array, items: {type: string}}
+            clinical_services: {type: array, items: {type: string}}
+            equipment: {type: array, items: {type: string}}
+            achievements: {type: array, items: {type: string}}
+            patient_guide: {type: array, items: {type: string}}
+            gallery: {type: array, items: {type: object, properties: {url: {type: string}, caption: {type: string}}}}
+            extra_sections: {type: array, items: {type: object, properties: {title: {type: string}, content: {type: string}}}}
             is_active: {type: boolean}
     responses:
       200:
@@ -103,6 +130,33 @@ def update_department(department_id):
     """
     fields = catalog_schema.validate_department_update(request.get_json(silent=True))
     return jsonify(catalog_service.update_department(department_id, fields))
+
+
+@department_bp.get('/admin/departments/<int:department_id>/leadership')
+@roles_required(constants.ROLE_ADMIN)
+@swag_from(spec('Departments', 'Xem lịch sử phân công trưởng/phó khoa và phiên bản hiện tại', [path('department_id')]))
+def department_leadership_history(department_id):
+    return jsonify(catalog_service.leadership_history(department_id))
+
+
+@department_bp.put('/admin/departments/<int:department_id>/leadership')
+@roles_required(constants.ROLE_ADMIN)
+@swag_from(spec('Departments', 'Thay danh sách lãnh đạo khoa trong một transaction; null/[] để gỡ phân công', [path('department_id'),body({
+    'head_doctor_id': {'type':'integer','description':'doctor_profile_id của trưởng khoa hoặc null'},
+    'deputy_doctor_ids': {'type':'array','items':{'type':'integer'}},
+    'expected_version': {'type':'integer','minimum':1},
+}, ('head_doctor_id','deputy_doctor_ids','expected_version'))]))
+def department_replace_leadership(department_id):
+    return jsonify(catalog_service.replace_leadership(current_user(),department_id,catalog_schema.validate_leadership(request.get_json(silent=True))))
+
+
+@department_bp.post('/admin/departments/<int:department_id>/images')
+@roles_required(constants.ROLE_ADMIN)
+@swag_from({'tags':['Departments'],'summary':'Tải ảnh khoa JPEG/PNG/WebP tối đa 5MB; dùng URL trả về cho cover_image_url/gallery',
+    'security':[{'Bearer':[]}],'consumes':['multipart/form-data'],'parameters':[path('department_id'),{'in':'formData','name':'file','type':'file','required':True}],
+    'responses':{201:{'description':'URL ảnh'},400:{'description':'Ảnh không hợp lệ'},403:{'description':'Chỉ ADMIN'}}})
+def department_upload_image(department_id):
+    return jsonify(catalog_service.upload_department_image(department_id,request.files.get('file'))),201
 
 
 room_bp = Blueprint('room', __name__)

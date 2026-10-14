@@ -55,6 +55,7 @@ class ArticleImageTests(unittest.TestCase):
             self.assertEqual((self.directory / 'articles' / filename).read_bytes(), data)
             public = self.client.get(url)
             self.assertEqual(public.status_code, 200)
+            self.assertEqual(public.content_type, {'jpg': 'image/jpeg', 'png': 'image/png', 'webp': 'image/webp'}[ext])
             self.assertEqual(public.data, data)
             self.assertEqual(public.headers['X-Content-Type-Options'], 'nosniff')
             public.close()

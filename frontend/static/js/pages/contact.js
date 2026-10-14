@@ -70,7 +70,7 @@ consultation.addEventListener("submit", (event) => {
   const phone = consultationPhone.value.replace(/[\s.-]/g, "");
   consultationPhone.setCustomValidity(/^\+?\d{9,15}$/.test(phone) ? "" : "Vui lòng nhập số điện thoại hợp lệ (9–15 chữ số).");
   if (!consultation.reportValidity()) return;
-  consultationStatus.textContent = "Biểu mẫu đang là bản xem trước. Yêu cầu chưa được gửi tới lễ tân.";
+  consultationStatus.textContent = "Yêu cầu chưa được gửi. Vui lòng liên hệ lễ tân qua số điện thoại chăm sóc khách hàng để được tư vấn.";
 });
 consultation.addEventListener("input", (event) => {
   event.target.setCustomValidity?.("");

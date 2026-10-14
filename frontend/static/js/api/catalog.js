@@ -23,6 +23,18 @@ export function updateDepartment(departmentId, data, options = {}) {
 }
 
 /** GET /rooms */
+export function getDepartmentLeadership(departmentId, options = {}) {
+  return apiRequest(`/admin/departments/${pathSegment(departmentId)}/leadership`, { ...options, method: "GET" });
+}
+export function replaceDepartmentLeadership(departmentId, data, options = {}) {
+  return apiRequest(`/admin/departments/${pathSegment(departmentId)}/leadership`, { ...options, method: "PUT", data });
+}
+export function uploadDepartmentImage(departmentId, file, options = {}) {
+  const data = new FormData(); data.append("file", file);
+  return apiRequest(`/admin/departments/${pathSegment(departmentId)}/images`, { ...options, method: "POST", data });
+}
+
+/** GET /rooms */
 export function listRooms(params = {}, options = {}) {
   return apiRequest("/rooms", { ...options, method: "GET", params });
 }

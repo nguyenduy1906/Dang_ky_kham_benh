@@ -65,7 +65,10 @@ def update_doctor(doctor_profile_id, fields):
             raise not_found('Không tìm thấy bác sĩ', 'DOCTOR_NOT_FOUND')
         if 'department_id' in fields:
             _check_department(db, fields['department_id'])
-        doctor_model.update_profile(db, doctor_profile_id, fields)
+        try:
+            doctor_model.update_profile(db, doctor_profile_id, fields)
+        except pg_errors.CheckViolation:
+            raise conflict('Hãy gỡ phân công trưởng/phó khoa trước khi chuyển bác sĩ sang khoa khác','DOCTOR_LEADERSHIP_ACTIVE') from None
         row = doctor_model.get_by_id(db, doctor_profile_id)
     return {'doctor': _present(row, True)}
 

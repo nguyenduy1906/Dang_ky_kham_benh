@@ -63,5 +63,14 @@ export function doctorCard(doctor, { showFee = false } = {}) {
   schedule.href = `../(patient)/booking.html?doctor=${encodeURIComponent(doctor.doctor_profile_id)}`;
   const more = element("a", "Xem hồ sơ chi tiết →", "directory-detail"); more.href = detail;
   body.append(element("p", doctor.department_name, "directory-specialty"), name, facts, schedule, more);
-  card.append(photo, body); return card;
+  card.append(photo, body); profileCard(card, more); return card;
+}
+
+export function profileCard(card, link) {
+  card.classList.toggle("profile-card-link", true);
+  card.addEventListener("click", event => {
+    if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey ||
+        event.target.closest("a, button, input, select, textarea, [role='button']") || window.getSelection?.()?.toString()) return;
+    link.click();
+  });
 }

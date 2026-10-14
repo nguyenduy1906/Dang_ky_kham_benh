@@ -6,6 +6,7 @@ const templates = new URL("../../../templates/", import.meta.url);
 export const homeUrl = new URL("public/home.html", templates);
 export const portalUrl = new URL("(patient)/portal.html", templates);
 export const bookingUrl = new URL("(patient)/booking.html", templates);
+export const bookingReviewUrl = new URL("(patient)/booking-review.html", templates);
 export const appointmentsUrl = new URL("(patient)/appointments.html", templates);
 const signInUrl = new URL("auth/login.html", templates);
 const patientOnlyMessage = "Giao diện hiện chỉ hỗ trợ đăng nhập bằng tài khoản bệnh nhân. Giao diện cho các vai trò khác chưa được triển khai.";
@@ -102,7 +103,7 @@ export function returnUrl(value) {
     const url = new URL(value || homeUrl.href, location.href);
     if (url.origin === homeUrl.origin && url.protocol === homeUrl.protocol &&
         !url.username && !url.password &&
-        [homeUrl.pathname, portalUrl.pathname, bookingUrl.pathname, appointmentsUrl.pathname].includes(url.pathname)) return url;
+        [homeUrl.pathname, portalUrl.pathname, bookingUrl.pathname, bookingReviewUrl.pathname, appointmentsUrl.pathname].includes(url.pathname)) return url;
   } catch { /* Never redirect to an untrusted next URL. */ }
   return new URL(homeUrl);
 }

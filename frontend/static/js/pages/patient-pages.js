@@ -61,6 +61,6 @@ if (recordLookup) {
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     if (!form.reportValidity()) return;
-    status.textContent = "Biểu mẫu đang là bản xem trước, chưa kết nối dữ liệu kết quả khám.";
+    status.textContent = "Chưa thể tra cứu kết quả lúc này. Vui lòng liên hệ bộ phận tiếp nhận để được hỗ trợ.";
   });
 }

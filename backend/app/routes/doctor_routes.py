@@ -205,7 +205,8 @@ def get_avatar(filename):
     """
     if not uploads.FILENAME_RE.match(filename):
         raise not_found('Không tìm thấy ảnh')
-    response = make_response(send_from_directory(uploads.avatar_dir(), filename))
+    mime = {'jpg': 'image/jpeg', 'png': 'image/png', 'webp': 'image/webp'}[filename.rsplit('.', 1)[1]]
+    response = make_response(send_from_directory(uploads.avatar_dir(), filename, mimetype=mime))
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Cache-Control'] = 'public, max-age=86400'
     return response

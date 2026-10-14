@@ -2,12 +2,11 @@ import { listDoctors } from "../api/doctor.js";
 import { listDepartments } from "../api/catalog.js";
 import { listDoctorSchedules } from "../api/schedule.js";
 import { listPatients, createPatient, updatePatient } from "../api/patient.js";
-import { createOnline, getEncounter, getTicket, listEncounters, cancel } from "../api/encounter.js";
-import { createIntent, listEncounterPayments, setDemoResult } from "../api/payment.js";
 import { getMe } from "../api/auth.js";
 import { verifySession, hasSession, clearSession, loginUrl } from "../core/session.js";
 import { thumbnailUrl } from "../core/articles.js";
-import { allPages, availableSchedules, money, clock, dateLabel, todayVN, matchingBooking, patientPayload, enableDragScroll } from "../core/booking.js";
+import { allPages, availableSchedules, money, clock, dateLabel, todayVN, patientPayload, enableDragScroll } from "../core/booking.js";
+import { readDraft, saveDraft } from "../core/booking-draft.js";
 
 const $ = selector => document.querySelector(selector);
 function el(tag, text = "", className = "") {
@@ -23,22 +22,11 @@ const ui = {
   data: $("#booking-data-status"), retry: $("#booking-data-retry"),
   schedule: $("#chosen-schedule"), scheduleStatus: $("#schedule-status"),
   days: $("#appointment-day-buttons"), slots: $("#booking-slots"),
-  from: $("#schedule-from"), to: $("#schedule-to"), summary: $("#appointment-summary-list"),
-  dialog: $("#booking-dialog"), review: $("#booking-review"), dialogStatus: $("#booking-dialog-status"),
-  confirm: $("#booking-confirm"), payment: $("#booking-payment"), method: $("#booking-payment-method"),
-  paymentCreate: $("#booking-payment-create"), paymentResult: $("#booking-payment-result"),
-  refresh: $("#booking-refresh"), cancel: $("#booking-cancel"),
+  from: $("#schedule-from"), to: $("#schedule-to"), reviewSubmit: $("#appointment-review-submit"),
 };
 enableDragScroll(ui.days);
 let doctors = [], patients = [], schedules = [], selectedDoctor, selectedDate = "", selectedSlot, actor;
-let loading = false, checking = false, scheduleVersion = 0, scheduleAbort, busy = false;
-let encounter, payment, ticket, countdown, reviewRequest, requestedEncounterId, submissionUncertain = false;
-const resume = el("button", "Tiếp tục xem lịch đã đăng ký", "add-relative-button");
-resume.type = "button";
-resume.hidden = true;
-ui.data.parentElement.append(resume);
-resume.addEventListener("click", () => { ui.dialog.showModal(); refreshBooking(); });
-
+let loading = false, checking = false, scheduleVersion = 0, scheduleAbort;
 function errorMessage(error) {
   if (error.status === 401) {
     for (const dialog of document.querySelectorAll("dialog[open]")) dialog.close();
@@ -47,12 +35,6 @@ function errorMessage(error) {
     return "Phiên đăng nhập đã hết hạn.";
   }
   return error.message || "Không thể kết nối hệ thống. Vui lòng thử lại.";
-}
-function details(target, pairs) {
-  const list = target.tagName === "DL" ? target : el("dl", "", "booking-review-list");
-  list.replaceChildren();
-  for (const [label, value] of pairs) list.append(el("dt", label), el("dd", String(value ?? "Chưa cung cấp")));
-  if (list !== target) target.replaceChildren(list);
 }
 function portrait(doctor) {
   const holder = el("span", "", "booking-portrait");
@@ -88,7 +70,7 @@ function updateInsurance() {
   $("#insurance-local-status").textContent = patient && patient.user_id !== actor?.user_id
     ? "Bạn có quyền đặt khám cho hồ sơ này. Chỉ chủ hồ sơ có thể cập nhật thông tin BHYT."
     : "Mã thẻ được lưu trong hồ sơ; quyền lợi BHYT cần được bệnh viện đối chiếu.";
-  updateSummary();
+  updateReviewState();
 }
 function renderDoctors() {
   $(".appointment-results").prepend(ui.schedule);
@@ -132,7 +114,7 @@ function clearSlot() {
   selectedSlot = undefined;
   $("#appointment-shift").value = "";
   $("#appointment-status").textContent = "";
-  updateSummary();
+  updateReviewState();
 }
 function clearDoctor() {
   scheduleVersion++;
@@ -237,7 +219,7 @@ function renderSlots() {
       button.type = "button";
       button.setAttribute("aria-pressed", String(active));
       shift.add(new Option(button.textContent, key));
-      button.addEventListener("click", () => { selectedSlot = { schedule, slot, key }; renderSlots(); updateSummary(); });
+      button.addEventListener("click", () => { selectedSlot = { schedule, slot, key }; renderSlots(); updateReviewState(); });
       grid.append(button);
     }
     group.append(grid);
@@ -245,21 +227,8 @@ function renderSlots() {
   }
   shift.value = selectedSlot?.key || "";
 }
-function updateSummary() {
-  $("#appointment-summary-empty").hidden = Boolean(selectedDoctor);
-  $("#appointment-summary-content").hidden = !selectedDoctor;
-  if (!selectedDoctor) return;
-  $("#summary-doctor-name").textContent = selectedDoctor.full_name;
-  $("#summary-doctor-specialty").textContent = selectedDoctor.department_name;
-  $("#summary-doctor-photo").replaceChildren(portrait(selectedDoctor));
-  details(ui.summary, [
-    ["Người khám", selectedPatient()?.full_name || "Chưa chọn"],
-    ["Ngày khám", selectedSlot ? dateLabel(selectedSlot.schedule.work_date) : "Chưa chọn"],
-    ["Khung giờ", selectedSlot ? `${clock(selectedSlot.slot.starts_at)}–${clock(selectedSlot.slot.ends_at)}` : "Chưa chọn"],
-    ["Phòng khám", selectedSlot?.schedule.room_name || "Chưa chọn"],
-    ["Giá khám", money(selectedDoctor.consultation_fee)],
-  ]);
-  $('#appointment-summary-content > button[type="submit"]').disabled = !selectedSlot;
+function updateReviewState() {
+  ui.reviewSubmit.disabled = !selectedSlot;
 }
 async function loadData() {
   if (loading) return;
@@ -285,16 +254,20 @@ async function loadData() {
     ui.patients.disabled = false;
     $("#add-relative").disabled = false;
     const query = new URLSearchParams(location.search);
+    if (!query.get("doctor") && results[2].value.items.some(department => String(department.department_id) === query.get("department"))) {
+      ui.departments.value = query.get("department");
+      document.querySelector('[data-booking-mode="department"]').click();
+      renderDoctors();
+    }
+    const key = query.get("draft"), draft = readDraft(key, actor.user_id);
+    if (draft) { ui.from.value = draft.from_date || draft.work_date; ui.to.value = draft.to_date || ""; }
     const doctor = doctors.find(d => String(d.doctor_profile_id) === query.get("doctor"));
     if (doctor) await selectDoctor(doctor, { scrollToDoctor: !query.get("encounter") });
-    const id = query.get("encounter");
-    if (id && /^[1-9]\d*$/.test(id)) {
-      $("#booking-dialog-title").textContent = "Thông tin lịch khám";
-      ui.confirm.hidden = true;
-      $("#booking-confirm-note").hidden = true;
-      ui.payment.hidden = true;
-      ui.dialog.showModal();
-      await refreshBooking(Number(id));
+    if (draft && doctor && String(draft.doctor_profile_id) === String(doctor.doctor_profile_id)) {
+      renderPatients(draft.patient_id); $("#appointment-symptoms").value = draft.symptoms;
+      const schedule = schedules.find(s => String(s.schedule_id) === String(draft.schedule_id));
+      const slot = schedule?.slots.find(s => s.appointment_time === draft.appointment_time);
+      if (slot) { selectedDate = schedule.work_date; selectedSlot = { schedule, slot, key: `${schedule.schedule_id}/${slot.appointment_time}` }; renderDays(); renderSlots(); updateReviewState(); }
     }
   } catch (error) { ui.data.textContent = errorMessage(error); ui.retry.hidden = false; }
   finally { loading = false; ui.doctors.setAttribute("aria-busy", "false"); }
@@ -314,183 +287,19 @@ async function checkAccess() {
   finally { checking = false; }
 }
 
-function busyDialog(value) {
-  busy = value;
-  ui.dialog.setAttribute("aria-busy", String(value));
-  ui.dialog.querySelectorAll("button,select").forEach(node => { node.disabled = value; });
-  if (!value && payment?.transaction_status === "PENDING") ui.method.disabled = true;
-}
-function rememberEncounter() {
-  requestedEncounterId = encounter.encounter_id;
-  const url = new URL(location.href);
-  url.searchParams.set("encounter", encounter.encounter_id);
-  history.replaceState(null, "", url);
-  resume.hidden = false;
-}
-function showBooking() {
-  clearInterval(countdown);
-  countdown = undefined;
-  rememberEncounter();
-  const status = encounter.encounter_status;
-  const confirmed = ["CONFIRMED", "CHECKED_IN", "IN_PROGRESS", "COMPLETED"].includes(status);
-  $("#booking-dialog-title").textContent = confirmed ? "Thông tin lịch khám" : status === "HOLDING" ? "Hoàn tất đăng ký khám" : "Trạng thái lịch khám";
-  ui.confirm.hidden = true;
-  $("#booking-confirm-note").hidden = true;
-  ui.payment.hidden = status !== "HOLDING";
-  ui.refresh.hidden = false; ui.cancel.hidden = status !== "HOLDING";
-  const labels = { HOLDING: "Đang giữ chỗ — chưa xác nhận", CONFIRMED: "Đã xác nhận", CHECKED_IN: "Đã check-in",
-    IN_PROGRESS: "Đang khám", COMPLETED: "Đã khám xong", EXPIRED: "Đã hết hạn giữ chỗ", CANCELLED: "Đã hủy", NO_SHOW: "Không tới khám" };
-  details(ui.review, [
-    ["Trạng thái", labels[status] || status], ["Mã phiếu", ticket?.ticket_code || encounter.ticket_code || "Chưa được cấp"],
-    ["Người khám", encounter.patient_name], ["Bác sĩ", encounter.doctor_name], ["Ngày khám", dateLabel(encounter.work_date)],
-    ["Khung giờ", `${clock(encounter.estimated_exam_at)}–${clock(encounter.appointment_end_at)}`], ["Phòng khám", encounter.room_name],
-    ["Giá khám đã chốt", money(encounter.consultation_fee_snapshot)],
-    [confirmed ? "Tiền cọc đã thanh toán" : status === "HOLDING" ? "Tiền cần thanh toán" : "Tiền cọc ban đầu", money(encounter.deposit_amount_snapshot)],
-    ["Vấn đề sức khỏe", encounter.symptoms || "Chưa cung cấp"],
-  ]);
-  ui.dialogStatus.textContent = confirmed ? "Lịch khám đã được hệ thống xác nhận. Vui lòng đến làm thủ tục trước khung giờ đã chọn ít nhất 30 phút."
-    : status === "HOLDING" ? "Thanh toán trước khi giữ chỗ hết hạn để được cấp phiếu khám."
-      : "Lượt khám này không còn giữ chỗ. Bạn có thể đóng cửa sổ và chọn lịch mới.";
-  ui.paymentResult.hidden = payment?.transaction_status !== "PENDING";
-  ui.paymentCreate.hidden = payment?.transaction_status === "PENDING";
-  ui.method.disabled = payment?.transaction_status === "PENDING";
-  if (payment) ui.method.value = payment.payment_method;
-  if (status === "HOLDING") {
-    let expirationChecked = new Date(encounter.hold_expires_at) <= new Date();
-    const tick = () => {
-      const seconds = Math.max(0, Math.ceil((new Date(encounter.hold_expires_at) - Date.now()) / 1000));
-      $("#booking-countdown").textContent = seconds > 0
-        ? `Thời gian giữ chỗ còn lại: ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
-        : "Đã tới thời hạn giữ chỗ. Bấm cập nhật trạng thái để đối chiếu hệ thống.";
-      if (!seconds && !expirationChecked && !busy) {
-        expirationChecked = true;
-        clearInterval(countdown); countdown = undefined; refreshBooking();
-      }
-    };
-    tick();
-    if (!expirationChecked) countdown = setInterval(tick, 1000);
-  }
-}
-async function readBooking(id) {
-  const result = await getEncounter(id);
-  const payments = await allPages((params, options) => listEncounterPayments(id, params, options));
-  let fetchedTicket;
-  if (result.encounter.ticket_code) fetchedTicket = (await getTicket(id)).ticket;
-  encounter = result.encounter;
-  payment = payments.find(p => p.payment_type === "DEPOSIT" && p.transaction_status === "PENDING") ||
-    payments.find(p => p.payment_type === "DEPOSIT");
-  ticket = fetchedTicket;
-  submissionUncertain = false;
-  showBooking();
-}
-async function recoverSubmission() {
-  const items = await allPages(listEncounters, {
-    patient_id: reviewRequest.patient_id, schedule_id: reviewRequest.schedule_id, encounter_type: "ONLINE",
-  });
-  const match = matchingBooking(items, reviewRequest);
-  if (match) { await readBooking(match.encounter_id); return; }
-  submissionUncertain = false;
-  ui.confirm.disabled = false; ui.refresh.hidden = true;
-  ui.dialogStatus.textContent = "Hệ thống chưa có lượt khám khớp thông tin này. Bạn có thể bấm xác nhận để gửi lại.";
-}
-async function refreshBooking(id = encounter?.encounter_id || requestedEncounterId) {
-  if (busy) return;
-  if (id) requestedEncounterId = id;
-  busyDialog(true);
-  ui.dialogStatus.textContent = "Đang cập nhật trạng thái từ hệ thống…";
-  try {
-    if (id) await readBooking(id);
-    else if (submissionUncertain) await recoverSubmission();
-    else throw new Error("Chưa có lượt khám để cập nhật.");
-  } catch (error) { ui.dialogStatus.textContent = errorMessage(error); ui.refresh.hidden = false; }
-  finally { busyDialog(false); if (submissionUncertain) ui.confirm.disabled = true; }
-}
 ui.form.addEventListener("submit", event => {
   event.preventDefault();
-  if (busy || loading) return;
-  if (encounter?.encounter_status === "HOLDING" || submissionUncertain) { ui.dialog.showModal(); refreshBooking(); return; }
-  const patient = selectedPatient();
-  if (!patient || !selectedSlot) { $("#appointment-status").textContent = "Vui lòng chọn hồ sơ người khám và khung giờ còn trống."; return; }
-  const symptoms = $("#appointment-symptoms").value.trim();
-  if (!symptoms) { $("#appointment-status").textContent = "Vui lòng mô tả vấn đề sức khỏe."; return; }
-  reviewRequest = { patient_id: patient.patient_id, schedule_id: selectedSlot.schedule.schedule_id,
-    appointment_time: selectedSlot.slot.appointment_time, symptoms };
-  encounter = payment = ticket = requestedEncounterId = undefined;
-  resume.hidden = true;
-  const url = new URL(location.href);
-  url.searchParams.delete("encounter");
-  history.replaceState(null, "", url);
-  details(ui.review, [
-    ["Người khám", patient.full_name], ["Bác sĩ", selectedDoctor.full_name], ["Ngày khám", dateLabel(selectedSlot.schedule.work_date)],
-    ["Khung giờ", `${clock(selectedSlot.slot.starts_at)}–${clock(selectedSlot.slot.ends_at)}`],
-    ["Phòng khám", selectedSlot.schedule.room_name], ["Giá khám", money(selectedDoctor.consultation_fee)], ["Vấn đề sức khỏe", symptoms],
-  ]);
-  $("#booking-dialog-title").textContent = "Xác nhận thông tin đặt khám";
-  $("#booking-confirm-note").hidden = false;
-  ui.confirm.hidden = false; ui.confirm.disabled = false;
-  ui.payment.hidden = ui.refresh.hidden = ui.cancel.hidden = true;
-  ui.dialogStatus.textContent = ""; ui.dialog.showModal();
-});
-ui.confirm.addEventListener("click", async () => {
-  if (busy || encounter || submissionUncertain || !reviewRequest) return;
-  busyDialog(true);
-  ui.dialogStatus.textContent = "Đang gửi yêu cầu giữ chỗ…";
+  if (loading) return;
+  const patient = selectedPatient(), symptoms = $("#appointment-symptoms").value.trim();
+  if (!patient || !selectedSlot || !symptoms) { $("#appointment-status").textContent = "Vui lòng chọn người khám, khung giờ và mô tả vấn đề sức khỏe."; return; }
   try {
-    const result = await createOnline(reviewRequest);
-    encounter = result.encounter;
-    rememberEncounter();
-    await readBooking(encounter.encounter_id);
-    loadSchedules();
-  } catch (error) {
-    ui.dialogStatus.textContent = errorMessage(error);
-    if (encounter) {
-      ui.confirm.hidden = true; ui.refresh.hidden = false;
-      ui.dialogStatus.textContent += " Lượt khám đã được tạo; bấm cập nhật trạng thái để tiếp tục.";
-    } else if (error.status === 0 || error.code === "DUPLICATE_ENCOUNTER") {
-      submissionUncertain = true; ui.refresh.hidden = false;
-      ui.dialogStatus.textContent += " Bấm cập nhật trạng thái để kiểm tra yêu cầu trước khi gửi lại.";
-    } else if (error.status === 409 || error.code === "SCHEDULE_NOT_FOUND") {
-      ui.confirm.hidden = true;
-      ui.dialogStatus.textContent += " Hãy đóng cửa sổ và chọn lại khung giờ.";
-      loadSchedules();
-    }
-  } finally { busyDialog(false); if (submissionUncertain) ui.confirm.disabled = true; }
+    const key = saveDraft({ user_id: actor.user_id, patient_id: patient.patient_id,
+      doctor_profile_id: selectedDoctor.doctor_profile_id, schedule_id: selectedSlot.schedule.schedule_id,
+      work_date: selectedSlot.schedule.work_date, from_date: ui.from.value, to_date: ui.to.value,
+      appointment_time: selectedSlot.slot.appointment_time, symptoms });
+    location.assign(`booking-review.html?draft=${encodeURIComponent(key)}`);
+  } catch { $("#appointment-status").textContent = "Trình duyệt không cho phép lưu thông tin tạm. Vui lòng bật lưu trữ để tiếp tục."; }
 });
-async function paymentAction(action) {
-  if (busy || encounter?.encounter_status !== "HOLDING") return;
-  busyDialog(true);
-  ui.dialogStatus.textContent = "Đang xử lý thanh toán trên hệ thống…";
-  try {
-    await action();
-    await readBooking(encounter.encounter_id);
-    if (payment?.transaction_status === "FAILED" && encounter.encounter_status === "HOLDING") {
-      ui.dialogStatus.textContent = "Thanh toán thất bại. Bạn có thể tạo phiên mới khi thời gian giữ chỗ còn hiệu lực.";
-    }
-  } catch (error) {
-    try { await readBooking(encounter.encounter_id); } catch { /* No mutation retry after an uncertain result. */ }
-    ui.dialogStatus.textContent = errorMessage(error) + " Bấm cập nhật trạng thái để đối chiếu trước khi thử lại.";
-  } finally { busyDialog(false); }
-}
-ui.paymentCreate.addEventListener("click", () => paymentAction(() => createIntent(encounter.encounter_id, { payment_method: ui.method.value })));
-$("#booking-payment-success").addEventListener("click", () => {
-  if (payment?.transaction_status === "PENDING") paymentAction(() => setDemoResult(payment.payment_id, { result: "SUCCESS" }));
-});
-$("#booking-payment-failed").addEventListener("click", () => {
-  if (payment?.transaction_status === "PENDING") paymentAction(() => setDemoResult(payment.payment_id, { result: "FAILED" }));
-});
-ui.cancel.addEventListener("click", async () => {
-  if (busy || encounter?.encounter_status !== "HOLDING") return;
-  busyDialog(true);
-  try {
-    await cancel(encounter.encounter_id, { reason: "Người đặt khám hủy giữ chỗ trên giao diện" });
-    await readBooking(encounter.encounter_id); loadSchedules();
-  } catch (error) { ui.dialogStatus.textContent = errorMessage(error); }
-  finally { busyDialog(false); }
-});
-ui.refresh.addEventListener("click", () => refreshBooking());
-$("#booking-dialog-close").addEventListener("click", () => { if (!busy) ui.dialog.close(); });
-ui.dialog.addEventListener("cancel", event => { if (busy) event.preventDefault(); });
-ui.dialog.addEventListener("close", () => { clearInterval(countdown); countdown = undefined; });
 
 $("#add-relative").addEventListener("click", () => {
   $("#relative-form").reset(); $("#relative-form-status").textContent = "";
@@ -584,7 +393,9 @@ window.addEventListener("neu:auth-change", () => {
 });
 window.addEventListener("pagehide", () => {
   ui.main.inert = true; document.body.classList.add("auth-pending");
-  clearInterval(countdown); scheduleVersion++; scheduleAbort?.abort();
+  scheduleVersion++; scheduleAbort?.abort();
 });
 window.addEventListener("pageshow", event => { if (event.persisted) checkAccess(); });
-checkAccess();
+const resumeId = new URLSearchParams(location.search).get("encounter");
+if (resumeId && /^[1-9]\d*$/.test(resumeId)) location.replace(`booking-review.html?encounter=${resumeId}`);
+else checkAccess();

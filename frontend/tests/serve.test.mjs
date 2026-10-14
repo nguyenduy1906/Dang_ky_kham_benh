@@ -25,7 +25,7 @@ test("npm's static server publishes the frontend and rejects traversal/private f
   assert.equal(page.status, 200); assert.match(page.body, /Trang chủ/);
   const js = await get("/frontend/static/js/pages/auth.js?v=test");
   assert.equal(js.status, 200); assert.match(js.headers["content-type"], /javascript/);
-  assert.equal((await get("/frontend/static/assets/clinic/l%E1%BB%85_t%C3%A2n.jpg", "HEAD")).status, 200);
+  assert.equal((await get("/frontend/static/assets/clinic/n%E1%BB%99i_khoa.jpg", "HEAD")).status, 200);
   for (const path of ["/backend/.env", "/frontend/package.json", "/frontend/static/../../backend/.env", "/frontend/static/%2e%2e/%2e%2e/backend/.env", "/frontend/static/%5c..%5cbackend%5c.env"]) {
     assert.equal((await get(path)).status, 404, path);
   }

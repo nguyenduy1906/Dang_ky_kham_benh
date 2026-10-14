@@ -1,4 +1,13 @@
-from backend.app.utils.database_helpers import update_row
+from psycopg.types.json import Jsonb
+from backend.app.utils.database_helpers import update_row, insert_row
+
+DEPARTMENT_FIELDS = {'name','description','is_active','overview','mission','cover_image_url','group_type',
+                     'specialties','clinical_services','equipment','achievements','patient_guide','gallery','extra_sections','content_is_demo'}
+DEPARTMENT_JSON = {'specialties','clinical_services','equipment','achievements','patient_guide','gallery','extra_sections'}
+
+
+def _department_values(fields):
+    return {key: Jsonb(value) if key in DEPARTMENT_JSON else value for key,value in fields.items() if key in DEPARTMENT_FIELDS}
 
 
 def list_departments(db, include_inactive=False):
@@ -16,13 +25,31 @@ def department_name_exists(db, name, exclude_id=None):
 
 
 def create_department(db, fields):
-    return db.execute('INSERT INTO department (name, description, is_active) VALUES (%s, %s, %s) RETURNING *',
-                      (fields['name'], fields['description'], fields['is_active'])).fetchone()
+    return insert_row(db, 'department', _department_values(fields), sorted(DEPARTMENT_FIELDS))
 
 
 def update_department(db, department_id, fields):
-    return update_row(db, 'department', 'department_id', department_id, fields,
-                      {'name', 'description', 'is_active'})
+    values = _department_values(fields)
+    values.update(updated_at=db.execute('SELECT CURRENT_TIMESTAMP AS now').fetchone()['now'])
+    update_row(db, 'department', 'department_id', department_id, values, DEPARTMENT_FIELDS | {'updated_at'})
+    return db.execute('UPDATE department SET version=version+1 WHERE department_id=%s RETURNING *',(department_id,)).fetchone()
+
+
+def department_doctors(db, department_id, *, include_inactive=False):
+    active = '' if include_inactive else "AND d.is_active=1 AND u.deleted_at IS NULL AND u.account_status='ACTIVE' AND u.approval_status='APPROVED' AND r.role_name='DOCTOR'"
+    return db.execute(f'''SELECT d.doctor_profile_id,d.department_id,dep.name AS department_name,u.full_name,d.academic_degree,
+        d.specialization,d.experience_years,d.avatar_url,d.is_active FROM doctor_profile d JOIN users u USING(user_id)
+        JOIN role r USING(role_id) JOIN department dep ON dep.department_id=d.department_id WHERE d.department_id=%s {active} ORDER BY u.full_name''',(department_id,)).fetchall()
+
+
+def department_leaders(db, department_id, *, history=False, include_inactive=False):
+    conditions = '' if history else 'AND l.ended_at IS NULL'
+    if not include_inactive:
+        conditions += " AND d.is_active=1 AND u.deleted_at IS NULL AND u.account_status='ACTIVE' AND u.approval_status='APPROVED' AND r.role_name='DOCTOR'"
+    return db.execute(f'''SELECT l.*,u.full_name,d.avatar_url,d.academic_degree,d.specialization,d.experience_years,
+        d.is_active,d.department_id AS current_department_id FROM department_leadership l
+        JOIN doctor_profile d USING(doctor_profile_id) JOIN users u USING(user_id) JOIN role r USING(role_id)
+        WHERE l.department_id=%s {conditions} ORDER BY l.appointed_at DESC,l.leadership_id DESC''',(department_id,)).fetchall()
 
 
 _SELECT = ('SELECT r.*, d.name AS department_name FROM room r '

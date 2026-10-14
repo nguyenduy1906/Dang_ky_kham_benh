@@ -57,15 +57,7 @@
 .article-category {
   color: var(--green);
 }
-.article-preview {
-  display: block;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.6;
-  border-left: 3px solid var(--green);
-  padding-left: 12px;
-  margin: 0 0 25px;
-}
+
 .article-content {
   color: var(--ink);
   font-size: 18px;

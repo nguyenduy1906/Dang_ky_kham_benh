@@ -3,7 +3,7 @@ import("./contact-info.js").then(module => module.initContactInfo());
 const panels = {
   privacy: [
     "Chính sách bảo mật",
-    "<p>Nội dung chính sách chính thức sẽ được bổ sung. Bản xem trước hiện chưa gửi dữ liệu đến hệ thống.</p>",
+    "<p>Thông tin tài khoản và hồ sơ khám được quản lý theo quyền truy cập. Không chia sẻ mật khẩu, mã xác minh hoặc thông tin hồ sơ với người khác.</p>",
   ],
   terms: [
     "Điều khoản sử dụng",
@@ -11,27 +11,15 @@ const panels = {
   ],
   insurance: [
     "Bảo hiểm y tế",
-    "<p>Hồ sơ người được khám có thể cung cấp mã thẻ BHYT. Đồ án chưa xử lý quyền lợi hoặc chi trả bảo hiểm.</p>",
-  ],
-  about: [
-    "Giới thiệu",
-    "<p>Website hỗ trợ tìm hiểu bác sĩ, chuyên khoa và đăng ký khám cho bản thân hoặc người thân.</p>",
+    "<p>Bổ sung mã thẻ BHYT trong hồ sơ người khám và mang theo giấy tờ khi đến khám. Liên hệ bộ phận tiếp nhận để được hướng dẫn về quyền lợi và thủ tục bảo hiểm.</p>",
   ],
   departments: [
     "Chuyên khoa",
-    "<p>Các chuyên khoa minh họa cho giao diện:</p><ul><li>Nội khoa</li><li>Ngoại khoa</li><li>Nha khoa</li></ul>",
+    "<p>Tìm hiểu chuyên môn, đội ngũ bác sĩ và dịch vụ khám tại trang Chuyên khoa.</p>",
   ],
   doctors: [
     "Đội ngũ bác sĩ",
     "<p>Trang danh sách bác sĩ sẽ trình bày ảnh, thông tin chuyên môn và lịch khám của từng bác sĩ.</p>",
-  ],
-  booking: [
-    "Đặt lịch khám",
-    "<p>Luồng giao diện dự kiến:</p><ol><li>Chọn hồ sơ người được khám.</li><li>Chọn bác sĩ và ca khám.</li><li>Nhập triệu chứng và kiểm tra thông tin.</li><li>Thanh toán giả lập để xác nhận lịch.</li></ol><p>Chức năng đặt lịch chưa được triển khai trong bản xem trước này.</p>",
-  ],
-  news: [
-    "Tin tức sức khỏe",
-    "<p>Khu vực tin tức sẽ hiển thị các bài viết và thông tin hoạt động của cơ sở khám bệnh.</p>",
   ],
   guide: [
     "Hướng dẫn khám bệnh",
@@ -54,8 +42,7 @@ document.querySelectorAll("[data-panel]").forEach((button) => {
     }
     const [title, content] = panels[button.dataset.panel];
     document.querySelector("#dialog-title").textContent = title;
-    document.querySelector("#dialog-content").innerHTML =
-      content + '<p class="preview-note">Bản xem trước giao diện · Chưa kết nối API.</p>';
+    document.querySelector("#dialog-content").innerHTML = content;
     dialog.showModal();
   });
 });

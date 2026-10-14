@@ -20,7 +20,7 @@ class ContactInfoTests(unittest.TestCase):
         result = create_app().test_client().get('/contact-info')
         self.assertEqual(result.status_code, 200)
         self.assertEqual(result.json, {'hospital_name': 'Cơ sở thử nghiệm', 'support_phone': '19001234',
-                                      'support_email': None, 'exam_hours': None})
+                                      'support_email': 'neumedical@gmail.com', 'exam_hours': None})
         with get_db_connection() as db:
             db.execute("DELETE FROM system_configuration WHERE config_key IN ('SUPPORT_EMAIL', 'EXAM_HOURS')")
         self.assertIsNone(create_app().test_client().get('/contact-info').json['support_email'])

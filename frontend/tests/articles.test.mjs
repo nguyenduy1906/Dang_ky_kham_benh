@@ -120,8 +120,11 @@ test("editorial content has an italic lead, proper heading levels and safe empha
   assert.equal(container.children.at(-1).className, 'article-source');
 });
 test("news pagination/search/category call the backend and persist filters in the URL", async () => {
+  const expanded = [...fixtures, ...Array.from({ length: 6 }, (_, i) => fixture(i + 11))];
+  respond = url => pageResponse(url, expanded);
   await controller("news");
-  assert.equal(nodes.get("news-grid").children.length, 6);
+  assert.equal(nodes.get("news-grid").children.length, 12);
+  assert.equal(calls.find(call => call.url.searchParams.get("page_size") !== "100").url.searchParams.get("page_size"), "12");
   assert.equal(nodes.get("news-page").textContent, "Trang 1 / 2");
   click("news-next"); await tick(); assert.equal(nodes.get("news-grid").children.length, 4);
   assert.equal(location.searchParams.get("page"), "2");
@@ -132,7 +135,7 @@ test("news pagination/search/category call the backend and persist filters in th
   assert.equal(location.searchParams.get("category"), "Tin bệnh viện"); assert.equal(location.searchParams.has("page"), false);
   form.elements.q.value = "Không có kết quả"; submit(); await tick();
   assert.equal(nodes.get("news-grid").children.length, 0); assert.match(nodes.get("news-status").textContent, /Chưa có bài viết/);
-  click("news-clear"); await tick(); assert.equal(nodes.get("news-grid").children.length, 6);
+  click("news-clear"); await tick(); assert.equal(nodes.get("news-grid").children.length, 12);
 });
 test("a late response cannot overwrite newer filters, and failed requests offer a working retry", async () => {
   let finish;
@@ -140,13 +143,15 @@ test("a late response cannot overwrite newer filters, and failed requests offer 
   await controller("news");
   respond = url => pageResponse(url, [fixture(99)]);
   submit(); await tick(); assert.match(nodes.get("news-grid").textContent, /Bài viết 99/);
-  finish(pageResponse(new URL("http://127.0.0.1:5000/articles?page_size=6")));
+  finish(pageResponse(new URL("http://127.0.0.1:5000/articles?page_size=12")));
   await tick(); assert.match(nodes.get("news-grid").textContent, /Bài viết 99/);
   respond = () => { throw new Error("offline"); }; submit(); await tick();
   assert.equal(nodes.get("news-grid").children.length, 0); assert.equal(nodes.get("news-retry").hidden, false);
-  respond = url => pageResponse(url); click("news-retry"); await tick(); assert.equal(nodes.get("news-grid").children.length, 6);
+  respond = url => pageResponse(url); click("news-retry"); await tick(); assert.equal(nodes.get("news-grid").children.length, 10);
 });
 test("an out-of-range bookmark moves to the final available page", async () => {
+  const expanded = [...fixtures, ...Array.from({ length: 6 }, (_, i) => fixture(i + 11))];
+  respond = url => pageResponse(url, expanded);
   location.searchParams.set("page", "99"); await controller("news");
   assert.equal(nodes.get("news-page").textContent, "Trang 2 / 2"); assert.equal(location.searchParams.get("page"), "2");
 });

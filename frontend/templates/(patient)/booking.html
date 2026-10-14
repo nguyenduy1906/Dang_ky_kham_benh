@@ -4,11 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Đặt lịch khám | NEU Medical</title>
-    <link rel="stylesheet" href="../../static/css/home.css?v=20261013-ui-only" />
-    <link rel="stylesheet" href="../../static/css/public-pages.css?v=20261014-footer-layout" />
-    <link rel="stylesheet" href="../../static/css/patient-pages.css?v=20261013-booking-api" />
-    <script src="../../static/js/core/public.js?v=20261014-contact-api" defer></script>
-    <script type="module" src="../../static/js/pages/booking.js?v=20261014-doctor-position"></script>
+    <link rel="stylesheet" href="../../static/css/home.css?v=20261014-banner-sharp" />
+    <link rel="stylesheet" href="../../static/css/public-pages.css?v=20261014-interface-update" />
+    <link rel="stylesheet" href="../../static/css/patient-pages.css?v=20261014-review-page" />
+    <script src="../../static/js/core/public.js?v=20261014-interface-update" defer></script>
+    <script type="module" src="../../static/js/pages/booking.js?v=20261014-department-selection"></script>
   </head>
   <body class="auth-pending">
     <a class="skip-link" href="#main">Đến nội dung chính</a>
@@ -108,6 +108,14 @@
               </button>
               <p id="insurance-local-status" class="field-note" role="status"></p>
             </div>
+            <div class="booking-review-actions">
+              <div class="appointment-field">
+                <label for="appointment-symptoms">Vấn đề sức khỏe gặp phải *</label>
+                <textarea id="appointment-symptoms" required rows="4" maxlength="2000" placeholder="Mô tả ngắn gọn triệu chứng..."></textarea>
+              </div>
+              <button id="appointment-review-submit" class="solid-button" type="submit" disabled>Xem lại thông tin</button>
+              <p id="appointment-status" role="status"></p>
+            </div>
           </form>
         </aside>
         <section class="appointment-results" aria-label="Lựa chọn bác sĩ">
@@ -170,39 +178,7 @@
             Không tìm thấy bác sĩ phù hợp. Hãy thay đổi từ khóa hoặc chuyên khoa.
           </p>
         </section>
-        <aside class="appointment-summary">
-          <h2>Tóm tắt lịch khám</h2>
-          <div id="appointment-summary-empty">
-            <span aria-hidden="true">▦</span>
-            <p>Vui lòng chọn bác sĩ, ngày và ca khám để xem chi tiết.</p>
-          </div>
-          <div id="appointment-summary-content" hidden>
-            <div class="summary-doctor">
-<span id="summary-doctor-photo"></span>
-              <div>
-                <strong id="summary-doctor-name"></strong
-                ><span id="summary-doctor-specialty"></span>
-              </div>
-            </div>
-            <dl id="appointment-summary-list"></dl>
-            <div class="appointment-field">
-              <label for="appointment-symptoms">Vấn đề sức khỏe gặp phải *</label
-              ><textarea
-                id="appointment-symptoms"
-                form="appointment-form"
-                required
-                rows="4"
-                maxlength="2000"
-                placeholder="Mô tả ngắn gọn triệu chứng..."
-              ></textarea>
-            </div>
 
-            <button class="solid-button" type="submit" form="appointment-form">
-              Xem lại thông tin
-            </button>
-            <p id="appointment-status" role="status"></p>
-          </div>
-        </aside>
       </div>
     </main>
     <footer class="compact-footer">
@@ -254,35 +230,6 @@
       </div>
       <div id="dialog-content"></div>
       <form method="dialog"><button class="dialog-done">Đóng</button></form>
-    </dialog>
-    <dialog id="booking-dialog" class="booking-confirm-dialog" aria-labelledby="booking-dialog-title">
-      <div class="dialog-heading">
-        <h2 id="booking-dialog-title">Xác nhận thông tin đặt khám</h2>
-        <button id="booking-dialog-close" type="button" class="dialog-close" aria-label="Đóng xác nhận">×</button>
-      </div>
-      <div id="booking-review"></div>
-      <p id="booking-confirm-note">Giữ chỗ trong 10 phút. Cần thanh toán 100% giá khám để được xác nhận và cấp phiếu.</p>
-      <button id="booking-confirm" type="button" class="solid-button">Xác nhận giữ chỗ</button>
-      <div id="booking-payment" hidden>
-        <p id="booking-countdown" role="status"></p>
-        <label for="booking-payment-method">Phương thức thanh toán</label>
-        <select id="booking-payment-method">
-          <option value="BANK">Chuyển khoản</option>
-          <option value="EWALLET">Ví điện tử</option>
-          <option value="CARD">Thẻ</option>
-        </select>
-        <button id="booking-payment-create" type="button" class="solid-button">Tạo phiên thanh toán</button>
-        <div id="booking-payment-result" hidden>
-          <p>Thanh toán demo: các nút dưới đây gửi kết quả tới API mô phỏng của backend, không thu tiền thật.</p>
-          <button id="booking-payment-success" type="button" class="solid-button">Mô phỏng thanh toán thành công</button>
-          <button id="booking-payment-failed" type="button" class="outline-button">Mô phỏng thanh toán thất bại</button>
-        </div>
-      </div>
-      <p id="booking-dialog-status" role="status"></p>
-      <div class="booking-dialog-actions">
-        <button id="booking-refresh" type="button" class="outline-button" hidden>Cập nhật trạng thái</button>
-        <button id="booking-cancel" type="button" class="outline-button" hidden>Hủy giữ chỗ</button>
-      </div>
     </dialog>
     <dialog id="relative-dialog" aria-labelledby="relative-title">
       <div class="dialog-heading">

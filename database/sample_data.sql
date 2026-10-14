@@ -12,6 +12,7 @@ $encoding$;
 
 -- Xóa dữ liệu cũ để có thể chạy lại file seed nhiều lần.
 TRUNCATE TABLE
+    department_leadership,
     patient_delegate,
     nurse_assignment,
     role_request,
@@ -60,7 +61,7 @@ VALUES
 (8, 2, 'BS. Lê Thu Trang', '0902000003', 'trang.le@medicare.vn', 'scrypt:32768:8:1$IeZHr9LZzEdGHTx0$25f6c1dd29cbc87252f09b65a719ffb4ad112c78a2402654bb17dfea84372f92ba32c7560292fe97adf8081f4b61479ed584438eb76b4f18fc6367f531a75f39', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:20:00+07', '2026-09-03 08:20:00+07'),
 (9, 2, 'BS. Phạm Đức Long', '0902000004', 'long.pham@medicare.vn', 'scrypt:32768:8:1$vkXSgjOpRBfi5gHu$4b7e7fa46bfda750384c65243d2502cffd91e4e4c08299d0a3c32d67b6d365f961aef0f04128319b279581368caf822737e622e6e1edadc852a4a3761e7f6509', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:30:00+07', '2026-09-03 08:30:00+07'),
 (10, 2, 'BS. Vũ Minh Anh', '0902000005', 'anh.vu@medicare.vn', 'scrypt:32768:8:1$rjGq1poyGzaRdOEo$bd9595c712ec6806eaf958c259e373cab4d6c1e3373157c78a3cf8f93ac08132806ae4e3c52ae195bbaf08cf3cc797e93bc066aba435300a7e245d1b3bf5f5f3', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:40:00+07', '2026-09-03 08:40:00+07'),
-(11, 2, 'BS. Đỗ Hải Yến', '0902000006', 'yen.do@medicare.vn', 'scrypt:32768:8:1$K3VaBPDtqxfLUDEJ$11fa8db189497c5c8cc8384d6e4f2d9a7c779702077f4e6527f09d0abb1275f83788a4ed52048f47f285fe47a360668cfd6e5cdf648fb7b4fa9887a3d849b271', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:50:00+07', '2026-09-03 08:50:00+07'),
+(11, 2, 'BS. Đỗ Hải Nam', '0902000006', 'yen.do@medicare.vn', 'scrypt:32768:8:1$K3VaBPDtqxfLUDEJ$11fa8db189497c5c8cc8384d6e4f2d9a7c779702077f4e6527f09d0abb1275f83788a4ed52048f47f285fe47a360668cfd6e5cdf648fb7b4fa9887a3d849b271', 'APPROVED', 'ACTIVE', 1, '2026-09-03 08:50:00+07', '2026-09-03 08:50:00+07'),
 (12, 2, 'BS. Bùi Thanh Tùng', '0902000007', 'tung.bui@medicare.vn', 'scrypt:32768:8:1$pfPLHhaanfw5hEiB$bdb69d563ccacc2288c21ee9fa50fcd512b6cc2978bdf51912d6c266819599873e6d518a91b03a0977aa8087b169c8bb5a079efd7c998ed9b7093822893a7b6e', 'APPROVED', 'ACTIVE', 1, '2026-09-03 09:00:00+07', '2026-09-03 09:00:00+07'),
 (13, 2, 'BS. Hoàng Mai Linh', '0902000008', 'linh.hoang@medicare.vn', 'scrypt:32768:8:1$Zp8Shp3hVOcOwWQi$08fff47ed2bcad535d9c8ced364b009858fe7d3fb49c4241eb281add318163d0da3a3f74cf84d230cfe2abf06607b085e3f8187c272f658d3fac15b0920773c2', 'APPROVED', 'ACTIVE', 1, '2026-09-03 09:10:00+07', '2026-09-03 09:10:00+07'),
 (14, 2, 'BS. Đặng Quang Huy', '0902000009', 'huy.dang@medicare.vn', 'scrypt:32768:8:1$9R5HR8gfrOdfjx0o$3ca055c33d74c9f24af8fe322bee9d1517880505c21b88008dd38a0f4f3be8f6764c4414ca749c2fdbfb0ee027094280a9cbf6afb9cc8d2d88ec746f60626772', 'APPROVED', 'ACTIVE', 1, '2026-09-03 09:20:00+07', '2026-09-03 09:20:00+07'),
@@ -124,16 +125,16 @@ VALUES
 INSERT INTO doctor_profile
 (doctor_profile_id, user_id, department_id, academic_degree, specialization, experience_years, introduction, consultation_fee, avatar_url, is_active, created_at, updated_at)
 VALUES
-(1, 6, 1, 'Thạc sĩ', 'Nội khoa', 12, 'Bác sĩ chuyên khám nội tổng quát.', 250000, '/uploads/avatars/966fa3079f664b08b1c977ccb6915d3a.jpg', 1, '2026-09-04 08:00:00+07', '2026-09-04 08:00:00+07'),
-(2, 7, 2, 'Tiến sĩ', 'Tim mạch', 15, 'Bác sĩ chuyên khoa tim mạch.', 350000, '/uploads/avatars/260d30cd4d96400f9023e7fd71af8382.jpg', 1, '2026-09-04 08:10:00+07', '2026-09-04 08:10:00+07'),
-(3, 8, 3, 'Chuyên khoa I', 'Da liễu', 9, 'Bác sĩ chuyên điều trị bệnh da.', 280000, '/uploads/avatars/8de4ec4fc6554aa3bddb589395ab2e1b.jpg', 1, '2026-09-04 08:20:00+07', '2026-09-04 08:20:00+07'),
-(4, 9, 4, 'Thạc sĩ', 'Nhi khoa', 11, 'Bác sĩ chuyên khám và điều trị trẻ em.', 300000, '/uploads/avatars/6b172a558f0648a5b9786daed64bcec4.jpg', 1, '2026-09-04 08:30:00+07', '2026-09-04 08:30:00+07'),
-(5, 10, 5, 'Chuyên khoa II', 'Sản phụ khoa', 14, 'Bác sĩ chuyên sản phụ khoa.', 380000, '/uploads/avatars/a93fef9e21064a9ba42a14f147b181dd.jpg', 1, '2026-09-04 08:40:00+07', '2026-09-04 08:40:00+07'),
-(6, 11, 6, 'Thạc sĩ', 'Tai Mũi Họng', 10, 'Bác sĩ chuyên tai mũi họng.', 270000, '/uploads/avatars/f234bc8cf1aa43cfb57cac0978fb6905.jpg', 1, '2026-09-04 08:50:00+07', '2026-09-04 08:50:00+07'),
-(7, 12, 7, 'Chuyên khoa I', 'Nhãn khoa', 8, 'Bác sĩ chuyên khám và điều trị mắt.', 260000, '/uploads/avatars/932e24ee2e0949ccbf1247748057a403.jpg', 1, '2026-09-04 09:00:00+07', '2026-09-04 09:00:00+07'),
-(8, 13, 8, 'Thạc sĩ', 'Răng Hàm Mặt', 13, 'Bác sĩ chuyên răng hàm mặt.', 320000, '/uploads/avatars/5ea9f58dc38049afa23aeddf8251adce.jpg', 1, '2026-09-04 09:10:00+07', '2026-09-04 09:10:00+07'),
-(9, 14, 9, 'Tiến sĩ', 'Cơ Xương Khớp', 16, 'Bác sĩ chuyên cơ xương khớp.', 360000, '/uploads/avatars/36ea98ff447b4c7ea4e242a3df829f41.jpg', 1, '2026-09-04 09:20:00+07', '2026-09-04 09:20:00+07'),
-(10, 15, 10, 'Chuyên khoa II', 'Thần kinh', 17, 'Bác sĩ chuyên thần kinh.', 400000, '/uploads/avatars/eeffdcdd8a30437fbb64e429d83aa1ad.jpg', 1, '2026-09-04 09:30:00+07', '2026-09-04 09:30:00+07');
+(1, 6, 1, 'Thạc sĩ', 'Nội khoa', 12, 'Bác sĩ chuyên khám nội tổng quát.', 250000, '/uploads/avatars/c4a8d50caedad0d8fed2dff0cfab0309.jpg', 1, '2026-09-04 08:00:00+07', '2026-09-04 08:00:00+07'),
+(2, 7, 2, 'Tiến sĩ', 'Tim mạch', 15, 'Bác sĩ chuyên khoa tim mạch.', 350000, '/uploads/avatars/4f257e4de22c28a9b8790c500251990c.jpg', 1, '2026-09-04 08:10:00+07', '2026-09-04 08:10:00+07'),
+(3, 8, 3, 'Chuyên khoa I', 'Da liễu', 9, 'Bác sĩ chuyên điều trị bệnh da.', 280000, '/uploads/avatars/7465c5220fd21bd49ef7913ad3f326d8.jpg', 1, '2026-09-04 08:20:00+07', '2026-09-04 08:20:00+07'),
+(4, 9, 4, 'Thạc sĩ', 'Nhi khoa', 11, 'Bác sĩ chuyên khám và điều trị trẻ em.', 300000, '/uploads/avatars/2afd17e4e62cafa329d63b130480a807.jpg', 1, '2026-09-04 08:30:00+07', '2026-09-04 08:30:00+07'),
+(5, 10, 5, 'Chuyên khoa II', 'Sản phụ khoa', 14, 'Bác sĩ chuyên sản phụ khoa.', 380000, '/uploads/avatars/1ba03faa4029ed403c4cb76576d72fb2.jpg', 1, '2026-09-04 08:40:00+07', '2026-09-04 08:40:00+07'),
+(6, 11, 6, 'Thạc sĩ', 'Tai Mũi Họng', 10, 'Bác sĩ chuyên tai mũi họng.', 270000, '/uploads/avatars/107a45e9f9ff0768d4b25ba9ed28a96a.jpg', 1, '2026-09-04 08:50:00+07', '2026-09-04 08:50:00+07'),
+(7, 12, 7, 'Chuyên khoa I', 'Nhãn khoa', 8, 'Bác sĩ chuyên khám và điều trị mắt.', 260000, '/uploads/avatars/2c58ba7f456ec5765c3812fdcd183d7b.jpg', 1, '2026-09-04 09:00:00+07', '2026-09-04 09:00:00+07'),
+(8, 13, 8, 'Thạc sĩ', 'Răng Hàm Mặt', 13, 'Bác sĩ chuyên răng hàm mặt.', 320000, '/uploads/avatars/d2d73ede697069072a82604c8adb21f5.jpg', 1, '2026-09-04 09:10:00+07', '2026-09-04 09:10:00+07'),
+(9, 14, 9, 'Tiến sĩ', 'Cơ Xương Khớp', 16, 'Bác sĩ chuyên cơ xương khớp.', 360000, '/uploads/avatars/a6ac79c44c9e0e56e83c03297452b13e.jpg', 1, '2026-09-04 09:20:00+07', '2026-09-04 09:20:00+07'),
+(10, 15, 10, 'Chuyên khoa II', 'Thần kinh', 17, 'Bác sĩ chuyên thần kinh.', 400000, '/uploads/avatars/2bea9973014ba16451820b91412045c6.jpg', 1, '2026-09-04 09:30:00+07', '2026-09-04 09:30:00+07');
 
 -- Hồ sơ đào tạo/công tác minh họa cho 10 bác sĩ mẫu, không thay phí khám hoặc ảnh.
 UPDATE doctor_profile SET introduction='Bác sĩ chuyên khám nội tổng quát.
@@ -457,7 +458,7 @@ VALUES
 INSERT INTO article
 (article_id, author_id, title, slug, category, thumbnail_url, content, is_active, published_at, created_at, updated_at)
 VALUES
-(1, 1, 'RSV và cúm mùa ở trẻ: Quan sát hô hấp để nhận biết diễn biến bất thường', 'benh-ho-hap-o-tre-rsv-va-cum-mua', 'Y học thường thức', '/uploads/articles/d2bbf80bf5e6474f9040d5510946261e.jpg', $article$*Trẻ mắc bệnh hô hấp có thể bắt đầu bằng triệu chứng nhẹ nhưng cần được theo dõi diễn biến. Chuyên gia nhi khoa Bạch Mai lưu ý rằng cách thở, khả năng bú hoặc uống và mức độ tỉnh táo có ý nghĩa quan trọng bên cạnh nhiệt độ cơ thể.*
+(1, 1, 'RSV và cúm mùa ở trẻ: Quan sát hô hấp để nhận biết diễn biến bất thường', 'benh-ho-hap-o-tre-rsv-va-cum-mua', 'Y học thường thức', '/uploads/articles/b6f491239f14078bc972158ca5f8eb1d.jpg', $article$*Trẻ mắc bệnh hô hấp có thể bắt đầu bằng triệu chứng nhẹ nhưng cần được theo dõi diễn biến. Chuyên gia nhi khoa Bạch Mai lưu ý rằng cách thở, khả năng bú hoặc uống và mức độ tỉnh táo có ý nghĩa quan trọng bên cạnh nhiệt độ cơ thể.*
 
 ## Vì sao trẻ nhỏ cần được quan sát sát hơn
 
@@ -467,7 +468,7 @@ Nguồn tin lưu ý trẻ sơ sinh, trẻ nhỏ, trẻ sinh non và trẻ có b�
 
 Đi khám đúng thời điểm giúp bác sĩ đánh giá cả dấu hiệu hô hấp lẫn tình trạng toàn thân. Phụ huynh nên ghi nhận những thay đổi quan sát được để trao đổi rõ trong quá trình chăm sóc.
 
-![Không gian khám bệnh](/uploads/articles/aa415242679740d7b2684416036beb63.jpg "Không gian phục vụ khám và tư vấn — ảnh minh họa demo")
+![Không gian khám bệnh](/uploads/articles/83e856c669a06875a98190946b0f1d8d.jpg "Không gian phục vụ khám và tư vấn — ảnh minh họa demo")
 
 ## RSV và cúm có những biểu hiện khác nhau
 
@@ -491,7 +492,7 @@ Những biểu hiện được nguồn tin lưu ý gồm:
 
 Đây là những tình huống cần được đánh giá trực tiếp tại cơ sở y tế. Bác sĩ sẽ kết hợp nhiều thông tin, bao gồm hô hấp, oxy máu, khả năng ăn uống và mức độ tỉnh táo, thay vì dựa vào một chỉ số đơn lẻ.
 
-![Khu vực tiếp đón gia đình](/uploads/articles/d2bbf80bf5e6474f9040d5510946261e.jpg "Khu vực tiếp đón và hướng dẫn gia đình người bệnh — ảnh minh họa demo")
+![Khu vực tiếp đón gia đình](/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg "Khu vực tiếp đón và hướng dẫn gia đình người bệnh — ảnh minh họa demo")
 
 ## Phòng bệnh theo tuổi và nguy cơ
 
@@ -504,7 +505,7 @@ Kháng sinh không điều trị được virus RSV hay cúm. Phụ huynh không
 Thông điệp của bài là theo dõi trẻ bằng nhiều dấu hiệu và chủ động phòng ngừa. Khi có thay đổi về cách thở hoặc tình trạng toàn thân, việc đưa trẻ đi đánh giá quan trọng hơn việc tiếp tục chờ xem nhiệt độ có tăng hay không.
 
 Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/canh-bao-benh-ho-hap-giao-mua-o-tre-nhan-biet-som-rsv-cum-mua-va-dau-hieu-nguy-hiem?id=6c0af8f9-86ae-4ca7-acf8-f7598fc504b0). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-02 00:00:00+07', '2026-10-02 00:00:00+07', '2026-10-02 00:00:00+07'),
-(2, 1, 'Theo dõi ung thư gan: Vì sao cần phối hợp nhiều thông tin?', 'theo-doi-nguy-co-ung-thu-gan', 'Y học thường thức', '/uploads/articles/da5271a8499c44d9bd5e65a306704e03.jpg', $article$*Bài viết của Bạch Mai đề cập giới hạn của từng công cụ theo dõi ung thư gan và vai trò của việc kết hợp thông tin. Với người có bệnh gan mạn tính, một kết quả kiểm tra riêng lẻ cần được hiểu trong bối cảnh nguy cơ và kế hoạch theo dõi của bác sĩ.*
+(2, 1, 'Theo dõi ung thư gan: Vì sao cần phối hợp nhiều thông tin?', 'theo-doi-nguy-co-ung-thu-gan', 'Y học thường thức', '/uploads/articles/b6df1b1ed14289fff99a16ee3ba9b283.jpg', $article$*Bài viết của Bạch Mai đề cập giới hạn của từng công cụ theo dõi ung thư gan và vai trò của việc kết hợp thông tin. Với người có bệnh gan mạn tính, một kết quả kiểm tra riêng lẻ cần được hiểu trong bối cảnh nguy cơ và kế hoạch theo dõi của bác sĩ.*
 
 ## Kết quả thông thường vẫn có giới hạn
 
@@ -514,7 +515,7 @@ AFP bình thường cũng không đủ để khẳng định chắc chắn khôn
 
 Điều này không có nghĩa các công cụ quen thuộc mất giá trị. Ý nghĩa của thông tin là hiểu giới hạn và tiếp tục theo dõi phù hợp, tránh coi một kết quả trước đây như bảo đảm cho mọi thời điểm sau đó.
 
-![Không gian khám bệnh](/uploads/articles/d2bbf80bf5e6474f9040d5510946261e.jpg "Không gian phục vụ đánh giá sức khỏe — ảnh minh họa demo")
+![Không gian khám bệnh](/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg "Không gian phục vụ đánh giá sức khỏe — ảnh minh họa demo")
 
 ## Các xét nghiệm bổ sung cung cấp thêm thông tin
 
@@ -532,7 +533,7 @@ Người có nguy cơ cao cần tuân thủ lịch đã được hướng dẫn.
 
 Theo dõi đều đặn không chỉ là thực hiện xét nghiệm, mà còn là mang kết quả đến bác sĩ để so sánh và quyết định các bước tiếp theo. Các kết quả từ nhiều lần khám có thể cung cấp bối cảnh quan trọng.
 
-![Khu vực tiếp đón](/uploads/articles/da5271a8499c44d9bd5e65a306704e03.jpg "Khu vực tiếp đón người bệnh — ảnh minh họa demo")
+![Khu vực tiếp đón](/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg "Khu vực tiếp đón người bệnh — ảnh minh họa demo")
 
 ## Chuẩn bị thông tin cho lần tái khám
 
@@ -547,7 +548,7 @@ Bài nguồn nhắc rằng bệnh gan có thể diễn tiến mà không có tri
 Mục tiêu là phối hợp thông tin để nhận diện nguy cơ và lựa chọn bước đánh giá phù hợp. Không nên suy diễn độ chính xác của một phương pháp thành bảo đảm tuyệt đối cho mỗi người bệnh.
 
 Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/lam-sao-de-khong-bo-sot-ung-thu-gan-khi-benh-con-am-tham?id=4febab14-1abb-4e05-8e15-3fcdc168dbb6). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-02 00:00:00+07', '2026-10-02 00:00:00+07', '2026-10-02 00:00:00+07'),
-(3, 1, 'Men vi sinh trong bệnh tiêu hóa: Lợi ích cần được đánh giá theo từng chủng', 'su-dung-men-vi-sinh-theo-bang-chung', 'Y học thường thức', '/uploads/articles/f295b0a7a359495a8f6caf1e417b1f04.jpg', $article$*Tại một hội thảo của Viện Tiêu hóa Bạch Mai, các chuyên gia lưu ý rằng probiotics không phải lựa chọn chung cho mọi triệu chứng đường ruột. Bệnh lý, chủng vi sinh vật và tình trạng người bệnh cần được xem xét trước khi quyết định sử dụng.*
+(3, 1, 'Men vi sinh trong bệnh tiêu hóa: Lợi ích cần được đánh giá theo từng chủng', 'su-dung-men-vi-sinh-theo-bang-chung', 'Y học thường thức', '/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg', $article$*Tại một hội thảo của Viện Tiêu hóa Bạch Mai, các chuyên gia lưu ý rằng probiotics không phải lựa chọn chung cho mọi triệu chứng đường ruột. Bệnh lý, chủng vi sinh vật và tình trạng người bệnh cần được xem xét trước khi quyết định sử dụng.*
 
 ## Hiệu quả không thể suy rộng từ một chủng sang mọi sản phẩm
 
@@ -557,7 +558,7 @@ Người có đau bụng, tiêu chảy hoặc táo bón cần tìm nguyên nhân
 
 Khi trao đổi về một sản phẩm, cần quan tâm thành phần cụ thể, dữ liệu khoa học và mục đích sử dụng. Giá cao hoặc số lượng chủng lớn không phải cách đủ tin cậy để so sánh hiệu quả.
 
-![Không gian thăm khám](/uploads/articles/da5271a8499c44d9bd5e65a306704e03.jpg "Không gian phục vụ thăm khám tiêu hóa — ảnh minh họa demo")
+![Không gian thăm khám](/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg "Không gian phục vụ thăm khám tiêu hóa — ảnh minh họa demo")
 
 ## Trong điều trị H. pylori, vai trò là hỗ trợ
 
@@ -575,7 +576,7 @@ Bài báo ghi nhận nghiên cứu về một số chủng ở các nhóm ngư�
 
 Việc lựa chọn biện pháp hỗ trợ nên căn cứ vào triệu chứng và đánh giá chuyên môn, không chỉ vào nhãn sản phẩm. Khi triệu chứng kéo dài hoặc thay đổi, người bệnh cần được đánh giá lại nguyên nhân.
 
-![Khu vực tư vấn](/uploads/articles/f295b0a7a359495a8f6caf1e417b1f04.jpg "Khu vực tiếp đón và tư vấn người bệnh — ảnh minh họa demo")
+![Khu vực tư vấn](/uploads/articles/a1da1b6c569a7d9bbb4699eb72350140.jpg "Khu vực tiếp đón và tư vấn người bệnh — ảnh minh họa demo")
 
 ## Những nhóm cần hỏi ý kiến bác sĩ
 
@@ -592,7 +593,7 @@ Những câu hỏi có thể đặt ra trong buổi tư vấn:
 Thông điệp của nguồn là lựa chọn dựa trên bằng chứng và đối tượng sử dụng. Men vi sinh có thể hữu ích ở một số tình huống, nhưng không phải cách mặc định xử trí mọi rối loạn tiêu hóa.
 
 Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/chuyen-gia-bach-mai-chi-cach-dung-men-vi-sinh-dung-benh-dung-nguoi?id=f18e2bb0-46cf-44aa-981b-0de94a01d565). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-02 00:00:00+07', '2026-10-02 00:00:00+07', '2026-10-02 00:00:00+07'),
-(4, 1, 'Vệ sinh tay và sức khỏe mắt: Bài học từ một ca viêm loét giác mạc', 'bao-ve-mat-bang-ve-sinh-tay', 'Y học thường thức', '/uploads/articles/aa415242679740d7b2684416036beb63.jpg', $article$*Một người bệnh nữ 63 tuổi được Bạch Mai cơ sở Ninh Bình tiếp nhận vì đau mắt và suy giảm thị lực. Khi tìm hiểu công việc và thói quen sinh hoạt, bác sĩ lưu ý khả năng đưa tác nhân gây bệnh từ bàn tay lên mắt, đặc biệt khi móng tay và kẽ móng chưa được vệ sinh kỹ.*
+(4, 1, 'Vệ sinh tay và sức khỏe mắt: Bài học từ một ca viêm loét giác mạc', 'bao-ve-mat-bang-ve-sinh-tay', 'Y học thường thức', '/uploads/articles/a27b33ba114fbca36ad72b1466487c1d.jpg', $article$*Một người bệnh nữ 63 tuổi được Bạch Mai cơ sở Ninh Bình tiếp nhận vì đau mắt và suy giảm thị lực. Khi tìm hiểu công việc và thói quen sinh hoạt, bác sĩ lưu ý khả năng đưa tác nhân gây bệnh từ bàn tay lên mắt, đặc biệt khi móng tay và kẽ móng chưa được vệ sinh kỹ.*
 
 ## Không bỏ qua thói quen khi tìm nguyên nhân
 
@@ -602,7 +603,7 @@ Bàn tay thường xuyên tiếp xúc chất hữu cơ, bụi bẩn hoặc nhi�
 
 Những chi tiết sinh hoạt tưởng nhỏ lại có giá trị khi bác sĩ đánh giá nguồn tiếp xúc. Điều này cũng cho thấy đi khám cần trao đổi về công việc và thói quen hằng ngày, không chỉ mô tả triệu chứng hiện tại.
 
-![Không gian khám bệnh](/uploads/articles/f295b0a7a359495a8f6caf1e417b1f04.jpg "Không gian phục vụ thăm khám — ảnh minh họa demo")
+![Không gian khám bệnh](/uploads/articles/a1da1b6c569a7d9bbb4699eb72350140.jpg "Không gian phục vụ thăm khám — ảnh minh họa demo")
 
 ## Vì sao dụi mắt có thể làm tăng nguy cơ
 
@@ -620,7 +621,7 @@ Không nên tự kéo dài việc dùng thuốc nhỏ mắt khi chưa xác đị
 
 Khám chuyên khoa giúp phân biệt các nguyên nhân và lựa chọn điều trị phù hợp. Một thói quen vệ sinh tốt có giá trị phòng ngừa, nhưng không thay thế việc xử trí một tổn thương đã xảy ra.
 
-![Khu vực tiếp đón](/uploads/articles/aa415242679740d7b2684416036beb63.jpg "Khu vực tiếp đón và hướng dẫn khám — ảnh minh họa demo")
+![Khu vực tiếp đón](/uploads/articles/83e856c669a06875a98190946b0f1d8d.jpg "Khu vực tiếp đón và hướng dẫn khám — ảnh minh họa demo")
 
 ## Bắt đầu từ những việc hằng ngày
 
@@ -633,7 +634,7 @@ Khám chuyên khoa giúp phân biệt các nguyên nhân và lựa chọn điề
 Ca bệnh không nhằm quy mọi tình trạng đau mắt về một nguyên nhân duy nhất. Thông điệp là chú ý đường tiếp xúc và tìm đánh giá chuyên môn khi triệu chứng xuất hiện, đặc biệt lúc khả năng nhìn bị ảnh hưởng.
 
 Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/dui-mat-bang-tay-ban-nguoi-phu-nu-63-tuoi-suyt-mat-thi-luc?id=aa3652dd-b552-448a-9d0a-2d7611ea6408). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-05 00:00:00+07', '2026-10-05 00:00:00+07', '2026-10-05 00:00:00+07'),
-(5, 1, 'Chăm sóc trẻ sơ sinh khi tắm: An toàn nằm trong từng thao tác', 'cham-soc-tre-so-sinh-khi-tam', 'Y học thường thức', '/uploads/articles/d2bbf80bf5e6474f9040d5510946261e.jpg', $article$*Bài viết từ Khoa Phụ sản Bạch Mai nhìn việc tắm trẻ sơ sinh như một quy trình chăm sóc có nhiều bước liên kết. Chuẩn bị, nhận diện đúng trẻ, nâng đỡ an toàn, giữ ấm và bàn giao đều quan trọng đối với sức khỏe trong những ngày đầu đời.*
+(5, 1, 'Chăm sóc trẻ sơ sinh khi tắm: An toàn nằm trong từng thao tác', 'cham-soc-tre-so-sinh-khi-tam', 'Y học thường thức', '/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg', $article$*Bài viết từ Khoa Phụ sản Bạch Mai nhìn việc tắm trẻ sơ sinh như một quy trình chăm sóc có nhiều bước liên kết. Chuẩn bị, nhận diện đúng trẻ, nâng đỡ an toàn, giữ ấm và bàn giao đều quan trọng đối với sức khỏe trong những ngày đầu đời.*
 
 ## Chuẩn bị trước khi bắt đầu chăm sóc
 
@@ -643,7 +644,7 @@ Khăn, quần áo, tã và dụng cụ nên được chuẩn bị đầy đủ �
 
 Ý nghĩa của việc chuẩn bị không chỉ là thuận tiện cho người thực hiện. Khi mọi dụng cụ đã ở vị trí cần thiết, nhân viên có thể tập trung theo dõi trẻ thay vì gián đoạn thao tác để tìm đồ dùng.
 
-![Không gian chăm sóc người bệnh](/uploads/articles/aa415242679740d7b2684416036beb63.jpg "Không gian tại cơ sở khám bệnh — ảnh minh họa demo")
+![Không gian chăm sóc người bệnh](/uploads/articles/83e856c669a06875a98190946b0f1d8d.jpg "Không gian tại cơ sở khám bệnh — ảnh minh họa demo")
 
 ## Nâng đỡ và quan sát trong suốt quá trình tắm
 
@@ -661,7 +662,7 @@ Tại bệnh viện, bàn giao trẻ về với mẹ là một bước cần ki�
 
 Quy trình an toàn vì vậy bao gồm cả thời điểm trước và sau tắm. Hoàn thành thao tác làm sạch chưa phải là kết thúc chăm sóc nếu chưa kiểm tra và bàn giao phù hợp.
 
-![Khu vực tiếp đón và hướng dẫn](/uploads/articles/d2bbf80bf5e6474f9040d5510946261e.jpg "Khu vực tiếp đón và hướng dẫn gia đình người bệnh — ảnh minh họa demo")
+![Khu vực tiếp đón và hướng dẫn](/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg "Khu vực tiếp đón và hướng dẫn gia đình người bệnh — ảnh minh họa demo")
 
 ## Hỗ trợ mẹ trong những ngày đầu nuôi con
 
@@ -677,7 +678,7 @@ Những biểu hiện cần được báo ngay trong quá trình chăm sóc gồ
 Sự phối hợp giữa gia đình và nhân viên chăm sóc giúp các thay đổi được nhận diện sớm hơn. Đối với trẻ sơ sinh, những thao tác nhỏ cần được thực hiện trong một kế hoạch chăm sóc nhất quán, an toàn và có theo dõi.
 
 Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/tam-be-mot-khoanh-khac-nho-mot-su-cham-soc-lon?id=da2e8874-21ac-408d-b842-137cc72a4ba8). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-07 00:00:00+07', '2026-10-07 00:00:00+07', '2026-10-07 00:00:00+07'),
-(6, 1, 'Tăng huyết áp khó kiểm soát: Khi nào cần đánh giá tuyến thượng thận?', 'tang-huyet-ap-va-cuong-aldosterone', 'Y học thường thức', '/uploads/articles/da5271a8499c44d9bd5e65a306704e03.jpg', $article$*Huyết áp cao dù đã dùng nhiều thuốc có thể cần được đánh giá thêm về nguyên nhân. Chuyên gia nội tiết tại Bạch Mai đề cập cường aldosterone tiên phát như một tình trạng cần cân nhắc, nhất là khi người bệnh đồng thời có hạ kali, yếu cơ hoặc chuột rút.*
+(6, 1, 'Tăng huyết áp khó kiểm soát: Khi nào cần đánh giá tuyến thượng thận?', 'tang-huyet-ap-va-cuong-aldosterone', 'Y học thường thức', '/uploads/articles/76d11a1892a153cb0a0377eccd410227.jpg', $article$*Huyết áp cao dù đã dùng nhiều thuốc có thể cần được đánh giá thêm về nguyên nhân. Chuyên gia nội tiết tại Bạch Mai đề cập cường aldosterone tiên phát như một tình trạng cần cân nhắc, nhất là khi người bệnh đồng thời có hạ kali, yếu cơ hoặc chuột rút.*
 
 ## Vai trò của hormone aldosterone
 
@@ -687,7 +688,7 @@ Khi lượng aldosterone được tiết ra quá mức, thận có thể giữ m
 
 Bài nguồn phân biệt những nguyên nhân như một khối u lành ở một bên tuyến hoặc tình trạng tăng sản ở hai bên. Việc xác định đúng nguồn gốc giúp lựa chọn hướng xử trí, chứ không chỉ nhằm điều chỉnh một chỉ số huyết áp.
 
-![Không gian thăm khám](/uploads/articles/d2bbf80bf5e6474f9040d5510946261e.jpg "Không gian khám và đánh giá sức khỏe — ảnh minh họa demo")
+![Không gian thăm khám](/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg "Không gian khám và đánh giá sức khỏe — ảnh minh họa demo")
 
 ## Những thông tin gợi ý cần kiểm tra thêm
 
@@ -705,7 +706,7 @@ Khi tổn thương liên quan cả hai bên hoặc người bệnh không có ch
 
 Hướng điều trị cần căn cứ vào chẩn đoán, tình trạng toàn thân và đánh giá của bác sĩ. Người bệnh không nên tự tăng liều, đổi thuốc hay ngừng điều trị chỉ vì nghi ngờ một nguyên nhân nội tiết.
 
-![Khu vực phục vụ người bệnh](/uploads/articles/da5271a8499c44d9bd5e65a306704e03.jpg "Khu vực phục vụ người bệnh — ảnh minh họa demo")
+![Khu vực phục vụ người bệnh](/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg "Khu vực phục vụ người bệnh — ảnh minh họa demo")
 
 ## Chuẩn bị thông tin khi đi khám
 
@@ -718,7 +719,7 @@ Hướng điều trị cần căn cứ vào chẩn đoán, tình trạng toàn t
 Bài nguồn nhấn mạnh rằng việc kiểm soát huyết áp đôi khi cần đi cùng tìm kiếm nguyên nhân phía sau. Đánh giá đúng có thể mở ra hướng điều trị phù hợp hơn cho từng người, đồng thời tránh việc chỉ liên tục bổ sung thuốc mà thiếu một kế hoạch xem xét toàn diện.
 
 Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/tang-huyet-ap-kho-kiem-soat-coi-chung-benh-tu-tuyen-thuong-than?id=acd55e47-7dd9-4205-bed0-c1cc3de7be11). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-09 00:00:00+07', '2026-10-09 00:00:00+07', '2026-10-09 00:00:00+07'),
-(7, 1, 'An toàn thực phẩm: Kiểm soát nguy cơ từ nguyên liệu đến bữa ăn', 'nguyen-tac-an-toan-thuc-pham-phong-ngo-doc', 'Y học thường thức', '/uploads/articles/f295b0a7a359495a8f6caf1e417b1f04.jpg', $article$*Phòng ngừa ngộ độc thực phẩm là một chuỗi công việc liên tục, bắt đầu từ chọn nguyên liệu và kết thúc ở khâu phục vụ. Bạch Mai lưu ý rằng vệ sinh tay, phân tách thực phẩm và kiểm soát bảo quản cần được thực hiện cùng nhau, đặc biệt tại bếp ăn tập thể.*
+(7, 1, 'An toàn thực phẩm: Kiểm soát nguy cơ từ nguyên liệu đến bữa ăn', 'nguyen-tac-an-toan-thuc-pham-phong-ngo-doc', 'Y học thường thức', '/uploads/articles/95dd9dc83516bbd85fc983a5134791f8.jpg', $article$*Phòng ngừa ngộ độc thực phẩm là một chuỗi công việc liên tục, bắt đầu từ chọn nguyên liệu và kết thúc ở khâu phục vụ. Bạch Mai lưu ý rằng vệ sinh tay, phân tách thực phẩm và kiểm soát bảo quản cần được thực hiện cùng nhau, đặc biệt tại bếp ăn tập thể.*
 
 ## Nguy cơ có thể xuất hiện ở nhiều công đoạn
 
@@ -728,7 +729,7 @@ Nhiễm khuẩn chéo xảy ra khi nguồn bẩn từ thực phẩm sống tiế
 
 Nguyên liệu nên có nguồn gốc rõ ràng, hạn sử dụng còn phù hợp và bao bì nguyên vẹn. Đối với bếp ăn tập thể, việc kiểm tra điều kiện giao nhận và bảo quản là một phần quan trọng của quy trình.
 
-![Không gian cơ sở khám bệnh](/uploads/articles/da5271a8499c44d9bd5e65a306704e03.jpg "Không gian tại cơ sở khám bệnh — ảnh minh họa demo")
+![Không gian cơ sở khám bệnh](/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg "Không gian tại cơ sở khám bệnh — ảnh minh họa demo")
 
 ## Vệ sinh tay và phân tách dụng cụ
 
@@ -752,7 +753,7 @@ Một số việc cần chú ý trong tổ chức bữa ăn:
 
 Mùi vị bình thường không bảo đảm một thực phẩm không mang tác nhân gây bệnh. Vì vậy, đánh giá an toàn cần dựa cả vào nguồn gốc, thao tác chế biến và điều kiện bảo quản.
 
-![Khu vực tiếp đón cơ sở y tế](/uploads/articles/f295b0a7a359495a8f6caf1e417b1f04.jpg "Khu vực tiếp đón tại cơ sở y tế — ảnh minh họa demo")
+![Khu vực tiếp đón cơ sở y tế](/uploads/articles/a1da1b6c569a7d9bbb4699eb72350140.jpg "Khu vực tiếp đón tại cơ sở y tế — ảnh minh họa demo")
 
 ## Khi nghi ngờ xảy ra ngộ độc
 
@@ -763,7 +764,7 @@ Món ăn hoặc lô nguyên liệu nghi ngờ cần được ngừng phục vụ
 Việc phòng ngừa hiệu quả không nằm ở một thao tác riêng lẻ. Một quy trình được duy trì đều đặn, có người chịu trách nhiệm và có thông tin truy xuất sẽ giúp cơ sở phản ứng phù hợp khi có sự cố.
 
 Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/kiem-soat-an-toan-thuc-pham-nhung-nguyen-tac-can-nho-de-phong-ngua-ngo-doc?id=e74eabd5-2bfa-4acf-bbf3-724341aa8820). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-12 00:00:00+07', '2026-10-12 00:00:00+07', '2026-10-12 00:00:00+07'),
-(8, 1, 'Rối loạn ăn uống ở người trẻ: Cần quan tâm cả sức khỏe thể chất và tinh thần', 'roi-loan-an-uong-va-ha-kali-mau', 'Y học thường thức', '/uploads/articles/aa415242679740d7b2684416036beb63.jpg', $article$*Một ca bệnh được Viện Sức khỏe Tâm thần báo cáo cho thấy nỗi lo cân nặng có thể gắn với rối loạn ăn uống và những biến chứng toàn thân. Đánh giá cần quan tâm đến hành vi, cảm xúc và sức khỏe, thay vì chỉ nhìn vào vóc dáng hoặc quy kết người bệnh thiếu ý chí.*
+(8, 1, 'Rối loạn ăn uống ở người trẻ: Cần quan tâm cả sức khỏe thể chất và tinh thần', 'roi-loan-an-uong-va-ha-kali-mau', 'Y học thường thức', '/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg', $article$*Một ca bệnh được Viện Sức khỏe Tâm thần báo cáo cho thấy nỗi lo cân nặng có thể gắn với rối loạn ăn uống và những biến chứng toàn thân. Đánh giá cần quan tâm đến hành vi, cảm xúc và sức khỏe, thay vì chỉ nhìn vào vóc dáng hoặc quy kết người bệnh thiếu ý chí.*
 
 ## Một vòng lặp khó thoát ra nếu thiếu hỗ trợ
 
@@ -773,7 +774,7 @@ Khi đến khám, người bệnh có BMI 17,6, mất kinh trong ba tháng và k
 
 Người bệnh được điều trị phối hợp nhiều phương pháp theo đánh giá của nhóm chuyên môn. Bài nguồn mô tả sự cải thiện từng bước, cho thấy việc hồi phục cần một kế hoạch chăm sóc phù hợp chứ không chỉ là yêu cầu thay đổi thói quen ăn uống.
 
-![Không gian tư vấn](/uploads/articles/f295b0a7a359495a8f6caf1e417b1f04.jpg "Không gian phục vụ khám và tư vấn — ảnh minh họa demo")
+![Không gian tư vấn](/uploads/articles/a1da1b6c569a7d9bbb4699eb72350140.jpg "Không gian phục vụ khám và tư vấn — ảnh minh họa demo")
 
 ## Cân nặng không phản ánh đầy đủ tình trạng bệnh
 
@@ -791,7 +792,7 @@ Theo bài nguồn, bác sĩ có thể phối hợp điều trị chuyên khoa t�
 
 Các biểu hiện nặng như ngất, khó thở, đau ngực, co giật, lú lẫn hoặc yếu cơ rõ rệt cần được đưa đến cơ sở y tế để đánh giá kịp thời. Đây là những tình huống cần hỗ trợ trực tiếp, không nên chờ một lịch tư vấn thông thường.
 
-![Khu vực tiếp đón](/uploads/articles/aa415242679740d7b2684416036beb63.jpg "Khu vực tiếp đón người bệnh — ảnh minh họa demo")
+![Khu vực tiếp đón](/uploads/articles/83e856c669a06875a98190946b0f1d8d.jpg "Khu vực tiếp đón người bệnh — ảnh minh họa demo")
 
 ## Đồng hành bằng cách lắng nghe
 
@@ -804,7 +805,7 @@ Các biểu hiện nặng như ngất, khó thở, đau ngực, co giật, lú l
 Sự hỗ trợ của gia đình có thể giúp việc tìm kiếm chăm sóc bớt khó khăn. Bài báo nhắc rằng rối loạn ăn uống là một vấn đề sức khỏe cần được nhận diện và điều trị, cùng với sự tôn trọng và đồng hành.
 
 Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/nu-sinh-21-tuoi-ha-kali-mau-vi-am-anh-can-nang-lien-tuc-an-roi-tu-gay-non?id=8383a596-959a-49e8-b635-bddf07c63483). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-13 00:00:00+07', '2026-10-13 00:00:00+07', '2026-10-13 00:00:00+07'),
-(9, 1, 'Thuốc tránh thai nội tiết và huyết khối: Những dấu hiệu không nên bỏ qua', 'nguy-co-huyet-khoi-khi-dung-thuoc-tranh-thai', 'Y học thường thức', '/uploads/articles/d2bbf80bf5e6474f9040d5510946261e.jpg', $article$*Từ một ca huyết khối ở người phụ nữ 36 tuổi, Bạch Mai lưu ý việc sử dụng thuốc tránh thai cần gắn với tư vấn cá nhân. Thuốc đang dùng, tiền sử bệnh, cân nặng và mức vận động đều là những thông tin quan trọng khi đánh giá nguy cơ hình thành cục máu đông.*
+(9, 1, 'Thuốc tránh thai nội tiết và huyết khối: Những dấu hiệu không nên bỏ qua', 'nguy-co-huyet-khoi-khi-dung-thuoc-tranh-thai', 'Y học thường thức', '/uploads/articles/b6df1b1ed14289fff99a16ee3ba9b283.jpg', $article$*Từ một ca huyết khối ở người phụ nữ 36 tuổi, Bạch Mai lưu ý việc sử dụng thuốc tránh thai cần gắn với tư vấn cá nhân. Thuốc đang dùng, tiền sử bệnh, cân nặng và mức vận động đều là những thông tin quan trọng khi đánh giá nguy cơ hình thành cục máu đông.*
 
 ## Từ sưng đau ở chân đến tình trạng cấp cứu
 
@@ -814,7 +815,7 @@ Qua thăm khám, bác sĩ xác định huyết khối tĩnh mạch sâu ở chi 
 
 Ca bệnh được nguồn tin dùng để nhấn mạnh việc xem xét nhiều yếu tố nguy cơ cùng lúc. Không thể từ một trường hợp riêng lẻ suy ra rằng mọi người sử dụng thuốc tránh thai đều sẽ gặp biến chứng.
 
-![Không gian thăm khám](/uploads/articles/aa415242679740d7b2684416036beb63.jpg "Không gian phục vụ thăm khám — ảnh minh họa demo")
+![Không gian thăm khám](/uploads/articles/83e856c669a06875a98190946b0f1d8d.jpg "Không gian phục vụ thăm khám — ảnh minh họa demo")
 
 ## Vì sao cần được tư vấn trước khi lựa chọn thuốc
 
@@ -832,7 +833,7 @@ Các dấu hiệu đột ngột như khó thở và đau ngực cần được �
 
 Nhận biết sớm không thay thế cho chẩn đoán. Điều quan trọng là cung cấp đầy đủ thời điểm xuất hiện triệu chứng và những thuốc đang dùng để nhân viên y tế đánh giá.
 
-![Khu vực tiếp đón người bệnh](/uploads/articles/d2bbf80bf5e6474f9040d5510946261e.jpg "Khu vực tiếp đón và hướng dẫn người bệnh — ảnh minh họa demo")
+![Khu vực tiếp đón người bệnh](/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg "Khu vực tiếp đón và hướng dẫn người bệnh — ảnh minh họa demo")
 
 ## Những việc cần trao đổi để sử dụng thuốc phù hợp
 
@@ -847,7 +848,7 @@ Trong sinh hoạt, người phải ngồi lâu có thể chủ động vận đ�
 Thông điệp của bài nguồn là lựa chọn biện pháp tránh thai có tư vấn, đồng thời chú ý những thay đổi bất thường của cơ thể. Hiệu quả và sự an toàn cần được xem xét cùng nhau ở từng người.
 
 Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/bac-si-canh-bao-nguy-co-huyet-khoi-o-phu-nu-thua-can-it-van-dong-dung-thuoc-tranh-thai?id=391dd160-dc48-48d6-8d32-56958155f80c). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-13 00:00:00+07', '2026-10-13 00:00:00+07', '2026-10-13 00:00:00+07'),
-(10, 1, 'Nội soi đại tràng khi khám sức khỏe, phát hiện sán dây bò dài 70cm', 'noi-soi-dai-trang-phat-hien-san-day-bo', 'Y học thường thức', '/uploads/articles/da5271a8499c44d9bd5e65a306704e03.jpg', $article$*Một trường hợp khám sức khỏe tại Bạch Mai cho thấy nhiễm ký sinh trùng đường ruột có thể diễn ra rất kín đáo. Người bệnh nữ 48 tuổi hầu như không có biểu hiện tiêu hóa đáng chú ý, nhưng nội soi phát hiện một dải sán và lấy ra đoạn thân dài khoảng 70 cm. Kết quả định danh bệnh phẩm phù hợp với sán dây bò.*
+(10, 1, 'Nội soi đại tràng khi khám sức khỏe, phát hiện sán dây bò dài 70cm', 'noi-soi-dai-trang-phat-hien-san-day-bo', 'Y học thường thức', '/uploads/articles/d63ef4484d9e64ee2cd1cb496a86c788.jpg', $article$*Một trường hợp khám sức khỏe tại Bạch Mai cho thấy nhiễm ký sinh trùng đường ruột có thể diễn ra rất kín đáo. Người bệnh nữ 48 tuổi hầu như không có biểu hiện tiêu hóa đáng chú ý, nhưng nội soi phát hiện một dải sán và lấy ra đoạn thân dài khoảng 70 cm. Kết quả định danh bệnh phẩm phù hợp với sán dây bò.*
 
 ## Phát hiện trong một lần kiểm tra sức khỏe
 
@@ -855,7 +856,7 @@ Người bệnh H.T.H., sống tại Lai Châu, đến Bệnh viện Bạch Mai 
 
 Ngày 30/9/2026, trong lúc thực hiện nội soi đại trực tràng có gây mê, ThS.BSNT Vũ Thị Ngọc Bích cùng ê-kíp của Viện Tiêu hóa phát hiện một cấu trúc trắng, dẹt ở đoạn cuối hồi tràng. Dải ký sinh trùng kéo dài sang đại tràng ngang. Bác sĩ dùng dụng cụ nội soi lấy ra một phần thân sán với chiều dài khoảng 70 cm.
 
-![Không gian khám bệnh](/uploads/articles/d2bbf80bf5e6474f9040d5510946261e.jpg "Không gian khám bệnh — ảnh minh họa demo")
+![Không gian khám bệnh](/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg "Không gian khám bệnh — ảnh minh họa demo")
 
 Bệnh phẩm được chuyển đến đơn vị vi sinh của Viện Xét nghiệm Y học để kiểm tra. Kết quả phù hợp với *Taenia saginata*, tên khoa học của sán dây bò. Sau thủ thuật, người bệnh tiếp tục được đánh giá tại phòng khám bệnh nhiệt đới và viêm gan để lập kế hoạch điều trị bằng thuốc.
 
@@ -879,7 +880,7 @@ Những biểu hiện có thể gặp bao gồm:
 
 Một số người không có đủ các biểu hiện trên. Ngược lại, các triệu chứng tiêu hóa cũng có thể xuất phát từ nhiều nguyên nhân khác, nên người bệnh cần được thăm khám để xác định chẩn đoán.
 
-![Khu vực tiếp đón](/uploads/articles/da5271a8499c44d9bd5e65a306704e03.jpg "Khu vực tiếp đón người bệnh — ảnh minh họa demo")
+![Khu vực tiếp đón](/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg "Khu vực tiếp đón người bệnh — ảnh minh họa demo")
 
 ## Chẩn đoán, điều trị và phòng ngừa
 
@@ -909,7 +910,7 @@ VALUES
 ('MAX_REVIEW_RATING', '5', 'Điểm đánh giá tối đa', '2026-10-01 08:00:00+07'),
 ('HOSPITAL_NAME', 'Bệnh viện NEU Medical', 'Tên cơ sở khám bệnh hiển thị trên hệ thống', '2026-10-01 08:00:00+07'),
 ('SUPPORT_PHONE', '19001234', 'Số điện thoại hỗ trợ khách hàng', '2026-10-01 08:00:00+07'),
-('SUPPORT_EMAIL', '', 'Email hỗ trợ công khai, để trống khi chưa có thông tin', '2026-10-01 08:00:00+07'),
+('SUPPORT_EMAIL', 'neumedical@gmail.com', 'Email liên hệ của bệnh viện', '2026-10-01 08:00:00+07'),
 ('EXAM_HOURS', E'Sáng: 07:00–12:00\nChiều: 13:30–16:30', 'Giờ khám tham khảo cho đồ án từ thông báo MEDLATEC ngày 16/03/2026', '2026-10-14 08:00:00+07'),
 ('ALLOW_WALK_IN', 'true', 'Cho phép lễ tân tạo lượt khám trực tiếp', '2026-10-01 08:00:00+07');
 
@@ -938,6 +939,808 @@ VALUES
 (9, 3, 9, 1, '2026-09-11 08:00:00+07', NULL, NULL, 'Hỗ trợ tiếp nhận và chăm sóc trong ca 9'),
 (10, 3, 10, 1, '2026-09-11 08:00:00+07', NULL, NULL, 'Hỗ trợ tiếp nhận và chăm sóc trong ca 10'),
 (11, 3, 1, 1, '2026-09-10 11:00:00+07', '2026-09-10 12:00:00+07', 1, 'Phân công cũ đã thu hồi, ca 1 được giao lại bằng bản ghi 1');
+
+-- Ảnh và hồ sơ mẫu bổ sung 14/10/2026: 14 bác sĩ, 13 điều dưỡng, 39 bài viết.
+-- Tên/học vị/công tác là dữ liệu đồ án, không xác nhận danh tính người trong ảnh.
+INSERT INTO users(user_id,role_id,full_name,email,password_hash,approval_status,account_status,email_verified)
+SELECT 24,2,'BS. Nguyễn Đức Hải','demo.doctor.11@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 25,2,'BS. Phan Minh Quang','demo.doctor.12@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 26,2,'BS. Trần Tuấn Kiệt','demo.doctor.13@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 27,2,'BS. Lê Hoàng Nam','demo.doctor.14@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 28,4,'Nguyễn Thu Hà','demo.nurse.2@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 29,4,'Trần Phương Linh','demo.nurse.3@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 30,4,'Phạm Ngọc Mai','demo.nurse.4@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 31,4,'Đỗ Thanh Hương','demo.nurse.5@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 32,4,'Bùi Khánh Ngọc','demo.nurse.6@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 33,4,'Hoàng Minh Châu','demo.nurse.7@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 34,4,'Vũ Thảo Vy','demo.nurse.8@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 35,4,'Lê Bảo An','demo.nurse.9@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 36,4,'Nguyễn Quỳnh Hoa','demo.nurse.10@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 37,4,'Trần Hà My','demo.nurse.11@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 38,4,'Phan Ngọc Lan','demo.nurse.12@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3
+UNION ALL
+SELECT 39,4,'Đặng Thu Thảo','demo.nurse.13@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3;
+
+INSERT INTO doctor_profile(doctor_profile_id,user_id,department_id,academic_degree,specialization,experience_years,introduction,consultation_fee,avatar_url) VALUES
+(11,24,1,'Thạc sĩ','Nội khoa',12,'Bác sĩ chuyên ngành Nội khoa.
+
+Quá trình đào tạo:
+- 2018: Thạc sĩ chuyên ngành Nội khoa, Đại học Y Hà Nội.
+- 2014: Tốt nghiệp Bác sĩ đa khoa, Đại học Y Hà Nội.
+
+Quá trình công tác:
+- 2020–nay: Bác sĩ chuyên ngành Nội khoa tại Bệnh viện NEU Medical.
+- 2014–2020: Khám và theo dõi người bệnh trong lĩnh vực Nội khoa.
+
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',290000,'/uploads/avatars/54f8618f24bc9d43fd5da9e54f0fab6c.jpg'),
+(12,25,2,'Tiến sĩ','Tim mạch',18,'Bác sĩ chuyên ngành Tim mạch.
+
+Quá trình đào tạo:
+- 2016: Tiến sĩ Y học chuyên ngành Tim mạch, Đại học Y Hà Nội.
+- 2012: Thạc sĩ chuyên ngành Tim mạch, Đại học Y Hà Nội.
+- 2008: Tốt nghiệp Bác sĩ đa khoa, Đại học Y Hà Nội.
+
+Quá trình công tác:
+- 2020–nay: Bác sĩ chuyên ngành Tim mạch tại Bệnh viện NEU Medical.
+- 2008–2020: Khám và theo dõi người bệnh trong lĩnh vực Tim mạch.
+
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',390000,'/uploads/avatars/99c539578baed65fc917a2377998af6f.jpg'),
+(13,26,6,'Thạc sĩ','Tai Mũi Họng',10,'Bác sĩ chuyên ngành Tai Mũi Họng.
+
+Quá trình đào tạo:
+- 2020: Thạc sĩ chuyên ngành Tai Mũi Họng, Đại học Y Hà Nội.
+- 2016: Tốt nghiệp Bác sĩ đa khoa, Đại học Y Hà Nội.
+
+Quá trình công tác:
+- 2020–nay: Bác sĩ chuyên ngành Tai Mũi Họng tại Bệnh viện NEU Medical.
+- 2016–2020: Khám và theo dõi người bệnh trong lĩnh vực Tai Mũi Họng.
+
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',300000,'/uploads/avatars/cc4daae70cd39341824a6a948c0bb8a5.jpg'),
+(14,27,9,'Chuyên khoa II','Cơ Xương Khớp',15,'Bác sĩ chuyên ngành Cơ Xương Khớp.
+
+Quá trình đào tạo:
+- 2019: Bác sĩ chuyên khoa II chuyên ngành Cơ Xương Khớp, Đại học Y Hà Nội.
+- 2015: Thạc sĩ chuyên ngành Cơ Xương Khớp, Đại học Y Hà Nội.
+- 2011: Tốt nghiệp Bác sĩ đa khoa, Đại học Y Hà Nội.
+
+Quá trình công tác:
+- 2020–nay: Bác sĩ chuyên ngành Cơ Xương Khớp tại Bệnh viện NEU Medical.
+- 2011–2020: Khám và theo dõi người bệnh trong lĩnh vực Cơ Xương Khớp.
+
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',380000,'/uploads/avatars/fa20ce283eb787dc827de89ad681deac.jpg');
+
+INSERT INTO room(room_id,department_id,room_name,description) VALUES
+(11,1,'Phòng Nội 103','Phòng mẫu bổ sung cho đồ án'),
+(12,2,'Phòng Tim mạch 206','Phòng mẫu bổ sung cho đồ án'),
+(13,6,'Phòng TMH 207','Phòng mẫu bổ sung cho đồ án'),
+(14,9,'Phòng CXK 304','Phòng mẫu bổ sung cho đồ án');
+
+-- Ca mẫu của bốn bác sĩ mới; dùng phòng riêng để không chồng ca cũ.
+WITH days AS (
+ SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date + day_offset AS work_date
+ FROM generate_series(0,30) AS day_offset
+), shifts(start_time,end_time) AS (VALUES ('08:00'::time,'11:30'::time),('13:30'::time,'17:00'::time)),
+base AS (SELECT MAX(schedule_id) AS id FROM work_schedule)
+INSERT INTO work_schedule(schedule_id,doctor_profile_id,room_id,work_date,start_time,end_time,max_quota,slot_minutes)
+SELECT base.id + ROW_NUMBER() OVER(ORDER BY day.work_date,d.doctor_profile_id,s.start_time),
+ d.doctor_profile_id,d.doctor_profile_id,day.work_date,s.start_time,s.end_time,7,30
+FROM doctor_profile d CROSS JOIN days day CROSS JOIN shifts s CROSS JOIN base WHERE d.doctor_profile_id BETWEEN 11 AND 14;
+
+INSERT INTO article(article_id,author_id,title,slug,category,thumbnail_url,content,is_active,published_at) VALUES
+(11,1,'Chuẩn bị thông tin để buổi khám thuận tiện hơn','chuan-bi-thong-tin-de-buoi-kham-thuan-tien-hon','Hướng dẫn khám bệnh','/uploads/articles/b6f491239f14078bc972158ca5f8eb1d.jpg','*Tìm hiểu các bước chuẩn bị và những thông tin cần kiểm tra trước một buổi khám.*
+
+## Chuẩn bị trước buổi khám
+
+Người đi khám có thể ghi lại vấn đề muốn trao đổi, các thuốc đang sử dụng và những kết quả đã có để cung cấp cho bác sĩ khi cần. Hồ sơ đăng ký nên ghi đúng người sẽ tới khám.
+
+## Tìm thông tin trên website
+
+Trang chuyên khoa và hồ sơ bác sĩ giúp bạn xem lĩnh vực chuyên môn trước khi chuyển sang trang đặt lịch.
+
+## Hình ảnh minh họa
+
+![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/b6f491239f14078bc972158ca5f8eb1d.jpg "Hoạt động thăm khám — ảnh minh họa")
+
+![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/d881bd16e45d49c0c1dae1b5e2e92d2c.jpg "Hoạt động thăm khám — ảnh minh họa")
+
+![Thiết bị chẩn đoán hình ảnh — ảnh minh họa](/uploads/articles/026d6ca08a42390c533aa56c98eff5fd.jpg "Thiết bị chẩn đoán hình ảnh — ảnh minh họa")
+
+![Không gian chăm sóc và theo dõi — ảnh minh họa](/uploads/articles/2c781175576a9c7099507edb4ee2345d.webp "Không gian chăm sóc và theo dõi — ảnh minh họa")
+
+![Khu vực tiếp đón — ảnh minh họa](/uploads/articles/83e856c669a06875a98190946b0f1d8d.jpg "Khu vực tiếp đón — ảnh minh họa")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-13T01:00:00+00:00'),
+(12,1,'Lựa chọn chuyên khoa và trao đổi cùng bác sĩ','lua-chon-chuyen-khoa-va-trao-doi-cung-bac-si','Hướng dẫn khám bệnh','/uploads/articles/621b4c4b6584b9fb80a535cc5dbfc6bf.jpg','*Tìm hiểu các bước chuẩn bị và những thông tin cần kiểm tra trước một buổi khám.*
+
+## Từ lựa chọn chuyên khoa đến buổi tư vấn
+
+Thông tin trên hồ sơ bác sĩ gồm chuyên khoa, học vị mẫu và lịch làm việc trong tuần. Khi chọn bác sĩ, hãy kiểm tra lại người khám, ngày và khung giờ trước bước xem lại thông tin.
+
+## Trao đổi rõ nhu cầu
+
+Chuẩn bị câu hỏi sẽ giúp bạn chủ động hơn trong cuộc trao đổi với nhân viên y tế.
+
+## Hình ảnh minh họa
+
+![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/621b4c4b6584b9fb80a535cc5dbfc6bf.jpg "Hoạt động thăm khám — ảnh minh họa")
+
+![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/b6df1b1ed14289fff99a16ee3ba9b283.jpg "Hoạt động thăm khám — ảnh minh họa")
+
+![Ghế và thiết bị nha khoa — ảnh minh họa](/uploads/articles/68ac4ec856100afa305db91d25e5b83c.jpg "Ghế và thiết bị nha khoa — ảnh minh họa")
+
+![Không gian khám nội khoa — ảnh minh họa](/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg "Không gian khám nội khoa — ảnh minh họa")
+
+![Khu vực chờ khám — ảnh minh họa](/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg "Khu vực chờ khám — ảnh minh họa")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-13T01:01:00+00:00'),
+(13,1,'Từ khu vực tiếp đón đến phòng khám','tu-khu-vuc-tiep-don-den-phong-kham','Hướng dẫn khám bệnh','/uploads/articles/d63ef4484d9e64ee2cd1cb496a86c788.jpg','*Tìm hiểu các bước chuẩn bị và những thông tin cần kiểm tra trước một buổi khám.*
+
+## Không gian và quy trình
+
+Khu vực tiếp đón, phòng chờ và phòng khám đảm nhận các bước khác nhau trong một buổi khám. Bộ ảnh giúp minh họa các khu vực đó trên website.
+
+## Liên hệ hỗ trợ
+
+Bạn có thể xem thông tin liên hệ hoặc để lại yêu cầu tư vấn tại trang Liên hệ.
+
+## Hình ảnh minh họa
+
+![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/d63ef4484d9e64ee2cd1cb496a86c788.jpg "Hoạt động thăm khám — ảnh minh họa")
+
+![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/a63effb466662b57fc234bfc75bbcdc6.jpg "Hoạt động thăm khám — ảnh minh họa")
+
+![Không gian tiếp nhận cấp cứu — ảnh minh họa](/uploads/articles/8a98734c693ba4ee8d41f58e3cabcdcc.png "Không gian tiếp nhận cấp cứu — ảnh minh họa")
+
+![Phòng phẫu thuật và trang thiết bị — ảnh minh họa](/uploads/articles/83ca69f7d126de2cfe88ab0bd9c7118b.webp "Phòng phẫu thuật và trang thiết bị — ảnh minh họa")
+
+![Không gian phòng phẫu thuật — ảnh minh họa](/uploads/articles/83cf3d3ac07df168c2860f7d77da7236.webp "Không gian phòng phẫu thuật — ảnh minh họa")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-13T01:02:00+00:00'),
+(14,1,'Không gian khám bệnh và theo dõi lịch đã đăng ký','khong-gian-kham-benh-va-theo-doi-lich-da-dang-ky','Hướng dẫn khám bệnh','/uploads/articles/76d11a1892a153cb0a0377eccd410227.jpg','*Tìm hiểu các bước chuẩn bị và những thông tin cần kiểm tra trước một buổi khám.*
+
+## Theo dõi thông tin đã đăng ký
+
+Trước khi xác nhận, người dùng xem lại các thông tin cơ bản và lịch đã chọn. Lịch đã đăng ký được quản lý tại khu vực dành cho bệnh nhân.
+
+## Hình ảnh phục vụ giới thiệu
+
+Các ảnh phòng khám trong bài là ảnh tham khảo về không gian, không xác nhận trang thiết bị thực tế tại NEU Medical.
+
+## Hình ảnh minh họa
+
+![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/76d11a1892a153cb0a0377eccd410227.jpg "Hoạt động thăm khám — ảnh minh họa")
+
+![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg "Hoạt động thăm khám — ảnh minh họa")
+
+![Không gian khám đa khoa — ảnh minh họa](/uploads/articles/a1da1b6c569a7d9bbb4699eb72350140.jpg "Không gian khám đa khoa — ảnh minh họa")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-13T01:03:00+00:00'),
+(15,1,'Trao đổi chuyên môn trong đội ngũ y tế','trao-doi-chuyen-mon-trong-doi-ngu-y-te','Hoạt động chuyên môn','/uploads/articles/b9dfe736649ee882d3c3712d0868d70f.jpg','*Trao đổi giữa các thành viên giúp thống nhất cách phối hợp trong công việc.*
+
+## Nội dung trao đổi
+
+Một buổi sinh hoạt chuyên môn có thể tập trung vào quy trình tiếp nhận, cách bàn giao thông tin và những điểm cần cải thiện trong trải nghiệm người bệnh.
+
+## Lưu ý về bộ ảnh
+
+Các hình ảnh dưới đây minh họa hình thức hội họp và học tập; không xác nhận người tham dự hoặc chương trình thực tế của NEU Medical.
+
+## Hình ảnh minh họa
+
+![Sinh hoạt chuyên môn — ảnh tham khảo](/uploads/articles/b9dfe736649ee882d3c3712d0868d70f.jpg "Sinh hoạt chuyên môn — ảnh tham khảo")
+
+![Sinh hoạt chuyên môn — ảnh tham khảo](/uploads/articles/29664509dfe4b43ecb6353adcf7250f1.webp "Sinh hoạt chuyên môn — ảnh tham khảo")
+
+![Sinh hoạt chuyên môn — ảnh tham khảo](/uploads/articles/ee2eeaebf6a59d225fa422f4703ee0eb.webp "Sinh hoạt chuyên môn — ảnh tham khảo")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-13T01:04:00+00:00'),
+(16,1,'Học tập và chia sẻ kinh nghiệm trong chăm sóc người bệnh','hoc-tap-va-chia-se-kinh-nghiem-trong-cham-soc-nguoi-benh','Hoạt động chuyên môn','/uploads/articles/accb1e1fdf967b93f35ff7f6e349a186.jpg','*Trao đổi giữa các thành viên giúp thống nhất cách phối hợp trong công việc.*
+
+## Nội dung trao đổi
+
+Một buổi sinh hoạt chuyên môn có thể tập trung vào quy trình tiếp nhận, cách bàn giao thông tin và những điểm cần cải thiện trong trải nghiệm người bệnh.
+
+## Lưu ý về bộ ảnh
+
+Các hình ảnh dưới đây minh họa hình thức hội họp và học tập; không xác nhận người tham dự hoặc chương trình thực tế của NEU Medical.
+
+## Hình ảnh minh họa
+
+![Sinh hoạt chuyên môn — ảnh tham khảo](/uploads/articles/accb1e1fdf967b93f35ff7f6e349a186.jpg "Sinh hoạt chuyên môn — ảnh tham khảo")
+
+![Sinh hoạt chuyên môn — ảnh tham khảo](/uploads/articles/e88568aab2b4825ffc52dc8b2978dcb3.png "Sinh hoạt chuyên môn — ảnh tham khảo")
+
+![Sinh hoạt chuyên môn — ảnh tham khảo](/uploads/articles/1ec20fba68354ab302f9795e3df94de8.jpg "Sinh hoạt chuyên môn — ảnh tham khảo")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-12T01:05:00+00:00'),
+(17,1,'Ghi nhận đóng góp và tinh thần làm việc của đội ngũ y tế','ghi-nhan-dong-gop-va-tinh-than-lam-viec-cua-doi-ngu-y-te','Hoạt động chuyên môn','/uploads/articles/0b5dd902e1346e1d037b9bd101acec26.jpg','*Sự ghi nhận dành cho công việc của nhân viên y tế được thể hiện qua nhiều hình thức.*
+
+## Ghi nhận trong môi trường làm việc
+
+Bài viết mẫu giới thiệu tinh thần khích lệ, hỗ trợ đồng nghiệp và chia sẻ kinh nghiệm.
+
+## Nguồn hình ảnh
+
+Bộ ảnh có tên và biểu trưng của những đơn vị khác. Đây là ảnh tham khảo do người dùng cung cấp, không phải giải thưởng hay thành tích của NEU Medical.
+
+## Hình ảnh minh họa
+
+![Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác](/uploads/articles/0b5dd902e1346e1d037b9bd101acec26.jpg "Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác")
+
+![Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác](/uploads/articles/14c210007a4c4b308808b8379726eeea.webp "Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác")
+
+![Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác](/uploads/articles/7c8162370033a43511468d0bdbc3b30f.jpg "Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác")
+
+![Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác](/uploads/articles/57635d7afcf74f14b44579cfa2f9f179.jpg "Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác")
+
+![Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác](/uploads/articles/6ff72a79624709a4dbe56d5f60d2024e.jpg "Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-12T01:06:00+00:00'),
+(18,1,'Lắng nghe và đồng hành cùng người bệnh','lang-nghe-va-dong-hanh-cung-nguoi-benh','Chăm sóc người bệnh','/uploads/articles/0dbc8fe8777572f2a768bc40a6a0f021.jpg','*Những cuộc trao đổi gần gũi giúp người bệnh trình bày nhu cầu và câu hỏi của mình.*
+
+## Trao đổi trong quá trình chăm sóc
+
+Sự phối hợp giữa người bệnh, gia đình và nhân viên y tế cần thông tin rõ ràng, dễ hiểu. Người bệnh có thể chủ động hỏi về các bước tiếp theo khi chưa nắm rõ.
+
+## Tôn trọng thông tin cá nhân
+
+Bài viết không xác định danh tính, tình trạng sức khỏe hay kết quả điều trị của người xuất hiện trong ảnh.
+
+## Hình ảnh minh họa
+
+![Hoạt động thăm hỏi — ảnh minh họa](/uploads/articles/0dbc8fe8777572f2a768bc40a6a0f021.jpg "Hoạt động thăm hỏi — ảnh minh họa")
+
+![Hoạt động thăm hỏi — ảnh minh họa](/uploads/articles/26e5b659b316133584d95b757df613c7.jpg "Hoạt động thăm hỏi — ảnh minh họa")
+
+![Hoạt động thăm hỏi — ảnh minh họa](/uploads/articles/d7eb07f32adacf9ce8c99e5a80718935.jpg "Hoạt động thăm hỏi — ảnh minh họa")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-12T01:07:00+00:00'),
+(19,1,'Phối hợp của ê kíp trong phòng phẫu thuật','phoi-hop-cua-e-kip-trong-phong-phau-thuat','Hoạt động chuyên môn','/uploads/articles/085097a311df4184ea0222e027b5c131.jpg','*Công việc trong môi trường y tế cần sự phối hợp giữa nhiều vị trí chuyên môn.*
+
+## Phối hợp theo nhiệm vụ
+
+Bác sĩ, điều dưỡng và các nhân viên hỗ trợ đảm nhận những nhiệm vụ khác nhau trong quy trình chăm sóc. Thông tin cần được trao đổi rõ ràng giữa các thành viên.
+
+## Bộ ảnh giới thiệu
+
+Ảnh ê kíp được dùng làm tư liệu minh họa, không mô tả kỹ thuật điều trị hay kết quả của một ca phẫu thuật cụ thể.
+
+## Hình ảnh minh họa
+
+![Ê kíp y tế — ảnh minh họa](/uploads/articles/085097a311df4184ea0222e027b5c131.jpg "Ê kíp y tế — ảnh minh họa")
+
+![Ê kíp y tế — ảnh minh họa](/uploads/articles/548c453e60f6e11545527bcf26ab781f.jpg "Ê kíp y tế — ảnh minh họa")
+
+![Ê kíp y tế — ảnh minh họa](/uploads/articles/ba30e5816ee83fcc7d7d93e9ea992002.jpg "Ê kíp y tế — ảnh minh họa")
+
+![Ê kíp y tế — ảnh minh họa](/uploads/articles/3cad3608377d3a73d6ca7a64a238efa2.jpg "Ê kíp y tế — ảnh minh họa")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-12T01:08:00+00:00'),
+(20,1,'Vai trò của từng thành viên trong đội ngũ chăm sóc','vai-tro-cua-tung-thanh-vien-trong-doi-ngu-cham-soc','Hoạt động chuyên môn','/uploads/articles/6037174df1952682f74673e2263ecb83.jpg','*Công việc trong môi trường y tế cần sự phối hợp giữa nhiều vị trí chuyên môn.*
+
+## Phối hợp theo nhiệm vụ
+
+Bác sĩ, điều dưỡng và các nhân viên hỗ trợ đảm nhận những nhiệm vụ khác nhau trong quy trình chăm sóc. Thông tin cần được trao đổi rõ ràng giữa các thành viên.
+
+## Bộ ảnh giới thiệu
+
+Ảnh ê kíp được dùng làm tư liệu minh họa, không mô tả kỹ thuật điều trị hay kết quả của một ca phẫu thuật cụ thể.
+
+## Hình ảnh minh họa
+
+![Ê kíp y tế — ảnh minh họa](/uploads/articles/6037174df1952682f74673e2263ecb83.jpg "Ê kíp y tế — ảnh minh họa")
+
+![Ê kíp y tế — ảnh minh họa](/uploads/articles/cddace57efacf8b35ed148725a676942.jpg "Ê kíp y tế — ảnh minh họa")
+
+![Ê kíp y tế — ảnh minh họa](/uploads/articles/fd55a913d82e69cb0c095e58bc2a65c6.jpg "Ê kíp y tế — ảnh minh họa")
+
+![Ê kíp y tế — ảnh minh họa](/uploads/articles/71f88ca22629f5407746c8eb1218d7cb.webp "Ê kíp y tế — ảnh minh họa")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-12T01:09:00+00:00'),
+(21,1,'Đội ngũ điều dưỡng: hỗ trợ người bệnh từ những bước đầu','doi-ngu-dieu-duong-ho-tro-nguoi-benh-tu-nhung-buoc-dau','Đội ngũ điều dưỡng','/uploads/articles/38add5edb7422b6b1a5691cf22fd56cb.jpg','*Điều dưỡng góp phần hỗ trợ người bệnh và phối hợp cùng đội ngũ bác sĩ trong quá trình khám.*
+
+## Tiếp đón và hỗ trợ
+
+Hướng dẫn bước tiếp theo, lắng nghe thắc mắc và trao đổi với đội ngũ chuyên môn là những nội dung được giới thiệu trong bài viết mẫu này.
+
+## Hồ sơ minh họa
+
+Những tên dưới đây là tên mẫu được gán cho ảnh, không xác nhận danh tính hay bằng cấp của người trong ảnh.
+
+## Hình ảnh minh họa
+
+![Điều dưỡng Lê Ngọc Anh — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/38add5edb7422b6b1a5691cf22fd56cb.jpg "Điều dưỡng Lê Ngọc Anh — tên và ảnh ghép minh họa cho đồ án")
+
+![Điều dưỡng Nguyễn Thu Hà — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/e7e23efddb79ca7affea3a55fbb4487c.jpg "Điều dưỡng Nguyễn Thu Hà — tên và ảnh ghép minh họa cho đồ án")
+
+![Điều dưỡng Trần Phương Linh — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/1ab2db4bf306d5516c6bc312d7487070.jpg "Điều dưỡng Trần Phương Linh — tên và ảnh ghép minh họa cho đồ án")
+
+![Điều dưỡng Phạm Ngọc Mai — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/c38cd1bd0d4240a7e4d6a71bba2576a7.jpg "Điều dưỡng Phạm Ngọc Mai — tên và ảnh ghép minh họa cho đồ án")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-11T01:10:00+00:00'),
+(22,1,'Điều dưỡng và công việc theo dõi, chăm sóc','dieu-duong-va-cong-viec-theo-doi-cham-soc','Đội ngũ điều dưỡng','/uploads/articles/532f4c6fdbee0f61f9c87154fe64a237.jpg','*Điều dưỡng góp phần hỗ trợ người bệnh và phối hợp cùng đội ngũ bác sĩ trong quá trình khám.*
+
+## Tiếp đón và hỗ trợ
+
+Hướng dẫn bước tiếp theo, lắng nghe thắc mắc và trao đổi với đội ngũ chuyên môn là những nội dung được giới thiệu trong bài viết mẫu này.
+
+## Hồ sơ minh họa
+
+Những tên dưới đây là tên mẫu được gán cho ảnh, không xác nhận danh tính hay bằng cấp của người trong ảnh.
+
+## Hình ảnh minh họa
+
+![Điều dưỡng Đỗ Thanh Hương — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/532f4c6fdbee0f61f9c87154fe64a237.jpg "Điều dưỡng Đỗ Thanh Hương — tên và ảnh ghép minh họa cho đồ án")
+
+![Điều dưỡng Bùi Khánh Ngọc — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/8e3fa7d2a6dac01fb42feccdec80b3f9.jpg "Điều dưỡng Bùi Khánh Ngọc — tên và ảnh ghép minh họa cho đồ án")
+
+![Điều dưỡng Hoàng Minh Châu — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/44c492e761b1b07fdb81b2ab9679e776.jpg "Điều dưỡng Hoàng Minh Châu — tên và ảnh ghép minh họa cho đồ án")
+
+![Điều dưỡng Vũ Thảo Vy — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/73de37dd74e19091ede18b3ebdeada48.jpg "Điều dưỡng Vũ Thảo Vy — tên và ảnh ghép minh họa cho đồ án")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-11T01:11:00+00:00'),
+(23,1,'Gặp gỡ những gương mặt điều dưỡng trong hồ sơ mẫu','gap-go-nhung-guong-mat-dieu-duong-trong-ho-so-mau','Đội ngũ điều dưỡng','/uploads/articles/879b090a02088bf607e7422a08f51c17.jpg','*Điều dưỡng góp phần hỗ trợ người bệnh và phối hợp cùng đội ngũ bác sĩ trong quá trình khám.*
+
+## Tiếp đón và hỗ trợ
+
+Hướng dẫn bước tiếp theo, lắng nghe thắc mắc và trao đổi với đội ngũ chuyên môn là những nội dung được giới thiệu trong bài viết mẫu này.
+
+## Hồ sơ minh họa
+
+Những tên dưới đây là tên mẫu được gán cho ảnh, không xác nhận danh tính hay bằng cấp của người trong ảnh.
+
+## Hình ảnh minh họa
+
+![Điều dưỡng Lê Bảo An — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/879b090a02088bf607e7422a08f51c17.jpg "Điều dưỡng Lê Bảo An — tên và ảnh ghép minh họa cho đồ án")
+
+![Điều dưỡng Nguyễn Quỳnh Hoa — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/61fa68e9be0ef2d2a9274a96bbb5e7fe.jpg "Điều dưỡng Nguyễn Quỳnh Hoa — tên và ảnh ghép minh họa cho đồ án")
+
+![Điều dưỡng Trần Hà My — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/94e1228f67b0328247c7278b68afeb91.jpg "Điều dưỡng Trần Hà My — tên và ảnh ghép minh họa cho đồ án")
+
+![Điều dưỡng Phan Ngọc Lan — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/19c8cf83a3b00413bfb8d04dd1399ad1.jpg "Điều dưỡng Phan Ngọc Lan — tên và ảnh ghép minh họa cho đồ án")
+
+![Điều dưỡng Đặng Thu Thảo — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/cdd32999932f468240fc2a3f6e09b4dd.jpg "Điều dưỡng Đặng Thu Thảo — tên và ảnh ghép minh họa cho đồ án")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-11T01:12:00+00:00'),
+(24,1,'Tìm hiểu thông tin về viêm não Nhật Bản','tim-hieu-thong-tin-ve-viem-nao-nhat-ban','Y học thường thức','/uploads/articles/3814bc5d86e8cf64ecf472d9141ed3c7.jpg','*Bộ poster giới thiệu chủ đề viêm não Nhật Bản. Bạn có thể đọc thêm tài liệu tổng quan của WHO qua liên kết bên dưới.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/japanese-encephalitis).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/3814bc5d86e8cf64ecf472d9141ed3c7.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-11T01:13:00+00:00'),
+(25,1,'Vệ sinh cá nhân trong sinh hoạt hằng ngày','ve-sinh-ca-nhan-trong-sinh-hoat-hang-ngay','Y học thường thức','/uploads/articles/95dd9dc83516bbd85fc983a5134791f8.jpg','*Vệ sinh và nước sạch đóng vai trò quan trọng đối với sức khỏe cộng đồng.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WHO](https://www.who.int/health-topics/water-sanitation-and-hygiene-wash).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/95dd9dc83516bbd85fc983a5134791f8.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-11T01:14:00+00:00'),
+(26,1,'Chủ động tìm hiểu thông tin phòng chống dịch bệnh','chu-dong-tim-hieu-thong-tin-phong-chong-dich-benh','Y học thường thức','/uploads/articles/fcf77260c0a78800d65382dbfd864285.jpg','*Nước sạch và điều kiện vệ sinh góp phần bảo vệ sức khỏe của cộng đồng.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WHO](https://www.who.int/health-topics/water-sanitation-and-hygiene-wash).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/fcf77260c0a78800d65382dbfd864285.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-10T01:15:00+00:00'),
+(27,1,'Tư liệu tìm hiểu về virus Nipah','tu-lieu-tim-hieu-ve-virus-nipah','Y học thường thức','/uploads/articles/88545f51c30d6b9df8ccedd4dcd8a67f.jpg','*Poster tổng hợp chủ đề Nipah được lưu trong thư viện truyền thông sức khỏe. Liên kết WHO dưới đây giúp bạn tiếp tục tìm hiểu thông tin về chủ đề này.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WHO](https://www.who.int/health-topics/nipah-virus-infection).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/88545f51c30d6b9df8ccedd4dcd8a67f.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-10T01:16:00+00:00'),
+(28,1,'Chăm sóc sức khỏe trong mùa đông xuân','cham-soc-suc-khoe-trong-mua-dong-xuan','Y học thường thức','/uploads/articles/8266e3b47f3843f086d02c292235c7b7.png','*Cúm mùa là bệnh nhiễm trùng đường hô hấp do virus cúm. Tìm hiểu thông tin chính thống giúp bạn chủ động trao đổi với nhân viên y tế.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/8266e3b47f3843f086d02c292235c7b7.png "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-10T01:17:00+00:00'),
+(29,1,'Thông tin về bệnh đường hô hấp và cúm mùa','thong-tin-ve-benh-duong-ho-hap-va-cum-mua','Y học thường thức','/uploads/articles/e656d82fb47a099500c385f48336e829.jpg','*Virus cúm có thể lây qua các hạt phát tán khi người nhiễm ho hoặc hắt hơi.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/e656d82fb47a099500c385f48336e829.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-10T01:18:00+00:00'),
+(30,1,'Vệ sinh môi trường và sức khỏe trong mùa hè','ve-sinh-moi-truong-va-suc-khoe-trong-mua-he','Y học thường thức','/uploads/articles/2725da7d4db960c7a6ecd9f2972b4b3a.jpg','*Điều kiện vệ sinh và nguồn nước an toàn có ý nghĩa đối với sức khỏe trong sinh hoạt hằng ngày.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WHO](https://www.who.int/health-topics/water-sanitation-and-hygiene-wash).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/2725da7d4db960c7a6ecd9f2972b4b3a.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-10T01:19:00+00:00'),
+(31,1,'Dịch tả lợn châu Phi: thông tin về bệnh ở động vật','dich-ta-lon-chau-phi-thong-tin-ve-benh-o-dong-vat','Thông tin cộng đồng','/uploads/articles/09ac3ebe914af27173caa06882828273.jpg','*Dịch tả lợn châu Phi là bệnh ở lợn nhà và lợn rừng. WOAH nêu rõ bệnh này không ảnh hưởng đến sức khỏe con người.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WOAH](https://www.woah.org/en/disease/african-swine-fever/).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/09ac3ebe914af27173caa06882828273.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-09T01:20:00+00:00'),
+(32,1,'Đau mắt đỏ: đọc thông tin từ nguồn chính thống','dau-mat-do-doc-thong-tin-tu-nguon-chinh-thong','Y học thường thức','/uploads/articles/a27b33ba114fbca36ad72b1466487c1d.jpg','*Viêm kết mạc có nhiều nguyên nhân, gồm virus, vi khuẩn và dị ứng. Không nên xác định nguyên nhân chỉ từ màu đỏ của mắt.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ CDC](https://www.cdc.gov/conjunctivitis/about/index.html).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/a27b33ba114fbca36ad72b1466487c1d.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-09T01:21:00+00:00'),
+(33,1,'Tư liệu truyền thông về mpox','tu-lieu-truyen-thong-ve-mpox','Y học thường thức','/uploads/articles/a3a3befb4c430ba35dca80646230561d.jpg','*Bộ poster giới thiệu chủ đề mpox. Tài liệu tổng quan của WHO được liên kết để người đọc đối chiếu thông tin.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/mpox).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/a3a3befb4c430ba35dca80646230561d.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-09T01:22:00+00:00'),
+(34,1,'Thông tin sức khỏe về COVID-19','thong-tin-suc-khoe-ve-covid-19','Y học thường thức','/uploads/articles/5089dc0513911c751cce6f2494813240.jpg','*Đây là tư liệu truyền thông về coronavirus. Bạn có thể theo dõi thông tin tổng quan và các tài liệu liên quan trên trang WHO.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WHO](https://www.who.int/health-topics/coronavirus).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/5089dc0513911c751cce6f2494813240.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-09T01:23:00+00:00'),
+(35,1,'Tìm hiểu về bệnh thương hàn','tim-hieu-ve-benh-thuong-han','Y học thường thức','/uploads/articles/d5adc9f5cb294f44571b82c7122ab85f.jpg','*Thương hàn do vi khuẩn Salmonella Typhi gây ra, thường liên quan đến thực phẩm hoặc nước bị nhiễm bẩn.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/typhoid).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/d5adc9f5cb294f44571b82c7122ab85f.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-09T01:24:00+00:00'),
+(36,1,'Tư liệu truyền thông về bệnh dại','tu-lieu-truyen-thong-ve-benh-dai','Y học thường thức','/uploads/articles/7789421677ad2f69c8865edf54468e22.jpg','*Poster giới thiệu chủ đề bệnh dại được dùng làm tư liệu giáo dục sức khỏe. Đọc tài liệu WHO để đối chiếu thông tin hiện hành.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/rabies).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/7789421677ad2f69c8865edf54468e22.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-08T01:25:00+00:00'),
+(37,1,'Cúm mùa và thông tin cần tìm hiểu','cum-mua-va-thong-tin-can-tim-hieu','Y học thường thức','/uploads/articles/c4dbea520a8654fbb3ca3f54bf61440b.jpg','*Cúm mùa là bệnh nhiễm trùng đường hô hấp do virus cúm. WHO cung cấp tài liệu tổng quan về căn bệnh này.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/c4dbea520a8654fbb3ca3f54bf61440b.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-08T01:26:00+00:00'),
+(38,1,'Thư viện poster truyền thông về coronavirus','thu-vien-poster-truyen-thong-ve-coronavirus','Y học thường thức','/uploads/articles/9ec20652c1431e12861a804f189c4c8f.jpg','*Tư liệu truyền thông giúp giới thiệu chủ đề coronavirus tới người đọc. Liên kết WHO cung cấp thông tin tổng quan để tham khảo thêm.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WHO](https://www.who.int/health-topics/coronavirus).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/9ec20652c1431e12861a804f189c4c8f.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-08T01:27:00+00:00'),
+(39,1,'Tìm hiểu các chủ đề sức khỏe khi giao mùa','tim-hieu-cac-chu-de-suc-khoe-khi-giao-mua','Y học thường thức','/uploads/articles/622a5a3a812e0bf79bbb7a62bf811a94.jpg','*Giao mùa là dịp nhắc nhở việc tìm hiểu thông tin sức khỏe. Bài viết giới thiệu poster và nguồn đọc thêm về cúm mùa.*
+
+## Đọc và đối chiếu thông tin
+
+Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+
+## Nguồn đọc thêm
+
+[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)).
+
+## Hình ảnh minh họa
+
+![Poster sức khỏe do người dùng cung cấp](/uploads/articles/622a5a3a812e0bf79bbb7a62bf811a94.jpg "Poster sức khỏe do người dùng cung cấp")
+
+Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-08T01:28:00+00:00');
+
+-- Incremental demo content: fill empty department profiles; never overwrite administrator content.
+UPDATE department SET overview='Khoa Nội tổng quát trong mô hình NEU Medical tập trung vào khám, tư vấn và theo dõi sức khỏe trong lĩnh vực nội tổng quát. Đội ngũ bác sĩ phối hợp với điều dưỡng để tiếp nhận thông tin, đánh giá nhu cầu khám và hướng dẫn các bước tiếp theo.
+
+Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
+    mission='Phát triển hoạt động nội tổng quát với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
+    cover_image_url='/uploads/articles/b6f491239f14078bc972158ca5f8eb1d.jpg',
+    group_type='CLINICAL',
+    specialties='["Nội khoa tổng quát", "Theo dõi bệnh lý mạn tính", "Đánh giá sức khỏe ban đầu"]'::jsonb,
+    clinical_services='["Khám và tư vấn chuyên khoa nội tổng quát", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
+    equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
+    achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực nội tổng quát", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
+    patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
+    gallery='[{"url": "/uploads/articles/b6f491239f14078bc972158ca5f8eb1d.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Nội tổng quát"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Nội tổng quát và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
+    content_is_demo=1,
+    version=version+1,
+    updated_at=CURRENT_TIMESTAMP WHERE department_id=1 AND name='Nội tổng quát' AND (overview IS NULL OR trim(overview)='');
+
+UPDATE department SET overview='Khoa Tim mạch trong mô hình NEU Medical tập trung vào khám, tư vấn và theo dõi sức khỏe trong lĩnh vực tim mạch. Đội ngũ bác sĩ phối hợp với điều dưỡng để tiếp nhận thông tin, đánh giá nhu cầu khám và hướng dẫn các bước tiếp theo.
+
+Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
+    mission='Phát triển hoạt động tim mạch với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
+    cover_image_url='/uploads/articles/b6df1b1ed14289fff99a16ee3ba9b283.jpg',
+    group_type='CLINICAL',
+    specialties='["Tim mạch nội khoa", "Đánh giá yếu tố nguy cơ tim mạch", "Theo dõi sức khỏe tim mạch"]'::jsonb,
+    clinical_services='["Khám và tư vấn chuyên khoa tim mạch", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
+    equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
+    achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực tim mạch", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
+    patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
+    gallery='[{"url": "/uploads/articles/b6df1b1ed14289fff99a16ee3ba9b283.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Tim mạch"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Tim mạch và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
+    content_is_demo=1,
+    version=version+1,
+    updated_at=CURRENT_TIMESTAMP WHERE department_id=2 AND name='Tim mạch' AND (overview IS NULL OR trim(overview)='');
+
+UPDATE department SET overview='Khoa Da liễu trong mô hình NEU Medical tập trung vào khám, tư vấn và theo dõi sức khỏe trong lĩnh vực da liễu. Đội ngũ bác sĩ phối hợp với điều dưỡng để tiếp nhận thông tin, đánh giá nhu cầu khám và hướng dẫn các bước tiếp theo.
+
+Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
+    mission='Phát triển hoạt động da liễu với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
+    cover_image_url='/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg',
+    group_type='CLINICAL',
+    specialties='["Da, tóc và móng", "Tư vấn chăm sóc da", "Theo dõi bệnh lý da liễu"]'::jsonb,
+    clinical_services='["Khám và tư vấn chuyên khoa da liễu", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
+    equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
+    achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực da liễu", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
+    patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
+    gallery='[{"url": "/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Da liễu"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Da liễu và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
+    content_is_demo=1,
+    version=version+1,
+    updated_at=CURRENT_TIMESTAMP WHERE department_id=3 AND name='Da liễu' AND (overview IS NULL OR trim(overview)='');
+
+UPDATE department SET overview='Khoa Nhi trong mô hình NEU Medical tập trung vào khám, tư vấn và theo dõi sức khỏe trong lĩnh vực nhi. Đội ngũ bác sĩ phối hợp với điều dưỡng để tiếp nhận thông tin, đánh giá nhu cầu khám và hướng dẫn các bước tiếp theo.
+
+Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
+    mission='Phát triển hoạt động nhi với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
+    cover_image_url='/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg',
+    group_type='CLINICAL',
+    specialties='["Nhi khoa tổng quát", "Theo dõi sự phát triển của trẻ", "Tư vấn chăm sóc sức khỏe trẻ em"]'::jsonb,
+    clinical_services='["Khám và tư vấn chuyên khoa nhi", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
+    equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
+    achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực nhi", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
+    patient_guide='["Chuẩn bị thông tin của trẻ và thông tin liên hệ của người đưa trẻ tới khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
+    gallery='[{"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Nhi"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Nhi và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
+    content_is_demo=1,
+    version=version+1,
+    updated_at=CURRENT_TIMESTAMP WHERE department_id=4 AND name='Nhi' AND (overview IS NULL OR trim(overview)='');
+
+UPDATE department SET overview='Khoa Sản phụ khoa trong mô hình NEU Medical tập trung vào khám, tư vấn và theo dõi sức khỏe trong lĩnh vực sản phụ khoa. Đội ngũ bác sĩ phối hợp với điều dưỡng để tiếp nhận thông tin, đánh giá nhu cầu khám và hướng dẫn các bước tiếp theo.
+
+Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
+    mission='Phát triển hoạt động sản phụ khoa với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
+    cover_image_url='/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg',
+    group_type='CLINICAL',
+    specialties='["Sức khỏe phụ nữ", "Sản khoa", "Theo dõi và tư vấn phụ khoa"]'::jsonb,
+    clinical_services='["Khám và tư vấn chuyên khoa sản phụ khoa", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
+    equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
+    achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực sản phụ khoa", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
+    patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
+    gallery='[{"url": "/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Sản phụ khoa"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Sản phụ khoa và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
+    content_is_demo=1,
+    version=version+1,
+    updated_at=CURRENT_TIMESTAMP WHERE department_id=5 AND name='Sản phụ khoa' AND (overview IS NULL OR trim(overview)='');
+
+UPDATE department SET overview='Khoa Tai Mũi Họng trong mô hình NEU Medical tập trung vào khám, tư vấn và theo dõi sức khỏe trong lĩnh vực tai mũi họng. Đội ngũ bác sĩ phối hợp với điều dưỡng để tiếp nhận thông tin, đánh giá nhu cầu khám và hướng dẫn các bước tiếp theo.
+
+Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
+    mission='Phát triển hoạt động tai mũi họng với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
+    cover_image_url='/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg',
+    group_type='CLINICAL',
+    specialties='["Tai và thính lực", "Mũi xoang", "Họng và thanh quản"]'::jsonb,
+    clinical_services='["Khám và tư vấn chuyên khoa tai mũi họng", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
+    equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
+    achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực tai mũi họng", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
+    patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
+    gallery='[{"url": "/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Tai Mũi Họng"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Tai Mũi Họng và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
+    content_is_demo=1,
+    version=version+1,
+    updated_at=CURRENT_TIMESTAMP WHERE department_id=6 AND name='Tai Mũi Họng' AND (overview IS NULL OR trim(overview)='');
+
+UPDATE department SET overview='Khoa Mắt trong mô hình NEU Medical tập trung vào khám, tư vấn và theo dõi sức khỏe trong lĩnh vực mắt. Đội ngũ bác sĩ phối hợp với điều dưỡng để tiếp nhận thông tin, đánh giá nhu cầu khám và hướng dẫn các bước tiếp theo.
+
+Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
+    mission='Phát triển hoạt động mắt với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
+    cover_image_url='/uploads/articles/a1da1b6c569a7d9bbb4699eb72350140.jpg',
+    group_type='CLINICAL',
+    specialties='["Nhãn khoa", "Thị lực và tật khúc xạ", "Theo dõi sức khỏe mắt"]'::jsonb,
+    clinical_services='["Khám và tư vấn chuyên khoa mắt", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
+    equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
+    achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực mắt", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
+    patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
+    gallery='[{"url": "/uploads/articles/a1da1b6c569a7d9bbb4699eb72350140.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Mắt"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Mắt và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
+    content_is_demo=1,
+    version=version+1,
+    updated_at=CURRENT_TIMESTAMP WHERE department_id=7 AND name='Mắt' AND (overview IS NULL OR trim(overview)='');
+
+UPDATE department SET overview='Khoa Răng Hàm Mặt trong mô hình NEU Medical tập trung vào khám, tư vấn và theo dõi sức khỏe trong lĩnh vực răng hàm mặt. Đội ngũ bác sĩ phối hợp với điều dưỡng để tiếp nhận thông tin, đánh giá nhu cầu khám và hướng dẫn các bước tiếp theo.
+
+Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
+    mission='Phát triển hoạt động răng hàm mặt với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
+    cover_image_url='/uploads/articles/68ac4ec856100afa305db91d25e5b83c.jpg',
+    group_type='CLINICAL',
+    specialties='["Răng và nha chu", "Sức khỏe răng miệng", "Răng hàm mặt"]'::jsonb,
+    clinical_services='["Khám và tư vấn chuyên khoa răng hàm mặt", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
+    equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Ghế và thiết bị thăm khám nha khoa — nội dung minh họa", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
+    achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực răng hàm mặt", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
+    patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
+    gallery='[{"url": "/uploads/articles/68ac4ec856100afa305db91d25e5b83c.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Răng Hàm Mặt"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Răng Hàm Mặt và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
+    content_is_demo=1,
+    version=version+1,
+    updated_at=CURRENT_TIMESTAMP WHERE department_id=8 AND name='Răng Hàm Mặt' AND (overview IS NULL OR trim(overview)='');
+
+UPDATE department SET overview='Khoa Cơ Xương Khớp trong mô hình NEU Medical tập trung vào khám, tư vấn và theo dõi sức khỏe trong lĩnh vực cơ xương khớp. Đội ngũ bác sĩ phối hợp với điều dưỡng để tiếp nhận thông tin, đánh giá nhu cầu khám và hướng dẫn các bước tiếp theo.
+
+Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
+    mission='Phát triển hoạt động cơ xương khớp với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
+    cover_image_url='/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg',
+    group_type='CLINICAL',
+    specialties='["Cơ, xương và khớp", "Đánh giá chức năng vận động", "Theo dõi sức khỏe cơ xương khớp"]'::jsonb,
+    clinical_services='["Khám và tư vấn chuyên khoa cơ xương khớp", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
+    equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
+    achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực cơ xương khớp", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
+    patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
+    gallery='[{"url": "/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Cơ Xương Khớp"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Cơ Xương Khớp và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
+    content_is_demo=1,
+    version=version+1,
+    updated_at=CURRENT_TIMESTAMP WHERE department_id=9 AND name='Cơ Xương Khớp' AND (overview IS NULL OR trim(overview)='');
+
+UPDATE department SET overview='Khoa Thần kinh trong mô hình NEU Medical tập trung vào khám, tư vấn và theo dõi sức khỏe trong lĩnh vực thần kinh. Đội ngũ bác sĩ phối hợp với điều dưỡng để tiếp nhận thông tin, đánh giá nhu cầu khám và hướng dẫn các bước tiếp theo.
+
+Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
+    mission='Phát triển hoạt động thần kinh với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
+    cover_image_url='/uploads/articles/026d6ca08a42390c533aa56c98eff5fd.jpg',
+    group_type='CLINICAL',
+    specialties='["Thần kinh nội khoa", "Đánh giá triệu chứng thần kinh", "Theo dõi và tư vấn chuyên khoa"]'::jsonb,
+    clinical_services='["Khám và tư vấn chuyên khoa thần kinh", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
+    equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Hình ảnh minh họa thiết bị chẩn đoán hình ảnh", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
+    achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực thần kinh", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
+    patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
+    gallery='[{"url": "/uploads/articles/026d6ca08a42390c533aa56c98eff5fd.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Thần kinh"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Thần kinh và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
+    content_is_demo=1,
+    version=version+1,
+    updated_at=CURRENT_TIMESTAMP WHERE department_id=10 AND name='Thần kinh' AND (overview IS NULL OR trim(overview)='');
+
+-- Initial leadership only for departments with no previous appointment history.
+WITH assignments(department_id,doctor_profile_id,position) AS (VALUES
+ (1,1,'HEAD'),(2,2,'HEAD'),(3,3,'HEAD'),(4,4,'HEAD'),(5,5,'HEAD'),
+ (6,6,'HEAD'),(7,7,'HEAD'),(8,8,'HEAD'),(9,9,'HEAD'),(10,10,'HEAD'),
+ (1,11,'DEPUTY'),(2,12,'DEPUTY'),(6,13,'DEPUTY'),(9,14,'DEPUTY')
+), actor AS (SELECT u.user_id FROM users u JOIN role r USING(role_id) WHERE r.role_name='ADMIN' AND u.deleted_at IS NULL AND u.account_status='ACTIVE' ORDER BY u.user_id LIMIT 1)
+INSERT INTO department_leadership(department_id,doctor_profile_id,position,appointed_by_id)
+SELECT a.department_id,a.doctor_profile_id,a.position,actor.user_id FROM assignments a
+JOIN doctor_profile d ON d.doctor_profile_id=a.doctor_profile_id AND d.department_id=a.department_id
+JOIN users u ON u.user_id=d.user_id JOIN role r ON r.role_id=u.role_id CROSS JOIN actor
+WHERE d.is_active=1 AND u.deleted_at IS NULL AND u.approval_status='APPROVED' AND u.account_status='ACTIVE' AND r.role_name='DOCTOR'
+AND NOT EXISTS(SELECT 1 FROM department_leadership l WHERE l.department_id=a.department_id)
+ON CONFLICT DO NOTHING;
 
 -- Đồng bộ sequence sau khi seed ID thủ công để lần INSERT tiếp theo không bị trùng khóa chính.
 SELECT setval(pg_get_serial_sequence('role', 'role_id'), (SELECT MAX(role_id) FROM role), true);
@@ -970,6 +1773,7 @@ UNION ALL SELECT 'auth_token', COUNT(*) FROM auth_token
 UNION ALL SELECT 'patient', COUNT(*) FROM patient
 UNION ALL SELECT 'patient_delegate', COUNT(*) FROM patient_delegate
 UNION ALL SELECT 'department', COUNT(*) FROM department
+UNION ALL SELECT 'department_leadership', COUNT(*) FROM department_leadership
 UNION ALL SELECT 'doctor_profile', COUNT(*) FROM doctor_profile
 UNION ALL SELECT 'room', COUNT(*) FROM room
 UNION ALL SELECT 'work_schedule', COUNT(*) FROM work_schedule

@@ -29,6 +29,9 @@ class EncounterWorkflowTests(unittest.TestCase):
             db.execute("UPDATE work_schedule SET work_date='2035-01-01',start_time='10:00',end_time='12:00',"
                        "max_quota=10,booked_count=0,slot_minutes=30,schedule_status='OPEN' WHERE schedule_id=2")
             db.execute("UPDATE encounter SET encounter_status='CANCELLED',ticket_code=NULL WHERE schedule_id IN (1,2)")
+            # Fixture chuyển bác sĩ sang cùng khoa: kết thúc phân công trước như quy tắc thực tế.
+            db.execute('UPDATE department_leadership SET ended_at=CURRENT_TIMESTAMP,ended_by_id=%s '
+                       'WHERE doctor_profile_id IN (1,2) AND ended_at IS NULL', (self.actors['ADMIN']['user_id'],))
             db.execute('UPDATE doctor_profile SET department_id=1,consultation_fee=100000,is_active=1 WHERE doctor_profile_id IN (1,2)')
             db.execute("UPDATE users SET account_status='ACTIVE',approval_status='APPROVED' WHERE user_id IN "
                        '(SELECT user_id FROM doctor_profile WHERE doctor_profile_id IN (1,2))')

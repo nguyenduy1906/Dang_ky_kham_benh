@@ -1,6 +1,7 @@
 import { API_CONFIG } from "../config.js";
 import { ApiError } from "./api.js";
 import { listArticles } from "../api/article.js";
+import { displayText } from "./display-text.js";
 
 const publicPages = new URL("../../../templates/public/", import.meta.url);
 const dateFormat = new Intl.DateTimeFormat("vi-VN", {
@@ -64,7 +65,7 @@ export function articleCard(article) {
     body.append(category);
   }
   const title = document.createElement("strong");
-  title.textContent = article.title;
+  title.textContent = displayText(article.title);
   const date = document.createElement("time");
   date.className = "article-date";
   date.textContent = publishedDate(article.published_at);
@@ -81,7 +82,7 @@ export async function articlePage(params = {}, options = {}) {
       result.items.some(item => !item || typeof item.slug !== "string" || !item.slug || typeof item.title !== "string")) {
     throw new ApiError("Phản hồi danh sách bài viết không hợp lệ.", { code: "CLIENT_INVALID_RESPONSE" });
   }
-  return result;
+  return { ...result, items: result.items.map(item => ({ ...item, title: displayText(item.title), summary: displayText(item.summary) })) };
 }
 
 // The existing API has no category endpoint. Read categories from published summaries.
@@ -129,7 +130,7 @@ function inlineText(node, value) {
 
 export function articleContent(container, value) {
   container.replaceChildren();
-  const lines = String(value || "").replace(/\r\n?/g, "\n").split("\n");
+  const lines = displayText(value).replace(/\r\n?/g, "\n").split("\n");
   const block = line => /^(#{1,6}\s|[-*+]\s|\d+\.\s|>\s?|```|!\[)/.test(line);
   let index = 0;
   while (index < lines.length) {
