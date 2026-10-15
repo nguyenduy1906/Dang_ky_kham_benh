@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Y tá | NEU Medical</title>
+  <link rel="stylesheet" href="../../static/css2/nurse.css">
+  <script src="../../static/js2/nurse.js" defer></script>
+</head>
+<body class="nurse-page">
+  <a class="skip-link" href="#main-content">Đến nội dung chính</a>
+  <div class="workspace">
+    <aside class="sidebar">
+      <a class="brand" href="../public/home.html">NEU Medical</a>
+      <p>Khu vực y tá</p>
+      <nav aria-label="Menu y tá">
+        <a href="#overview" aria-current="location">Tổng quan</a>
+        <a href="#assignments">Phòng được phân công</a>
+        <a href="#patients">Bệnh nhân trong ca</a>
+        <a href="#support">Phạm vi hỗ trợ</a>
+      </nav>
+      <div class="sidebar-note">Đồng hành cùng bác sĩ<br>Chăm sóc người bệnh</div>
+    </aside>
+    <main id="main-content" tabindex="-1">
+      <header class="page-header">
+        <div><p class="eyebrow">KHÔNG GIAN LÀM VIỆC</p><h1>Tổng quan y tá</h1><p class="muted">Theo dõi ca được giao và thông tin lượt khám.</p></div>
+        <span class="preview-label">Bản xem trước giao diện</span>
+      </header>
+      <p class="preview-note">Dữ liệu minh họa · Chưa kết nối hệ thống · Không lưu hoặc thay đổi thông tin khám bệnh.</p>
+
+      <section id="overview" aria-labelledby="overview-title">
+        <h2 id="overview-title">Tổng quan phân công mẫu</h2>
+        <div class="summary-grid">
+          <article class="summary-card"><span>Ca đang được phân công</span><strong>2</strong><small>Hai ca minh họa còn hiệu lực</small></article>
+          <article class="summary-card"><span>Lượt khám trong các ca</span><strong>4</strong><small>Thuộc phạm vi được giao</small></article>
+          <article class="summary-card"><span>Đang chờ khám</span><strong>2</strong><small>Theo danh sách minh họa bên dưới</small></article>
+          <article class="summary-card"><span>Đang khám</span><strong>2</strong><small>Theo danh sách minh họa bên dưới</small></article>
+        </div>
+      </section>
+
+      <section id="assignments" class="panel" aria-labelledby="assignments-title">
+        <div class="section-heading"><div><p class="eyebrow">BƯỚC 1 · CHỌN PHÒNG / CA</p><h2 id="assignments-title">Phòng được phân công</h2></div><span class="badge green">Còn hiệu lực · Minh họa</span></div>
+        <p class="muted">Các ca mẫu trong cùng một ngày minh họa; thời gian hiển thị theo giờ Việt Nam.</p>
+        <div class="shift-grid">
+          <article class="shift-card"><p class="eyebrow">CA SÁNG · CA-MAU-01</p><h3>08:00 – 11:30</h3><dl><div><dt>Phòng</dt><dd>201</dd></div><div><dt>Chuyên khoa</dt><dd>Nội tổng quát</dd></div><div><dt>Bác sĩ phụ trách</dt><dd>Bác sĩ minh họa A</dd></div></dl><button type="button" data-show-shift="morning">Xem 2 lượt khám trong ca</button></article>
+          <article class="shift-card"><p class="eyebrow">CA CHIỀU · CA-MAU-02</p><h3>13:30 – 17:00</h3><dl><div><dt>Phòng</dt><dd>202</dd></div><div><dt>Chuyên khoa</dt><dd>Nội tổng quát</dd></div><div><dt>Bác sĩ phụ trách</dt><dd>Bác sĩ minh họa B</dd></div></dl><button type="button" data-show-shift="afternoon">Xem 2 lượt khám trong ca</button></article>
+        </div>
+        <details><summary>Lịch sử phân công đã thu hồi</summary><div class="empty-state"><h3>Chưa có lịch sử minh họa</h3><p>Phân công đã thu hồi không cho phép truy cập thông tin lượt khám của ca đó.</p></div></details>
+      </section>
+
+      <section id="patients" class="panel" aria-labelledby="patients-title" hidden>
+        <div class="section-heading"><div><p class="eyebrow" id="selected-room">PHÒNG / CA ĐƯỢC CHỌN</p><h2 id="patients-title" tabindex="-1">Bệnh nhân trong phòng</h2></div><button type="button" id="back-to-rooms" class="secondary">← Chọn lại phòng</button></div>
+        <p class="muted">Danh sách mẫu theo khung giờ tăng dần. Thứ tự thực tế do hệ thống cung cấp khi tích hợp.</p>
+        <div class="filters">
+          <label class="search-label">Tìm theo tên hoặc mã phiếu<input id="patient-search" type="search" placeholder="Nhập tên hoặc mã phiếu…"></label>
+          <label hidden>Ca làm việc<select id="shift-filter"><option value="">Chưa chọn ca</option><option value="morning">Ca sáng · Phòng 201</option><option value="afternoon">Ca chiều · Phòng 202</option></select></label>
+          <label>Trạng thái<select id="status-filter"><option value="">Tất cả trạng thái</option><option value="waiting">Chờ khám</option><option value="examining">Đang khám</option></select></label>
+          <button type="button" id="reset-filters" class="secondary">Xóa bộ lọc</button>
+        </div>
+        <div class="table-wrapper" role="region" aria-label="Bảng bệnh nhân trong ca" tabindex="0">
+          <table>
+            <caption class="visually-hidden">Danh sách lượt khám minh họa thuộc hai ca được phân công</caption>
+            <thead><tr><th scope="col">Mã phiếu</th><th scope="col">Bệnh nhân</th><th scope="col">Khung giờ</th><th scope="col">Phòng</th><th scope="col">Trạng thái</th><th scope="col">Chi tiết</th></tr></thead>
+            <tbody id="patient-list">
+              <tr data-shift="morning" data-status="waiting"><td>MINHHOA-001</td><td>Bệnh nhân mẫu A</td><td>08:00 – 08:15</td><td>201</td><td><span class="badge amber">Chờ khám</span></td><td><button type="button" class="secondary detail-button" aria-label="Xem chi tiết bệnh nhân mẫu A">Xem chi tiết</button></td></tr>
+              <tr data-shift="morning" data-status="examining"><td>MINHHOA-002</td><td>Bệnh nhân mẫu B</td><td>08:15 – 08:30</td><td>201</td><td><span class="badge blue">Đang khám</span></td><td><button type="button" class="secondary detail-button" aria-label="Xem chi tiết bệnh nhân mẫu B">Xem chi tiết</button></td></tr>
+              <tr data-shift="afternoon" data-status="waiting"><td>MINHHOA-003</td><td>Bệnh nhân mẫu C</td><td>13:30 – 13:45</td><td>202</td><td><span class="badge amber">Chờ khám</span></td><td><button type="button" class="secondary detail-button" aria-label="Xem chi tiết bệnh nhân mẫu C">Xem chi tiết</button></td></tr>
+              <tr data-shift="afternoon" data-status="examining"><td>MINHHOA-004</td><td>Bệnh nhân mẫu D</td><td>13:45 – 14:00</td><td>202</td><td><span class="badge blue">Đang khám</span></td><td><button type="button" class="secondary detail-button" aria-label="Xem chi tiết bệnh nhân mẫu D">Xem chi tiết</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p id="search-result" role="status" aria-live="polite">Hiển thị 4 lượt khám minh họa.</p>
+        <div id="no-results" class="empty-state" hidden><h3>Không tìm thấy lượt khám</h3><p>Thử thay đổi tên, mã phiếu, ca hoặc trạng thái trong bộ lọc.</p></div>
+      </section>
+
+      <section id="support" class="panel" aria-labelledby="support-title">
+        <h2 id="support-title">Phạm vi hỗ trợ</h2>
+        <div class="support-grid">
+          <article><span class="step">01</span><h3>Theo dõi ca được giao</h3><p>Xem thời gian, phòng khám và bác sĩ phụ trách trong phân công còn hiệu lực.</p></article>
+          <article><span class="step">02</span><h3>Tra cứu thông tin lượt khám</h3><p>Xem danh sách bệnh nhân, khung giờ và trạng thái trong phạm vi ca được giao.</p></article>
+          <article><span class="step">03</span><h3>Hỗ trợ quá trình khám</h3><p>Xem thông tin liên quan để phối hợp với bác sĩ. Chưa triển khai thao tác cập nhật khi quyền chưa được chốt.</p></article>
+        </div>
+        <p class="scope-note">Bệnh án và đơn thuốc ở chế độ xem. Y tá không chỉnh sửa chẩn đoán, kê thuốc hoặc hoàn tất lượt khám.</p>
+      </section>
+      <footer>NEU Medical · Không gian y tá · Giao diện minh họa</footer>
+    </main>
+  </div>
+  <dialog id="patient-dialog" aria-labelledby="dialog-title">
+    <div class="section-heading"><div><p class="eyebrow">CHỈ XEM</p><h2 id="dialog-title">Chi tiết lượt khám</h2></div><button type="button" id="close-dialog" class="secondary" aria-label="Đóng chi tiết lượt khám">Đóng ×</button></div>
+    <dl id="patient-details" class="patient-details"></dl>
+    <div class="record-preview"><h3>Hỗ trợ cập nhật thông tin cho bác sĩ</h3><p>Chờ xác định các trường y tá được phép nhập và quy trình bác sĩ xác nhận.</p><button type="button" disabled>Cập nhật thông tin · Chờ chốt quyền</button><p class="muted">Chưa mở chỉnh sửa chẩn đoán hoặc đơn thuốc. Thông tin bệnh án hiện ở chế độ xem và chưa có dữ liệu thật.</p></div>
+    <p class="preview-note">Thông tin minh họa. Không lưu dữ liệu hoặc thay đổi trạng thái khám.</p>
+  </dialog>
+</body>
+</html>
