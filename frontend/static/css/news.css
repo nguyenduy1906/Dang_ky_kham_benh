@@ -3,13 +3,12 @@
 .news-search label { display: grid; gap: 8px; flex: 1 1 220px; font-size: 14px; font-weight: 600; }
 .news-search input { width: 100%; min-height: 46px; padding: 11px 14px; font: inherit; border: 1px solid #cbd7cf; background: white; color: var(--ink); }
 .news-search input:focus { outline: 2px solid var(--green); outline-offset: 2px; }
-.news-search button, .news-pagination button, .news-retry { padding: 12px 20px; border: 1px solid var(--green); background: var(--green); color: white; font-weight: 600; min-height: 44px; }
-.news-search .news-clear, .news-pagination button { background: white; color: var(--green); }
-.news-pagination button:disabled { opacity: .45; cursor: default; }
+.news-retry { padding: 12px 20px; border: 1px solid var(--green); background: var(--green); color: white; font-weight: 600; min-height: 44px; }
 .news-status { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 22px 0; }
 .home-page #news-status:empty { display: none; }
 .news-grid[aria-busy="true"] { min-height: 160px; }
-.news-pagination { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 22px; margin-top: 30px; font-size: 14px; }
+.news-pagination { flex-direction: row; flex-wrap: wrap; }
+.news-pagination > div { flex-wrap: wrap; justify-content: center; }
 .article-thumbnail { display: flex; position: relative; align-items: center; justify-content: center; width: 100%; height: 240px; background: #e7eeea; overflow: hidden; }
 .article-thumbnail img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .article-image-missing { color: #52675b; font-size: 14px; }
@@ -20,7 +19,5 @@
 .home-page #news-filters button { font-size: 14px; padding: 8px 0; }
 @media (max-width: 760px) {
   .news-search label { flex-basis: 100%; }
-  .news-search button { flex: 1; }
-  .news-pagination { gap: 12px; }
   .home-page #news-filters { justify-content: flex-start; }
 }

@@ -64,7 +64,7 @@ async function load() {
     if (page > totalPages) { page = totalPages; return load(); }
     currentDoctors = result.items;
     renderCards();
-    status.textContent = `Hiển thị ${result.items.length} / ${result.total} bác sĩ`;
+    status.textContent = "";
     empty.hidden = result.total > 0;
     pager.hidden = totalPages <= 1; previous.disabled = page <= 1; next.disabled = page >= totalPages;
     pages.replaceChildren();

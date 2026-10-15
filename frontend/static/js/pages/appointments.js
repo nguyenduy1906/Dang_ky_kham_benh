@@ -4,7 +4,7 @@ import { listDoctors } from "../api/doctor.js";
 import { allPages, dateLabel, clock, money } from "../core/booking.js";
 import { statusLabels, isUpcoming, filterAppointments, appointmentActionUrl } from "../core/appointments.js";
 import { thumbnailUrl } from "../core/articles.js";
-import { protectPatientPage } from "../core/patient-access.js";
+import { protectPatientPage } from "../core/patient_access.js";
 
 const $ = selector => document.querySelector(selector);
 function el(tag, text = "", className = "") {

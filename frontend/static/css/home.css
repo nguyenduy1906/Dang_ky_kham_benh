@@ -110,10 +110,7 @@ button {
 }
 .motto {
   color: #d89c08;
-  font:
-    italic 44px Georgia,
-    "Times New Roman",
-    serif;
+  font: italic 44px/1.35 var(--font-ui);
   margin: 0;
   flex: 1;
   text-align: center;

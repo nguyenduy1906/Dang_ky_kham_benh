@@ -6,7 +6,7 @@ import { getMe } from "../api/auth.js";
 import { verifySession, hasSession, clearSession, loginUrl } from "../core/session.js";
 import { thumbnailUrl } from "../core/articles.js";
 import { allPages, availableSchedules, money, clock, dateLabel, todayVN, patientPayload, enableDragScroll } from "../core/booking.js";
-import { readDraft, saveDraft } from "../core/booking-draft.js";
+import { readDraft, saveDraft } from "../core/booking_draft.js";
 
 const $ = selector => document.querySelector(selector);
 function el(tag, text = "", className = "") {
@@ -111,7 +111,7 @@ function renderDoctors() {
     info.append(el("h2", doctor.full_name), el("p", `Chuyên khoa: ${doctor.department_name}`));
     if (doctor.academic_degree) info.append(el("span", doctor.academic_degree));
     if (doctor.experience_years != null) info.append(el("span", `${doctor.experience_years} năm kinh nghiệm`));
-    const profileUrl = `../public/doctor-detail.html?id=${encodeURIComponent(doctor.doctor_profile_id)}`;
+    const profileUrl = `../public/doctor_detail.html?id=${encodeURIComponent(doctor.doctor_profile_id)}`;
     const profile = el("a", "Xem hồ sơ bác sĩ →", "booking-profile-link");
     profile.href = profileUrl;
     info.append(profile);
@@ -334,7 +334,7 @@ ui.form.addEventListener("submit", event => {
       doctor_profile_id: selectedDoctor.doctor_profile_id, schedule_id: selectedSlot.schedule.schedule_id,
       work_date: selectedSlot.schedule.work_date, from_date: ui.from.value, to_date: ui.to.value,
       appointment_time: selectedSlot.slot.appointment_time, symptoms });
-    location.assign(`booking-review.html?draft=${encodeURIComponent(key)}`);
+    location.assign(`booking_review.html?draft=${encodeURIComponent(key)}`);
   } catch { $("#appointment-status").textContent = "Trình duyệt không cho phép lưu thông tin tạm. Vui lòng bật lưu trữ để tiếp tục."; }
 });
 
@@ -429,5 +429,5 @@ window.addEventListener("pagehide", () => {
 });
 window.addEventListener("pageshow", event => { if (event.persisted) checkAccess(); });
 const resumeId = new URLSearchParams(location.search).get("encounter");
-if (resumeId && /^[1-9]\d*$/.test(resumeId)) location.replace(`booking-review.html?encounter=${resumeId}`);
+if (resumeId && /^[1-9]\d*$/.test(resumeId)) location.replace(`booking_review.html?encounter=${resumeId}`);
 else checkAccess();

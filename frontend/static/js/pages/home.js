@@ -33,7 +33,7 @@ async function loadHomeDepartments() {
     if (!Array.isArray(result.items)) throw new Error("Phản hồi chuyên khoa không hợp lệ.");
     holder.replaceChildren(...result.items.map((department, index) => {
       const link = element("a", "", "department-row");
-      link.href = `department-detail.html?id=${encodeURIComponent(department.department_id)}`;
+      link.href = `department_detail.html?id=${encodeURIComponent(department.department_id)}`;
       link.append(element("span", department.name), element("span", "→"));
       link.hidden = index >= 5 && allDepartments.getAttribute("aria-expanded") !== "true"; return link;
     }));
@@ -80,7 +80,7 @@ async function loadHomeDoctors() {
     const doctors = await allPages(async (params, options) => doctorPage(await listDoctors(params, options)), {}, { auth: false });
     const cards = doctors.map(doctor => {
       const card = element("a", "", "doctor-card");
-      card.href = `doctor-detail.html?id=${encodeURIComponent(doctor.doctor_profile_id)}`;
+      card.href = `doctor_detail.html?id=${encodeURIComponent(doctor.doctor_profile_id)}`;
       const photo = element("div", "", "doctor-photo");
       const src = thumbnailUrl(doctor.avatar_url);
       const missing = element("span", "Chưa có ảnh", "doctor-photo-placeholder");

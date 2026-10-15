@@ -1,7 +1,7 @@
 import { getBySlug } from "../api/article.js";
 import { articlePage, articleUrl, articleThumbnail, articleContent, publishedDate } from "../core/articles.js";
 import { ApiError } from "../core/api.js";
-import { displayText } from "../core/display-text.js";
+import { displayText } from "../core/display_text.js";
 
 const slug = new URLSearchParams(location.search).get("slug");
 const title = document.querySelector("#article-title");

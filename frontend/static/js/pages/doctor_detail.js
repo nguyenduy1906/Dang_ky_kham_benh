@@ -1,6 +1,6 @@
 import { getDoctor } from "../api/doctor.js";
 import { listDoctorSchedules } from "../api/schedule.js";
-import { listDoctorReviews, createReview } from "../api/medical-record.js";
+import { listDoctorReviews, createReview } from "../api/medical_record.js";
 import { listEncounters } from "../api/encounter.js";
 import { verifySession, hasSession } from "../core/session.js";
 import { portrait, experience, element, doctorPage, profileSections, currentWeek } from "../core/doctors.js";

@@ -16,7 +16,7 @@ export * as patientApi from "./patient.js";
 export * as encounterApi from "./encounter.js";
 export * as paymentApi from "./payment.js";
 export * as notificationApi from "./notification.js";
-export * as medicalRecordApi from "./medical-record.js";
+export * as medicalRecordApi from "./medical_record.js";
 export * as articleApi from "./article.js";
 export * as configurationApi from "./configuration.js";
 export * as statisticsApi from "./statistics.js";

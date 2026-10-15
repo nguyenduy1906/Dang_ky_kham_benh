@@ -7,8 +7,8 @@ import { getMe } from "../api/auth.js";
 import { verifySession, hasSession, clearSession, loginUrl } from "../core/session.js";
 import { thumbnailUrl } from "../core/articles.js";
 import { allPages, availableSchedules, money, clock, dateLabel, matchingBooking } from "../core/booking.js";
-import { readDraft, saveDraft, draftRequest } from "../core/booking-draft.js";
-import { renderDemoQr } from "../core/payment-qr.js";
+import { readDraft, saveDraft, draftRequest } from "../core/booking_draft.js";
+import { renderDemoQr } from "../core/payment_qr.js";
 const $ = selector => document.querySelector(selector);
 function el(tag, text = "", className = "") {
   const node = document.createElement(tag); node.textContent = text;
