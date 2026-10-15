@@ -38,6 +38,7 @@ export function currentWeek(date = new Date()) {
 }
 export function portrait(doctor) {
   const holder = element("div", "", "doctor-portrait");
+  holder.dataset.doctorId = String(doctor.doctor_profile_id);
   const missing = element("span", "Chưa có ảnh", "doctor-photo-missing"); holder.append(missing);
   const src = thumbnailUrl(doctor.avatar_url);
   if (src) {
