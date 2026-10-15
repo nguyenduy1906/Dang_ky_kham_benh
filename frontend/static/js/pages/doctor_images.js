@@ -8,7 +8,7 @@ function collect(id, image) {
   if (!photos.has(id)) photos.set(id, []);
   photos.get(id).push(image);
 }
-document.querySelectorAll('a[href*="doctor-detail.html?id="] img').forEach(image => {
+document.querySelectorAll('a[href*="doctor_detail.html?id="] img').forEach(image => {
   collect(new URL(image.closest("a").href).searchParams.get("id"), image);
 });
 document.querySelectorAll("img[data-doctor-photo]").forEach(image => collect(image.dataset.doctorPhoto, image));

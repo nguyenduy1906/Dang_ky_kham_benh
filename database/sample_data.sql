@@ -453,26 +453,24 @@ VALUES
 (10, 15, 'SYSTEM', 'Cập nhật hệ thống', 'Hệ thống đã cập nhật cấu hình nhắc lịch khám.', NULL, NULL, 0, '2026-10-01 09:00:00+07');
 
 -- 17. ARTICLE
--- 10 bài biên soạn từ nguồn Bệnh viện Bạch Mai; ảnh demo lưu tại backend/uploads.
--- Tài khoản ADMIN #1 đăng các bài; nguồn gốc nội dung ghi ở cuối từng bài.
+-- Nội dung có nguồn tham khảo, ảnh được chọn theo chủ đề và chú thích riêng.
 INSERT INTO article
-(article_id, author_id, title, slug, category, thumbnail_url, content, is_active, published_at, created_at, updated_at)
-VALUES
-(1, 1, 'RSV và cúm mùa ở trẻ: Quan sát hô hấp để nhận biết diễn biến bất thường', 'benh-ho-hap-o-tre-rsv-va-cum-mua', 'Y học thường thức', '/uploads/articles/b6f491239f14078bc972158ca5f8eb1d.jpg', $article$*Trẻ mắc bệnh hô hấp có thể bắt đầu bằng triệu chứng nhẹ nhưng cần được theo dõi diễn biến. Chuyên gia nhi khoa Bạch Mai lưu ý rằng cách thở, khả năng bú hoặc uống và mức độ tỉnh táo có ý nghĩa quan trọng bên cạnh nhiệt độ cơ thể.*
+(article_id,author_id,title,slug,category,thumbnail_url,content,is_active,published_at,created_at,updated_at) VALUES
+(1,1,'RSV và cúm mùa ở trẻ: Quan sát hô hấp để nhận biết diễn biến bất thường','benh-ho-hap-o-tre-rsv-va-cum-mua','Y học thường thức','/uploads/articles/d15603e6fc1db7baf5c53ee9ac7f0ab3.png','*Ho, sốt hay sổ mũi ở trẻ cần được theo dõi cùng nhịp thở, khả năng ăn uống và sự tỉnh táo. Nhận ra thay đổi sớm giúp gia đình tìm đến cơ sở y tế đúng lúc.*
 
 ## Vì sao trẻ nhỏ cần được quan sát sát hơn
 
 Đường thở của trẻ nhỏ có kích thước hẹp. Phù nề và tăng tiết dịch có thể ảnh hưởng rõ đến việc lưu thông không khí, đặc biệt khi trẻ có viêm ở những đường thở nhỏ.
 
-Nguồn tin lưu ý trẻ sơ sinh, trẻ nhỏ, trẻ sinh non và trẻ có bệnh nền là những nhóm cần thận trọng. Những biểu hiện ban đầu có thể chưa phản ánh đầy đủ mức độ nặng, nên việc theo dõi phải tiếp tục khi tình trạng thay đổi.
+Trẻ sơ sinh, trẻ nhỏ, trẻ sinh non và trẻ có bệnh nền là những nhóm cần thận trọng. Những biểu hiện ban đầu có thể chưa phản ánh đầy đủ mức độ nặng, nên việc theo dõi phải tiếp tục khi tình trạng thay đổi.
 
 Đi khám đúng thời điểm giúp bác sĩ đánh giá cả dấu hiệu hô hấp lẫn tình trạng toàn thân. Phụ huynh nên ghi nhận những thay đổi quan sát được để trao đổi rõ trong quá trình chăm sóc.
 
-![Không gian khám bệnh](/uploads/articles/83e856c669a06875a98190946b0f1d8d.jpg "Không gian phục vụ khám và tư vấn — ảnh minh họa demo")
+![Bác sĩ trao đổi với mẹ trong buổi khám cho trẻ nhỏ.](/uploads/articles/d15603e6fc1db7baf5c53ee9ac7f0ab3.png "Bác sĩ trao đổi với mẹ trong buổi khám cho trẻ nhỏ.")
 
 ## RSV và cúm có những biểu hiện khác nhau
 
-RSV có thể gây biểu hiện giống cảm lạnh, sau đó một số trẻ xuất hiện khò khè, thở nhanh hoặc khó bú. Bài nguồn nhắc vai trò của RSV trong viêm tiểu phế quản và viêm phổi ở trẻ nhỏ.
+RSV có thể gây biểu hiện giống cảm lạnh, sau đó một số trẻ xuất hiện khò khè, thở nhanh hoặc khó bú. RSV là một tác nhân gây viêm tiểu phế quản và viêm phổi ở trẻ nhỏ.
 
 Cúm mùa thường có khởi phát đột ngột hơn với sốt, ho và mệt mỏi; trẻ nhỏ cũng có thể có những biểu hiện tiêu hóa hoặc giảm ăn, giảm bú. Cả hai tác nhân đều có thể đi kèm biến chứng hô hấp.
 
@@ -482,7 +480,7 @@ Không thể xác định tác nhân chỉ từ một triệu chứng. Điều c
 
 Cách thở là một dấu hiệu quan trọng. Thở nhanh, rút lõm lồng ngực, cánh mũi phập phồng hoặc mức gắng sức tăng cần được chú ý, đặc biệt khi thay đổi so với trạng thái thường ngày.
 
-Những biểu hiện được nguồn tin lưu ý gồm:
+Cần đưa trẻ đến cơ sở y tế ngay khi có những biểu hiện sau:
 
 - Khó thở rõ hoặc cách thở tăng gắng sức.
 - Môi, lưỡi hoặc da chuyển màu tím.
@@ -492,48 +490,46 @@ Những biểu hiện được nguồn tin lưu ý gồm:
 
 Đây là những tình huống cần được đánh giá trực tiếp tại cơ sở y tế. Bác sĩ sẽ kết hợp nhiều thông tin, bao gồm hô hấp, oxy máu, khả năng ăn uống và mức độ tỉnh táo, thay vì dựa vào một chỉ số đơn lẻ.
 
-![Khu vực tiếp đón gia đình](/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg "Khu vực tiếp đón và hướng dẫn gia đình người bệnh — ảnh minh họa demo")
+![Khuyến cáo phòng bệnh đường hô hấp: giữ vệ sinh, che miệng khi ho và bảo vệ người có nguy cơ.](/uploads/articles/e656d82fb47a099500c385f48336e829.jpg "Khuyến cáo phòng bệnh đường hô hấp: giữ vệ sinh, che miệng khi ho và bảo vệ người có nguy cơ.")
 
 ## Phòng bệnh theo tuổi và nguy cơ
 
-Bài nguồn đề cập tiêm phòng cúm theo khuyến cáo cùng các biện pháp dự phòng RSV dành cho những nhóm có chỉ định. Việc lựa chọn biện pháp cần trao đổi với bác sĩ, căn cứ tuổi, sức khỏe và khả năng tiếp cận phù hợp.
+Bệnh viện Bạch Mai đề cập tiêm phòng cúm theo khuyến cáo cùng các biện pháp dự phòng RSV dành cho những nhóm có chỉ định. Việc lựa chọn biện pháp cần trao đổi với bác sĩ, căn cứ tuổi, sức khỏe và khả năng tiếp cận phù hợp.
 
 Rửa tay, hạn chế tiếp xúc với người đang mắc bệnh hô hấp, giữ môi trường thông thoáng và tránh khói thuốc là những thực hành cần duy trì trong sinh hoạt. Chúng cần đi cùng việc quan sát và tìm chăm sóc khi có biểu hiện bất thường.
 
 Kháng sinh không điều trị được virus RSV hay cúm. Phụ huynh không nên tự cho trẻ dùng thuốc này; quyết định sử dụng phải do bác sĩ cân nhắc khi có tình huống cần điều trị nhiễm khuẩn.
 
-Thông điệp của bài là theo dõi trẻ bằng nhiều dấu hiệu và chủ động phòng ngừa. Khi có thay đổi về cách thở hoặc tình trạng toàn thân, việc đưa trẻ đi đánh giá quan trọng hơn việc tiếp tục chờ xem nhiệt độ có tăng hay không.
+Khi có thay đổi về cách thở hoặc tình trạng toàn thân, việc đưa trẻ đi đánh giá quan trọng hơn việc tiếp tục chờ xem nhiệt độ có tăng hay không.
 
-Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/canh-bao-benh-ho-hap-giao-mua-o-tre-nhan-biet-som-rsv-cum-mua-va-dau-hieu-nguy-hiem?id=6c0af8f9-86ae-4ca7-acf8-f7598fc504b0). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-02 00:00:00+07', '2026-10-02 00:00:00+07', '2026-10-02 00:00:00+07'),
-(2, 1, 'Theo dõi ung thư gan: Vì sao cần phối hợp nhiều thông tin?', 'theo-doi-nguy-co-ung-thu-gan', 'Y học thường thức', '/uploads/articles/b6df1b1ed14289fff99a16ee3ba9b283.jpg', $article$*Bài viết của Bạch Mai đề cập giới hạn của từng công cụ theo dõi ung thư gan và vai trò của việc kết hợp thông tin. Với người có bệnh gan mạn tính, một kết quả kiểm tra riêng lẻ cần được hiểu trong bối cảnh nguy cơ và kế hoạch theo dõi của bác sĩ.*
+Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/canh-bao-benh-ho-hap-giao-mua-o-tre-nhan-biet-som-rsv-cum-mua-va-dau-hieu-nguy-hiem?id=6c0af8f9-86ae-4ca7-acf8-f7598fc504b0).',1,'2026-10-01T17:00:00+00:00','2026-10-01T17:00:00+00:00','2026-10-15 12:00:00+07'),
+(2,1,'Theo dõi ung thư gan: Vì sao cần phối hợp nhiều thông tin?','theo-doi-nguy-co-ung-thu-gan','Y học thường thức','/uploads/articles/026d6ca08a42390c533aa56c98eff5fd.jpg','*Theo dõi gan cần dựa trên nguy cơ của từng người và nhiều kết quả kiểm tra. Một chỉ số bình thường chưa đủ để kết luận gan hoàn toàn khỏe mạnh.*
 
 ## Kết quả thông thường vẫn có giới hạn
 
-Siêu âm và xét nghiệm AFP là những phương pháp quen thuộc khi kiểm tra gan. Tuy nhiên, nguồn tin lưu ý rằng ở giai đoạn sớm, một số tổn thương có thể chưa được nhận diện bằng cách đánh giá đơn lẻ.
+Siêu âm và xét nghiệm AFP là những phương pháp quen thuộc khi kiểm tra gan. Tuy nhiên, ở giai đoạn sớm, một số tổn thương có thể chưa được nhận diện bằng cách đánh giá đơn lẻ.
 
 AFP bình thường cũng không đủ để khẳng định chắc chắn không có ung thư gan. Cách diễn giải phải đi cùng tình trạng người bệnh, tiền sử và những kết quả khác.
 
 Điều này không có nghĩa các công cụ quen thuộc mất giá trị. Ý nghĩa của thông tin là hiểu giới hạn và tiếp tục theo dõi phù hợp, tránh coi một kết quả trước đây như bảo đảm cho mọi thời điểm sau đó.
 
-![Không gian khám bệnh](/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg "Không gian phục vụ đánh giá sức khỏe — ảnh minh họa demo")
-
 ## Các xét nghiệm bổ sung cung cấp thêm thông tin
 
-Bài nguồn đề cập PIVKA-II như một xét nghiệm có thể bổ sung thông tin cho đánh giá. Nguồn cũng giới thiệu GAAD, phương pháp kết hợp tuổi, giới tính cùng kết quả AFP và PIVKA-II để ước tính mức nguy cơ.
+Bệnh viện Bạch Mai đề cập PIVKA-II như một xét nghiệm có thể bổ sung thông tin cho đánh giá. GAAD là phương pháp kết hợp tuổi, giới tính cùng kết quả AFP và PIVKA-II để ước tính mức nguy cơ.
 
 Đây là những dữ kiện hỗ trợ quyết định chuyên môn, không phải cách tự kết luận chẩn đoán từ một con số. Việc có sử dụng xét nghiệm nào và sử dụng khi nào phải gắn với tình trạng cụ thể.
 
 Các công cụ bổ sung không thay thế hoàn toàn siêu âm hay chẩn đoán hình ảnh. Nếu có bất thường hoặc mức nguy cơ cần xem xét thêm, bác sĩ có thể lựa chọn CT, MRI hoặc những đánh giá phù hợp khác.
 
+![Kỹ thuật viên hỗ trợ người bệnh trên bàn chụp cộng hưởng từ.](/uploads/articles/026d6ca08a42390c533aa56c98eff5fd.jpg "Kỹ thuật viên hỗ trợ người bệnh trên bàn chụp cộng hưởng từ.")
+
 ## Ai cần có kế hoạch theo dõi riêng
 
-Những nhóm được nguồn tin lưu ý gồm người viêm gan B hoặc C mạn tính, người xơ gan và một số người có bệnh gan nhiễm mỡ kèm yếu tố nguy cơ. Không phải mọi người có cùng nhu cầu xét nghiệm và khoảng cách giữa các lần kiểm tra.
+Những nhóm cần lưu ý gồm người viêm gan B hoặc C mạn tính, người xơ gan và một số người có bệnh gan nhiễm mỡ kèm yếu tố nguy cơ. Không phải mọi người có cùng nhu cầu xét nghiệm và khoảng cách giữa các lần kiểm tra.
 
 Người có nguy cơ cao cần tuân thủ lịch đã được hướng dẫn. Thời điểm đánh giá lại có thể thay đổi theo tình trạng bệnh, các bất thường đã phát hiện và kế hoạch điều trị.
 
 Theo dõi đều đặn không chỉ là thực hiện xét nghiệm, mà còn là mang kết quả đến bác sĩ để so sánh và quyết định các bước tiếp theo. Các kết quả từ nhiều lần khám có thể cung cấp bối cảnh quan trọng.
-
-![Khu vực tiếp đón](/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg "Khu vực tiếp đón người bệnh — ảnh minh họa demo")
 
 ## Chuẩn bị thông tin cho lần tái khám
 
@@ -543,26 +539,26 @@ Theo dõi đều đặn không chỉ là thực hiện xét nghiệm, mà còn l
 - Hỏi rõ lịch theo dõi và mục đích của từng xét nghiệm được đề xuất.
 - Báo cho bác sĩ khi chưa thể thực hiện đúng kế hoạch để được hướng dẫn.
 
-Bài nguồn nhắc rằng bệnh gan có thể diễn tiến mà không có triệu chứng rõ. Người có bệnh mạn tính nên theo dõi theo kế hoạch, không chờ đến lúc xuất hiện vàng da, sụt cân hay đau mới tìm đến chăm sóc.
+Bệnh gan có thể diễn tiến mà không có triệu chứng rõ. Người có bệnh mạn tính nên theo dõi theo kế hoạch, không chờ đến lúc xuất hiện vàng da, sụt cân hay đau mới tìm đến chăm sóc.
 
 Mục tiêu là phối hợp thông tin để nhận diện nguy cơ và lựa chọn bước đánh giá phù hợp. Không nên suy diễn độ chính xác của một phương pháp thành bảo đảm tuyệt đối cho mỗi người bệnh.
 
-Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/lam-sao-de-khong-bo-sot-ung-thu-gan-khi-benh-con-am-tham?id=4febab14-1abb-4e05-8e15-3fcdc168dbb6). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-02 00:00:00+07', '2026-10-02 00:00:00+07', '2026-10-02 00:00:00+07'),
-(3, 1, 'Men vi sinh trong bệnh tiêu hóa: Lợi ích cần được đánh giá theo từng chủng', 'su-dung-men-vi-sinh-theo-bang-chung', 'Y học thường thức', '/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg', $article$*Tại một hội thảo của Viện Tiêu hóa Bạch Mai, các chuyên gia lưu ý rằng probiotics không phải lựa chọn chung cho mọi triệu chứng đường ruột. Bệnh lý, chủng vi sinh vật và tình trạng người bệnh cần được xem xét trước khi quyết định sử dụng.*
+Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/lam-sao-de-khong-bo-sot-ung-thu-gan-khi-benh-con-am-tham?id=4febab14-1abb-4e05-8e15-3fcdc168dbb6).',1,'2026-10-01T17:00:00+00:00','2026-10-01T17:00:00+00:00','2026-10-15 12:00:00+07'),
+(3,1,'Men vi sinh trong bệnh tiêu hóa: Lợi ích cần được đánh giá theo từng chủng','su-dung-men-vi-sinh-theo-bang-chung','Y học thường thức','/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg','*Không phải sản phẩm men vi sinh nào cũng có tác dụng giống nhau. Lựa chọn phù hợp cần căn cứ vào chủng vi sinh, tình trạng bệnh và đặc điểm người sử dụng.*
 
 ## Hiệu quả không thể suy rộng từ một chủng sang mọi sản phẩm
 
-Probiotics là các vi sinh vật sống được sử dụng trong những tình huống phù hợp. Điểm quan trọng được bài báo nhấn mạnh là tính đặc hiệu: bằng chứng về một chủng trong một bệnh cảnh không đồng nghĩa tất cả chế phẩm có tác dụng tương tự.
+Probiotics là các vi sinh vật sống được sử dụng trong những tình huống phù hợp. Hiệu quả của probiotics có tính đặc hiệu: bằng chứng về một chủng trong một bệnh cảnh không đồng nghĩa tất cả chế phẩm có tác dụng tương tự.
 
 Người có đau bụng, tiêu chảy hoặc táo bón cần tìm nguyên nhân, thay vì mặc nhiên chọn men vi sinh. Dùng không phù hợp có thể làm tăng chi phí mà không đem lại lợi ích dự kiến.
 
 Khi trao đổi về một sản phẩm, cần quan tâm thành phần cụ thể, dữ liệu khoa học và mục đích sử dụng. Giá cao hoặc số lượng chủng lớn không phải cách đủ tin cậy để so sánh hiệu quả.
 
-![Không gian thăm khám](/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg "Không gian phục vụ thăm khám tiêu hóa — ảnh minh họa demo")
+![Bác sĩ dùng ống nghe thăm khám người bệnh tại giường.](/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg "Bác sĩ dùng ống nghe thăm khám người bệnh tại giường.")
 
 ## Trong điều trị H. pylori, vai trò là hỗ trợ
 
-Phác đồ tiệt trừ *Helicobacter pylori* thường phối hợp nhiều thuốc. Bài nguồn đề cập một số nghiên cứu về probiotics trong hỗ trợ giảm tác dụng không mong muốn hoặc cải thiện việc tuân thủ, nhưng đồng thời lưu ý bằng chứng và hiệu quả khác nhau giữa các chủng.
+Phác đồ tiệt trừ *Helicobacter pylori* thường phối hợp nhiều thuốc. Bệnh viện Bạch Mai đề cập một số nghiên cứu về probiotics trong hỗ trợ giảm tác dụng không mong muốn hoặc cải thiện việc tuân thủ, nhưng đồng thời lưu ý bằng chứng và hiệu quả khác nhau giữa các chủng.
 
 Men vi sinh không thể thay thế phác đồ điều trị H. pylori. Khi đã được kê thuốc, người bệnh không nên tự bỏ kháng sinh hoặc dùng probiotics như một phương án tiệt trừ độc lập.
 
@@ -572,11 +568,9 @@ Nếu bác sĩ chỉ định bổ sung, cách chọn chế phẩm, thời điể
 
 IBS là rối loạn tương tác não và ruột, có thể biểu hiện bằng đau bụng tái diễn cùng thay đổi việc đi ngoài. Các thể tiêu chảy, táo bón hay hỗn hợp không có cùng nhu cầu chăm sóc.
 
-Bài báo ghi nhận nghiên cứu về một số chủng ở các nhóm người bệnh, nhưng không khẳng định một chế phẩm dùng được cho tất cả. Những yếu tố tâm lý, căng thẳng và tình trạng dinh dưỡng cũng cần được cân nhắc trong kế hoạch điều trị.
+Các nghiên cứu về từng chủng vi sinh được thực hiện ở những nhóm người bệnh khác nhau. Kết quả ấy chưa cho phép lựa chọn một chế phẩm cho mọi trường hợp IBS. Những yếu tố tâm lý, căng thẳng và tình trạng dinh dưỡng cũng cần được cân nhắc trong kế hoạch điều trị.
 
 Việc lựa chọn biện pháp hỗ trợ nên căn cứ vào triệu chứng và đánh giá chuyên môn, không chỉ vào nhãn sản phẩm. Khi triệu chứng kéo dài hoặc thay đổi, người bệnh cần được đánh giá lại nguyên nhân.
-
-![Khu vực tư vấn](/uploads/articles/a1da1b6c569a7d9bbb4699eb72350140.jpg "Khu vực tiếp đón và tư vấn người bệnh — ảnh minh họa demo")
 
 ## Những nhóm cần hỏi ý kiến bác sĩ
 
@@ -590,20 +584,18 @@ Những câu hỏi có thể đặt ra trong buổi tư vấn:
 - Thời gian sử dụng và khi nào cần đánh giá lại.
 - Có những lựa chọn chăm sóc khác phù hợp hơn hay không.
 
-Thông điệp của nguồn là lựa chọn dựa trên bằng chứng và đối tượng sử dụng. Men vi sinh có thể hữu ích ở một số tình huống, nhưng không phải cách mặc định xử trí mọi rối loạn tiêu hóa.
+Men vi sinh có thể hữu ích ở một số tình huống, nhưng không phải cách mặc định xử trí mọi rối loạn tiêu hóa.
 
-Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/chuyen-gia-bach-mai-chi-cach-dung-men-vi-sinh-dung-benh-dung-nguoi?id=f18e2bb0-46cf-44aa-981b-0de94a01d565). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-02 00:00:00+07', '2026-10-02 00:00:00+07', '2026-10-02 00:00:00+07'),
-(4, 1, 'Vệ sinh tay và sức khỏe mắt: Bài học từ một ca viêm loét giác mạc', 'bao-ve-mat-bang-ve-sinh-tay', 'Y học thường thức', '/uploads/articles/a27b33ba114fbca36ad72b1466487c1d.jpg', $article$*Một người bệnh nữ 63 tuổi được Bạch Mai cơ sở Ninh Bình tiếp nhận vì đau mắt và suy giảm thị lực. Khi tìm hiểu công việc và thói quen sinh hoạt, bác sĩ lưu ý khả năng đưa tác nhân gây bệnh từ bàn tay lên mắt, đặc biệt khi móng tay và kẽ móng chưa được vệ sinh kỹ.*
+Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/chuyen-gia-bach-mai-chi-cach-dung-men-vi-sinh-dung-benh-dung-nguoi?id=f18e2bb0-46cf-44aa-981b-0de94a01d565).',1,'2026-10-01T17:00:00+00:00','2026-10-01T17:00:00+00:00','2026-10-15 12:00:00+07'),
+(4,1,'Giữ tay sạch để bảo vệ mắt: khi nào cần khám chuyên khoa?','bao-ve-mat-bang-ve-sinh-tay','Y học thường thức','/uploads/articles/36d4acc110bbe26e4c5e79f55c73c3e6.png','*Đưa tay chưa sạch lên mắt có thể tạo cơ hội cho tác nhân gây bệnh tiếp xúc với bề mặt nhãn cầu. Giữ tay sạch và khám sớm khi mắt đau, nhìn mờ là những việc cần nhớ.*
 
 ## Không bỏ qua thói quen khi tìm nguyên nhân
 
-Người bệnh được chẩn đoán viêm loét giác mạc do nấm sau những đợt điều trị trước đó chưa cải thiện tình trạng. Khi khai thác thêm thông tin, nhóm chuyên môn ghi nhận công việc ở một cơ sở chế biến mắm thủ công và thói quen dụi mắt bằng tay.
+Bệnh viện Bạch Mai ghi nhận một người bệnh được chẩn đoán viêm loét giác mạc do nấm sau những đợt điều trị trước đó chưa cải thiện tình trạng. Khi khai thác thêm thông tin, nhóm chuyên môn ghi nhận công việc ở một cơ sở chế biến mắm thủ công và thói quen dụi mắt bằng tay.
 
 Bàn tay thường xuyên tiếp xúc chất hữu cơ, bụi bẩn hoặc nhiều bề mặt có thể mang các vi sinh vật. Móng tay dài và phần bẩn còn lưu ở kẽ móng là những yếu tố cần chú ý trong vệ sinh cá nhân.
 
 Những chi tiết sinh hoạt tưởng nhỏ lại có giá trị khi bác sĩ đánh giá nguồn tiếp xúc. Điều này cũng cho thấy đi khám cần trao đổi về công việc và thói quen hằng ngày, không chỉ mô tả triệu chứng hiện tại.
-
-![Không gian khám bệnh](/uploads/articles/a1da1b6c569a7d9bbb4699eb72350140.jpg "Không gian phục vụ thăm khám — ảnh minh họa demo")
 
 ## Vì sao dụi mắt có thể làm tăng nguy cơ
 
@@ -611,7 +603,9 @@ Khi tay chưa sạch chạm vào vùng mắt, tác nhân gây bệnh có cơ h�
 
 Các tổn thương ở giác mạc cần được đánh giá chuyên khoa. Nhiễm trùng tại đây có thể ảnh hưởng đến thị lực và để lại hậu quả, nên việc điều trị không nên chỉ dựa vào kinh nghiệm từ một lần đau mắt trước đó.
 
-Bài nguồn nhắc rằng vi sinh vật còn có thể được đưa lên mắt khi lau mồ hôi, nhỏ thuốc hoặc xử lý kính áp tròng bằng tay chưa được vệ sinh. Những thao tác này cần được thực hiện với bàn tay sạch.
+Vi sinh vật còn có thể được đưa lên mắt khi lau mồ hôi, nhỏ thuốc hoặc xử lý kính áp tròng bằng tay chưa được vệ sinh. Những thao tác này cần được thực hiện với bàn tay sạch.
+
+![Bác sĩ kiểm tra mắt bằng đèn khe tại phòng khám chuyên khoa.](/uploads/articles/36d4acc110bbe26e4c5e79f55c73c3e6.png "Bác sĩ kiểm tra mắt bằng đèn khe tại phòng khám chuyên khoa.")
 
 ## Những thay đổi ở mắt cần được thăm khám
 
@@ -621,8 +615,6 @@ Không nên tự kéo dài việc dùng thuốc nhỏ mắt khi chưa xác đị
 
 Khám chuyên khoa giúp phân biệt các nguyên nhân và lựa chọn điều trị phù hợp. Một thói quen vệ sinh tốt có giá trị phòng ngừa, nhưng không thay thế việc xử trí một tổn thương đã xảy ra.
 
-![Khu vực tiếp đón](/uploads/articles/83e856c669a06875a98190946b0f1d8d.jpg "Khu vực tiếp đón và hướng dẫn khám — ảnh minh họa demo")
-
 ## Bắt đầu từ những việc hằng ngày
 
 - Rửa tay với xà phòng và làm sạch kẽ ngón, đầu ngón, quanh móng.
@@ -631,10 +623,10 @@ Khám chuyên khoa giúp phân biệt các nguyên nhân và lựa chọn điề
 - Vệ sinh và lau khô tay trước khi nhỏ thuốc hay xử lý kính áp tròng.
 - Đi khám khi có biểu hiện bất thường thay vì liên tục tự đổi thuốc.
 
-Ca bệnh không nhằm quy mọi tình trạng đau mắt về một nguyên nhân duy nhất. Thông điệp là chú ý đường tiếp xúc và tìm đánh giá chuyên môn khi triệu chứng xuất hiện, đặc biệt lúc khả năng nhìn bị ảnh hưởng.
+Chú ý đến đường tiếp xúc giúp phòng ngừa, còn tìm đánh giá chuyên môn là điều cần thiết khi triệu chứng xuất hiện, đặc biệt lúc khả năng nhìn bị ảnh hưởng.
 
-Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/dui-mat-bang-tay-ban-nguoi-phu-nu-63-tuoi-suyt-mat-thi-luc?id=aa3652dd-b552-448a-9d0a-2d7611ea6408). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-05 00:00:00+07', '2026-10-05 00:00:00+07', '2026-10-05 00:00:00+07'),
-(5, 1, 'Chăm sóc trẻ sơ sinh khi tắm: An toàn nằm trong từng thao tác', 'cham-soc-tre-so-sinh-khi-tam', 'Y học thường thức', '/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg', $article$*Bài viết từ Khoa Phụ sản Bạch Mai nhìn việc tắm trẻ sơ sinh như một quy trình chăm sóc có nhiều bước liên kết. Chuẩn bị, nhận diện đúng trẻ, nâng đỡ an toàn, giữ ấm và bàn giao đều quan trọng đối với sức khỏe trong những ngày đầu đời.*
+Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/dui-mat-bang-tay-ban-nguoi-phu-nu-63-tuoi-suyt-mat-thi-luc?id=aa3652dd-b552-448a-9d0a-2d7611ea6408).',1,'2026-10-04T17:00:00+00:00','2026-10-04T17:00:00+00:00','2026-10-15 12:00:00+07'),
+(5,1,'Chăm sóc trẻ sơ sinh khi tắm: An toàn nằm trong từng thao tác','cham-soc-tre-so-sinh-khi-tam','Y học thường thức','/uploads/articles/34e01aafccfe561311107c41641858e8.jpg','*Chuẩn bị đủ đồ dùng, nâng đỡ đúng cách và luôn quan sát trẻ là những việc cần thiết khi tắm cho bé. Sự an toàn bắt đầu từ trước khi trẻ tiếp xúc với nước.*
 
 ## Chuẩn bị trước khi bắt đầu chăm sóc
 
@@ -644,15 +636,15 @@ Khăn, quần áo, tã và dụng cụ nên được chuẩn bị đầy đủ �
 
 Ý nghĩa của việc chuẩn bị không chỉ là thuận tiện cho người thực hiện. Khi mọi dụng cụ đã ở vị trí cần thiết, nhân viên có thể tập trung theo dõi trẻ thay vì gián đoạn thao tác để tìm đồ dùng.
 
-![Không gian chăm sóc người bệnh](/uploads/articles/83e856c669a06875a98190946b0f1d8d.jpg "Không gian tại cơ sở khám bệnh — ảnh minh họa demo")
-
 ## Nâng đỡ và quan sát trong suốt quá trình tắm
 
-Nguồn tin mô tả những bước chăm sóc theo trình tự, từ vệ sinh tay, làm sạch mặt, tóc và cơ thể đến lau khô. Trong từng bước, đầu và cổ của trẻ cần được giữ chắc bằng thao tác phù hợp.
+Các bước chăm sóc cần có trình tự, từ vệ sinh tay, làm sạch mặt, tóc và cơ thể đến lau khô. Trong từng bước, đầu và cổ của trẻ cần được giữ chắc bằng thao tác phù hợp.
 
 Không được để trẻ một mình trong lúc tắm. Người chăm sóc cần quan sát màu da, cách thở và phản ứng của trẻ, đồng thời duy trì những động tác nhẹ nhàng.
 
 Trình tự và cách thực hiện nên được nhân viên y tế hướng dẫn trực tiếp. Với trẻ có tình trạng sức khỏe đặc biệt, việc chăm sóc phải theo đánh giá riêng, không nên dùng một quy trình chung để tự áp dụng cho mọi trường hợp.
+
+![Nhân viên y tế nâng đỡ trẻ trong lúc tắm. Ảnh: Bệnh viện Bạch Mai.](/uploads/articles/34e01aafccfe561311107c41641858e8.jpg "Nhân viên y tế nâng đỡ trẻ trong lúc tắm. Ảnh: Bệnh viện Bạch Mai.")
 
 ## Sau tắm: Lau khô, giữ ấm và kiểm tra lại
 
@@ -662,11 +654,9 @@ Tại bệnh viện, bàn giao trẻ về với mẹ là một bước cần ki�
 
 Quy trình an toàn vì vậy bao gồm cả thời điểm trước và sau tắm. Hoàn thành thao tác làm sạch chưa phải là kết thúc chăm sóc nếu chưa kiểm tra và bàn giao phù hợp.
 
-![Khu vực tiếp đón và hướng dẫn](/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg "Khu vực tiếp đón và hướng dẫn gia đình người bệnh — ảnh minh họa demo")
-
 ## Hỗ trợ mẹ trong những ngày đầu nuôi con
 
-Bài nguồn nhắc vai trò của việc hướng dẫn cho bú, tư thế và khớp ngậm phù hợp. Khi người mẹ gặp khó khăn, trao đổi với nhân viên y tế giúp tìm cách hỗ trợ đúng với tình trạng của mẹ và bé.
+Hướng dẫn cho bú cần chú ý tư thế và khớp ngậm phù hợp. Khi người mẹ gặp khó khăn, trao đổi với nhân viên y tế giúp tìm cách hỗ trợ đúng với tình trạng của mẹ và bé.
 
 Những biểu hiện cần được báo ngay trong quá trình chăm sóc gồm:
 
@@ -677,8 +667,8 @@ Những biểu hiện cần được báo ngay trong quá trình chăm sóc gồ
 
 Sự phối hợp giữa gia đình và nhân viên chăm sóc giúp các thay đổi được nhận diện sớm hơn. Đối với trẻ sơ sinh, những thao tác nhỏ cần được thực hiện trong một kế hoạch chăm sóc nhất quán, an toàn và có theo dõi.
 
-Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/tam-be-mot-khoanh-khac-nho-mot-su-cham-soc-lon?id=da2e8874-21ac-408d-b842-137cc72a4ba8). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-07 00:00:00+07', '2026-10-07 00:00:00+07', '2026-10-07 00:00:00+07'),
-(6, 1, 'Tăng huyết áp khó kiểm soát: Khi nào cần đánh giá tuyến thượng thận?', 'tang-huyet-ap-va-cuong-aldosterone', 'Y học thường thức', '/uploads/articles/76d11a1892a153cb0a0377eccd410227.jpg', $article$*Huyết áp cao dù đã dùng nhiều thuốc có thể cần được đánh giá thêm về nguyên nhân. Chuyên gia nội tiết tại Bạch Mai đề cập cường aldosterone tiên phát như một tình trạng cần cân nhắc, nhất là khi người bệnh đồng thời có hạ kali, yếu cơ hoặc chuột rút.*
+Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/tam-be-mot-khoanh-khac-nho-mot-su-cham-soc-lon?id=da2e8874-21ac-408d-b842-137cc72a4ba8).',1,'2026-10-06T17:00:00+00:00','2026-10-06T17:00:00+00:00','2026-10-15 12:00:00+07'),
+(6,1,'Tăng huyết áp khó kiểm soát: Khi nào cần đánh giá tuyến thượng thận?','tang-huyet-ap-va-cuong-aldosterone','Y học thường thức','/uploads/articles/621b4c4b6584b9fb80a535cc5dbfc6bf.jpg','*Huyết áp tăng kéo dài dù đang điều trị cần được đánh giá lại có hệ thống. Trong một số trường hợp, bác sĩ phải tìm nguyên nhân nội tiết, bao gồm cường aldosterone tiên phát.*
 
 ## Vai trò của hormone aldosterone
 
@@ -686,13 +676,13 @@ Tuyến thượng thận nằm phía trên mỗi thận và sản xuất nhiều
 
 Khi lượng aldosterone được tiết ra quá mức, thận có thể giữ muối và nước nhiều hơn, trong khi kali bị thải ra tăng. Bệnh cảnh vì vậy có thể bao gồm cả tăng huyết áp và hạ kali máu.
 
-Bài nguồn phân biệt những nguyên nhân như một khối u lành ở một bên tuyến hoặc tình trạng tăng sản ở hai bên. Việc xác định đúng nguồn gốc giúp lựa chọn hướng xử trí, chứ không chỉ nhằm điều chỉnh một chỉ số huyết áp.
+Nguyên nhân có thể là một khối u lành ở một bên tuyến hoặc tình trạng tăng sản ở hai bên. Việc xác định đúng nguồn gốc giúp lựa chọn hướng xử trí, chứ không chỉ nhằm điều chỉnh một chỉ số huyết áp.
 
-![Không gian thăm khám](/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg "Không gian khám và đánh giá sức khỏe — ảnh minh họa demo")
+![Bác sĩ đo huyết áp cho người bệnh trong buổi khám và tư vấn.](/uploads/articles/621b4c4b6584b9fb80a535cc5dbfc6bf.jpg "Bác sĩ đo huyết áp cho người bệnh trong buổi khám và tư vấn.")
 
 ## Những thông tin gợi ý cần kiểm tra thêm
 
-TS.BS Nguyễn Quang Bảy, chuyên gia được bài báo dẫn, lưu ý các trường hợp huyết áp vẫn cao khi phải phối hợp nhiều thuốc. Những biểu hiện như yếu cơ, chuột rút hay hạ kali chưa rõ nguyên nhân cũng cần được xem xét.
+Theo tư vấn của TS.BS Nguyễn Quang Bảy tại Bệnh viện Bạch Mai, cần lưu ý các trường hợp huyết áp vẫn cao khi phải phối hợp nhiều thuốc. Những biểu hiện như yếu cơ, chuột rút hay hạ kali chưa rõ nguyên nhân cũng cần được xem xét.
 
 Phát hiện khối u tuyến thượng thận trên hình ảnh học là một thông tin khác cần cung cấp cho bác sĩ. Ngoài ra, tuổi khởi phát tăng huyết áp, tiền sử gia đình và các bất thường tim mạch có thể ảnh hưởng đến kế hoạch đánh giá.
 
@@ -706,8 +696,6 @@ Khi tổn thương liên quan cả hai bên hoặc người bệnh không có ch
 
 Hướng điều trị cần căn cứ vào chẩn đoán, tình trạng toàn thân và đánh giá của bác sĩ. Người bệnh không nên tự tăng liều, đổi thuốc hay ngừng điều trị chỉ vì nghi ngờ một nguyên nhân nội tiết.
 
-![Khu vực phục vụ người bệnh](/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg "Khu vực phục vụ người bệnh — ảnh minh họa demo")
-
 ## Chuẩn bị thông tin khi đi khám
 
 - Mang danh sách thuốc hạ huyết áp đang dùng và cách sử dụng thực tế.
@@ -716,10 +704,10 @@ Hướng điều trị cần căn cứ vào chẩn đoán, tình trạng toàn t
 - Mang kết quả siêu âm, CT và các xét nghiệm trước đó nếu có.
 - Cung cấp tiền sử bản thân và gia đình liên quan đến bệnh tim mạch.
 
-Bài nguồn nhấn mạnh rằng việc kiểm soát huyết áp đôi khi cần đi cùng tìm kiếm nguyên nhân phía sau. Đánh giá đúng có thể mở ra hướng điều trị phù hợp hơn cho từng người, đồng thời tránh việc chỉ liên tục bổ sung thuốc mà thiếu một kế hoạch xem xét toàn diện.
+Bệnh viện Bạch Mai nhấn mạnh rằng việc kiểm soát huyết áp đôi khi cần đi cùng tìm kiếm nguyên nhân phía sau. Đánh giá đúng có thể mở ra hướng điều trị phù hợp hơn cho từng người, đồng thời tránh việc chỉ liên tục bổ sung thuốc mà thiếu một kế hoạch xem xét toàn diện.
 
-Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/tang-huyet-ap-kho-kiem-soat-coi-chung-benh-tu-tuyen-thuong-than?id=acd55e47-7dd9-4205-bed0-c1cc3de7be11). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-09 00:00:00+07', '2026-10-09 00:00:00+07', '2026-10-09 00:00:00+07'),
-(7, 1, 'An toàn thực phẩm: Kiểm soát nguy cơ từ nguyên liệu đến bữa ăn', 'nguyen-tac-an-toan-thuc-pham-phong-ngo-doc', 'Y học thường thức', '/uploads/articles/95dd9dc83516bbd85fc983a5134791f8.jpg', $article$*Phòng ngừa ngộ độc thực phẩm là một chuỗi công việc liên tục, bắt đầu từ chọn nguyên liệu và kết thúc ở khâu phục vụ. Bạch Mai lưu ý rằng vệ sinh tay, phân tách thực phẩm và kiểm soát bảo quản cần được thực hiện cùng nhau, đặc biệt tại bếp ăn tập thể.*
+Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/tang-huyet-ap-kho-kiem-soat-coi-chung-benh-tu-tuyen-thuong-than?id=acd55e47-7dd9-4205-bed0-c1cc3de7be11).',1,'2026-10-08T17:00:00+00:00','2026-10-08T17:00:00+00:00','2026-10-15 12:00:00+07'),
+(7,1,'An toàn thực phẩm: Kiểm soát nguy cơ từ nguyên liệu đến bữa ăn','nguyen-tac-an-toan-thuc-pham-phong-ngo-doc','Y học thường thức','/uploads/articles/4920ea87d172e204dde3b077a5a23bee.png','*Một bữa ăn an toàn là kết quả của nhiều bước: chọn nguyên liệu, vệ sinh tay và dụng cụ, nấu chín rồi bảo quản đúng cách. Bỏ qua một bước có thể làm tăng nguy cơ ngộ độc.*
 
 ## Nguy cơ có thể xuất hiện ở nhiều công đoạn
 
@@ -729,8 +717,6 @@ Nhiễm khuẩn chéo xảy ra khi nguồn bẩn từ thực phẩm sống tiế
 
 Nguyên liệu nên có nguồn gốc rõ ràng, hạn sử dụng còn phù hợp và bao bì nguyên vẹn. Đối với bếp ăn tập thể, việc kiểm tra điều kiện giao nhận và bảo quản là một phần quan trọng của quy trình.
 
-![Không gian cơ sở khám bệnh](/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg "Không gian tại cơ sở khám bệnh — ảnh minh họa demo")
-
 ## Vệ sinh tay và phân tách dụng cụ
 
 Người tham gia chế biến cần giữ tay, móng tay và trang phục sạch. Rửa tay với xà phòng là bước cần thực hiện trước khi làm thức ăn, sau khi đi vệ sinh, xử lý nguyên liệu sống hoặc tiếp xúc với rác và bề mặt bẩn.
@@ -739,9 +725,11 @@ Thớt, dao, khay và hộp dùng cho thực phẩm sống cần được tách 
 
 Khu vực bồn rửa, bàn chế biến và các vật dụng cần được vệ sinh thường xuyên. Khăn lau và miếng bọt biển cũng cần được làm sạch, làm khô và thay khi không còn phù hợp, vì chúng có thể trở thành nguồn truyền vi sinh vật.
 
+![Rửa tay trước khi chế biến là một bước bảo đảm vệ sinh thực phẩm. Đồ họa: Bệnh viện Bạch Mai.](/uploads/articles/4920ea87d172e204dde3b077a5a23bee.png "Rửa tay trước khi chế biến là một bước bảo đảm vệ sinh thực phẩm. Đồ họa: Bệnh viện Bạch Mai.")
+
 ## Bảo quản phải gắn với thời gian và nhiệt độ
 
-Bài nguồn nhắc việc nấu chín kỹ, phục vụ kịp thời và bảo quản đúng yêu cầu từng món. Với thức ăn nóng, cơ sở cần duy trì điều kiện giữ nóng phù hợp; với món lạnh, cần hạn chế thời gian ở nhiệt độ phòng.
+Nấu chín kỹ cần đi cùng phục vụ kịp thời và bảo quản đúng yêu cầu từng món. Với thức ăn nóng, cơ sở cần duy trì điều kiện giữ nóng phù hợp; với món lạnh, cần hạn chế thời gian ở nhiệt độ phòng.
 
 Một số việc cần chú ý trong tổ chức bữa ăn:
 
@@ -753,8 +741,6 @@ Một số việc cần chú ý trong tổ chức bữa ăn:
 
 Mùi vị bình thường không bảo đảm một thực phẩm không mang tác nhân gây bệnh. Vì vậy, đánh giá an toàn cần dựa cả vào nguồn gốc, thao tác chế biến và điều kiện bảo quản.
 
-![Khu vực tiếp đón cơ sở y tế](/uploads/articles/a1da1b6c569a7d9bbb4699eb72350140.jpg "Khu vực tiếp đón tại cơ sở y tế — ảnh minh họa demo")
-
 ## Khi nghi ngờ xảy ra ngộ độc
 
 Nôn nhiều, tiêu chảy kéo dài, đau bụng dữ dội hoặc những biểu hiện toàn thân bất thường là lý do cần đưa người bệnh đi khám. Cơ sở phục vụ bữa ăn cần đồng thời báo cho người phụ trách và phối hợp với cơ quan y tế.
@@ -763,36 +749,34 @@ Món ăn hoặc lô nguyên liệu nghi ngờ cần được ngừng phục vụ
 
 Việc phòng ngừa hiệu quả không nằm ở một thao tác riêng lẻ. Một quy trình được duy trì đều đặn, có người chịu trách nhiệm và có thông tin truy xuất sẽ giúp cơ sở phản ứng phù hợp khi có sự cố.
 
-Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/kiem-soat-an-toan-thuc-pham-nhung-nguyen-tac-can-nho-de-phong-ngua-ngo-doc?id=e74eabd5-2bfa-4acf-bbf3-724341aa8820). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-12 00:00:00+07', '2026-10-12 00:00:00+07', '2026-10-12 00:00:00+07'),
-(8, 1, 'Rối loạn ăn uống ở người trẻ: Cần quan tâm cả sức khỏe thể chất và tinh thần', 'roi-loan-an-uong-va-ha-kali-mau', 'Y học thường thức', '/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg', $article$*Một ca bệnh được Viện Sức khỏe Tâm thần báo cáo cho thấy nỗi lo cân nặng có thể gắn với rối loạn ăn uống và những biến chứng toàn thân. Đánh giá cần quan tâm đến hành vi, cảm xúc và sức khỏe, thay vì chỉ nhìn vào vóc dáng hoặc quy kết người bệnh thiếu ý chí.*
+Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/kiem-soat-an-toan-thuc-pham-nhung-nguyen-tac-can-nho-de-phong-ngua-ngo-doc?id=e74eabd5-2bfa-4acf-bbf3-724341aa8820).',1,'2026-10-11T17:00:00+00:00','2026-10-11T17:00:00+00:00','2026-10-15 12:00:00+07'),
+(8,1,'Rối loạn ăn uống ở người trẻ: Cần quan tâm cả sức khỏe thể chất và tinh thần','roi-loan-an-uong-va-ha-kali-mau','Y học thường thức','/uploads/articles/b6f491239f14078bc972158ca5f8eb1d.jpg','*Ăn uống mất kiểm soát, tự gây nôn hay liên tục lo sợ tăng cân có thể là dấu hiệu cần được hỗ trợ chuyên môn. Việc chăm sóc phải quan tâm đồng thời đến cơ thể và sức khỏe tinh thần.*
 
 ## Một vòng lặp khó thoát ra nếu thiếu hỗ trợ
 
-Nữ sinh 21 tuổi được đề cập trong bài nguồn đã trải qua những đợt ăn mất kiểm soát rồi tự gây nôn trong khoảng một năm. Áp lực học tập, những lời bình luận về ngoại hình và căng thẳng gia đình là những yếu tố được ghi nhận khi khai thác tình trạng của người bệnh.
+Trong trường hợp được Bệnh viện Bạch Mai công bố, một nữ sinh 21 tuổi đã trải qua những đợt ăn mất kiểm soát rồi tự gây nôn trong khoảng một năm. Áp lực học tập, những lời bình luận về ngoại hình và căng thẳng gia đình là những yếu tố được ghi nhận khi khai thác tình trạng của người bệnh.
 
 Khi đến khám, người bệnh có BMI 17,6, mất kinh trong ba tháng và kết quả kali máu 2,9 mmol/L. Đây là những dữ kiện của một ca lâm sàng cụ thể, không phải các ngưỡng để người đọc tự chẩn đoán rối loạn ăn uống tại nhà.
 
-Người bệnh được điều trị phối hợp nhiều phương pháp theo đánh giá của nhóm chuyên môn. Bài nguồn mô tả sự cải thiện từng bước, cho thấy việc hồi phục cần một kế hoạch chăm sóc phù hợp chứ không chỉ là yêu cầu thay đổi thói quen ăn uống.
-
-![Không gian tư vấn](/uploads/articles/a1da1b6c569a7d9bbb4699eb72350140.jpg "Không gian phục vụ khám và tư vấn — ảnh minh họa demo")
+Người bệnh được điều trị phối hợp nhiều phương pháp theo đánh giá của nhóm chuyên môn. Sự cải thiện từng bước cho thấy việc hồi phục cần một kế hoạch chăm sóc phù hợp chứ không chỉ là yêu cầu thay đổi thói quen ăn uống.
 
 ## Cân nặng không phản ánh đầy đủ tình trạng bệnh
 
 Ăn vô độ tâm thần, hay *Bulimia nervosa*, có thể liên quan đến các đợt ăn mất kiểm soát và hành vi bù trừ sau ăn. Những suy nghĩ về hình thể, cảm giác tội lỗi và sợ tăng cân có thể khiến người bệnh bị cuốn vào vòng lặp kéo dài.
 
-Không phải mọi người mắc tình trạng này đều gầy. Bài nguồn nhấn mạnh rằng người bệnh có thể có cân nặng trong khoảng thông thường hoặc thừa cân, nên việc quan sát vóc dáng đơn thuần dễ bỏ sót vấn đề.
+Không phải mọi người mắc tình trạng này đều gầy. Bệnh viện Bạch Mai nhấn mạnh rằng người bệnh có thể có cân nặng trong khoảng thông thường hoặc thừa cân, nên việc quan sát vóc dáng đơn thuần dễ bỏ sót vấn đề.
 
 Những biến đổi về hành vi cần được đặt trong bối cảnh: ăn uống kín đáo bất thường, lo lắng nhiều về cân nặng, thường xuyên rời bữa ăn để vào nhà vệ sinh hoặc tập luyện quá mức. Khi các biểu hiện lặp lại, gia đình nên khuyến khích đánh giá chuyên khoa.
+
+![Bác sĩ và điều dưỡng trao đổi với người bệnh tại giường.](/uploads/articles/b6f491239f14078bc972158ca5f8eb1d.jpg "Bác sĩ và điều dưỡng trao đổi với người bệnh tại giường.")
 
 ## Vì sao việc thăm khám cần bao quát nhiều mặt
 
 Rối loạn ăn uống có thể đi kèm mất nước, thay đổi điện giải và những vấn đề tiêu hóa, răng miệng hoặc kinh nguyệt. Các vấn đề tâm lý cũng có thể cùng tồn tại. Vì vậy, kế hoạch chăm sóc cần xem xét cả tình trạng cơ thể và sức khỏe tinh thần.
 
-Theo bài nguồn, bác sĩ có thể phối hợp điều trị chuyên khoa tâm thần, liệu pháp tâm lý và tư vấn dinh dưỡng. Phương pháp cụ thể được lựa chọn theo từng người bệnh; không nên lấy một ca điều trị làm công thức áp dụng cho tất cả.
+Bác sĩ có thể phối hợp điều trị chuyên khoa tâm thần, liệu pháp tâm lý và tư vấn dinh dưỡng. Phương pháp cụ thể được lựa chọn theo từng người bệnh; không nên lấy một ca điều trị làm công thức áp dụng cho tất cả.
 
 Các biểu hiện nặng như ngất, khó thở, đau ngực, co giật, lú lẫn hoặc yếu cơ rõ rệt cần được đưa đến cơ sở y tế để đánh giá kịp thời. Đây là những tình huống cần hỗ trợ trực tiếp, không nên chờ một lịch tư vấn thông thường.
-
-![Khu vực tiếp đón](/uploads/articles/83e856c669a06875a98190946b0f1d8d.jpg "Khu vực tiếp đón người bệnh — ảnh minh họa demo")
 
 ## Đồng hành bằng cách lắng nghe
 
@@ -802,20 +786,18 @@ Các biểu hiện nặng như ngất, khó thở, đau ngực, co giật, lú l
 - Đồng hành với kế hoạch theo dõi, không yêu cầu người bệnh phải tự giải quyết bằng ý chí.
 - Quan tâm các thay đổi về sức khỏe và báo cho nhóm điều trị khi cần.
 
-Sự hỗ trợ của gia đình có thể giúp việc tìm kiếm chăm sóc bớt khó khăn. Bài báo nhắc rằng rối loạn ăn uống là một vấn đề sức khỏe cần được nhận diện và điều trị, cùng với sự tôn trọng và đồng hành.
+Sự hỗ trợ của gia đình có thể giúp việc tìm kiếm chăm sóc bớt khó khăn. Rối loạn ăn uống cần được nhận diện và điều trị trong môi trường tôn trọng, tránh phán xét.
 
-Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/nu-sinh-21-tuoi-ha-kali-mau-vi-am-anh-can-nang-lien-tuc-an-roi-tu-gay-non?id=8383a596-959a-49e8-b635-bddf07c63483). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-13 00:00:00+07', '2026-10-13 00:00:00+07', '2026-10-13 00:00:00+07'),
-(9, 1, 'Thuốc tránh thai nội tiết và huyết khối: Những dấu hiệu không nên bỏ qua', 'nguy-co-huyet-khoi-khi-dung-thuoc-tranh-thai', 'Y học thường thức', '/uploads/articles/b6df1b1ed14289fff99a16ee3ba9b283.jpg', $article$*Từ một ca huyết khối ở người phụ nữ 36 tuổi, Bạch Mai lưu ý việc sử dụng thuốc tránh thai cần gắn với tư vấn cá nhân. Thuốc đang dùng, tiền sử bệnh, cân nặng và mức vận động đều là những thông tin quan trọng khi đánh giá nguy cơ hình thành cục máu đông.*
+Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/nu-sinh-21-tuoi-ha-kali-mau-vi-am-anh-can-nang-lien-tuc-an-roi-tu-gay-non?id=8383a596-959a-49e8-b635-bddf07c63483).',1,'2026-10-12T17:00:00+00:00','2026-10-12T17:00:00+00:00','2026-10-15 12:00:00+07'),
+(9,1,'Thuốc tránh thai nội tiết và huyết khối: Những dấu hiệu không nên bỏ qua','nguy-co-huyet-khoi-khi-dung-thuoc-tranh-thai','Y học thường thức','/uploads/articles/621b4c4b6584b9fb80a535cc5dbfc6bf.jpg','*Trước khi dùng thuốc tránh thai nội tiết, người sử dụng cần được tư vấn về tiền sử bệnh và các yếu tố nguy cơ. Sưng đau một chân hoặc khó thở đột ngột là những biểu hiện cần chú ý.*
 
 ## Từ sưng đau ở chân đến tình trạng cấp cứu
 
-Người bệnh trong báo cáo đã tự sử dụng thuốc tránh thai trong khoảng 10 tháng. Trước khi nhập viện, chân phải xuất hiện sưng đau; việc đi lại gây khó chịu. Người bệnh xử trí tại nhà bằng xoa dầu và mát-xa, sau đó mới đến cấp cứu khi có khó thở, đau ngực và nhịp tim nhanh.
+Trong ca bệnh do Bệnh viện Bạch Mai công bố, người bệnh đã tự sử dụng thuốc tránh thai trong khoảng 10 tháng. Trước khi nhập viện, chân phải xuất hiện sưng đau; việc đi lại gây khó chịu. Người bệnh xử trí tại nhà bằng xoa dầu và mát-xa, sau đó mới đến cấp cứu khi có khó thở, đau ngực và nhịp tim nhanh.
 
 Qua thăm khám, bác sĩ xác định huyết khối tĩnh mạch sâu ở chi dưới kèm thuyên tắc phổi. Người bệnh làm công việc văn phòng, ít vận động và có BMI 26. Tình trạng dần ổn định sau những ngày đầu điều trị tại bệnh viện.
 
-Ca bệnh được nguồn tin dùng để nhấn mạnh việc xem xét nhiều yếu tố nguy cơ cùng lúc. Không thể từ một trường hợp riêng lẻ suy ra rằng mọi người sử dụng thuốc tránh thai đều sẽ gặp biến chứng.
-
-![Không gian thăm khám](/uploads/articles/83e856c669a06875a98190946b0f1d8d.jpg "Không gian phục vụ thăm khám — ảnh minh họa demo")
+Việc đánh giá cần xem xét nhiều yếu tố nguy cơ cùng lúc. Không thể từ một trường hợp riêng lẻ suy ra rằng mọi người sử dụng thuốc tránh thai đều sẽ gặp biến chứng.
 
 ## Vì sao cần được tư vấn trước khi lựa chọn thuốc
 
@@ -825,15 +807,15 @@ Những thông tin nên cung cấp trong buổi tư vấn gồm tiền sử bả
 
 Thừa cân và ngồi lâu là những yếu tố cần được xem xét trong bối cảnh sức khỏe tổng thể. Không nên chọn sản phẩm chỉ dựa trên quảng cáo, lời giới thiệu của người quen hoặc đơn thuốc của một người khác.
 
+![Đo huyết áp trong buổi khám giúp bổ sung thông tin đánh giá sức khỏe trước khi lựa chọn thuốc.](/uploads/articles/621b4c4b6584b9fb80a535cc5dbfc6bf.jpg "Đo huyết áp trong buổi khám giúp bổ sung thông tin đánh giá sức khỏe trước khi lựa chọn thuốc.")
+
 ## Dấu hiệu ở chân và dấu hiệu ở phổi khác nhau
 
 Huyết khối ở tĩnh mạch sâu có thể gây sưng một bên chân, đau, căng tức, nóng hoặc thay đổi màu da. Khi cục máu đông di chuyển đến phổi, biểu hiện có thể chuyển thành khó thở đột ngột, đau ngực, tim đập nhanh hoặc choáng.
 
-Các dấu hiệu đột ngột như khó thở và đau ngực cần được đánh giá cấp cứu. Người có chân sưng đau nghi do huyết khối cũng cần đi khám; nguồn tin khuyến cáo tránh xoa bóp, mát-xa hoặc chườm nóng tại vùng đó.
+Các dấu hiệu đột ngột như khó thở và đau ngực cần được đánh giá cấp cứu. Người có chân sưng đau nghi do huyết khối cũng cần đi khám; cần tránh xoa bóp, mát-xa hoặc chườm nóng tại vùng đó.
 
 Nhận biết sớm không thay thế cho chẩn đoán. Điều quan trọng là cung cấp đầy đủ thời điểm xuất hiện triệu chứng và những thuốc đang dùng để nhân viên y tế đánh giá.
-
-![Khu vực tiếp đón người bệnh](/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg "Khu vực tiếp đón và hướng dẫn người bệnh — ảnh minh họa demo")
 
 ## Những việc cần trao đổi để sử dụng thuốc phù hợp
 
@@ -845,10 +827,10 @@ Nhận biết sớm không thay thế cho chẩn đoán. Điều quan trọng l�
 
 Trong sinh hoạt, người phải ngồi lâu có thể chủ động vận động chân và dành những khoảng nghỉ phù hợp. Khi đi khám vì bất cứ vấn đề nào, danh sách thuốc là thông tin hữu ích để bác sĩ nhận diện những nguy cơ liên quan.
 
-Thông điệp của bài nguồn là lựa chọn biện pháp tránh thai có tư vấn, đồng thời chú ý những thay đổi bất thường của cơ thể. Hiệu quả và sự an toàn cần được xem xét cùng nhau ở từng người.
+Lựa chọn biện pháp tránh thai cần có tư vấn, đồng thời chú ý những thay đổi bất thường của cơ thể. Hiệu quả và sự an toàn cần được xem xét cùng nhau ở từng người.
 
-Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/bac-si-canh-bao-nguy-co-huyet-khoi-o-phu-nu-thua-can-it-van-dong-dung-thuoc-tranh-thai?id=391dd160-dc48-48d6-8d32-56958155f80c). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-13 00:00:00+07', '2026-10-13 00:00:00+07', '2026-10-13 00:00:00+07'),
-(10, 1, 'Nội soi đại tràng khi khám sức khỏe, phát hiện sán dây bò dài 70cm', 'noi-soi-dai-trang-phat-hien-san-day-bo', 'Y học thường thức', '/uploads/articles/d63ef4484d9e64ee2cd1cb496a86c788.jpg', $article$*Một trường hợp khám sức khỏe tại Bạch Mai cho thấy nhiễm ký sinh trùng đường ruột có thể diễn ra rất kín đáo. Người bệnh nữ 48 tuổi hầu như không có biểu hiện tiêu hóa đáng chú ý, nhưng nội soi phát hiện một dải sán và lấy ra đoạn thân dài khoảng 70 cm. Kết quả định danh bệnh phẩm phù hợp với sán dây bò.*
+Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/bac-si-canh-bao-nguy-co-huyet-khoi-o-phu-nu-thua-can-it-van-dong-dung-thuoc-tranh-thai?id=391dd160-dc48-48d6-8d32-56958155f80c).',1,'2026-10-12T17:00:00+00:00','2026-10-12T17:00:00+00:00','2026-10-15 12:00:00+07'),
+(10,1,'Nội soi đại tràng khi khám sức khỏe, phát hiện sán dây bò dài 70cm','noi-soi-dai-trang-phat-hien-san-day-bo','Y học thường thức','/uploads/articles/ac5930b03caffc393a2e7b0a43226e4a.jpg','*Bệnh viện Bạch Mai thông tin về một trường hợp phát hiện sán dây bò qua nội soi khi khám sức khỏe. Ca bệnh cho thấy nhiễm ký sinh trùng có thể hiện diện dù triệu chứng tiêu hóa không rõ ràng.*
 
 ## Phát hiện trong một lần kiểm tra sức khỏe
 
@@ -856,15 +838,17 @@ Người bệnh H.T.H., sống tại Lai Châu, đến Bệnh viện Bạch Mai 
 
 Ngày 30/9/2026, trong lúc thực hiện nội soi đại trực tràng có gây mê, ThS.BSNT Vũ Thị Ngọc Bích cùng ê-kíp của Viện Tiêu hóa phát hiện một cấu trúc trắng, dẹt ở đoạn cuối hồi tràng. Dải ký sinh trùng kéo dài sang đại tràng ngang. Bác sĩ dùng dụng cụ nội soi lấy ra một phần thân sán với chiều dài khoảng 70 cm.
 
-![Không gian khám bệnh](/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg "Không gian khám bệnh — ảnh minh họa demo")
-
 Bệnh phẩm được chuyển đến đơn vị vi sinh của Viện Xét nghiệm Y học để kiểm tra. Kết quả phù hợp với *Taenia saginata*, tên khoa học của sán dây bò. Sau thủ thuật, người bệnh tiếp tục được đánh giá tại phòng khám bệnh nhiệt đới và viêm gan để lập kế hoạch điều trị bằng thuốc.
+
+![Bác sĩ Vũ Thị Ngọc Bích thực hiện nội soi phát hiện sán dây bò. Ảnh: Bệnh viện Bạch Mai.](/uploads/articles/ac5930b03caffc393a2e7b0a43226e4a.jpg "Bác sĩ Vũ Thị Ngọc Bích thực hiện nội soi phát hiện sán dây bò. Ảnh: Bệnh viện Bạch Mai.")
 
 ## Lấy được thân sán chưa có nghĩa đã điều trị khỏi
 
-Theo thông tin được bác sĩ chia sẻ trong bài gốc, người nhiễm sán dây bò có thể có rất ít biểu hiện, thậm chí không nhận ra điều gì khác thường. Việc nội soi lấy được bệnh phẩm tạo điều kiện cho xét nghiệm định danh, nhưng không thể dùng riêng kết quả đó để kết luận ký sinh trùng đã được loại bỏ hoàn toàn.
+Theo bác sĩ điều trị, người nhiễm sán dây bò có thể có rất ít biểu hiện, thậm chí không nhận ra điều gì khác thường. Việc nội soi lấy được bệnh phẩm tạo điều kiện cho xét nghiệm định danh, nhưng không thể dùng riêng kết quả đó để kết luận ký sinh trùng đã được loại bỏ hoàn toàn.
 
 Phần được lấy ra trong ca bệnh chỉ là một đoạn thân. Nếu đầu sán còn bám vào ruột non, ký sinh trùng có thể tiếp tục phát triển. Vì vậy, người bệnh vẫn cần được bác sĩ đánh giá và chỉ định điều trị đặc hiệu; việc theo dõi sau thủ thuật là một phần của quá trình xử trí.
+
+![Đoạn thân sán dây bò được lấy ra qua nội soi trong ca bệnh. Ảnh: Bệnh viện Bạch Mai.](/uploads/articles/02a1af2735e037b89f766f877e40795d.jpg "Đoạn thân sán dây bò được lấy ra qua nội soi trong ca bệnh. Ảnh: Bệnh viện Bạch Mai.")
 
 ## Đường lây và những dấu hiệu cần chú ý
 
@@ -880,19 +864,17 @@ Những biểu hiện có thể gặp bao gồm:
 
 Một số người không có đủ các biểu hiện trên. Ngược lại, các triệu chứng tiêu hóa cũng có thể xuất phát từ nhiều nguyên nhân khác, nên người bệnh cần được thăm khám để xác định chẩn đoán.
 
-![Khu vực tiếp đón](/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg "Khu vực tiếp đón người bệnh — ảnh minh họa demo")
-
 ## Chẩn đoán, điều trị và phòng ngừa
 
 Xét nghiệm phân để tìm trứng hoặc đốt sán là một hướng đánh giá thường được sử dụng. Trong những tình huống cần thiết, mẫu đốt sán có thể giúp xác định loài. Lựa chọn xét nghiệm và diễn giải kết quả thuộc về bác sĩ chuyên khoa.
 
-Bài nguồn đề cập praziquantel trong điều trị sán dây bò. Người bệnh cần dùng thuốc theo chỉ định và tái khám khi được yêu cầu, thay vì tự mua thuốc hoặc coi việc lấy được thân sán qua nội soi là đủ để kết thúc theo dõi.
+Bệnh viện Bạch Mai đề cập praziquantel trong điều trị sán dây bò. Người bệnh cần dùng thuốc theo chỉ định và tái khám khi được yêu cầu, thay vì tự mua thuốc hoặc coi việc lấy được thân sán qua nội soi là đủ để kết thúc theo dõi.
 
 Các thực hành giúp hạn chế nguy cơ gồm nấu chín thịt bò, chọn nguyên liệu có nguồn gốc được kiểm soát, tách dụng cụ chế biến thực phẩm sống và chín, vệ sinh tay và giữ môi trường chăn nuôi, sinh hoạt sạch sẽ.
 
 Ca bệnh nhấn mạnh vai trò của đánh giá chuyên môn: có bệnh ký sinh trùng tồn tại âm thầm, trong khi xét nghiệm và điều trị phù hợp vẫn cần thiết ngay cả sau khi đã lấy được một phần ký sinh trùng.
 
-Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/noi-soi-dai-trang-khi-kham-suc-khoe-phat-hien-san-day-bo-dai-70cm?id=e5652f8d-2b4f-4ae9-8ba2-5f742d87ce0d). Nội dung được biên soạn lại theo nguồn để phục vụ bản demo; các ảnh trong bài là ảnh minh họa giao diện.$article$, 1, '2026-10-13 00:00:00+07', '2026-10-13 00:00:00+07', '2026-10-13 00:00:00+07');
+Nguồn: [Bệnh viện Bạch Mai — bài viết gốc](https://bachmai.gov.vn/bai-viet/noi-soi-dai-trang-khi-kham-suc-khoe-phat-hien-san-day-bo-dai-70cm?id=e5652f8d-2b4f-4ae9-8ba2-5f742d87ce0d).',1,'2026-10-12T17:00:00+00:00','2026-10-12T17:00:00+00:00','2026-10-15 12:00:00+07');
 
 -- 18. SYSTEM_CONFIGURATION
 INSERT INTO system_configuration
@@ -1040,536 +1022,675 @@ SELECT base.id + ROW_NUMBER() OVER(ORDER BY day.work_date,d.doctor_profile_id,s.
  d.doctor_profile_id,d.doctor_profile_id,day.work_date,s.start_time,s.end_time,7,30
 FROM doctor_profile d CROSS JOIN days day CROSS JOIN shifts s CROSS JOIN base WHERE d.doctor_profile_id BETWEEN 11 AND 14;
 
-INSERT INTO article(article_id,author_id,title,slug,category,thumbnail_url,content,is_active,published_at) VALUES
-(11,1,'Chuẩn bị thông tin để buổi khám thuận tiện hơn','chuan-bi-thong-tin-de-buoi-kham-thuan-tien-hon','Hướng dẫn khám bệnh','/uploads/articles/b6f491239f14078bc972158ca5f8eb1d.jpg','*Tìm hiểu các bước chuẩn bị và những thông tin cần kiểm tra trước một buổi khám.*
+INSERT INTO article
+(article_id,author_id,title,slug,category,thumbnail_url,content,is_active,published_at,created_at,updated_at) VALUES
+(11,1,'Chuẩn bị thông tin để buổi khám thuận tiện hơn','chuan-bi-thong-tin-de-buoi-kham-thuan-tien-hon','Hướng dẫn khám bệnh','/uploads/articles/621b4c4b6584b9fb80a535cc5dbfc6bf.jpg','*Một buổi khám dễ theo dõi hơn khi người bệnh mang theo đúng hồ sơ, nhớ các thuốc đang dùng và chuẩn bị trước điều muốn trao đổi. Có thể bắt đầu bằng một tờ ghi chú ngắn, sắp xếp theo vấn đề quan tâm nhất.*
 
-## Chuẩn bị trước buổi khám
+## Ghi lại diễn biến thay vì chỉ nhớ tên triệu chứng
 
-Người đi khám có thể ghi lại vấn đề muốn trao đổi, các thuốc đang sử dụng và những kết quả đã có để cung cấp cho bác sĩ khi cần. Hồ sơ đăng ký nên ghi đúng người sẽ tới khám.
+Hãy ghi thời điểm triệu chứng bắt đầu, diễn ra liên tục hay từng đợt, điều gì làm tăng hoặc giảm khó chịu và những thay đổi trong ăn uống, giấc ngủ, vận động. Với vấn đề đã tái diễn, kết quả của những lần khám trước giúp bác sĩ có thêm bối cảnh.
 
-## Tìm thông tin trên website
+Chọn vài câu hỏi quan trọng để hỏi trước. Chẳng hạn: triệu chứng này cần theo dõi điều gì, xét nghiệm được đề nghị nhằm làm rõ vấn đề nào, hoặc khi nào cần quay lại khám. Nếu khó nhớ, có thể viết câu hỏi trên điện thoại hoặc giấy và mang vào phòng khám.
 
-Trang chuyên khoa và hồ sơ bác sĩ giúp bạn xem lĩnh vực chuyên môn trước khi chuyển sang trang đặt lịch.
+![Quầy tiếp đón được bố trí tại khu vực sảnh để hướng dẫn người đến khám.](/uploads/articles/aa415242679740d7b2684416036beb63.jpg "Quầy tiếp đón được bố trí tại khu vực sảnh để hướng dẫn người đến khám.")
 
-## Hình ảnh minh họa
+## Mang theo hồ sơ và danh sách thuốc
 
-![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/b6f491239f14078bc972158ca5f8eb1d.jpg "Hoạt động thăm khám — ảnh minh họa")
+Sắp xếp giấy tờ cá nhân, thông tin lịch hẹn và kết quả gần đây vào cùng một tập. Đơn thuốc, giấy ra viện, kết quả xét nghiệm và phim chụp cũ nên có ngày thực hiện rõ ràng để thuận tiện đối chiếu.
 
-![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/d881bd16e45d49c0c1dae1b5e2e92d2c.jpg "Hoạt động thăm khám — ảnh minh họa")
+Danh sách thuốc cần gồm cả thuốc kê đơn, thuốc tự mua, vitamin, thực phẩm bổ sung và sản phẩm thảo dược. Ghi tên, cách sử dụng thực tế, những lần bỏ liều và phản ứng từng gặp; nếu không nhớ tên, mang theo vỏ hộp hoặc ảnh nhãn thuốc.
 
-![Thiết bị chẩn đoán hình ảnh — ảnh minh họa](/uploads/articles/026d6ca08a42390c533aa56c98eff5fd.jpg "Thiết bị chẩn đoán hình ảnh — ảnh minh họa")
+## Hỏi rõ việc chuẩn bị cho từng chỉ định
 
-![Không gian chăm sóc và theo dõi — ảnh minh họa](/uploads/articles/2c781175576a9c7099507edb4ee2345d.webp "Không gian chăm sóc và theo dõi — ảnh minh họa")
+Một số xét nghiệm hoặc thủ thuật cần có hướng dẫn riêng trước khi thực hiện. Hãy xác nhận yêu cầu từ cơ sở khám, nhất là chuyện ăn uống, dùng thuốc và có cần người đi cùng hay không. Không tự nhịn ăn hoặc dừng thuốc chỉ vì lần khám trước từng được hướng dẫn như vậy.
 
-![Khu vực tiếp đón — ảnh minh họa](/uploads/articles/83e856c669a06875a98190946b0f1d8d.jpg "Khu vực tiếp đón — ảnh minh họa")
+Nếu cần hỗ trợ di chuyển, giao tiếp hoặc đọc giấy tờ, nên báo từ lúc tiếp nhận. Người thân đi cùng có thể giúp ghi nhớ hướng dẫn, trong khi người bệnh vẫn được trực tiếp chia sẻ điều mình quan tâm.
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-13T01:00:00+00:00'),
-(12,1,'Lựa chọn chuyên khoa và trao đổi cùng bác sĩ','lua-chon-chuyen-khoa-va-trao-doi-cung-bac-si','Hướng dẫn khám bệnh','/uploads/articles/621b4c4b6584b9fb80a535cc5dbfc6bf.jpg','*Tìm hiểu các bước chuẩn bị và những thông tin cần kiểm tra trước một buổi khám.*
+## Trước khi kết thúc buổi khám
 
-## Từ lựa chọn chuyên khoa đến buổi tư vấn
+Hãy kiểm tra mình đã hiểu kế hoạch tiếp theo: thực hiện chỉ định ở đâu, nhận kết quả bằng cách nào, sử dụng thuốc ra sao và thời điểm tái khám. Có thể nhắc lại bằng lời của mình để nhân viên y tế xác nhận hoặc giải thích thêm.
 
-Thông tin trên hồ sơ bác sĩ gồm chuyên khoa, học vị mẫu và lịch làm việc trong tuần. Khi chọn bác sĩ, hãy kiểm tra lại người khám, ngày và khung giờ trước bước xem lại thông tin.
+Giữ hồ sơ sau khám theo thứ tự thời gian. Những thông tin này giúp lần tái khám tiếp nối được buổi khám trước và giảm việc phải nhớ lại toàn bộ quá trình từ đầu.
 
-## Trao đổi rõ nhu cầu
+Nguồn: [National Institute on Aging — chuẩn bị câu hỏi và trao đổi khi đi khám](https://www.nia.nih.gov/health/5-ways-make-most-your-time-doctors-office).',1,'2026-10-13T01:00:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(12,1,'Lựa chọn chuyên khoa và trao đổi cùng bác sĩ','lua-chon-chuyen-khoa-va-trao-doi-cung-bac-si','Hướng dẫn khám bệnh','/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg','*Chọn chuyên khoa bắt đầu từ vấn đề sức khỏe đang gặp, không nhất thiết phải tự biết chính xác tên bệnh. Mô tả rõ triệu chứng và tiền sử giúp nhân viên y tế hướng dẫn điểm khám phù hợp.*
 
-Chuẩn bị câu hỏi sẽ giúp bạn chủ động hơn trong cuộc trao đổi với nhân viên y tế.
+## Bắt đầu từ điều khiến bạn cần đi khám
 
-## Hình ảnh minh họa
+Nếu triệu chứng mới xuất hiện hoặc ảnh hưởng nhiều cơ quan, hãy trình bày với bộ phận hướng dẫn để được định hướng. Người đang được theo dõi một bệnh mạn tính nên mang hồ sơ và lịch hẹn của bác sĩ điều trị để việc tiếp nhận có đủ thông tin.
 
-![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/621b4c4b6584b9fb80a535cc5dbfc6bf.jpg "Hoạt động thăm khám — ảnh minh họa")
+Khi tìm hiểu chuyên khoa, cần đọc phạm vi khám và thông tin bác sĩ đang được cơ sở công bố. Tên chuyên khoa chỉ là bước định hướng; kết luận bệnh và lựa chọn xét nghiệm vẫn cần dựa trên buổi thăm khám trực tiếp.
 
-![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/b6df1b1ed14289fff99a16ee3ba9b283.jpg "Hoạt động thăm khám — ảnh minh họa")
+![Bác sĩ thăm khám và điều dưỡng ghi nhận thông tin tại giường người bệnh.](/uploads/articles/b6f491239f14078bc972158ca5f8eb1d.jpg "Bác sĩ thăm khám và điều dưỡng ghi nhận thông tin tại giường người bệnh.")
 
-![Ghế và thiết bị nha khoa — ảnh minh họa](/uploads/articles/68ac4ec856100afa305db91d25e5b83c.jpg "Ghế và thiết bị nha khoa — ảnh minh họa")
+## Chuẩn bị một bản mô tả ngắn gọn
 
-![Không gian khám nội khoa — ảnh minh họa](/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg "Không gian khám nội khoa — ảnh minh họa")
+Có thể sắp xếp thông tin theo ba câu hỏi: vấn đề bắt đầu từ khi nào, hiện gây khó chịu thế nào và trước đây đã được xử trí ra sao. Ghi rõ các thuốc đã dùng và mức thay đổi của triệu chứng sau đó.
 
-![Khu vực chờ khám — ảnh minh họa](/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg "Khu vực chờ khám — ảnh minh họa")
+Nếu có nhiều vấn đề, hãy nói vấn đề đáng lo nhất trước, rồi cung cấp phần còn lại để bác sĩ cùng cân nhắc thứ tự đánh giá. Đừng bỏ qua thông tin chỉ vì cho rằng nó không liên quan đến chuyên khoa đã chọn.
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-13T01:01:00+00:00'),
-(13,1,'Từ khu vực tiếp đón đến phòng khám','tu-khu-vuc-tiep-don-den-phong-kham','Hướng dẫn khám bệnh','/uploads/articles/d63ef4484d9e64ee2cd1cb496a86c788.jpg','*Tìm hiểu các bước chuẩn bị và những thông tin cần kiểm tra trước một buổi khám.*
+## Trao đổi để hiểu hướng đánh giá
 
-## Không gian và quy trình
+Người bệnh có thể hỏi mục đích của xét nghiệm, những cách xử trí đang được cân nhắc và điều cần theo dõi sau buổi khám. Khi chưa hiểu một thuật ngữ, hãy đề nghị giải thích bằng cách diễn đạt quen thuộc hơn.
 
-Khu vực tiếp đón, phòng chờ và phòng khám đảm nhận các bước khác nhau trong một buổi khám. Bộ ảnh giúp minh họa các khu vực đó trên website.
+Nếu được hướng dẫn khám thêm chuyên khoa khác, cần hỏi rõ lý do chuyển, giấy tờ cần mang theo và kết quả nào nên giữ để đối chiếu. Việc chuyển chuyên khoa có thể là một phần của quá trình làm rõ vấn đề, vì từng nhóm chuyên môn có phạm vi đánh giá riêng.
 
-## Liên hệ hỗ trợ
+## Tìm chăm sóc kịp thời khi diễn biến thay đổi
 
-Bạn có thể xem thông tin liên hệ hoặc để lại yêu cầu tư vấn tại trang Liên hệ.
+Lịch khám thông thường phù hợp với việc đánh giá theo hẹn. Khi tình trạng xấu đi nhanh hoặc có biểu hiện nặng như khó thở, đau ngực dữ dội, mất ý thức, hãy tìm trợ giúp y tế ngay và báo rõ triệu chứng tại nơi tiếp nhận.
 
-## Hình ảnh minh họa
+Sau buổi khám, giữ lại tóm tắt hướng dẫn và lịch theo dõi. Một lần trao đổi đầy đủ giúp người bệnh hiểu mình cần làm gì tiếp theo và biết khi nào nên liên hệ lại với cơ sở y tế.
 
-![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/d63ef4484d9e64ee2cd1cb496a86c788.jpg "Hoạt động thăm khám — ảnh minh họa")
+Nguồn: [National Institute on Aging — những câu hỏi trong buổi khám](https://www.nia.nih.gov/health/medical-care-and-appointments/what-should-i-ask-my-doctor-during-checkup).',1,'2026-10-13T01:01:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(13,1,'Từ khu vực tiếp đón đến phòng khám','tu-khu-vuc-tiep-don-den-phong-kham','Hướng dẫn khám bệnh','/uploads/articles/83e856c669a06875a98190946b0f1d8d.jpg','*Từ tiếp đón đến phòng khám, người bệnh thường cần xác nhận thông tin, nhận hướng dẫn và chờ đến lượt. Chuẩn bị giấy tờ gọn gàng, kiểm tra đúng nơi khám và chủ động hỏi khi chưa rõ giúp quá trình này thuận tiện hơn.*
 
-![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/a63effb466662b57fc234bfc75bbcdc6.jpg "Hoạt động thăm khám — ảnh minh họa")
+## Kiểm tra thông tin ngay từ bước tiếp nhận
 
-![Không gian tiếp nhận cấp cứu — ảnh minh họa](/uploads/articles/8a98734c693ba4ee8d41f58e3cabcdcc.png "Không gian tiếp nhận cấp cứu — ảnh minh họa")
+Khi đến cơ sở khám, hãy xuất trình giấy tờ và thông tin lịch hẹn theo hướng dẫn. Nếu đi cùng người thân hoặc đặt lịch hộ, cần xác nhận đúng người sẽ được khám để tránh nhầm hồ sơ.
 
-![Phòng phẫu thuật và trang thiết bị — ảnh minh họa](/uploads/articles/83ca69f7d126de2cfe88ab0bd9c7118b.webp "Phòng phẫu thuật và trang thiết bị — ảnh minh họa")
+Đối chiếu họ tên, ngày sinh, số điện thoại liên hệ và chuyên khoa. Khi phát hiện sai khác, báo nhân viên tiếp nhận để kiểm tra trước khi tiếp tục. Những điều chỉnh ở bước đầu giúp kết quả, đơn thuốc và giấy hẹn sau đó gắn với đúng hồ sơ.
 
-![Không gian phòng phẫu thuật — ảnh minh họa](/uploads/articles/83cf3d3ac07df168c2860f7d77da7236.webp "Không gian phòng phẫu thuật — ảnh minh họa")
+![Không gian quầy tiếp đón và lối đi tại khu vực khám bệnh.](/uploads/articles/aa415242679740d7b2684416036beb63.jpg "Không gian quầy tiếp đón và lối đi tại khu vực khám bệnh.")
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-13T01:02:00+00:00'),
-(14,1,'Không gian khám bệnh và theo dõi lịch đã đăng ký','khong-gian-kham-benh-va-theo-doi-lich-da-dang-ky','Hướng dẫn khám bệnh','/uploads/articles/76d11a1892a153cb0a0377eccd410227.jpg','*Tìm hiểu các bước chuẩn bị và những thông tin cần kiểm tra trước một buổi khám.*
+## Hỏi rõ phòng khám và bước cần thực hiện
 
-## Theo dõi thông tin đã đăng ký
+Trước khi rời quầy, nên biết mình cần đến khu vực nào, mang theo giấy tờ gì và có cần hoàn tất thêm bước nào hay không. Nếu biển chỉ dẫn khó đọc, có thể nhờ nhân viên hướng dẫn trực tiếp thay vì tự đoán đường.
 
-Trước khi xác nhận, người dùng xem lại các thông tin cơ bản và lịch đã chọn. Lịch đã đăng ký được quản lý tại khu vực dành cho bệnh nhân.
+Người cần xe lăn, người cao tuổi hoặc người gặp khó khăn về nghe nhìn nên được hỗ trợ ngay từ đầu. Người đi cùng có thể giữ hồ sơ, trong khi người bệnh tập trung trao đổi về nhu cầu của bản thân.
 
-## Hình ảnh phục vụ giới thiệu
+## Chờ khám trong tâm thế chủ động
 
-Các ảnh phòng khám trong bài là ảnh tham khảo về không gian, không xác nhận trang thiết bị thực tế tại NEU Medical.
+Theo dõi hướng dẫn tại khu vực đang chờ. Trước khi vào phòng, chuẩn bị sẵn giấy tờ và ghi chú về triệu chứng để không mất thời gian tìm lại. Giữ lối đi thông thoáng và trao đổi với nhân viên khi cần rời khu vực.
 
-## Hình ảnh minh họa
+![Dãy ghế chờ được bố trí dọc hành lang, bên cạnh các cửa phòng khám.](/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg "Dãy ghế chờ được bố trí dọc hành lang, bên cạnh các cửa phòng khám.")
 
-![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/76d11a1892a153cb0a0377eccd410227.jpg "Hoạt động thăm khám — ảnh minh họa")
+Nếu xuất hiện mệt nhiều hoặc triệu chứng thay đổi trong lúc chờ, cần báo ngay để được đánh giá. Không nên im lặng chờ chỉ vì đã có lịch hẹn từ trước.
 
-![Hoạt động thăm khám — ảnh minh họa](/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg "Hoạt động thăm khám — ảnh minh họa")
+## Giữ lại hướng dẫn sau buổi khám
 
-![Không gian khám đa khoa — ảnh minh họa](/uploads/articles/a1da1b6c569a7d9bbb4699eb72350140.jpg "Không gian khám đa khoa — ảnh minh họa")
+Khi nhận chỉ định, đơn thuốc hoặc lịch tái khám, hãy kiểm tra lại thông tin cá nhân. Hỏi rõ nơi thực hiện xét nghiệm, cách nhận kết quả và bước tiếp theo; giữ giấy tờ cùng một tập để dễ đối chiếu.
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-13T01:03:00+00:00'),
-(15,1,'Trao đổi chuyên môn trong đội ngũ y tế','trao-doi-chuyen-mon-trong-doi-ngu-y-te','Hoạt động chuyên môn','/uploads/articles/b9dfe736649ee882d3c3712d0868d70f.jpg','*Trao đổi giữa các thành viên giúp thống nhất cách phối hợp trong công việc.*
+Trước khi ra về, xác nhận những câu hỏi còn vướng mắc với nhân viên phụ trách. Sự rõ ràng ở từng bước giúp người bệnh tiếp tục kế hoạch chăm sóc mà không phải quay lại chỉ để bổ sung một thông tin có thể kiểm tra từ trước.',1,'2026-10-13T01:02:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(14,1,'Theo dõi lịch đã đăng ký và chuẩn bị cho ngày khám','khong-gian-kham-benh-va-theo-doi-lich-da-dang-ky','Hướng dẫn khám bệnh','/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg','*Lịch hẹn giúp người bệnh chủ động sắp xếp thời gian, nhưng vẫn cần được kiểm tra lại trước ngày khám. Họ tên, ngày, giờ, bác sĩ và trạng thái lịch là những thông tin nên đọc cùng nhau.*
 
-## Nội dung trao đổi
+## Đối chiếu đúng lịch của đúng người
 
-Một buổi sinh hoạt chuyên môn có thể tập trung vào quy trình tiếp nhận, cách bàn giao thông tin và những điểm cần cải thiện trong trải nghiệm người bệnh.
+Sau khi đăng ký, mở phần lịch khám để xem lại thông tin đã được ghi nhận. Nếu quản lý lịch cho nhiều thành viên gia đình, cần đọc tên người bệnh ở từng lịch, tránh chỉ nhìn ngày và giờ.
 
-## Lưu ý về bộ ảnh
+Giữ thông tin xác nhận ở nơi dễ tìm, chẳng hạn ghi chú trên điện thoại. Khi cần trao đổi với cơ sở y tế, cung cấp mã lịch hoặc thông tin định danh theo hướng dẫn để nhân viên tra cứu đúng lượt khám.
 
-Các hình ảnh dưới đây minh họa hình thức hội họp và học tập; không xác nhận người tham dự hoặc chương trình thực tế của NEU Medical.
+## Chuẩn bị trước ngày đến viện
 
-## Hình ảnh minh họa
+Sắp xếp giấy tờ, kết quả cũ và danh sách thuốc đang dùng. Nếu lần khám có hướng dẫn chuẩn bị riêng, hãy đọc lại và hỏi cơ sở khám khi chưa rõ, đặc biệt với việc ăn uống hoặc sử dụng thuốc.
 
-![Sinh hoạt chuyên môn — ảnh tham khảo](/uploads/articles/b9dfe736649ee882d3c3712d0868d70f.jpg "Sinh hoạt chuyên môn — ảnh tham khảo")
+Chủ động tính thời gian di chuyển và thời gian làm thủ tục tại nơi khám. Khi cần người đi cùng, nên thống nhất trước việc hỗ trợ đi lại, giữ hồ sơ và ghi nhớ thông tin sau tư vấn.
 
-![Sinh hoạt chuyên môn — ảnh tham khảo](/uploads/articles/29664509dfe4b43ecb6353adcf7250f1.webp "Sinh hoạt chuyên môn — ảnh tham khảo")
+![Khu vực ghế chờ bên ngoài các phòng khám, có biển chỉ dẫn tại hành lang.](/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg "Khu vực ghế chờ bên ngoài các phòng khám, có biển chỉ dẫn tại hành lang.")
 
-![Sinh hoạt chuyên môn — ảnh tham khảo](/uploads/articles/ee2eeaebf6a59d225fa422f4703ee0eb.webp "Sinh hoạt chuyên môn — ảnh tham khảo")
+## Khi muốn thay đổi kế hoạch
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-13T01:04:00+00:00'),
-(16,1,'Học tập và chia sẻ kinh nghiệm trong chăm sóc người bệnh','hoc-tap-va-chia-se-kinh-nghiem-trong-cham-soc-nguoi-benh','Hoạt động chuyên môn','/uploads/articles/accb1e1fdf967b93f35ff7f6e349a186.jpg','*Trao đổi giữa các thành viên giúp thống nhất cách phối hợp trong công việc.*
+Nếu không thể đến đúng hẹn, kiểm tra những thao tác và điều kiện đang được hệ thống hoặc cơ sở khám cung cấp. Sau khi thực hiện một thay đổi, cần đọc lại trạng thái xác nhận; việc gửi yêu cầu chưa luôn đồng nghĩa lịch đã được thay đổi thành công.
 
-## Nội dung trao đổi
+Không tạo thêm nhiều lịch cho cùng một nhu cầu chỉ để thử các lựa chọn. Khi thông tin hiển thị chưa rõ hoặc thao tác chưa hoàn tất, nên liên hệ kênh hỗ trợ được công bố để kiểm tra.
 
-Một buổi sinh hoạt chuyên môn có thể tập trung vào quy trình tiếp nhận, cách bàn giao thông tin và những điểm cần cải thiện trong trải nghiệm người bệnh.
+## Nối tiếp việc theo dõi sau buổi khám
 
-## Lưu ý về bộ ảnh
+Lưu đơn thuốc, kết quả và lịch hẹn tiếp theo cùng hồ sơ của người được khám. Nếu bác sĩ dặn theo dõi một biểu hiện cụ thể, có thể ghi vào cùng ghi chú để nhớ trao đổi trong lần tái khám.
 
-Các hình ảnh dưới đây minh họa hình thức hội họp và học tập; không xác nhận người tham dự hoặc chương trình thực tế của NEU Medical.
+Một lịch hẹn được quản lý tốt đi cùng thông tin được lưu đầy đủ. Điều này giúp người bệnh dễ nhìn lại quá trình, biết bước tiếp theo và chuẩn bị đúng cho lần đến viện sau.',1,'2026-10-13T01:03:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(15,1,'Tâm Anh được vinh danh tại cuộc thi Cơ sở y tế xanh – sạch – đẹp','tam-anh-giai-thuong-co-so-y-te-xanh-sach-dep','Tin trong ngành','/uploads/articles/7c8162370033a43511468d0bdbc3b30f.jpg','*Giải thưởng về môi trường bệnh viện ghi nhận những nỗ lực từ cảnh quan đến vệ sinh và tổ chức không gian chăm sóc. Tại lễ trao giải ngày 7/8/2025, Bệnh viện Đa khoa Tâm Anh nhận giải Nhất cuộc thi Cơ sở y tế xanh – sạch – đẹp.*
 
-## Hình ảnh minh họa
+## Ghi nhận từ cuộc thi lần đầu tổ chức
 
-![Sinh hoạt chuyên môn — ảnh tham khảo](/uploads/articles/accb1e1fdf967b93f35ff7f6e349a186.jpg "Sinh hoạt chuyên môn — ảnh tham khảo")
+Theo thông tin Tâm Anh công bố, cuộc thi do Bộ Y tế phát động từ tháng 8/2024, có hơn 2.000 cơ sở tham gia. Kết quả vinh danh gắn việc xây dựng môi trường y tế với chất lượng phục vụ người bệnh.
 
-![Sinh hoạt chuyên môn — ảnh tham khảo](/uploads/articles/e88568aab2b4825ffc52dc8b2978dcb3.png "Sinh hoạt chuyên môn — ảnh tham khảo")
+![Các đơn vị nhận giải tại lễ trao giải Cơ sở y tế xanh – sạch – đẹp lần thứ nhất, năm 2025. Ảnh: Bệnh viện Đa khoa Tâm Anh.](/uploads/articles/7c8162370033a43511468d0bdbc3b30f.jpg "Các đơn vị nhận giải tại lễ trao giải Cơ sở y tế xanh – sạch – đẹp lần thứ nhất, năm 2025. Ảnh: Bệnh viện Đa khoa Tâm Anh.")
 
-![Sinh hoạt chuyên môn — ảnh tham khảo](/uploads/articles/1ec20fba68354ab302f9795e3df94de8.jpg "Sinh hoạt chuyên môn — ảnh tham khảo")
+## Môi trường chăm sóc bắt đầu từ việc hằng ngày
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-12T01:05:00+00:00'),
-(17,1,'Ghi nhận đóng góp và tinh thần làm việc của đội ngũ y tế','ghi-nhan-dong-gop-va-tinh-than-lam-viec-cua-doi-ngu-y-te','Hoạt động chuyên môn','/uploads/articles/0b5dd902e1346e1d037b9bd101acec26.jpg','*Sự ghi nhận dành cho công việc của nhân viên y tế được thể hiện qua nhiều hình thức.*
+Nhóm tiêu chí vệ sinh bao quát những việc thiết thực: giường bệnh, nhà vệ sinh, nước sạch, đồ vải và quản lý chất thải. Không gian chăm sóc cần được duy trì qua công việc thường ngày của nhiều bộ phận, từ lâm sàng đến vận hành.
 
-## Ghi nhận trong môi trường làm việc
+Với người đến khám, một lối đi thuận tiện, khu vực chờ dễ nhận biết và đồ dùng sạch là những điểm có thể trực tiếp cảm nhận. Chăm chút các chi tiết ấy giúp môi trường bệnh viện gần gũi hơn.
 
-Bài viết mẫu giới thiệu tinh thần khích lệ, hỗ trợ đồng nghiệp và chia sẻ kinh nghiệm.
+## Tiếp tục duy trì sau vinh danh
 
-## Nguồn hình ảnh
+Giải thưởng là dấu mốc để giới thiệu kinh nghiệm tổ chức môi trường y tế. Giá trị của những cải tiến tiếp tục được thể hiện trong mỗi ngày phục vụ, khi việc giữ sạch và bảo vệ môi trường trở thành trách nhiệm chung.
 
-Bộ ảnh có tên và biểu trưng của những đơn vị khác. Đây là ảnh tham khảo do người dùng cung cấp, không phải giải thưởng hay thành tích của NEU Medical.
+Nguồn: [Bệnh viện Đa khoa Tâm Anh — kết quả cuộc thi](https://tamanhhospital.vn/giai-thuong/co-so-y-te-xanh-sach-dep/), [những hoạt động giữ vệ sinh trong bệnh viện](https://tamanhhospital.vn/giai-thuong/3-giai-thuong-sach-khang-dinh-vi-the-dan-dau/).',1,'2026-10-13T01:04:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(16,1,'Uông Bí trao giải các tác phẩm truyền thông năm 2026','uong-bi-trao-giai-tac-pham-truyen-thong-2026','Tin trong ngành','/uploads/articles/0b5dd902e1346e1d037b9bd101acec26.jpg','*Ngày 18/6/2026, Bệnh viện Việt Nam – Thụy Điển Uông Bí tổ chức trao giải cuộc thi sáng tác tác phẩm truyền thông. Các tác giả và nhóm tác giả được ghi nhận qua những câu chuyện về đời sống, công việc và hình ảnh của bệnh viện.*
 
-## Hình ảnh minh họa
+## Kể câu chuyện từ chính nơi làm việc
 
-![Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác](/uploads/articles/0b5dd902e1346e1d037b9bd101acec26.jpg "Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác")
+Cuộc thi hưởng ứng Tháng Công nhân năm 2026, khuyến khích sự sáng tạo và tinh thần gắn kết giữa các khoa, phòng, trung tâm. Nhân viên y tế có thêm một cách chia sẻ những điều được quan sát trong công việc hằng ngày.
 
-![Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác](/uploads/articles/14c210007a4c4b308808b8379726eeea.webp "Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác")
+![Các tác giả nhận giải cuộc thi sáng tác tác phẩm truyền thông năm 2026 tại Bệnh viện Việt Nam – Thụy Điển Uông Bí.](/uploads/articles/0b5dd902e1346e1d037b9bd101acec26.jpg "Các tác giả nhận giải cuộc thi sáng tác tác phẩm truyền thông năm 2026 tại Bệnh viện Việt Nam – Thụy Điển Uông Bí.")
 
-![Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác](/uploads/articles/7c8162370033a43511468d0bdbc3b30f.jpg "Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác")
+## Truyền thông bằng những chi tiết gần gũi
 
-![Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác](/uploads/articles/57635d7afcf74f14b44579cfa2f9f179.jpg "Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác")
+Một câu chuyện dễ hiểu có thể bắt đầu từ việc rất nhỏ: hỗ trợ một người mới đến khám, giải thích một hướng dẫn hoặc phối hợp giữa đồng nghiệp. Cách kể rõ ràng giúp người đọc hình dung được công việc phía sau hoạt động chăm sóc.
 
-![Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác](/uploads/articles/6ff72a79624709a4dbe56d5f60d2024e.jpg "Hình ảnh tham khảo về hoạt động ghi nhận tại đơn vị khác")
+## Ghi nhận và khuyến khích sáng tạo
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-12T01:06:00+00:00'),
-(18,1,'Lắng nghe và đồng hành cùng người bệnh','lang-nghe-va-dong-hanh-cung-nguoi-benh','Chăm sóc người bệnh','/uploads/articles/0dbc8fe8777572f2a768bc40a6a0f021.jpg','*Những cuộc trao đổi gần gũi giúp người bệnh trình bày nhu cầu và câu hỏi của mình.*
+Lễ trao giải dành sự ghi nhận cho những tác phẩm được lựa chọn. Hoạt động này cũng mở thêm không gian để đội ngũ y tế quan sát, viết và chia sẻ bằng trải nghiệm nghề nghiệp của mình.
 
-## Trao đổi trong quá trình chăm sóc
+Nguồn: [Bệnh viện Việt Nam – Thụy Điển Uông Bí — lễ trao giải năm 2026](https://vsh.org.vn/trao-giai-cuoc-thi-sang-tac-tac-pham-truyen-thong-nam-2026.htm).',1,'2026-10-12T01:05:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(17,1,'Hai giải pháp y tế thông minh được vinh danh tại Thành tựu Y khoa Việt Nam 2024','hai-giai-phap-y-te-thong-minh-thanh-tuu-y-khoa-2024','Tin trong ngành','/uploads/articles/14c210007a4c4b308808b8379726eeea.webp','*Bệnh viện Đại học Y Dược TP. Hồ Chí Minh được trao hai giải thưởng tại chương trình Thành tựu Y khoa Việt Nam 2024. Lễ trao giải diễn ra ngày 26/2/2025, với các công trình thuộc lĩnh vực dữ liệu bệnh án và công tác dược.*
 
-Sự phối hợp giữa người bệnh, gia đình và nhân viên y tế cần thông tin rõ ràng, dễ hiểu. Người bệnh có thể chủ động hỏi về các bước tiếp theo khi chưa nắm rõ.
+## Hai công trình được ghi nhận
 
-## Tôn trọng thông tin cá nhân
+Giải Nhì dành cho giải pháp mã hóa dữ liệu lâm sàng trong bệnh án điện tử bằng SNOMED CT. Giải Ba ghi nhận ứng dụng công nghệ thông tin trong quản lý và triển khai công tác dược bệnh viện.
 
-Bài viết không xác định danh tính, tình trạng sức khỏe hay kết quả điều trị của người xuất hiện trong ảnh.
+![Đoàn Bệnh viện Đại học Y Dược TP. Hồ Chí Minh tại lễ trao giải Thành tựu Y khoa Việt Nam 2024 với hai công trình y tế thông minh.](/uploads/articles/14c210007a4c4b308808b8379726eeea.webp "Đoàn Bệnh viện Đại học Y Dược TP. Hồ Chí Minh tại lễ trao giải Thành tựu Y khoa Việt Nam 2024 với hai công trình y tế thông minh.")
 
-## Hình ảnh minh họa
+## Từ dữ liệu đến công việc chăm sóc
 
-![Hoạt động thăm hỏi — ảnh minh họa](/uploads/articles/0dbc8fe8777572f2a768bc40a6a0f021.jpg "Hoạt động thăm hỏi — ảnh minh họa")
+Mã hóa giúp thông tin lâm sàng được ghi nhận nhất quán hơn. Trong công tác dược, dữ liệu hỗ trợ kết nối các khâu cung ứng, cấp phát và theo dõi sử dụng thuốc. Đây là hai hướng ứng dụng công nghệ được bệnh viện giới thiệu qua giải thưởng.
 
-![Hoạt động thăm hỏi — ảnh minh họa](/uploads/articles/26e5b659b316133584d95b757df613c7.jpg "Hoạt động thăm hỏi — ảnh minh họa")
+## Công nghệ cần gắn với nhu cầu thực tế
 
-![Hoạt động thăm hỏi — ảnh minh họa](/uploads/articles/d7eb07f32adacf9ce8c99e5a80718935.jpg "Hoạt động thăm hỏi — ảnh minh họa")
+Với người bệnh, điều dễ cảm nhận là thông tin được tìm thấy đúng lúc và hướng dẫn được tiếp nối qua các lần khám. Những cải tiến phía sau màn hình chỉ có ý nghĩa khi giúp đội ngũ chăm sóc làm việc rõ ràng, có thể kiểm tra và phối hợp tốt hơn.
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-12T01:07:00+00:00'),
-(19,1,'Phối hợp của ê kíp trong phòng phẫu thuật','phoi-hop-cua-e-kip-trong-phong-phau-thuat','Hoạt động chuyên môn','/uploads/articles/085097a311df4184ea0222e027b5c131.jpg','*Công việc trong môi trường y tế cần sự phối hợp giữa nhiều vị trí chuyên môn.*
+Nguồn: [Bệnh viện Đại học Y Dược TP. Hồ Chí Minh — hai giải pháp được vinh danh](https://bvdaihoc.com.vn/thanh-tuu-va-giai-thuong/dat-giai-thuong-thanh-tuu-y-khoa-viet-nam-2024-voi-hai-giai-phap-y-te-thong-minh).',1,'2026-10-12T01:06:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(18,1,'Nhìn lại hội thi tay nghề điều dưỡng, kỹ thuật viên tại Bệnh viện Châm cứu Trung ương','hoi-thi-tay-nghe-dieu-duong-ky-thuat-vien-2020','Tin trong ngành','/uploads/articles/57635d7afcf74f14b44579cfa2f9f179.jpg','*Hội thi tay nghề là dịp để điều dưỡng và kỹ thuật viên ôn lại kiến thức, thực hành và học hỏi từ đồng nghiệp. Tại Bệnh viện Châm cứu Trung ương, lễ trao giải hội thi năm 2020 diễn ra ngày 3/12/2020.*
 
-## Phối hợp theo nhiệm vụ
+## Đánh giá qua lý thuyết và thực hành
 
-Bác sĩ, điều dưỡng và các nhân viên hỗ trợ đảm nhận những nhiệm vụ khác nhau trong quy trình chăm sóc. Thông tin cần được trao đổi rõ ràng giữa các thành viên.
+Các thí sinh tham gia cả phần kiến thức và thao tác chuyên môn. Tám thí sinh từ bảy khoa được khen thưởng; điều dưỡng Hoàng Thị Mỹ Hạnh, Khoa Đột quỵ – Phục hồi chức năng, nhận giải Nhất.
 
-## Bộ ảnh giới thiệu
+![Đại diện Phòng Điều dưỡng phát biểu tại lễ trao giải hội thi tay nghề điều dưỡng, kỹ thuật viên năm 2020. Ảnh: Bệnh viện Châm cứu Trung ương.](/uploads/articles/57635d7afcf74f14b44579cfa2f9f179.jpg "Đại diện Phòng Điều dưỡng phát biểu tại lễ trao giải hội thi tay nghề điều dưỡng, kỹ thuật viên năm 2020. Ảnh: Bệnh viện Châm cứu Trung ương.")
 
-Ảnh ê kíp được dùng làm tư liệu minh họa, không mô tả kỹ thuật điều trị hay kết quả của một ca phẫu thuật cụ thể.
+## Học hỏi từ những thao tác cụ thể
 
-## Hình ảnh minh họa
+Một buổi thi còn là cơ hội nhận ra phần việc cần rèn thêm. Khi một bước được làm rõ, người thực hiện có thể ghi nhớ lý do và áp dụng có ý thức hơn trong công việc.
 
-![Ê kíp y tế — ảnh minh họa](/uploads/articles/085097a311df4184ea0222e027b5c131.jpg "Ê kíp y tế — ảnh minh họa")
+## Mang tinh thần học tập về khoa phòng
 
-![Ê kíp y tế — ảnh minh họa](/uploads/articles/548c453e60f6e11545527bcf26ab781f.jpg "Ê kíp y tế — ảnh minh họa")
+Sự ghi nhận dành cho thí sinh tạo thêm động lực chia sẻ kinh nghiệm. Với một đội ngũ chăm sóc, học hỏi đều đặn giúp những điều đã được hướng dẫn có cơ hội trở thành thói quen làm việc chung.
 
-![Ê kíp y tế — ảnh minh họa](/uploads/articles/ba30e5816ee83fcc7d7d93e9ea992002.jpg "Ê kíp y tế — ảnh minh họa")
+Nguồn: [Bệnh viện Châm cứu Trung ương — kết quả hội thi năm 2020](https://benhvienchamcuu.com/tin-tuc/le-trao-giai-hoi-thi-tay-nghe-dieu-duong--ky-thuat-vien-nam-2020-184).',1,'2026-10-12T01:07:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(19,1,'An toàn phẫu thuật bắt đầu từ sự phối hợp của cả ê kíp','phoi-hop-cua-e-kip-trong-phong-phau-thuat','Hoạt động chuyên môn','/uploads/articles/085097a311df4184ea0222e027b5c131.jpg','*Trong phòng mổ, mỗi thành viên đảm nhận một phần việc nhưng cùng hướng đến sự an toàn của người bệnh. Trao đổi rõ ràng, xác nhận thông tin và bàn giao đầy đủ giúp các bước chăm sóc nối tiếp nhau.*
 
-![Ê kíp y tế — ảnh minh họa](/uploads/articles/3cad3608377d3a73d6ca7a64a238efa2.jpg "Ê kíp y tế — ảnh minh họa")
+## Xác nhận trước khi bắt đầu
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-12T01:08:00+00:00'),
-(20,1,'Vai trò của từng thành viên trong đội ngũ chăm sóc','vai-tro-cua-tung-thanh-vien-trong-doi-ngu-cham-soc','Hoạt động chuyên môn','/uploads/articles/6037174df1952682f74673e2263ecb83.jpg','*Công việc trong môi trường y tế cần sự phối hợp giữa nhiều vị trí chuyên môn.*
+Người bệnh, thủ thuật dự kiến và vị trí can thiệp cần được kiểm tra theo quy trình của cơ sở. Những câu hỏi được lặp lại ở các thời điểm khác nhau nhằm đối chiếu thông tin trước những bước quan trọng.
 
-## Phối hợp theo nhiệm vụ
+Người bệnh nên báo các thuốc đang dùng, dị ứng đã biết và vấn đề từng gặp trong lần phẫu thuật hoặc gây mê trước. Nếu còn điều chưa hiểu về thủ thuật, hãy đề nghị giải thích trước khi hoàn tất việc đồng ý thực hiện.
 
-Bác sĩ, điều dưỡng và các nhân viên hỗ trợ đảm nhận những nhiệm vụ khác nhau trong quy trình chăm sóc. Thông tin cần được trao đổi rõ ràng giữa các thành viên.
+![Các thành viên ê kíp làm việc quanh bàn phẫu thuật dưới hệ thống đèn mổ.](/uploads/articles/085097a311df4184ea0222e027b5c131.jpg "Các thành viên ê kíp làm việc quanh bàn phẫu thuật dưới hệ thống đèn mổ.")
 
-## Bộ ảnh giới thiệu
+## Trao đổi để cùng nắm kế hoạch
 
-Ảnh ê kíp được dùng làm tư liệu minh họa, không mô tả kỹ thuật điều trị hay kết quả của một ca phẫu thuật cụ thể.
+Bảng kiểm an toàn phẫu thuật của WHO đặt trọng tâm vào những điểm xác nhận trước gây mê, trước rạch da và trước khi người bệnh rời phòng mổ. Tại các thời điểm này, ê kíp có cơ hội cùng nói rõ những nội dung cần lưu ý.
 
-## Hình ảnh minh họa
+Một thông tin được nói ra đúng lúc có thể giúp đồng nghiệp kiểm tra lại trước khi tiếp tục. Mỗi người cần có cơ hội nêu thắc mắc khi nhận thấy điều chưa rõ, thay vì giữ lại vì cho rằng người khác đã biết.
 
-![Ê kíp y tế — ảnh minh họa](/uploads/articles/6037174df1952682f74673e2263ecb83.jpg "Ê kíp y tế — ảnh minh họa")
+## Bàn giao để chăm sóc được tiếp nối
 
-![Ê kíp y tế — ảnh minh họa](/uploads/articles/cddace57efacf8b35ed148725a676942.jpg "Ê kíp y tế — ảnh minh họa")
+Khi kết thúc thủ thuật, những thông tin liên quan đến diễn biến, mẫu bệnh phẩm, dụng cụ và kế hoạch theo dõi cần được chuyển đến bộ phận tiếp nhận theo quy trình. Bàn giao là cầu nối giữa công việc trong phòng mổ và chăm sóc sau đó.
 
-![Ê kíp y tế — ảnh minh họa](/uploads/articles/fd55a913d82e69cb0c095e58bc2a65c6.jpg "Ê kíp y tế — ảnh minh họa")
+![Ê kíp phối hợp trong phòng can thiệp có hệ thống màn hình theo dõi hình ảnh.](/uploads/articles/a63effb466662b57fc234bfc75bbcdc6.jpg "Ê kíp phối hợp trong phòng can thiệp có hệ thống màn hình theo dõi hình ảnh.")
 
-![Ê kíp y tế — ảnh minh họa](/uploads/articles/71f88ca22629f5407746c8eb1218d7cb.webp "Ê kíp y tế — ảnh minh họa")
+## Người bệnh và gia đình cùng tham gia
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-12T01:09:00+00:00'),
-(21,1,'Đội ngũ điều dưỡng: hỗ trợ người bệnh từ những bước đầu','doi-ngu-dieu-duong-ho-tro-nguoi-benh-tu-nhung-buoc-dau','Đội ngũ điều dưỡng','/uploads/articles/38add5edb7422b6b1a5691cf22fd56cb.jpg','*Điều dưỡng góp phần hỗ trợ người bệnh và phối hợp cùng đội ngũ bác sĩ trong quá trình khám.*
+Gia đình cần biết ai là đầu mối cung cấp thông tin và khi nào nhận hướng dẫn sau phẫu thuật. Trước khi ra viện, nên hỏi rõ cách chăm sóc, lịch tái khám và những thay đổi cần liên hệ lại với cơ sở điều trị.
 
-## Tiếp đón và hỗ trợ
+An toàn được xây dựng từ nhiều bước nhỏ được thực hiện nhất quán. Từ xác nhận danh tính đến trao đổi và bàn giao, sự phối hợp giúp mỗi phần việc gắn với kế hoạch chung dành cho đúng người bệnh.
 
-Hướng dẫn bước tiếp theo, lắng nghe thắc mắc và trao đổi với đội ngũ chuyên môn là những nội dung được giới thiệu trong bài viết mẫu này.
+Nguồn: [WHO — bảng kiểm và tài liệu về an toàn phẫu thuật](https://www.who.int/teams/integrated-health-services/quality-of-care-and-patient-safety/patient-safety-guidance-and-tools/safe-surgery/tool-and-resources).',1,'2026-10-12T01:08:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(24,1,'Viêm não do vi rút: phòng bệnh và nhận biết dấu hiệu cần cấp cứu','tim-hieu-thong-tin-ve-viem-nao-nhat-ban','Kiến thức sức khỏe','/uploads/articles/3814bc5d86e8cf64ecf472d9141ed3c7.jpg','*Sốt kèm đau đầu dữ dội, thay đổi ý thức hoặc co giật cần được đánh giá y tế ngay. Viêm não có nhiều nguyên nhân; các biện pháp phòng bệnh cần dựa vào đường lây của từng tác nhân.*
 
-## Hồ sơ minh họa
+## Viêm não và viêm não Nhật Bản khác nhau thế nào?
 
-Những tên dưới đây là tên mẫu được gán cho ảnh, không xác nhận danh tính hay bằng cấp của người trong ảnh.
+Viêm não là tình trạng viêm ở não, có thể liên quan đến nhiều loại vi rút. Viêm não Nhật Bản là một bệnh cụ thể do vi rút truyền qua muỗi, không phải tên gọi chung của mọi trường hợp viêm não.
 
-## Hình ảnh minh họa
+Đặc điểm này có ý nghĩa khi lựa chọn biện pháp phòng ngừa. Giữ vệ sinh, hạn chế muỗi đốt và tiêm chủng cần được hiểu theo từng bệnh; một loại vắc xin không phòng được tất cả tác nhân gây viêm não.
 
-![Điều dưỡng Lê Ngọc Anh — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/38add5edb7422b6b1a5691cf22fd56cb.jpg "Điều dưỡng Lê Ngọc Anh — tên và ảnh ghép minh họa cho đồ án")
+![Các biện pháp phòng viêm não do vi rút: vệ sinh môi trường, tránh muỗi đốt và tiêm chủng đúng hướng dẫn.](/uploads/articles/3814bc5d86e8cf64ecf472d9141ed3c7.jpg "Các biện pháp phòng viêm não do vi rút: vệ sinh môi trường, tránh muỗi đốt và tiêm chủng đúng hướng dẫn.")
 
-![Điều dưỡng Nguyễn Thu Hà — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/e7e23efddb79ca7affea3a55fbb4487c.jpg "Điều dưỡng Nguyễn Thu Hà — tên và ảnh ghép minh họa cho đồ án")
+## Giảm tiếp xúc với muỗi và giữ nơi ở sạch
 
-![Điều dưỡng Trần Phương Linh — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/1ab2db4bf306d5516c6bc312d7487070.jpg "Điều dưỡng Trần Phương Linh — tên và ảnh ghép minh họa cho đồ án")
+Ngủ màn, sử dụng biện pháp xua muỗi phù hợp và mặc quần áo giúp hạn chế vùng da hở là những cách giảm muỗi đốt. Gia đình nên kiểm tra chỗ nước đọng, vệ sinh nơi ở và phối hợp với hoạt động kiểm soát muỗi tại địa phương.
 
-![Điều dưỡng Phạm Ngọc Mai — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/c38cd1bd0d4240a7e4d6a71bba2576a7.jpg "Điều dưỡng Phạm Ngọc Mai — tên và ảnh ghép minh họa cho đồ án")
+Đối với tiêm phòng viêm não Nhật Bản, cần mang sổ tiêm để nhân viên y tế kiểm tra loại vắc xin và các mũi đã có. Lịch tiêm phụ thuộc sản phẩm, tuổi và tiền sử; không tự áp dụng một lịch duy nhất cho mọi trẻ chỉ từ thông tin trên áp phích.
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-11T01:10:00+00:00'),
-(22,1,'Điều dưỡng và công việc theo dõi, chăm sóc','dieu-duong-va-cong-viec-theo-doi-cham-soc','Đội ngũ điều dưỡng','/uploads/articles/532f4c6fdbee0f61f9c87154fe64a237.jpg','*Điều dưỡng góp phần hỗ trợ người bệnh và phối hợp cùng đội ngũ bác sĩ trong quá trình khám.*
+## Khi nào cần đưa người bệnh đi ngay?
 
-## Tiếp đón và hỗ trợ
+Sốt đi cùng lơ mơ, khó đánh thức, co giật, đau đầu nặng hoặc cổ cứng là tình huống cần đến cơ sở y tế khẩn cấp. Không chờ xuất hiện đầy đủ các dấu hiệu mới tìm chăm sóc.
 
-Hướng dẫn bước tiếp theo, lắng nghe thắc mắc và trao đổi với đội ngũ chuyên môn là những nội dung được giới thiệu trong bài viết mẫu này.
+Người đi cùng nên cung cấp thời điểm khởi phát, những thay đổi đã quan sát và thuốc đã sử dụng. Những thông tin ấy hỗ trợ đánh giá, nhưng việc xác định nguyên nhân vẫn cần thăm khám và xét nghiệm theo chỉ định.
 
-## Hồ sơ minh họa
+## Chuẩn bị để phòng bệnh lâu dài
 
-Những tên dưới đây là tên mẫu được gán cho ảnh, không xác nhận danh tính hay bằng cấp của người trong ảnh.
+Gia đình có thể giữ sổ tiêm ở một nơi dễ tìm, ghi lại các lần hẹn tiếp theo và duy trì việc kiểm tra môi trường quanh nhà. Phòng bệnh đều đặn giúp các việc nhỏ không bị bỏ quên giữa những sinh hoạt bận rộn.
 
-## Hình ảnh minh họa
+Nguồn: [WHO — Viêm não Nhật Bản](https://www.who.int/news-room/fact-sheets/detail/japanese-encephalitis).',1,'2026-10-11T01:13:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(25,1,'Vệ sinh cá nhân: duy trì thói quen sạch trong sinh hoạt hằng ngày','ve-sinh-ca-nhan-trong-sinh-hoat-hang-ngay','Kiến thức sức khỏe','/uploads/articles/95dd9dc83516bbd85fc983a5134791f8.jpg','*Vệ sinh cá nhân hiệu quả bắt đầu từ những thời điểm dễ làm lây tác nhân gây bệnh: chuẩn bị bữa ăn, đi vệ sinh, chăm trẻ và tiếp xúc đồ dùng chung. Thói quen đều đặn quan trọng hơn việc chỉ làm sạch khi thấy bẩn.*
 
-![Điều dưỡng Đỗ Thanh Hương — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/532f4c6fdbee0f61f9c87154fe64a237.jpg "Điều dưỡng Đỗ Thanh Hương — tên và ảnh ghép minh họa cho đồ án")
+## Bàn tay nối giữa nhiều bề mặt
 
-![Điều dưỡng Bùi Khánh Ngọc — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/8e3fa7d2a6dac01fb42feccdec80b3f9.jpg "Điều dưỡng Bùi Khánh Ngọc — tên và ảnh ghép minh họa cho đồ án")
+Trong một ngày, bàn tay chạm vào điện thoại, tay nắm cửa, thực phẩm và cơ thể. Khi chưa được làm sạch, tay có thể đưa tác nhân từ bề mặt lên mắt, mũi, miệng hoặc sang thức ăn.
 
-![Điều dưỡng Hoàng Minh Châu — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/44c492e761b1b07fdb81b2ab9679e776.jpg "Điều dưỡng Hoàng Minh Châu — tên và ảnh ghép minh họa cho đồ án")
+Cần nhớ rửa tay trước khi chế biến và ăn uống; sau khi đi vệ sinh, thay tã, ho hoặc hắt hơi, tiếp xúc động vật và xử lý rác. Người chăm sóc người đang nôn, tiêu chảy cũng cần chú ý vệ sinh tay trước và sau khi hỗ trợ.
 
-![Điều dưỡng Vũ Thảo Vy — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/73de37dd74e19091ede18b3ebdeada48.jpg "Điều dưỡng Vũ Thảo Vy — tên và ảnh ghép minh họa cho đồ án")
+## Rửa đủ các vùng trên bàn tay
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-11T01:11:00+00:00'),
-(23,1,'Gặp gỡ những gương mặt điều dưỡng trong hồ sơ mẫu','gap-go-nhung-guong-mat-dieu-duong-trong-ho-so-mau','Đội ngũ điều dưỡng','/uploads/articles/879b090a02088bf607e7422a08f51c17.jpg','*Điều dưỡng góp phần hỗ trợ người bệnh và phối hợp cùng đội ngũ bác sĩ trong quá trình khám.*
+Làm ướt tay bằng nước sạch, dùng xà phòng rồi chà kỹ lòng bàn tay, mu bàn tay, kẽ ngón và quanh móng trong ít nhất 20 giây. Sau đó xả sạch và làm khô bằng khăn sạch hoặc thiết bị phù hợp.
 
-## Tiếp đón và hỗ trợ
+![Hướng dẫn vệ sinh cá nhân trước và sau lao động: rửa tay, làm sạch cơ thể và giữ đồ dùng sạch.](/uploads/articles/95dd9dc83516bbd85fc983a5134791f8.jpg "Hướng dẫn vệ sinh cá nhân trước và sau lao động: rửa tay, làm sạch cơ thể và giữ đồ dùng sạch.")
 
-Hướng dẫn bước tiếp theo, lắng nghe thắc mắc và trao đổi với đội ngũ chuyên môn là những nội dung được giới thiệu trong bài viết mẫu này.
+## Giữ đồ dùng cá nhân khô và sạch
 
-## Hồ sơ minh họa
+Sắp xếp khăn, bàn chải và dụng cụ chăm sóc ở vị trí dễ làm sạch, tránh để lẫn đồ bẩn với đồ đã vệ sinh. Những món dùng thường xuyên cần được làm sạch theo hướng dẫn của sản phẩm.
 
-Những tên dưới đây là tên mẫu được gán cho ảnh, không xác nhận danh tính hay bằng cấp của người trong ảnh.
+Với trẻ nhỏ, người lớn có thể cùng thực hiện thay vì chỉ nhắc. Một chỗ rửa tay có xà phòng, khăn sạch và đồ dùng vừa tầm giúp trẻ chủ động hơn trong sinh hoạt.
 
-## Hình ảnh minh họa
+## Biến việc cần làm thành thói quen dễ nhớ
 
-![Điều dưỡng Lê Bảo An — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/879b090a02088bf607e7422a08f51c17.jpg "Điều dưỡng Lê Bảo An — tên và ảnh ghép minh họa cho đồ án")
+Có thể gắn mỗi việc vệ sinh với một mốc quen thuộc: trước bữa ăn, sau khi về nhà hoặc sau khi dọn rác. Khi chuẩn bị đi xa, kiểm tra trước nơi có thể rửa tay và đồ dùng cần mang theo.
 
-![Điều dưỡng Nguyễn Quỳnh Hoa — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/61fa68e9be0ef2d2a9274a96bbb5e7fe.jpg "Điều dưỡng Nguyễn Quỳnh Hoa — tên và ảnh ghép minh họa cho đồ án")
+Trong gia đình, thống nhất nơi để đồ sạch và cách xử lý đồ bẩn giúp các thành viên dễ tiếp nối công việc của nhau. Những sắp xếp nhỏ ấy làm cho việc giữ vệ sinh bền vững và thuận tiện hơn.
 
-![Điều dưỡng Trần Hà My — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/94e1228f67b0328247c7278b68afeb91.jpg "Điều dưỡng Trần Hà My — tên và ảnh ghép minh họa cho đồ án")
+Nguồn: [CDC — Vệ sinh tay](https://www.cdc.gov/clean-hands/about/index.html).',1,'2026-10-11T01:14:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(26,1,'Cộng đồng cùng phòng bệnh: bắt đầu từ những việc có thể duy trì','chu-dong-tim-hieu-thong-tin-phong-chong-dich-benh','Kiến thức sức khỏe','/uploads/articles/fcf77260c0a78800d65382dbfd864285.jpg','*Phòng chống dịch bệnh cần sự tham gia của từng gia đình, trường học và nơi làm việc. Thông tin rõ ràng đi cùng hành động cụ thể giúp mọi người biết mình có thể làm gì để bảo vệ bản thân và người xung quanh.*
 
-![Điều dưỡng Phan Ngọc Lan — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/19c8cf83a3b00413bfb8d04dd1399ad1.jpg "Điều dưỡng Phan Ngọc Lan — tên và ảnh ghép minh họa cho đồ án")
+## Chọn thông tin có thể kiểm tra
 
-![Điều dưỡng Đặng Thu Thảo — tên và ảnh ghép minh họa cho đồ án](/uploads/articles/cdd32999932f468240fc2a3f6e09b4dd.jpg "Điều dưỡng Đặng Thu Thảo — tên và ảnh ghép minh họa cho đồ án")
+Khi đọc một khuyến cáo, cần xem cơ quan ban hành, ngày cập nhật và bệnh đang được đề cập. Một hướng dẫn dành cho bệnh này hoặc một giai đoạn dịch không nhất thiết áp dụng nguyên vẹn cho tình huống khác.
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-11T01:12:00+00:00'),
-(24,1,'Tìm hiểu thông tin về viêm não Nhật Bản','tim-hieu-thong-tin-ve-viem-nao-nhat-ban','Y học thường thức','/uploads/articles/3814bc5d86e8cf64ecf472d9141ed3c7.jpg','*Bộ poster giới thiệu chủ đề viêm não Nhật Bản. Bạn có thể đọc thêm tài liệu tổng quan của WHO qua liên kết bên dưới.*
+Nếu nhận được thông tin khiến lo lắng, hãy kiểm tra tại cơ quan y tế địa phương hoặc nguồn chính thức trước khi chia sẻ. Hạn chế chuyển tiếp hình ảnh có thông tin riêng tư hay kết luận về người mắc bệnh khi chưa được xác minh.
 
-## Đọc và đối chiếu thông tin
+![Những hành động cộng đồng có thể cùng thực hiện: giữ vệ sinh, dùng thực phẩm an toàn và phối hợp với y tế.](/uploads/articles/fcf77260c0a78800d65382dbfd864285.jpg "Những hành động cộng đồng có thể cùng thực hiện: giữ vệ sinh, dùng thực phẩm an toàn và phối hợp với y tế.")
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+## Tạo điều kiện để mọi người cùng làm
 
-## Nguồn đọc thêm
+Đặt xà phòng ở nơi rửa tay, giữ khu vực sinh hoạt chung sạch và lựa chọn cách thông gió phù hợp là những việc có thể phân công rõ ràng. Ở nơi tập thể, nên có người kiểm tra định kỳ thay vì chỉ dọn khi có phản ánh.
 
-[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/japanese-encephalitis).
+Với bệnh hô hấp, tiêm chủng theo khuyến cáo, giữ vệ sinh và cải thiện chất lượng không khí là các biện pháp nền tảng. Khẩu trang và hạn chế tiếp xúc gần có thể bổ sung bảo vệ ở nơi đông người hoặc khi cần bảo vệ người dễ bệnh nặng.
 
-## Hình ảnh minh họa
+## Hỗ trợ người đang có triệu chứng
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/3814bc5d86e8cf64ecf472d9141ed3c7.jpg "Poster sức khỏe do người dùng cung cấp")
+Người mệt, ho hoặc sốt cần điều kiện nghỉ ngơi và tìm tư vấn phù hợp. Gia đình có thể hỗ trợ việc ăn uống, theo dõi thay đổi và liên hệ cơ sở y tế khi có dấu hiệu đáng lo.
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-11T01:13:00+00:00'),
-(25,1,'Vệ sinh cá nhân trong sinh hoạt hằng ngày','ve-sinh-ca-nhan-trong-sinh-hoat-hang-ngay','Y học thường thức','/uploads/articles/95dd9dc83516bbd85fc983a5134791f8.jpg','*Vệ sinh và nước sạch đóng vai trò quan trọng đối với sức khỏe cộng đồng.*
+Tại trường học hoặc nơi làm việc, nên có cách báo nghỉ dễ hiểu và đầu mối giải đáp thống nhất. Cách tổ chức thuận tiện giúp một khuyến cáo trở thành việc có thể làm được trong thực tế.
 
-## Đọc và đối chiếu thông tin
+## Phối hợp mà không kỳ thị
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+Cung cấp thông tin sức khỏe liên quan theo hướng dẫn của nhân viên y tế và tôn trọng quyền riêng tư của người bệnh. Một cộng đồng biết hỗ trợ sẽ giúp người có triệu chứng chủ động tìm chăm sóc sớm hơn.
 
-## Nguồn đọc thêm
+Nguồn: [CDC — Phòng bệnh hô hấp](https://www.cdc.gov/respiratory-viruses/prevention/index.html).',1,'2026-10-10T01:15:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(27,1,'Vi rút Nipah: đường lây và những điều cần chú ý khi phòng bệnh','tu-lieu-tim-hieu-ve-virus-nipah','Kiến thức sức khỏe','/uploads/articles/88545f51c30d6b9df8ccedd4dcd8a67f.jpg','*Nipah là vi rút có thể lây từ động vật sang người, qua thực phẩm bị nhiễm hoặc khi tiếp xúc gần với người bệnh. Phòng ngừa cần chú ý nguồn tiếp xúc, an toàn ăn uống và việc tìm chăm sóc sớm khi có triệu chứng đáng lo.*
 
-[Thông tin từ WHO](https://www.who.int/health-topics/water-sanitation-and-hygiene-wash).
+## Nhận biết những đường tiếp xúc cần lưu ý
 
-## Hình ảnh minh họa
+Dơi ăn quả là vật chủ tự nhiên của vi rút Nipah. Một số vụ dịch có liên quan đến tiếp xúc động vật mắc bệnh hoặc dùng sản phẩm bị nhiễm từ dơi; vi rút cũng có thể lây giữa người với người khi tiếp xúc gần.
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/95dd9dc83516bbd85fc983a5134791f8.jpg "Poster sức khỏe do người dùng cung cấp")
+Vì vậy, không nên hiểu Nipah chỉ là bệnh liên quan đến một loại thực phẩm. Công việc chăn nuôi, chăm sóc người bệnh và hành trình đến vùng có dịch đều là những thông tin cần trao đổi khi được đánh giá nguy cơ.
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-11T01:14:00+00:00'),
-(26,1,'Chủ động tìm hiểu thông tin phòng chống dịch bệnh','chu-dong-tim-hieu-thong-tin-phong-chong-dich-benh','Y học thường thức','/uploads/articles/fcf77260c0a78800d65382dbfd864285.jpg','*Nước sạch và điều kiện vệ sinh góp phần bảo vệ sức khỏe của cộng đồng.*
+![Khuyến cáo về Nipah tập trung vào người đi từ vùng dịch, vệ sinh ăn uống và tiếp xúc an toàn.](/uploads/articles/88545f51c30d6b9df8ccedd4dcd8a67f.jpg "Khuyến cáo về Nipah tập trung vào người đi từ vùng dịch, vệ sinh ăn uống và tiếp xúc an toàn.")
 
-## Đọc và đối chiếu thông tin
+## Ăn uống và chăm sóc an toàn
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+Rửa sạch và gọt vỏ trái cây; loại bỏ quả có dấu hiệu bị động vật cắn. Tránh sử dụng sản phẩm sống có nguy cơ bị dơi làm nhiễm, đồng thời tuân thủ hướng dẫn tại nơi đến nếu có cảnh báo dịch.
 
-## Nguồn đọc thêm
+Khi chăm sóc người nghi mắc bệnh, cần hạn chế tiếp xúc không được bảo vệ với dịch cơ thể, vệ sinh tay và làm theo hướng dẫn của nhân viên y tế. Không tự tiếp xúc hoặc xử lý động vật ốm mà thiếu hướng dẫn chuyên môn.
 
-[Thông tin từ WHO](https://www.who.int/health-topics/water-sanitation-and-hygiene-wash).
+## Khi xuất hiện biểu hiện bất thường
 
-## Hình ảnh minh họa
+Sốt có thể đi cùng đau đầu, ho, khó thở hoặc thay đổi thần kinh. Triệu chứng không đủ để tự xác định Nipah; xét nghiệm và đánh giá chuyên môn giúp phân biệt với các nguyên nhân khác.
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/fcf77260c0a78800d65382dbfd864285.jpg "Poster sức khỏe do người dùng cung cấp")
+Nếu sốt sau một tiếp xúc đáng ngờ, hãy liên hệ cơ sở y tế, nói rõ nơi đã đến và tình huống tiếp xúc. Khi có khó thở, lú lẫn hoặc diễn biến nặng, cần được chăm sóc khẩn cấp.
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-10T01:15:00+00:00'),
-(27,1,'Tư liệu tìm hiểu về virus Nipah','tu-lieu-tim-hieu-ve-virus-nipah','Y học thường thức','/uploads/articles/88545f51c30d6b9df8ccedd4dcd8a67f.jpg','*Poster tổng hợp chủ đề Nipah được lưu trong thư viện truyền thông sức khỏe. Liên kết WHO dưới đây giúp bạn tiếp tục tìm hiểu thông tin về chủ đề này.*
+## Theo dõi khuyến cáo đúng nơi, đúng thời điểm
 
-## Đọc và đối chiếu thông tin
+Trước chuyến đi, lưu kênh thông tin của cơ quan y tế tại điểm đến và đầu mối có thể liên hệ. Khi trở về, giữ lại thông tin hành trình để dễ cung cấp nếu cần thăm khám.
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+Nguồn: [WHO — Vi rút Nipah](https://www.who.int/news-room/fact-sheets/detail/nipah-virus).',1,'2026-10-10T01:16:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(28,1,'Mùa đông xuân: chuẩn bị thói quen bảo vệ sức khỏe cho gia đình','cham-soc-suc-khoe-trong-mua-dong-xuan','Kiến thức sức khỏe','/uploads/articles/8266e3b47f3843f086d02c292235c7b7.png','*Ngày lạnh thường khiến sinh hoạt diễn ra nhiều hơn trong không gian kín. Chuẩn bị quần áo phù hợp, giữ vệ sinh và có kế hoạch chăm sóc người dễ bị bệnh nặng giúp gia đình chủ động hơn trong mùa đông xuân.*
 
-## Nguồn đọc thêm
+## Chuẩn bị theo nhu cầu từng thành viên
 
-[Thông tin từ WHO](https://www.who.int/health-topics/nipah-virus-infection).
+Người cao tuổi, trẻ nhỏ, phụ nữ mang thai và người có bệnh nền cần được chú ý khi có bệnh hô hấp. Hãy kiểm tra lịch tái khám, thuốc đang sử dụng và đầu mối liên hệ của cơ sở điều trị trước những kỳ nghỉ dài.
 
-## Hình ảnh minh họa
+Với người đang được theo dõi bệnh mạn tính, kế hoạch đã thống nhất với bác sĩ cần được tiếp tục. Khi sức khỏe thay đổi, báo tình trạng mới thay vì tự thay liều hoặc dùng thêm thuốc theo lời truyền miệng.
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/88545f51c30d6b9df8ccedd4dcd8a67f.jpg "Poster sức khỏe do người dùng cung cấp")
+![Khuyến cáo mùa đông xuân nhắc giữ ấm, ăn uống đủ chất, vệ sinh và tiêm chủng phòng các bệnh có vắc xin.](/uploads/articles/8266e3b47f3843f086d02c292235c7b7.png "Khuyến cáo mùa đông xuân nhắc giữ ấm, ăn uống đủ chất, vệ sinh và tiêm chủng phòng các bệnh có vắc xin.")
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-10T01:16:00+00:00'),
-(28,1,'Chăm sóc sức khỏe trong mùa đông xuân','cham-soc-suc-khoe-trong-mua-dong-xuan','Y học thường thức','/uploads/articles/8266e3b47f3843f086d02c292235c7b7.png','*Cúm mùa là bệnh nhiễm trùng đường hô hấp do virus cúm. Tìm hiểu thông tin chính thống giúp bạn chủ động trao đổi với nhân viên y tế.*
+## Giữ ấm cùng với giữ nơi ở thoáng
 
-## Đọc và đối chiếu thông tin
+Chọn quần áo phù hợp nhiệt độ và khả năng vận động. Trong nhà, giữ không gian sạch và thông thoáng khi điều kiện cho phép; tránh khói thuốc và những nguồn làm chất lượng không khí kém đi.
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+Sắp xếp sẵn đồ dùng chăm sóc, giấy tờ sức khỏe và thông tin liên hệ giúp giảm lúng túng khi một thành viên bị mệt. Người chăm trẻ nên biết trước ai có thể hỗ trợ nếu trẻ cần đến cơ sở y tế.
 
-## Nguồn đọc thêm
+## Khi gia đình có người ho, sốt
 
-[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)).
+Tạo điều kiện nghỉ ngơi, hạn chế tiếp xúc gần với người dễ bệnh nặng và chú ý vệ sinh tay. Nếu nghi cúm ở người thuộc nhóm nguy cơ, nên tìm tư vấn sớm để được đánh giá hướng chăm sóc phù hợp.
 
-## Hình ảnh minh họa
+Khó thở, đau ngực, lơ mơ hoặc tình trạng xấu đi nhanh cần được đưa đi khám khẩn cấp. Không chỉ nhìn nhiệt độ để quyết định mức độ nghiêm trọng của bệnh.
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/8266e3b47f3843f086d02c292235c7b7.png "Poster sức khỏe do người dùng cung cấp")
+## Chủ động trước mùa bệnh
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-10T01:17:00+00:00'),
-(29,1,'Thông tin về bệnh đường hô hấp và cúm mùa','thong-tin-ve-benh-duong-ho-hap-va-cum-mua','Y học thường thức','/uploads/articles/e656d82fb47a099500c385f48336e829.jpg','*Virus cúm có thể lây qua các hạt phát tán khi người nhiễm ho hoặc hắt hơi.*
+Mang sổ tiêm khi tư vấn tiêm chủng và hỏi các mũi phù hợp với tuổi, bệnh nền. Một danh sách việc cần chuẩn bị ngắn gọn giúp gia đình duy trì kế hoạch phòng bệnh cả khi nhịp sinh hoạt thay đổi.
 
-## Đọc và đối chiếu thông tin
+Nguồn: [NHS — Cúm](https://www.nhs.uk/conditions/flu/).',1,'2026-10-10T01:17:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(29,1,'Bệnh đường hô hấp: phòng ngừa bằng nhiều lớp bảo vệ','thong-tin-ve-benh-duong-ho-hap-va-cum-mua','Kiến thức sức khỏe','/uploads/articles/e656d82fb47a099500c385f48336e829.jpg','*Rửa tay, không khí sạch, tiêm chủng và những biện pháp bảo vệ khi tiếp xúc đều có vai trò trong phòng bệnh hô hấp. Kết hợp các biện pháp phù hợp giúp giảm nguy cơ ở gia đình và nơi tập thể.*
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+## Mỗi biện pháp hỗ trợ một phần
 
-## Nguồn đọc thêm
+Tác nhân gây bệnh hô hấp có thể lan qua không khí và tiếp xúc trong sinh hoạt. Vì vậy, chỉ lau đồ dùng mà bỏ qua thông khí hoặc tiếp xúc gần sẽ chưa bao quát hết các tình huống.
 
-[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)).
+Các biện pháp nền tảng gồm tiêm chủng theo khuyến cáo, vệ sinh tay và cải thiện không khí trong nhà. Khi bệnh lưu hành nhiều hoặc cần bảo vệ người có nguy cơ, khẩu trang và giảm tiếp xúc gần là những lớp bảo vệ bổ sung.
 
-## Hình ảnh minh họa
+![Khuyến cáo phòng bệnh đường hô hấp nêu các việc cần làm khi sinh hoạt và khi có triệu chứng.](/uploads/articles/e656d82fb47a099500c385f48336e829.jpg "Khuyến cáo phòng bệnh đường hô hấp nêu các việc cần làm khi sinh hoạt và khi có triệu chứng.")
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/e656d82fb47a099500c385f48336e829.jpg "Poster sức khỏe do người dùng cung cấp")
+## Bố trí không gian thuận tiện cho phòng bệnh
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-10T01:18:00+00:00'),
-(30,1,'Vệ sinh môi trường và sức khỏe trong mùa hè','ve-sinh-moi-truong-va-suc-khoe-trong-mua-he','Y học thường thức','/uploads/articles/2725da7d4db960c7a6ecd9f2972b4b3a.jpg','*Điều kiện vệ sinh và nguồn nước an toàn có ý nghĩa đối với sức khỏe trong sinh hoạt hằng ngày.*
+Đảm bảo nơi rửa tay có xà phòng, đặt thùng rác ở vị trí phù hợp và giữ các khu vực thường chạm sạch. Thực hiện những việc này đều đặn giúp người dùng không phải tìm đồ hoặc bỏ qua chỉ vì bất tiện.
 
-## Đọc và đối chiếu thông tin
+Với phòng kín, cân nhắc tăng không khí ngoài trời khi điều kiện cho phép hoặc sử dụng hệ thống thông khí, lọc khí phù hợp. Giảm thời gian ở nơi đông người, bí khí cũng giúp hạn chế những cuộc tiếp xúc không cần thiết.
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+## Có triệu chứng thì cần làm gì?
 
-## Nguồn đọc thêm
+Người ho, sốt hoặc mệt nên nghỉ ngơi, hạn chế tiếp xúc với người khác và theo dõi diễn biến. Người thuộc nhóm dễ bệnh nặng cần tìm tư vấn y tế sớm, vì việc đánh giá và điều trị có thể phụ thuộc thời điểm.
 
-[Thông tin từ WHO](https://www.who.int/health-topics/water-sanitation-and-hygiene-wash).
+Không tự phân biệt cúm, COVID-19 hoặc tác nhân khác chỉ bằng một biểu hiện. Khi đi khám, cung cấp thời điểm bắt đầu bệnh, tiếp xúc gần đây, bệnh nền và thuốc đã dùng.
 
-## Hình ảnh minh họa
+## Bảo vệ người dễ bệnh nặng
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/2725da7d4db960c7a6ecd9f2972b4b3a.jpg "Poster sức khỏe do người dùng cung cấp")
+Nếu sống cùng trẻ nhỏ, người cao tuổi hoặc người suy giảm miễn dịch, nên thống nhất cách hỗ trợ khi có người ốm. Những thói quen được cả nhà cùng thực hiện giúp kế hoạch phòng bệnh bớt phụ thuộc vào việc phải nhắc nhau liên tục.
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-10T01:19:00+00:00'),
-(31,1,'Dịch tả lợn châu Phi: thông tin về bệnh ở động vật','dich-ta-lon-chau-phi-thong-tin-ve-benh-o-dong-vat','Thông tin cộng đồng','/uploads/articles/09ac3ebe914af27173caa06882828273.jpg','*Dịch tả lợn châu Phi là bệnh ở lợn nhà và lợn rừng. WOAH nêu rõ bệnh này không ảnh hưởng đến sức khỏe con người.*
+Nguồn: [CDC — Phòng bệnh hô hấp](https://www.cdc.gov/respiratory-viruses/prevention/index.html).',1,'2026-10-10T01:18:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(30,1,'Phòng bệnh mùa hè từ nước sạch, bữa ăn và môi trường sống','ve-sinh-moi-truong-va-suc-khoe-trong-mua-he','Kiến thức sức khỏe','/uploads/articles/2725da7d4db960c7a6ecd9f2972b4b3a.jpg','*Mùa hè là lúc cần chú ý đồng thời đến thực phẩm, nước sinh hoạt và nơi muỗi sinh sản. Những việc phòng bệnh có thể bắt đầu ngay từ căn bếp, sân nhà và cách theo dõi người đang mệt.*
 
-## Đọc và đối chiếu thông tin
+## Kiểm tra từ nguồn nước và nguyên liệu
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+Nước dùng để uống, làm đá và chế biến thức ăn cần được bảo đảm an toàn. Khi đi xa hoặc ăn ở nơi mới, cần quan tâm nguồn nước, điều kiện bảo quản và việc thức ăn có được nấu chín hay không.
 
-## Nguồn đọc thêm
+Giữ sạch, tách thực phẩm sống và chín, nấu kỹ, bảo quản ở nhiệt độ phù hợp và sử dụng nguyên liệu an toàn là năm nguyên tắc WHO nhấn mạnh. Các bước cần được tiếp nối từ chuẩn bị đến phục vụ, không chỉ tập trung vào lúc nấu.
 
-[Thông tin từ WOAH](https://www.woah.org/en/disease/african-swine-fever/).
+![Phòng dịch mùa hè: bảo đảm an toàn ăn uống, giữ vệ sinh, diệt lăng quăng và đi khám khi có dấu hiệu nghi ngờ.](/uploads/articles/2725da7d4db960c7a6ecd9f2972b4b3a.jpg "Phòng dịch mùa hè: bảo đảm an toàn ăn uống, giữ vệ sinh, diệt lăng quăng và đi khám khi có dấu hiệu nghi ngờ.")
 
-## Hình ảnh minh họa
+## Dọn nước đọng và hạn chế muỗi đốt
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/09ac3ebe914af27173caa06882828273.jpg "Poster sức khỏe do người dùng cung cấp")
+Kiểm tra dụng cụ chứa nước, đồ phế thải và những vị trí có thể đọng nước quanh nơi ở. Phân công người kiểm tra định kỳ giúp việc dọn môi trường không bị gián đoạn sau một lần tổng vệ sinh.
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-09T01:20:00+00:00'),
-(32,1,'Đau mắt đỏ: đọc thông tin từ nguồn chính thống','dau-mat-do-doc-thong-tin-tu-nguon-chinh-thong','Y học thường thức','/uploads/articles/a27b33ba114fbca36ad72b1466487c1d.jpg','*Viêm kết mạc có nhiều nguyên nhân, gồm virus, vi khuẩn và dị ứng. Không nên xác định nguyên nhân chỉ từ màu đỏ của mắt.*
+Phòng sốt xuất huyết cần chú ý tránh muỗi đốt cả ban ngày. Gia đình nên sử dụng các biện pháp bảo vệ phù hợp và phối hợp với hướng dẫn kiểm soát muỗi tại địa phương.
 
-## Đọc và đối chiếu thông tin
+## Không xem mọi cơn sốt là giống nhau
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+Sốt, đau đầu, nôn hoặc đau bụng có thể do nhiều nguyên nhân. Khi đi khám, cần nói rõ thời điểm bắt đầu bệnh, thực phẩm đã dùng, nơi đã đến và thuốc đang sử dụng.
 
-## Nguồn đọc thêm
+Đặc biệt, nghi sốt xuất huyết mà có đau bụng nhiều, nôn liên tục, chảy máu hoặc mệt lả cần được đánh giá ngay. Dấu hiệu nặng có thể xuất hiện khi sốt đã giảm, nên không chỉ dựa vào nhiệt độ để yên tâm.
 
-[Thông tin từ CDC](https://www.cdc.gov/conjunctivitis/about/index.html).
+## Duy trì những việc dễ kiểm tra
 
-## Hình ảnh minh họa
+Có thể lập một bảng việc ngắn cho gia đình: kiểm tra nước uống, làm sạch khu chế biến, kiểm tra tủ bảo quản và dọn nơi nước đọng. Gắn người phụ trách với từng việc giúp thói quen phòng bệnh tiếp tục sau mùa cao điểm.
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/a27b33ba114fbca36ad72b1466487c1d.jpg "Poster sức khỏe do người dùng cung cấp")
+Nguồn: [WHO — năm nguyên tắc thực phẩm an toàn](https://www.who.int/activities/promoting-safe-food-handling/five-key-to-safer-food/), [WHO — sốt xuất huyết](https://www.who.int/news-room/fact-sheets/detail/dengue-and-severe-dengue).',1,'2026-10-10T01:19:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(31,1,'Dịch tả lợn châu Phi: hiểu đúng để cùng bảo vệ chăn nuôi','dich-ta-lon-chau-phi-thong-tin-ve-benh-o-dong-vat','Kiến thức sức khỏe','/uploads/articles/09ac3ebe914af27173caa06882828273.jpg','*Dịch tả lợn châu Phi là bệnh ở lợn nuôi và lợn rừng, gây thiệt hại lớn cho chăn nuôi. Hiểu đúng về bệnh giúp người dân tránh hoang mang và thực hiện những biện pháp hạn chế phát tán mầm bệnh.*
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-09T01:21:00+00:00'),
-(33,1,'Tư liệu truyền thông về mpox','tu-lieu-truyen-thong-ve-mpox','Y học thường thức','/uploads/articles/a3a3befb4c430ba35dca80646230561d.jpg','*Bộ poster giới thiệu chủ đề mpox. Tài liệu tổng quan của WHO được liên kết để người đọc đối chiếu thông tin.*
+## Phân biệt bệnh ở động vật với nguy cơ ở người
 
-## Đọc và đối chiếu thông tin
+Theo Tổ chức Thú y Thế giới, vi rút dịch tả lợn châu Phi không gây bệnh cho người. Tuy vậy, dịch có thể ảnh hưởng nghiêm trọng đến đàn lợn, sinh kế và chuỗi cung ứng thực phẩm.
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+Người tiêu dùng vẫn cần chọn thịt có nguồn gốc được kiểm soát và chế biến đúng vệ sinh. Thông tin một bệnh không lây sang người không có nghĩa mọi sản phẩm không rõ nguồn gốc đều an toàn để sử dụng.
 
-## Nguồn đọc thêm
+![Dấu hiệu mắc bệnh ở lợn và biện pháp an toàn sinh học trong phòng dịch tả lợn châu Phi.](/uploads/articles/09ac3ebe914af27173caa06882828273.jpg "Dấu hiệu mắc bệnh ở lợn và biện pháp an toàn sinh học trong phòng dịch tả lợn châu Phi.")
 
-[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/mpox).
+## Con người có thể làm mầm bệnh di chuyển
 
-## Hình ảnh minh họa
+Vi rút có thể tồn tại trên phương tiện, giày dép, quần áo, dụng cụ và một số sản phẩm từ lợn. Vận chuyển hoặc sử dụng thức ăn thừa không được xử lý phù hợp có thể góp phần đưa mầm bệnh đến đàn lợn khác.
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/a3a3befb4c430ba35dca80646230561d.jpg "Poster sức khỏe do người dùng cung cấp")
+Ở cơ sở chăn nuôi, cần kiểm soát người và phương tiện ra vào, làm sạch dụng cụ và tuân thủ hướng dẫn an toàn sinh học. Người không có nhiệm vụ nên hạn chế ra vào khu đang có nghi ngờ dịch.
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-09T01:22:00+00:00'),
-(34,1,'Thông tin sức khỏe về COVID-19','thong-tin-suc-khoe-ve-covid-19','Y học thường thức','/uploads/articles/5089dc0513911c751cce6f2494813240.jpg','*Đây là tư liệu truyền thông về coronavirus. Bạn có thể theo dõi thông tin tổng quan và các tài liệu liên quan trên trang WHO.*
+## Khi phát hiện đàn lợn có biểu hiện bất thường
 
-## Đọc và đối chiếu thông tin
+Lợn sốt, bỏ ăn, có vùng da đổi màu hoặc chết bất thường cần được báo cho thú y địa phương. Dấu hiệu bên ngoài chỉ gợi ý; xác định bệnh cần xét nghiệm chuyên môn.
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+Không tự vận chuyển, bán chạy hoặc xử lý xác động vật theo cách làm phát tán ra môi trường. Ghi lại thời điểm phát hiện và những thay đổi của đàn để cung cấp cho đơn vị phụ trách.
 
-## Nguồn đọc thêm
+## Chia sẻ thông tin có nguồn
 
-[Thông tin từ WHO](https://www.who.int/health-topics/coronavirus).
+Trước khi chuyển tiếp tin về ổ dịch hoặc khuyến cáo tiêu dùng, cần kiểm tra cơ quan công bố và phạm vi áp dụng. Thông tin chính xác giúp việc phòng dịch tập trung vào hành động cần thiết và hỗ trợ người chăn nuôi phản ứng kịp thời.
 
-## Hình ảnh minh họa
+Nguồn: [WOAH — Dịch tả lợn châu Phi](https://www.woah.org/en/disease/african-swine-fever/).',1,'2026-10-09T01:20:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(32,1,'Đau mắt đỏ: vệ sinh đúng và nhận biết khi cần khám','dau-mat-do-doc-thong-tin-tu-nguon-chinh-thong','Kiến thức sức khỏe','/uploads/articles/a27b33ba114fbca36ad72b1466487c1d.jpg','*Mắt đỏ có thể do vi rút, vi khuẩn, dị ứng hoặc những nguyên nhân khác. Giữ vệ sinh giúp hạn chế lây trong một số trường hợp, còn đau mắt, sợ ánh sáng và nhìn mờ là những dấu hiệu cần được khám.*
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/5089dc0513911c751cce6f2494813240.jpg "Poster sức khỏe do người dùng cung cấp")
+## Đừng kết luận chỉ vì thấy mắt đỏ
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-09T01:23:00+00:00'),
-(35,1,'Tìm hiểu về bệnh thương hàn','tim-hieu-ve-benh-thuong-han','Y học thường thức','/uploads/articles/d5adc9f5cb294f44571b82c7122ab85f.jpg','*Thương hàn do vi khuẩn Salmonella Typhi gây ra, thường liên quan đến thực phẩm hoặc nước bị nhiễm bẩn.*
+Viêm kết mạc thường gây đỏ, chảy nước mắt, ngứa hoặc ghèn. Tuy nhiên, biểu hiện giống nhau không luôn có cùng nguyên nhân, nên thuốc từng dùng trong một đợt đau mắt trước chưa chắc phù hợp với lần này.
 
-## Đọc và đối chiếu thông tin
+Người đeo kính áp tròng, trẻ sơ sinh hoặc người có thị lực thay đổi cần được đánh giá phù hợp. Khi đi khám, mang thông tin thuốc nhỏ mắt đã sử dụng và cho biết triệu chứng bắt đầu ở mắt nào.
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+![Khuyến cáo phòng đau mắt đỏ nhấn mạnh rửa tay và không dùng chung khăn, chậu rửa mặt.](/uploads/articles/a27b33ba114fbca36ad72b1466487c1d.jpg "Khuyến cáo phòng đau mắt đỏ nhấn mạnh rửa tay và không dùng chung khăn, chậu rửa mặt.")
 
-## Nguồn đọc thêm
+## Hạn chế lây qua tay và đồ dùng
 
-[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/typhoid).
+Rửa tay trước và sau khi chăm sóc mắt; tránh dụi mắt hoặc chạm đầu lọ thuốc vào mắt, tay và các bề mặt. Không dùng chung khăn mặt, mỹ phẩm mắt hoặc vật dụng có thể dính dịch tiết.
 
-## Hình ảnh minh họa
+Khi gia đình có người đau mắt, nên sắp xếp đồ dùng riêng và làm sạch những bề mặt hay chạm. Người hỗ trợ chăm sóc cũng cần vệ sinh tay sau khi tiếp xúc với khăn, giấy lau đã dùng.
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/d5adc9f5cb294f44571b82c7122ab85f.jpg "Poster sức khỏe do người dùng cung cấp")
+## Những lúc cần khám sớm
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-09T01:24:00+00:00'),
-(36,1,'Tư liệu truyền thông về bệnh dại','tu-lieu-truyen-thong-ve-benh-dai','Y học thường thức','/uploads/articles/7789421677ad2f69c8865edf54468e22.jpg','*Poster giới thiệu chủ đề bệnh dại được dùng làm tư liệu giáo dục sức khỏe. Đọc tài liệu WHO để đối chiếu thông tin hiện hành.*
+Đau rõ, nhạy cảm với ánh sáng, nhìn mờ hoặc triệu chứng tăng lên cần được khám. Trẻ sơ sinh có mắt đỏ hoặc tiết dịch cần được bác sĩ đánh giá ngay.
 
-## Đọc và đối chiếu thông tin
+Không tự dùng kéo dài thuốc nhỏ mắt, nhất là sản phẩm có corticoid hoặc thuốc được người khác chia sẻ. Điều trị phụ thuộc nguyên nhân, không chỉ nhằm làm mắt bớt đỏ.
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+![Bác sĩ dùng đèn khe kiểm tra mắt, giúp đánh giá các cấu trúc tại chuyên khoa mắt.](/uploads/articles/36d4acc110bbe26e4c5e79f55c73c3e6.png "Bác sĩ dùng đèn khe kiểm tra mắt, giúp đánh giá các cấu trúc tại chuyên khoa mắt.")
 
-## Nguồn đọc thêm
+## Khi quay lại sinh hoạt tập thể
 
-[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/rabies).
+Trao đổi với nhân viên y tế về thời điểm trở lại lớp học hoặc nơi làm việc nếu còn triệu chứng. Cách sắp xếp nên tính đến mức tiếp xúc gần, điều kiện vệ sinh và hướng dẫn tại cơ sở, thay vì tự đặt một số ngày nghỉ giống nhau cho mọi người.
 
-## Hình ảnh minh họa
+Nguồn: [CDC — Viêm kết mạc](https://www.cdc.gov/conjunctivitis/about/index.html).',1,'2026-10-09T01:21:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(33,1,'Mpox: nhận biết biểu hiện và phòng lây khi tiếp xúc gần','tu-lieu-truyen-thong-ve-mpox','Kiến thức sức khỏe','/uploads/articles/a3a3befb4c430ba35dca80646230561d.jpg','*Mpox có thể gây tổn thương da hoặc niêm mạc, đôi khi đi cùng sốt, đau người và nổi hạch. Nhận biết sớm, hạn chế tiếp xúc khi nghi bệnh và tìm tư vấn giúp bảo vệ người bệnh cùng những người ở gần.*
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/7789421677ad2f69c8865edf54468e22.jpg "Poster sức khỏe do người dùng cung cấp")
+## Biểu hiện cần được đánh giá trong bối cảnh
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-08T01:25:00+00:00'),
-(37,1,'Cúm mùa và thông tin cần tìm hiểu','cum-mua-va-thong-tin-can-tim-hieu','Y học thường thức','/uploads/articles/c4dbea520a8654fbb3ca3f54bf61440b.jpg','*Cúm mùa là bệnh nhiễm trùng đường hô hấp do virus cúm. WHO cung cấp tài liệu tổng quan về căn bệnh này.*
+Phát ban hoặc vết loét có thể xuất hiện ở những vị trí khác nhau. Các triệu chứng có thể đi kèm mệt, đau đầu hoặc sưng hạch, nhưng không phải ai cũng có cùng trình tự biểu hiện.
 
-## Đọc và đối chiếu thông tin
+Một tổn thương trên da chưa đủ để tự kết luận mpox. Khi đến khám, nên cung cấp thời điểm xuất hiện, tiếp xúc gần đây và những thuốc đã dùng; nhân viên y tế sẽ cân nhắc khám và xét nghiệm cần thiết.
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+![Thông tin về triệu chứng, đường lây và sáu nhóm biện pháp phòng tránh bệnh mpox trên tài liệu truyền thông.](/uploads/articles/a3a3befb4c430ba35dca80646230561d.jpg "Thông tin về triệu chứng, đường lây và sáu nhóm biện pháp phòng tránh bệnh mpox trên tài liệu truyền thông.")
 
-## Nguồn đọc thêm
+## Chú ý tiếp xúc gần và đồ dùng nhiễm bẩn
 
-[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)).
+Mpox có thể lây qua tiếp xúc gần với người mắc bệnh, vật dụng bị nhiễm hoặc động vật nhiễm bệnh. Người chăm sóc cần tránh chạm trực tiếp vào tổn thương và làm theo hướng dẫn vệ sinh, bảo vệ tại nơi điều trị.
 
-## Hình ảnh minh họa
+Khi nghi mắc bệnh, hạn chế tiếp xúc gần, không dùng chung khăn, quần áo hoặc đồ giường và chủ động liên hệ cơ sở y tế. Không tự làm vỡ tổn thương hay sử dụng các sản phẩm không rõ thành phần để bôi lên da.
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/c4dbea520a8654fbb3ca3f54bf61440b.jpg "Poster sức khỏe do người dùng cung cấp")
+## Chăm sóc cần đi cùng đánh giá nguy cơ
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-08T01:26:00+00:00'),
-(38,1,'Thư viện poster truyền thông về coronavirus','thu-vien-poster-truyen-thong-ve-coronavirus','Y học thường thức','/uploads/articles/9ec20652c1431e12861a804f189c4c8f.jpg','*Tư liệu truyền thông giúp giới thiệu chủ đề coronavirus tới người đọc. Liên kết WHO cung cấp thông tin tổng quan để tham khảo thêm.*
+Trẻ nhỏ, phụ nữ mang thai và người suy giảm miễn dịch cần được chú ý khi có nghi ngờ nhiễm bệnh. Nhân viên y tế sẽ hướng dẫn việc chăm sóc, xử lý đồ dùng và theo dõi theo tình trạng từng người.
 
-## Đọc và đối chiếu thông tin
+Các biện pháp dự phòng, bao gồm việc có cần tiêm chủng hay không, phải dựa vào nguy cơ và hướng dẫn y tế đang áp dụng. Không lấy khuyến cáo dành cho một nhóm tiếp xúc để áp dụng cho tất cả mọi người.
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+## Tôn trọng người bệnh khi trao đổi thông tin
 
-## Nguồn đọc thêm
+Cung cấp thông tin tiếp xúc cho nhân viên có trách nhiệm và giữ kín những chi tiết cá nhân không cần công khai. Tránh kỳ thị giúp người có triệu chứng dễ tìm chăm sóc và phối hợp phòng bệnh hơn.
 
-[Thông tin từ WHO](https://www.who.int/health-topics/coronavirus).
+Nguồn: [WHO — Mpox](https://www.who.int/news-room/fact-sheets/detail/mpox).',1,'2026-10-09T01:22:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(34,1,'COVID-19: theo dõi triệu chứng và bảo vệ người có nguy cơ','thong-tin-suc-khoe-ve-covid-19','Kiến thức sức khỏe','/uploads/articles/d881bd16e45d49c0c1dae1b5e2e92d2c.jpg','*COVID-19 có thể ảnh hưởng khác nhau tùy tuổi và tình trạng sức khỏe. Theo dõi diễn biến, tìm tư vấn sớm cho người có nguy cơ và hạn chế lây cho người khác vẫn là những việc cần quan tâm.*
 
-## Hình ảnh minh họa
+## Triệu chứng cần được nhìn cùng tình trạng toàn thân
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/9ec20652c1431e12861a804f189c4c8f.jpg "Poster sức khỏe do người dùng cung cấp")
+Ho, sốt, đau họng hoặc mệt có thể gặp trong COVID-19 và nhiều bệnh hô hấp khác. Việc có cần xét nghiệm hay không phụ thuộc tình huống, nguy cơ và đánh giá của nhân viên y tế.
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-08T01:27:00+00:00'),
-(39,1,'Tìm hiểu các chủ đề sức khỏe khi giao mùa','tim-hieu-cac-chu-de-suc-khoe-khi-giao-mua','Y học thường thức','/uploads/articles/622a5a3a812e0bf79bbb7a62bf811a94.jpg','*Giao mùa là dịp nhắc nhở việc tìm hiểu thông tin sức khỏe. Bài viết giới thiệu poster và nguồn đọc thêm về cúm mùa.*
+Người cao tuổi, người có bệnh nền hoặc suy giảm miễn dịch cần chú ý hơn khi bắt đầu có triệu chứng. Khi tìm tư vấn, hãy thông báo bệnh đang điều trị và toàn bộ thuốc sử dụng để hỗ trợ lựa chọn chăm sóc.
 
-## Đọc và đối chiếu thông tin
+![Bác sĩ nghe tim phổi trong lúc thăm khám người bệnh tại giường.](/uploads/articles/d881bd16e45d49c0c1dae1b5e2e92d2c.jpg "Bác sĩ nghe tim phổi trong lúc thăm khám người bệnh tại giường.")
 
-Poster là tư liệu truyền thông trong thư viện ảnh. Nội dung có thể được biên soạn ở thời điểm khác; các mốc thời gian và thông tin dịch tễ trên ảnh không được dùng để xác nhận tình hình hiện tại.
+## Giảm tiếp xúc khi đang ốm
 
-## Nguồn đọc thêm
+Ở nhà khi mắc bệnh hô hấp, hạn chế tiếp xúc gần và lựa chọn biện pháp bảo vệ phù hợp khi cần ở cùng người khác. Giữ vệ sinh tay, che miệng khi ho và cải thiện không khí trong không gian chung.
 
-[Thông tin từ WHO](https://www.who.int/news-room/fact-sheets/detail/influenza-(seasonal)).
+Đặc biệt quan tâm người dễ bệnh nặng trong gia đình. Có thể thống nhất trước cách hỗ trợ ăn uống, liên hệ y tế và những việc ai sẽ đảm nhận nếu một thành viên phải nghỉ ngơi.
 
-## Hình ảnh minh họa
+## Dấu hiệu không nên chờ theo dõi thêm
 
-![Poster sức khỏe do người dùng cung cấp](/uploads/articles/622a5a3a812e0bf79bbb7a62bf811a94.jpg "Poster sức khỏe do người dùng cung cấp")
+Khó thở, đau hoặc tức ngực kéo dài, lú lẫn, khó đánh thức hoặc tình trạng xấu đi nhanh cần được đánh giá khẩn cấp. Đừng chỉ dựa vào việc có sốt hay không để quyết định mức độ nghiêm trọng.
 
-Ảnh do người dùng cung cấp, dùng minh họa cho đồ án NEU Medical; không mô tả một sự kiện, thành tích hoặc ca bệnh thực tế của bệnh viện.',1,'2026-10-08T01:28:00+00:00');
+Khi đi khám, mang thông tin xét nghiệm nếu có, ngày bắt đầu triệu chứng và thuốc đã sử dụng. Người bệnh không nên tự dùng kháng sinh hoặc thuốc kháng vi rút theo đơn của người khác.
+
+## Cập nhật hướng dẫn theo thời điểm
+
+Lịch tiêm, dự phòng và cách tổ chức chăm sóc cần theo khuyến cáo hiện hành tại nơi sinh sống và tình trạng từng người. Kiểm tra ngày của tài liệu trước khi áp dụng, vì các quy định trong giai đoạn dịch trước có thể đã thay đổi.
+
+Nguồn: [WHO — COVID-19](https://www.who.int/news-room/fact-sheets/detail/coronavirus-disease-%28covid-19%29), [CDC — phòng bệnh hô hấp](https://www.cdc.gov/respiratory-viruses/prevention/index.html).',1,'2026-10-09T01:23:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(35,1,'Thương hàn: chú ý nước uống, thực phẩm và sốt kéo dài','tim-hieu-ve-benh-thuong-han','Kiến thức sức khỏe','/uploads/articles/d5adc9f5cb294f44571b82c7122ab85f.jpg','*Thương hàn lây chủ yếu qua thực phẩm hoặc nước nhiễm vi khuẩn Salmonella Typhi. Bảo đảm vệ sinh ăn uống và đi khám khi sốt kéo dài giúp hạn chế nguy cơ và tránh chậm trễ trong điều trị.*
+
+## Bệnh liên quan đến điều kiện nước và vệ sinh
+
+Người nhiễm có thể đưa vi khuẩn ra môi trường qua phân, làm nhiễm nguồn nước hoặc thức ăn nếu vệ sinh không bảo đảm. Cải thiện nước sạch, nhà vệ sinh và thực hành của người chế biến là những phần việc gắn chặt với phòng bệnh.
+
+Bệnh có thể gây sốt kéo dài, mệt, đau đầu, đau bụng, táo bón hoặc tiêu chảy. Các biểu hiện này cũng gặp ở nhiều bệnh khác, nên cần được khám và xét nghiệm theo chỉ định thay vì tự kết luận từ triệu chứng.
+
+![Các biện pháp phòng thương hàn trên tài liệu truyền thông: giám sát bệnh, nước sạch, vệ sinh và an toàn thực phẩm.](/uploads/articles/d5adc9f5cb294f44571b82c7122ab85f.jpg "Các biện pháp phòng thương hàn trên tài liệu truyền thông: giám sát bệnh, nước sạch, vệ sinh và an toàn thực phẩm.")
+
+## Chú ý những điểm dễ bỏ quên trong bữa ăn
+
+Không chỉ món ăn, đá uống và nước dùng rửa thực phẩm cũng cần có nguồn an toàn. Khi ăn xa nhà, ưu tiên món được nấu chín và phục vụ nóng; thận trọng với thực phẩm sống hoặc sản phẩm từ sữa chưa được xử lý phù hợp.
+
+Rửa tay sau khi đi vệ sinh và trước khi chuẩn bị bữa ăn. Nếu đang được điều trị thương hàn, hỏi bác sĩ về việc chế biến thức ăn cho người khác và những kiểm tra cần thực hiện trước khi trở lại công việc liên quan thực phẩm.
+
+## Điều trị phải theo chỉ định
+
+Thương hàn cần được bác sĩ đánh giá để chọn thuốc phù hợp. Tình trạng kháng kháng sinh làm việc tự mua thuốc càng khó bảo đảm hiệu quả; cần dùng đủ theo chỉ định và tái khám khi được yêu cầu.
+
+Khi đi khám, thông báo thời gian sốt, nơi đã đến, thực phẩm có thể liên quan và các thuốc đã dùng. Giữ thông tin đơn thuốc giúp bác sĩ biết quá trình trước đó nếu cần đánh giá lại.
+
+## Chuẩn bị trước chuyến đi
+
+Nếu đến nơi có nguy cơ, trao đổi trước với cơ sở y tế về phòng bệnh và tiêm chủng phù hợp. Vắc xin là một phần của dự phòng; nước sạch và thực hành ăn uống an toàn vẫn cần được duy trì.
+
+Nguồn: [WHO — Thương hàn](https://www.who.int/news-room/fact-sheets/detail/typhoid).',1,'2026-10-09T01:24:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(36,1,'Phòng bệnh dại: xử lý ngay sau khi bị động vật cắn hoặc cào','tu-lieu-truyen-thong-ve-benh-dai','Kiến thức sức khỏe','/uploads/articles/7789421677ad2f69c8865edf54468e22.jpg','*Sau khi bị động vật cắn, cào hoặc có nước bọt tiếp xúc với da tổn thương, cần xử lý vết thương và đến cơ sở y tế sớm. Không chờ xuất hiện triệu chứng bệnh dại mới tìm chăm sóc.*
+
+## Rửa vết thương ngay khi có thể
+
+Rửa kỹ vết cắn hoặc cào với xà phòng và nước chảy trong ít nhất 15 phút. Sau sơ cứu, đến cơ sở y tế để đánh giá nguy cơ; không đắp lá, bôi các chất không rõ thành phần hoặc trì hoãn để thử phương pháp dân gian.
+
+Ngay cả vết thương nhỏ cũng cần được xem xét theo tình huống tiếp xúc. Nếu nước bọt động vật vào mắt, miệng hoặc vùng da đã trầy xước, cần báo rõ khi được tư vấn.
+
+![Hướng dẫn phòng bệnh dại: tiêm phòng cho vật nuôi, quản lý chó mèo và đến cơ sở y tế sau khi bị cắn.](/uploads/articles/7789421677ad2f69c8865edf54468e22.jpg "Hướng dẫn phòng bệnh dại: tiêm phòng cho vật nuôi, quản lý chó mèo và đến cơ sở y tế sau khi bị cắn.")
+
+## Nhân viên y tế sẽ đánh giá những gì?
+
+Cung cấp thời điểm bị cắn, vị trí vết thương, loài động vật, tình trạng của con vật và lịch tiêm phòng dại trước đây của người bị phơi nhiễm. Nếu không nhớ hoặc không có hồ sơ, nói rõ để được hướng dẫn.
+
+Dự phòng sau phơi nhiễm có thể gồm vắc xin và, trong trường hợp có chỉ định, chế phẩm miễn dịch. Lựa chọn và lịch sử dụng do nhân viên y tế quyết định; không tự chờ theo dõi con vật thay cho việc đến khám.
+
+## Hoàn thành các bước được hướng dẫn
+
+Giữ phiếu hẹn, ghi lại nơi đã tiêm và đến đúng lịch được chỉ định. Nếu bỏ lỡ một mốc, liên hệ cơ sở tiêm để được hướng dẫn tiếp tục, không tự quyết định dừng hoặc tiêm lại toàn bộ.
+
+Khi con vật có thay đổi hoặc không còn theo dõi được, báo cho nhân viên phụ trách. Những thông tin mới cần được đánh giá trong kế hoạch đã lập, thay vì tự diễn giải tại nhà.
+
+## Phòng phơi nhiễm từ việc quản lý vật nuôi
+
+Tiêm phòng dại và quản lý chó, mèo theo hướng dẫn thú y; không để trẻ tự trêu chọc hay tiếp cận động vật lạ. Gia đình nên dạy trẻ báo ngay khi bị cắn hoặc cào, kể cả lúc vết xước có vẻ nhỏ.
+
+Nguồn: [WHO — chăm sóc vết thương và dự phòng sau phơi nhiễm](https://www.who.int/teams/control-of-neglected-tropical-diseases/rabies/vaccinations-and-immunization), [CDC — chăm sóc sau phơi nhiễm bệnh dại](https://www.cdc.gov/rabies/hcp/clinical-care/post-exposure-prophylaxis.html).',1,'2026-10-08T01:25:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(37,1,'Cúm mùa: chủ động phòng ngừa và theo dõi người có nguy cơ','cum-mua-va-thong-tin-can-tim-hieu','Kiến thức sức khỏe','/uploads/articles/c4dbea520a8654fbb3ca3f54bf61440b.jpg','*Cúm mùa có thể khởi phát nhanh với sốt, ho, đau mỏi và mệt. Phòng ngừa từ trước, đồng thời tìm tư vấn sớm cho người có nguy cơ giúp việc chăm sóc không bị chậm trễ.*
+
+## Cúm không chỉ là một cơn cảm lạnh
+
+Cúm là bệnh hô hấp do vi rút influenza. Nhiều người hồi phục sau thời gian nghỉ ngơi và chăm sóc phù hợp, nhưng một số có thể bị biến chứng hoặc bệnh nền nặng lên.
+
+Phụ nữ mang thai, trẻ nhỏ, người cao tuổi, người mắc bệnh mạn tính hoặc suy giảm miễn dịch cần được chú ý. Khi có triệu chứng, nên liên hệ cơ sở y tế sớm để được đánh giá và tư vấn hướng xử trí.
+
+![Đồ họa về cúm mùa trình bày đường lây và những thói quen giúp phòng bệnh trong sinh hoạt.](/uploads/articles/c4dbea520a8654fbb3ca3f54bf61440b.jpg "Đồ họa về cúm mùa trình bày đường lây và những thói quen giúp phòng bệnh trong sinh hoạt.")
+
+## Phòng bệnh trước khi xuất hiện triệu chứng
+
+Tiêm phòng cúm theo khuyến cáo là biện pháp dự phòng quan trọng. Người đi tiêm nên cung cấp tuổi, bệnh nền, tình trạng mang thai và phản ứng từng gặp để được tư vấn phù hợp.
+
+Duy trì vệ sinh tay, che miệng khi ho và cải thiện không khí trong nhà. Khi cần ở nơi đông người hoặc gần người dễ bệnh nặng, có thể bổ sung khẩu trang và hạn chế tiếp xúc gần.
+
+## Theo dõi khi trong nhà có người mắc bệnh
+
+Tạo điều kiện nghỉ ngơi và chú ý khả năng ăn uống, mức tỉnh táo, cách thở. Không dùng một đơn thuốc chung cho mọi thành viên, nhất là khi có trẻ nhỏ hoặc người đang điều trị bệnh khác.
+
+Khó thở, đau ngực, lơ mơ hoặc tình trạng xấu đi sau khi đã có vẻ cải thiện cần được đánh giá kịp thời. Kháng sinh không điều trị vi rút cúm; việc sử dụng thuốc cần theo chỉ định cho tình trạng cụ thể.
+
+![Thăm khám tim phổi giúp bác sĩ đánh giá tình trạng người bệnh khi có biểu hiện hô hấp.](/uploads/articles/d881bd16e45d49c0c1dae1b5e2e92d2c.jpg "Thăm khám tim phổi giúp bác sĩ đánh giá tình trạng người bệnh khi có biểu hiện hô hấp.")
+
+## Chuẩn bị thông tin cho lần khám
+
+Ghi ngày bắt đầu sốt, mức thay đổi của triệu chứng và thuốc đã dùng. Với người đang có bệnh nền, mang theo hồ sơ gần nhất để bác sĩ xem xét kế hoạch chăm sóc trong bối cảnh đầy đủ hơn.
+
+Nguồn: [WHO — cúm mùa](https://www.who.int/news-room/fact-sheets/detail/influenza-%28seasonal%29), [CDC — phòng bệnh hô hấp](https://www.cdc.gov/respiratory-viruses/prevention/index.html).',1,'2026-10-08T01:26:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(38,1,'Không khí sạch và vệ sinh: giảm nguy cơ lây bệnh hô hấp','thu-vien-poster-truyen-thong-ve-coronavirus','Kiến thức sức khỏe','/uploads/articles/9ec20652c1431e12861a804f189c4c8f.jpg','*Không khí trong phòng là một phần của phòng bệnh hô hấp. Bên cạnh rửa tay và giữ đồ dùng sạch, cần quan tâm cách đưa không khí ngoài trời vào, giảm nơi bí khí và bảo vệ người có nguy cơ khi phải tiếp xúc gần.*
+
+## Vì sao cần chú ý không gian kín?
+
+Khi nhiều người cùng ở trong một căn phòng, không khí được dùng chung trong suốt thời gian sinh hoạt. Việc lau bề mặt không thay thế được các biện pháp cải thiện không khí và hạn chế tiếp xúc khi có người đang mắc bệnh.
+
+Có thể cân nhắc tăng thông gió tự nhiên khi an toàn và điều kiện bên ngoài phù hợp, bảo trì hệ thống thông khí hoặc dùng thiết bị lọc khí phù hợp với không gian. Mỗi nơi cần lựa chọn cách làm theo điều kiện thực tế.
+
+![Đồ họa về đường lây và phòng bệnh hô hấp qua vệ sinh tay, che miệng khi ho và hạn chế tiếp xúc khi có triệu chứng.](/uploads/articles/9ec20652c1431e12861a804f189c4c8f.jpg "Đồ họa về đường lây và phòng bệnh hô hấp qua vệ sinh tay, che miệng khi ho và hạn chế tiếp xúc khi có triệu chứng.")
+
+## Sắp xếp sinh hoạt để giảm tiếp xúc kéo dài
+
+Nếu có thể, chọn hoạt động ngoài trời hoặc nơi thông thoáng hơn cho các cuộc gặp. Trong nhà, cân nhắc số người, thời gian ở cùng và nhu cầu bảo vệ những người dễ bệnh nặng.
+
+Khi có người ho hoặc sốt, nên điều chỉnh sinh hoạt chung, tạo điều kiện nghỉ ngơi và bổ sung biện pháp bảo vệ khi cần ở gần. Cách sắp xếp đơn giản, dễ làm giúp các thành viên tuân thủ tốt hơn.
+
+## Giữ vệ sinh đi cùng cải thiện không khí
+
+Rửa tay ở những thời điểm cần thiết và làm sạch các bề mặt thường chạm. Xử lý khăn giấy đã dùng, giữ đồ dùng chăm sóc gọn gàng và nhắc nhau che miệng khi ho, hắt hơi.
+
+Không đưa hóa chất vệ sinh vào không khí để tự khử khuẩn nơi có người ở. Dùng sản phẩm đúng hướng dẫn và bảo đảm trẻ nhỏ không tiếp cận được hóa chất hoặc thiết bị đang sử dụng.
+
+## Kiểm tra định kỳ thay vì chờ có người ốm
+
+Gia đình hoặc nơi làm việc có thể ghi lịch vệ sinh, thay bộ lọc và kiểm tra hệ thống theo hướng dẫn nhà sản xuất. Một người phụ trách rõ ràng giúp các công việc bảo trì không bị bỏ sót.
+
+Phòng bệnh là sự phối hợp giữa không gian, thói quen và cách ứng xử khi có triệu chứng. Những điều chỉnh nhỏ được duy trì thường xuyên có giá trị hơn việc chỉ làm đồng loạt trong vài ngày.
+
+Nguồn: [CDC — cải thiện chất lượng không khí để phòng bệnh hô hấp](https://www.cdc.gov/respiratory-viruses/prevention/air-quality.html).',1,'2026-10-08T01:27:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07'),
+(39,1,'Giao mùa: phân biệt triệu chứng để tìm hướng chăm sóc phù hợp','tim-hieu-cac-chu-de-suc-khoe-khi-giao-mua','Kiến thức sức khỏe','/uploads/articles/622a5a3a812e0bf79bbb7a62bf811a94.jpg','*Khi thời tiết thay đổi, ho, sổ mũi, sốt hoặc phát ban có thể xuất hiện do nhiều nguyên nhân. Đọc đúng triệu chứng và biết giới hạn của việc tự theo dõi giúp gia đình tìm hướng chăm sóc phù hợp.*
+
+## Giao mùa không phải tên một bệnh
+
+Cúm, viêm đường hô hấp, sởi, tay chân miệng và viêm mũi dị ứng có cơ chế khác nhau. Một số bệnh có thể lây, trong khi dị ứng lại cần được đánh giá theo những yếu tố kích phát riêng.
+
+Vì vậy, không nên gọi mọi biểu hiện ho hoặc hắt hơi là cảm do thời tiết. Ghi thời điểm xuất hiện, biểu hiện đi kèm và mức ảnh hưởng sinh hoạt sẽ hữu ích hơn việc tự đặt tên bệnh từ một triệu chứng.
+
+![Năm nhóm bệnh được nhắc trong khuyến cáo giao mùa: cúm, sởi, tay chân miệng, viêm đường hô hấp và viêm mũi dị ứng.](/uploads/articles/622a5a3a812e0bf79bbb7a62bf811a94.jpg "Năm nhóm bệnh được nhắc trong khuyến cáo giao mùa: cúm, sởi, tay chân miệng, viêm đường hô hấp và viêm mũi dị ứng.")
+
+## Quan sát những thay đổi có ý nghĩa
+
+Ở trẻ nhỏ, cần chú ý cách thở, khả năng bú hoặc uống, sự tỉnh táo và mức thay đổi so với bình thường. Ở người có bệnh mạn tính, theo dõi thêm những dấu hiệu đã được bác sĩ dặn từ trước.
+
+Khi xuất hiện khó thở, li bì, co giật hoặc diễn biến nặng nhanh, cần tìm chăm sóc khẩn cấp. Không chờ xem thời tiết ấm lên hoặc nhiệt độ hạ xuống mới quyết định đi khám.
+
+## Chọn biện pháp phòng ngừa đúng hướng
+
+Giữ vệ sinh tay, nhà ở sạch và không khí thông thoáng hỗ trợ phòng các bệnh hô hấp. Kiểm tra lịch tiêm với nhân viên y tế để biết những bệnh nào có vắc xin phù hợp tuổi và tiền sử.
+
+Nếu có biểu hiện gợi ý dị ứng tái diễn, ghi lại hoàn cảnh xuất hiện như tiếp xúc bụi, thay đổi môi trường hoặc thời điểm trong ngày để trao đổi khi đi khám. Không tự dùng cùng một loại thuốc cho cả nhà.
+
+![Bác sĩ trao đổi với gia đình trong buổi khám trẻ nhỏ để ghi nhận triệu chứng và hướng dẫn theo dõi.](/uploads/articles/d15603e6fc1db7baf5c53ee9ac7f0ab3.png "Bác sĩ trao đổi với gia đình trong buổi khám trẻ nhỏ để ghi nhận triệu chứng và hướng dẫn theo dõi.")
+
+## Chuẩn bị cho buổi tư vấn
+
+Mang theo sổ tiêm, hồ sơ bệnh cũ và tên những thuốc đã sử dụng. Một ghi chú ngắn về diễn biến giúp bác sĩ hiểu câu chuyện sức khỏe rõ hơn và hướng dẫn gia đình những việc cần làm tiếp theo.
+
+Nguồn: [CDC — các biện pháp phòng bệnh hô hấp](https://www.cdc.gov/respiratory-viruses/prevention/index.html), [WHO — cúm mùa](https://www.who.int/news-room/fact-sheets/detail/influenza-%28seasonal%29).',1,'2026-10-08T01:28:00+00:00','2026-10-14T16:40:12.227821+00:00','2026-10-15 12:00:00+07');
 
 -- Incremental demo content: fill empty department profiles; never overwrite administrator content.
 UPDATE department SET overview='Khoa Nội tổng quát trong mô hình NEU Medical tập trung vào khám, tư vấn và theo dõi sức khỏe trong lĩnh vực nội tổng quát. Đội ngũ bác sĩ phối hợp với điều dưỡng để tiếp nhận thông tin, đánh giá nhu cầu khám và hướng dẫn các bước tiếp theo.
 
 Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
     mission='Phát triển hoạt động nội tổng quát với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
-    cover_image_url='/uploads/articles/b6f491239f14078bc972158ca5f8eb1d.jpg',
+    cover_image_url='/uploads/articles/aabe2deb72fab7ca6aff745508f1e993.png',
     group_type='CLINICAL',
     specialties='["Nội khoa tổng quát", "Theo dõi bệnh lý mạn tính", "Đánh giá sức khỏe ban đầu"]'::jsonb,
     clinical_services='["Khám và tư vấn chuyên khoa nội tổng quát", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
     equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
     achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực nội tổng quát", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
     patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
-    gallery='[{"url": "/uploads/articles/b6f491239f14078bc972158ca5f8eb1d.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Nội tổng quát"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    gallery='[{"url": "/uploads/articles/aabe2deb72fab7ca6aff745508f1e993.png", "caption": "Bác sĩ dùng ống nghe thăm khám cho người bệnh tại phòng khám."}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Dãy ghế chờ được bố trí dọc hành lang bên ngoài các phòng khám."}]'::jsonb,
     extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Nội tổng quát và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
     content_is_demo=1,
     version=version+1,
@@ -1579,14 +1700,14 @@ UPDATE department SET overview='Khoa Tim mạch trong mô hình NEU Medical tậ
 
 Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
     mission='Phát triển hoạt động tim mạch với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
-    cover_image_url='/uploads/articles/b6df1b1ed14289fff99a16ee3ba9b283.jpg',
+    cover_image_url='/uploads/articles/67c51a87dd71b58d9d3114eb58277565.png',
     group_type='CLINICAL',
     specialties='["Tim mạch nội khoa", "Đánh giá yếu tố nguy cơ tim mạch", "Theo dõi sức khỏe tim mạch"]'::jsonb,
     clinical_services='["Khám và tư vấn chuyên khoa tim mạch", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
     equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
     achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực tim mạch", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
     patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
-    gallery='[{"url": "/uploads/articles/b6df1b1ed14289fff99a16ee3ba9b283.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Tim mạch"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    gallery='[{"url": "/uploads/articles/67c51a87dd71b58d9d3114eb58277565.png", "caption": "Bác sĩ trao đổi với người bệnh tại phòng khám tim mạch."}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Dãy ghế chờ được bố trí dọc hành lang bên ngoài các phòng khám."}]'::jsonb,
     extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Tim mạch và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
     content_is_demo=1,
     version=version+1,
@@ -1596,14 +1717,14 @@ UPDATE department SET overview='Khoa Da liễu trong mô hình NEU Medical tập
 
 Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
     mission='Phát triển hoạt động da liễu với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
-    cover_image_url='/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg',
+    cover_image_url='/uploads/articles/492696ff3a0f21110b55b9b927cf4b7c.png',
     group_type='CLINICAL',
     specialties='["Da, tóc và móng", "Tư vấn chăm sóc da", "Theo dõi bệnh lý da liễu"]'::jsonb,
     clinical_services='["Khám và tư vấn chuyên khoa da liễu", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
     equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
     achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực da liễu", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
     patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
-    gallery='[{"url": "/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Da liễu"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    gallery='[{"url": "/uploads/articles/492696ff3a0f21110b55b9b927cf4b7c.png", "caption": "Bác sĩ tư vấn và trao đổi với người bệnh tại phòng khám da liễu."}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Dãy ghế chờ được bố trí dọc hành lang bên ngoài các phòng khám."}]'::jsonb,
     extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Da liễu và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
     content_is_demo=1,
     version=version+1,
@@ -1613,14 +1734,14 @@ UPDATE department SET overview='Khoa Nhi trong mô hình NEU Medical tập trung
 
 Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
     mission='Phát triển hoạt động nhi với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
-    cover_image_url='/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg',
+    cover_image_url='/uploads/articles/d15603e6fc1db7baf5c53ee9ac7f0ab3.png',
     group_type='CLINICAL',
     specialties='["Nhi khoa tổng quát", "Theo dõi sự phát triển của trẻ", "Tư vấn chăm sóc sức khỏe trẻ em"]'::jsonb,
     clinical_services='["Khám và tư vấn chuyên khoa nhi", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
     equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
     achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực nhi", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
     patient_guide='["Chuẩn bị thông tin của trẻ và thông tin liên hệ của người đưa trẻ tới khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
-    gallery='[{"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Nhi"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    gallery='[{"url": "/uploads/articles/d15603e6fc1db7baf5c53ee9ac7f0ab3.png", "caption": "Bác sĩ khám và trao đổi với gia đình của trẻ tại phòng khám nhi."}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Dãy ghế chờ được bố trí dọc hành lang bên ngoài các phòng khám."}]'::jsonb,
     extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Nhi và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
     content_is_demo=1,
     version=version+1,
@@ -1630,14 +1751,14 @@ UPDATE department SET overview='Khoa Sản phụ khoa trong mô hình NEU Medica
 
 Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
     mission='Phát triển hoạt động sản phụ khoa với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
-    cover_image_url='/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg',
+    cover_image_url='/uploads/articles/fbbb1896f60a71a08cafaf9da711ea77.png',
     group_type='CLINICAL',
     specialties='["Sức khỏe phụ nữ", "Sản khoa", "Theo dõi và tư vấn phụ khoa"]'::jsonb,
     clinical_services='["Khám và tư vấn chuyên khoa sản phụ khoa", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
     equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
     achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực sản phụ khoa", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
     patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
-    gallery='[{"url": "/uploads/articles/a2fb8573cc51042d32bf044ffd18c48d.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Sản phụ khoa"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    gallery='[{"url": "/uploads/articles/fbbb1896f60a71a08cafaf9da711ea77.png", "caption": "Bác sĩ tư vấn cho người bệnh tại phòng khám sản phụ khoa."}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Dãy ghế chờ được bố trí dọc hành lang bên ngoài các phòng khám."}]'::jsonb,
     extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Sản phụ khoa và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
     content_is_demo=1,
     version=version+1,
@@ -1647,14 +1768,14 @@ UPDATE department SET overview='Khoa Tai Mũi Họng trong mô hình NEU Medical
 
 Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
     mission='Phát triển hoạt động tai mũi họng với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
-    cover_image_url='/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg',
+    cover_image_url='/uploads/articles/c84700e9069445ee64382f87ac4fbf40.png',
     group_type='CLINICAL',
     specialties='["Tai và thính lực", "Mũi xoang", "Họng và thanh quản"]'::jsonb,
     clinical_services='["Khám và tư vấn chuyên khoa tai mũi họng", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
     equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
     achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực tai mũi họng", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
     patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
-    gallery='[{"url": "/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Tai Mũi Họng"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    gallery='[{"url": "/uploads/articles/c84700e9069445ee64382f87ac4fbf40.png", "caption": "Bác sĩ thăm khám vùng mũi bằng dụng cụ chuyên khoa tai mũi họng."}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Dãy ghế chờ được bố trí dọc hành lang bên ngoài các phòng khám."}]'::jsonb,
     extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Tai Mũi Họng và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
     content_is_demo=1,
     version=version+1,
@@ -1664,14 +1785,14 @@ UPDATE department SET overview='Khoa Mắt trong mô hình NEU Medical tập tru
 
 Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
     mission='Phát triển hoạt động mắt với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
-    cover_image_url='/uploads/articles/a1da1b6c569a7d9bbb4699eb72350140.jpg',
+    cover_image_url='/uploads/articles/36d4acc110bbe26e4c5e79f55c73c3e6.png',
     group_type='CLINICAL',
     specialties='["Nhãn khoa", "Thị lực và tật khúc xạ", "Theo dõi sức khỏe mắt"]'::jsonb,
     clinical_services='["Khám và tư vấn chuyên khoa mắt", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
     equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
     achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực mắt", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
     patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
-    gallery='[{"url": "/uploads/articles/a1da1b6c569a7d9bbb4699eb72350140.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Mắt"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    gallery='[{"url": "/uploads/articles/36d4acc110bbe26e4c5e79f55c73c3e6.png", "caption": "Bác sĩ kiểm tra mắt bằng đèn khe tại phòng khám mắt."}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Dãy ghế chờ được bố trí dọc hành lang bên ngoài các phòng khám."}]'::jsonb,
     extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Mắt và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
     content_is_demo=1,
     version=version+1,
@@ -1681,14 +1802,14 @@ UPDATE department SET overview='Khoa Răng Hàm Mặt trong mô hình NEU Medica
 
 Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
     mission='Phát triển hoạt động răng hàm mặt với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
-    cover_image_url='/uploads/articles/68ac4ec856100afa305db91d25e5b83c.jpg',
+    cover_image_url='/uploads/articles/805b59568eab391ba78c3ea6a571c27f.png',
     group_type='CLINICAL',
     specialties='["Răng và nha chu", "Sức khỏe răng miệng", "Răng hàm mặt"]'::jsonb,
     clinical_services='["Khám và tư vấn chuyên khoa răng hàm mặt", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
     equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Ghế và thiết bị thăm khám nha khoa — nội dung minh họa", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
     achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực răng hàm mặt", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
     patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
-    gallery='[{"url": "/uploads/articles/68ac4ec856100afa305db91d25e5b83c.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Răng Hàm Mặt"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    gallery='[{"url": "/uploads/articles/805b59568eab391ba78c3ea6a571c27f.png", "caption": "Bác sĩ thăm khám vùng miệng và trao đổi với người bệnh tại phòng khám răng hàm mặt."}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Dãy ghế chờ được bố trí dọc hành lang bên ngoài các phòng khám."}]'::jsonb,
     extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Răng Hàm Mặt và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
     content_is_demo=1,
     version=version+1,
@@ -1698,14 +1819,14 @@ UPDATE department SET overview='Khoa Cơ Xương Khớp trong mô hình NEU Medi
 
 Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
     mission='Phát triển hoạt động cơ xương khớp với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
-    cover_image_url='/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg',
+    cover_image_url='/uploads/articles/0fd09b29e6d5e634589b0655346eaeb2.png',
     group_type='CLINICAL',
     specialties='["Cơ, xương và khớp", "Đánh giá chức năng vận động", "Theo dõi sức khỏe cơ xương khớp"]'::jsonb,
     clinical_services='["Khám và tư vấn chuyên khoa cơ xương khớp", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
     equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Trang thiết bị phục vụ thăm khám theo nhu cầu chuyên môn", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
     achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực cơ xương khớp", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
     patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
-    gallery='[{"url": "/uploads/articles/68178addee0c44c9a4121c22f11290dd.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Cơ Xương Khớp"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    gallery='[{"url": "/uploads/articles/0fd09b29e6d5e634589b0655346eaeb2.png", "caption": "Bác sĩ sử dụng mô hình cột sống khi tư vấn cho người bệnh."}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Dãy ghế chờ được bố trí dọc hành lang bên ngoài các phòng khám."}]'::jsonb,
     extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Cơ Xương Khớp và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
     content_is_demo=1,
     version=version+1,
@@ -1715,14 +1836,14 @@ UPDATE department SET overview='Khoa Thần kinh trong mô hình NEU Medical t�
 
 Người bệnh có thể tìm hiểu đội ngũ chuyên môn, xem hồ sơ bác sĩ và lựa chọn lịch khám phù hợp ngay trên website. Nội dung khoa và hình ảnh được xây dựng để minh họa cho đồ án.',
     mission='Phát triển hoạt động thần kinh với tinh thần tận tâm, trao đổi rõ ràng và phối hợp chuyên môn; hướng đến trải nghiệm khám thuận tiện cho người bệnh và gia đình.',
-    cover_image_url='/uploads/articles/026d6ca08a42390c533aa56c98eff5fd.jpg',
+    cover_image_url='/uploads/articles/549016195c3bb4a48a0f3a608a842141.png',
     group_type='CLINICAL',
     specialties='["Thần kinh nội khoa", "Đánh giá triệu chứng thần kinh", "Theo dõi và tư vấn chuyên khoa"]'::jsonb,
     clinical_services='["Khám và tư vấn chuyên khoa thần kinh", "Trao đổi kết quả khám và thông tin cận lâm sàng theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch của bác sĩ"]'::jsonb,
     equipment='["Không gian tiếp đón và phòng khám chuyên khoa", "Hình ảnh minh họa thiết bị chẩn đoán hình ảnh", "Hệ thống hỗ trợ tra cứu thông tin và đăng ký lịch khám"]'::jsonb,
     achievements='["Xây dựng chương trình bồi dưỡng chuyên môn trong lĩnh vực thần kinh", "Phát triển sáng kiến cải thiện hướng dẫn và tiếp đón người bệnh", "Tổ chức các buổi sinh hoạt chuyên môn giữa bác sĩ và điều dưỡng"]'::jsonb,
     patient_guide='["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và thông tin thuốc đang sử dụng nếu có.", "Kiểm tra lại bác sĩ, ngày và khung giờ trước khi xác nhận lịch khám.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb,
-    gallery='[{"url": "/uploads/articles/026d6ca08a42390c533aa56c98eff5fd.jpg", "caption": "Không gian và hoạt động chuyên môn — ảnh minh họa cho khoa Thần kinh"}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Khu vực chờ và tiếp đón — ảnh minh họa"}]'::jsonb,
+    gallery='[{"url": "/uploads/articles/549016195c3bb4a48a0f3a608a842141.png", "caption": "Bác sĩ giải thích hình ảnh chụp não trên màn hình cho người bệnh."}, {"url": "/uploads/articles/e46b7bb59a7b5fe5063a0303e25a2038.jpg", "caption": "Dãy ghế chờ được bố trí dọc hành lang bên ngoài các phòng khám."}]'::jsonb,
     extra_sections='[{"title": "Phối hợp chăm sóc người bệnh", "content": "Bác sĩ khoa Thần kinh và điều dưỡng phối hợp tiếp nhận thông tin, hỗ trợ người đi khám và trao đổi với các chuyên khoa khác khi cần. Bạn có thể liên hệ bộ phận hỗ trợ để được hướng dẫn lựa chọn khoa."}]'::jsonb,
     content_is_demo=1,
     version=version+1,

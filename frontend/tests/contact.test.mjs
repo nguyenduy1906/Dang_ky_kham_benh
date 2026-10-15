@@ -1,7 +1,7 @@
 import test, { beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { initContactInfo } from "../static/js/core/contact-info.js";
+import { initContactInfo } from "../static/js/core/contact_info.js";
 import { setAccessToken } from "../static/js/core/api.js";
 
 class Node {

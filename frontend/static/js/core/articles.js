@@ -1,7 +1,7 @@
 import { API_CONFIG } from "../config.js";
 import { ApiError } from "./api.js";
 import { listArticles } from "../api/article.js";
-import { displayText } from "./display-text.js";
+import { displayText } from "./display_text.js";
 
 const publicPages = new URL("../../../templates/public/", import.meta.url);
 const dateFormat = new Intl.DateTimeFormat("vi-VN", {
@@ -71,7 +71,7 @@ export function articleCard(article) {
   date.textContent = publishedDate(article.published_at);
   if (date.textContent) date.dateTime = article.published_at;
   body.append(title, date);
-  link.append(articleThumbnail(article), body);
+  link.append(articleThumbnail(article, displayText(article.title)), body);
   return link;
 }
 

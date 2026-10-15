@@ -1,4 +1,4 @@
-import("./contact-info.js").then(module => module.initContactInfo());
+import("./contact_info.js").then(module => module.initContactInfo());
 
 const panels = {
   privacy: [

@@ -10,6 +10,7 @@ const retry = document.querySelector("#news-retry");
 const pager = document.querySelector("#news-pagination");
 const previous = document.querySelector("#news-prev");
 const next = document.querySelector("#news-next");
+const pages = document.querySelector("#news-pages");
 const form = document.querySelector("#news-filter-form");
 const filters = document.querySelector("#news-filters");
 const params = new URLSearchParams(location.search);
@@ -22,6 +23,8 @@ let version = 0;
 let categoryRequest;
 let otherRequest;
 let otherVersion = 0;
+let loading = false, totalPages = 1;
+let searchTimer;
 
 if (form) { form.elements.q.value = query; form.elements.category.value = category; }
 function saveFilters() {
@@ -36,7 +39,9 @@ function saveFilters() {
   if (activeLink) activeLink.href = url.href;
 }
 async function load() {
+  clearTimeout(searchTimer);
   const current = ++version;
+  loading = true;
   request?.abort(); request = new AbortController();
   grid.replaceChildren(); grid.setAttribute("aria-busy", "true");
   status.textContent = "Đang tải bài viết…"; retry.hidden = true; pager.hidden = true;
@@ -50,14 +55,26 @@ async function load() {
     status.textContent = result.total
       ? (home ? "" : `${result.total} bài viết${category ? ` · ${category}` : ""}`)
       : "Chưa có bài viết phù hợp.";
-    document.querySelector("#news-page").textContent = `Trang ${result.page} / ${lastPage}`;
+    totalPages = lastPage;
+    pages.replaceChildren();
+    for (let number = Math.max(1, result.page - 2); number <= Math.min(lastPage, result.page + 2); number++) {
+      const button = document.createElement("button");
+      button.type = "button"; button.textContent = String(number);
+      button.setAttribute("aria-label", `Trang ${number}`);
+      if (number === result.page) button.setAttribute("aria-current", "page");
+      button.addEventListener("click", () => {
+        if (loading || page === number) return;
+        page = number; load();
+      });
+      pages.append(button);
+    }
     previous.disabled = result.page <= 1; next.disabled = result.page >= lastPage;
     pager.hidden = lastPage <= 1;
     saveFilters();
   } catch (error) {
     if (current !== version || error.code === "CLIENT_ABORTED") return;
     status.textContent = error.message; retry.hidden = false;
-  } finally { if (current === version) grid.setAttribute("aria-busy", "false"); }
+  } finally { if (current === version) { loading = false; grid.setAttribute("aria-busy", "false"); } }
 }
 async function loadCategories() {
   categoryRequest?.abort(); categoryRequest = new AbortController();
@@ -81,16 +98,25 @@ async function loadCategories() {
     }
   } catch { /* The list/search still works when category suggestions cannot load. */ }
 }
-previous.addEventListener("click", () => { page--; load(); });
-next.addEventListener("click", () => { page++; load(); });
+previous.addEventListener("click", () => { if (!loading && page > 1) { page--; load(); } });
+next.addEventListener("click", () => { if (!loading && page < totalPages) { page++; load(); } });
 retry.addEventListener("click", () => { load(); loadCategories(); });
-form?.addEventListener("submit", event => {
-  event.preventDefault(); query = form.elements.q.value.trim(); category = form.elements.category.value.trim();
+function applyFilters() {
+  clearTimeout(searchTimer);
+  query = form.elements.q.value.trim(); category = form.elements.category.value.trim();
   page = 1; saveFilters(); load();
-});
-document.querySelector("#news-clear")?.addEventListener("click", () => {
-  form.reset(); query = ""; category = ""; page = 1; saveFilters(); load();
-});
+}
+function queueFilters(event) {
+  clearTimeout(searchTimer);
+  // Discard older results while typing, including Vietnamese IME input.
+  request?.abort(); version++; loading = true; pager.hidden = true;
+  status.textContent = "Đang tìm bài viết…";
+  if (!event.isComposing) searchTimer = setTimeout(applyFilters, 300);
+}
+form?.addEventListener("input", queueFilters);
+form?.addEventListener("compositionend", queueFilters);
+form?.addEventListener("change", applyFilters);
+form?.addEventListener("submit", event => { event.preventDefault(); applyFilters(); });
 filters?.addEventListener("click", event => {
   const button = event.target.closest("button[data-article-category]");
   if (!button || category === button.dataset.articleCategory) return;
@@ -121,6 +147,6 @@ async function loadOtherNews() {
   }
 }
 document.querySelector("#other-news-retry")?.addEventListener("click", loadOtherNews);
-window.addEventListener("pagehide", () => { request?.abort(); categoryRequest?.abort(); otherRequest?.abort(); });
+window.addEventListener("pagehide", () => { clearTimeout(searchTimer); request?.abort(); categoryRequest?.abort(); otherRequest?.abort(); });
 window.addEventListener("pageshow", event => { if (event.persisted) { load(); loadCategories(); loadOtherNews(); } });
 load(); loadCategories(); loadOtherNews();

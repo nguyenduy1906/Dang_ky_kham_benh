@@ -464,7 +464,7 @@ main [data-contact-field="support_phone"],
   margin-bottom: 5px;
 }
 .specialty-overview span {
-  font-size: 12px;
+  font-size: 20px;
   color: #65746b;
 }
 .specialty-list-heading {
@@ -493,7 +493,7 @@ main [data-contact-field="support_phone"],
 }
 .specialty-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 22px;
 }
 .specialty-card {
@@ -1509,7 +1509,7 @@ main [data-contact-field="support_phone"],
 .about-history-heading { max-width: 640px; margin-bottom: 48px; }
 .about-history h2 { font-size: clamp(28px, 3vw, 40px); line-height: 1.25; letter-spacing: 0; color: var(--ink); margin: 0 0 22px; }
 .about-history h2 > span { color: var(--green); }
-.about-sample-note { font-size: 14px; line-height: 1.7; color: var(--muted); margin: 0; }
+.about-sample-note { font-size: 13px; line-height: 1.7; color: var(--muted); margin: 0; }
 .about-timeline { list-style: none; position: relative; margin: 0; padding: 0; }
 .about-timeline::before { content: ""; position: absolute; width: 1px; background: #cbd7cf; left: 50%; top: 16px; bottom: 50px; }
 .about-timeline-item { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 64px; padding-bottom: 34px; }

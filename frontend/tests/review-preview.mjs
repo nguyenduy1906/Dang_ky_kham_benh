@@ -40,10 +40,10 @@ createServer(async (req, res) => {
     const rel = relative(root, target);
     if (rel.startsWith(".." + sep) || rel === "..") throw new Error("Outside fixture");
     let content = await readFile(target);
-    if (path === "/templates/(patient)/booking-review.html") {
+    if (path === "/templates/(patient)/booking_review.html") {
       content = content.toString().replace("<head>", "<head><script>" + setup + "</script>")
         .replace("<main id=\"main\"", "<p style=\"padding:12px;text-align:center;background:#fff4d4;margin:0\">Kiểm thử giao diện — dữ liệu tạm, không ghi database</p><main id=\"main\"");
     }
     res.writeHead(200, { "Content-Type": mime[extname(target)] || "application/octet-stream", "Cache-Control": "no-store" }); res.end(content);
   } catch { res.writeHead(404); res.end(); }
-}).listen(3101, "127.0.0.1", () => console.log("Isolated review fixture: http://127.0.0.1:3101/frontend/templates/(patient)/booking-review.html?draft=11111111-1111-4111-8111-111111111111"));
+}).listen(3101, "127.0.0.1", () => console.log("Isolated review fixture: http://127.0.0.1:3101/frontend/templates/(patient)/booking_review.html?draft=11111111-1111-4111-8111-111111111111"));

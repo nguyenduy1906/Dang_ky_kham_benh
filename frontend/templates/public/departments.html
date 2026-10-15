@@ -4,11 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Chuyên khoa | NEU Medical</title>
-    <link rel="stylesheet" href="../../static/css/home.css?v=20261014-banner-sharp" />
-    <link rel="stylesheet" href="../../static/css/public-pages.css?v=20261014-interface-update" />
+    <link rel="stylesheet" href="../../static/css/home.css?v=20261015-vietnamese-motto" />
+    <link rel="stylesheet" href="../../static/css/public_pages.css?v=20261015-specialty-pagination" />
     <script src="../../static/js/core/navigation.js?v=20261013-auth1" defer></script>
     <script src="../../static/js/core/public.js?v=20261014-interface-update" defer></script>
-    <script src="../../static/js/pages/departments.js?v=20261014-interface-update" type="module"></script>
+    <script src="../../static/js/pages/departments.js?v=20261015-specialty-pagination" type="module"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Đến nội dung chính</a>
@@ -27,7 +27,7 @@
         <a class="brand" href="home.html"
           ><img
             class="brand-logo"
-            src="../../static/assets/logo_neu.png"
+            src="../../static/assets/bieu_trung_neu.png"
             alt="Logo NEU Medical"
             width="68"
             height="68"
@@ -50,7 +50,7 @@
     </header>
     <main id="main" class="specialty-page">
       <div class="page-title">
-        <img class="page-title-photo" src="../../static/assets/clinic/nội_khoa.jpg" alt="" aria-hidden="true" />
+        <img class="page-title-photo" src="../../static/assets/clinic/thiet_bi_chup_c_arm.jpg" alt="" aria-hidden="true" />
         <div class="section-wrap"><h1>Chuyên khoa</h1><p><a href="home.html">Trang chủ</a> / Chuyên khoa</p></div>
       </div>
       <div class="section-wrap">
@@ -73,10 +73,10 @@
             </div>
           </div>
           <div class="specialty-overview">
-            <div><strong id="specialty-total">…</strong><span>Chuyên khoa</span></div>
-            <div><strong id="specialty-doctors">…</strong><span>Bác sĩ đang hoạt động</span></div>
-            <div><strong>Một cơ sở</strong><span>NEU Medical · Hà Nội</span></div>
-            <div><strong>Online</strong><span>Giao diện đăng ký khám</span></div>
+            <div><span>Chuyên khoa</span><strong id="specialty-total">…</strong></div>
+            <div><span>Bác sĩ đang hoạt động</span><strong id="specialty-doctors">…</strong></div>
+            <div><span>Cơ sở</span><strong>NEU Medical · Hà Nội</strong></div>
+            <div><span>Đặt lịch khám</span><strong>Trực tuyến & Trực tiếp</strong></div>
           </div>
         </section>
         <div class="specialty-list-heading">
@@ -90,13 +90,18 @@
         <button id="specialty-retry" type="button" class="solid-button" hidden>Thử lại</button>
         <div class="specialty-grid" aria-busy="true"></div>
         <p id="specialty-empty" class="text-block" hidden>Chưa có chuyên khoa phù hợp. Hãy chọn bộ lọc khác hoặc đổi từ khóa.</p>
+        <nav id="specialty-pagination" class="directory-pagination" aria-label="Phân trang chuyên khoa" hidden>
+          <button type="button" id="specialty-prev" aria-label="Trang trước">‹</button>
+          <div id="specialty-pages"></div>
+          <button type="button" id="specialty-next">Tiếp theo ›</button>
+        </nav>
         <section class="equipment-section">
           <h2>Trang thiết bị chẩn đoán hình ảnh</h2>
           <p>Không gian thăm khám và trang thiết bị hỗ trợ chẩn đoán.</p>
           <div class="equipment-grid">
             <article class="equipment-card">
               <img
-                src="../../static/assets/clinic/media-chup-xquang.jpg"
+                src="../../static/assets/clinic/chup_cong_huong_tu.jpg"
                 alt="Chẩn đoán hình ảnh"
                 loading="lazy"
               />
@@ -108,7 +113,7 @@
             </article>
             <article class="equipment-card">
               <img
-                src="../../static/assets/clinic/nội_khoa.jpg"
+                src="../../static/assets/clinic/thiet_bi_chup_c_arm.jpg"
                 alt="Không gian khám nội khoa"
                 loading="lazy"
               />
@@ -120,7 +125,7 @@
             </article>
             <article class="equipment-card">
               <img
-                src="../../static/assets/clinic/media-hoi-suc.webp"
+                src="../../static/assets/clinic/giuong_benh_hoi_suc.webp"
                 alt="Khu vực hồi sức"
                 loading="lazy"
               />
@@ -140,7 +145,7 @@
               nhất 30 phút trước giờ hẹn.
             </p>
           </div>
-          <a class="outline-button" href="../(patient)/portal.html">Xem giao diện đặt lịch →</a>
+          <a class="outline-button" href="../(patient)/portal.html">Đặt lịch khám ngay →</a>
         </section>
         <p class="sample-caption">Tìm hiểu chuyên khoa và lựa chọn dịch vụ khám phù hợp với nhu cầu của bạn.</p>
       </div>

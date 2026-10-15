@@ -34,8 +34,8 @@ function pageResponse(url, items = fixtures) {
 }
 beforeEach(() => {
   nodes = new Map(); root = new Element(); root.dataset.articleFeed = "news"; calls = [];
-  for (const id of ["news-grid", "news-status", "news-retry", "news-pagination", "news-prev", "news-next", "news-page",
-    "news-filter-form", "news-clear", "news-category-options", "article-title", "article-status", "article-retry",
+  for (const id of ["news-grid", "news-status", "news-retry", "news-pagination", "news-prev", "news-next", "news-pages",
+    "news-filter-form", "news-category-options", "article-title", "article-status", "article-retry",
     "article-content", "article-metadata", "article-photo", "article-author", "article-date", "article-date-wrap",
     "article-category", "related-news", "related-status", "related-retry", "related-feature", "related-list", "related-title"]) nodes.set(id, new Element());
   nodes.get("news-filter-form").elements = { q: new Element("input"), category: new Element("input") };
@@ -125,7 +125,8 @@ test("news pagination/search/category call the backend and persist filters in th
   await controller("news");
   assert.equal(nodes.get("news-grid").children.length, 12);
   assert.equal(calls.find(call => call.url.searchParams.get("page_size") !== "100").url.searchParams.get("page_size"), "12");
-  assert.equal(nodes.get("news-page").textContent, "Trang 1 / 2");
+  assert.deepEqual(nodes.get("news-pages").children.map(button => button.textContent), ["1", "2"]);
+  assert.equal(nodes.get("news-pages").children[0].attributes["aria-current"], "page");
   click("news-next"); await tick(); assert.equal(nodes.get("news-grid").children.length, 4);
   assert.equal(location.searchParams.get("page"), "2");
   const form = nodes.get("news-filter-form"); form.elements.q.value = "Bài viết 1"; form.elements.category.value = "Tin bệnh viện";
@@ -135,7 +136,8 @@ test("news pagination/search/category call the backend and persist filters in th
   assert.equal(location.searchParams.get("category"), "Tin bệnh viện"); assert.equal(location.searchParams.has("page"), false);
   form.elements.q.value = "Không có kết quả"; submit(); await tick();
   assert.equal(nodes.get("news-grid").children.length, 0); assert.match(nodes.get("news-status").textContent, /Chưa có bài viết/);
-  click("news-clear"); await tick(); assert.equal(nodes.get("news-grid").children.length, 12);
+  form.elements.q.value = ""; form.elements.category.value = "";
+  submit(); await tick(); assert.equal(nodes.get("news-grid").children.length, 12);
 });
 test("a late response cannot overwrite newer filters, and failed requests offer a working retry", async () => {
   let finish;
@@ -149,11 +151,83 @@ test("a late response cannot overwrite newer filters, and failed requests offer 
   assert.equal(nodes.get("news-grid").children.length, 0); assert.equal(nodes.get("news-retry").hidden, false);
   respond = url => pageResponse(url); click("news-retry"); await tick(); assert.equal(nodes.get("news-grid").children.length, 10);
 });
+test("numbered news pages request the chosen backend page and keep active filters", async () => {
+  const items = Array.from({ length: 75 }, (_, i) => fixture(i + 1));
+  respond = url => pageResponse(url, items);
+  location.searchParams.set("category", "Sức khỏe");
+  await controller("news");
+  nodes.get("news-pages").children.find(button => button.textContent === "3").listeners.click[0](); await tick();
+  assert.equal(location.searchParams.get("page"), "3");
+  assert.equal(location.searchParams.get("category"), "Sức khỏe");
+  assert.match(nodes.get("news-grid").children[0].textContent, /Bài viết 25/);
+  assert.deepEqual(nodes.get("news-pages").children.map(button => button.textContent), ["1", "2", "3", "4", "5"]);
+  assert.equal(nodes.get("news-pages").children[2].attributes["aria-current"], "page");
+  const count = calls.length;
+  nodes.get("news-pages").children[2].listeners.click[0](); await tick();
+  assert.equal(calls.length, count);
+});
+
+test("homepage numbered news pages use six articles per page and category changes reset pagination", async () => {
+  root.dataset.articleFeed = "home";
+  nodes.delete("news-filter-form");
+  nodes.set("news-filters", new Element());
+  const items = Array.from({ length: 19 }, (_, i) => fixture(i + 1, i < 13 ? "Sức khỏe" : "Tin bệnh viện"));
+  respond = url => pageResponse(url, items);
+  await controller("news");
+  assert.equal(nodes.get("news-grid").children.length, 6);
+  assert.equal(nodes.get("news-prev").disabled, true);
+  nodes.get("news-pages").children[2].listeners.click[0](); await tick();
+  assert.match(nodes.get("news-grid").children[0].textContent, /Bài viết 13/);
+  assert.equal(calls.at(-1).url.searchParams.get("page_size"), "6");
+  assert.equal(calls.at(-1).url.searchParams.get("page"), "3");
+  const filters = nodes.get("news-filters");
+  const category = filters.children.find(button => button.dataset.articleCategory === "Tin bệnh viện");
+  filters.listeners.click[0]({ target: category }); await tick();
+  assert.equal(calls.at(-1).url.searchParams.get("page"), "1");
+  assert.equal(calls.at(-1).url.searchParams.get("category"), "Tin bệnh viện");
+  assert.equal(nodes.get("news-pagination").hidden, true);
+  assert.equal(nodes.get("news-grid").children.length, 6);
+  assert.equal(location.searchParams.has("page"), false);
+});
+
+test("typing filters automatically fetches only the latest query and clears back to all articles", async () => {
+  await controller("news");
+  const form = nodes.get("news-filter-form");
+  const previousCalls = calls.length;
+  form.elements.q.value = "Bài viết"; form.listeners.input[0]({ isComposing: false });
+  form.elements.q.value = "Bài viết 10"; form.listeners.input[0]({ isComposing: false });
+  assert.equal(calls.length, previousCalls);
+  await new Promise(resolve => setTimeout(resolve, 350)); await tick();
+  assert.equal(calls.length, previousCalls + 1);
+  assert.equal(calls.at(-1).url.searchParams.get("q"), "Bài viết 10");
+  assert.equal(nodes.get("news-grid").children.length, 1);
+  form.elements.q.value = ""; form.listeners.change[0](); await tick();
+  assert.equal(nodes.get("news-grid").children.length, 10);
+  assert.equal(location.searchParams.has("q"), false);
+});
+
+test("Vietnamese composition waits until committed and leaving cancels pending searches", async () => {
+  await controller("news");
+  const form = nodes.get("news-filter-form"), initialCalls = calls.length;
+  form.elements.category.value = "Sức khỏe"; form.listeners.input[0]({ isComposing: true });
+  await new Promise(resolve => setTimeout(resolve, 350)); await tick();
+  assert.equal(calls.length, initialCalls);
+  form.listeners.compositionend[0]({});
+  await new Promise(resolve => setTimeout(resolve, 350)); await tick();
+  assert.equal(calls.at(-1).url.searchParams.get("category"), "Sức khỏe");
+  assert.equal(nodes.get("news-grid").children.length, 6);
+  const count = calls.length;
+  form.elements.q.value = "Bài viết 10"; form.listeners.input[0]({ isComposing: false });
+  window.dispatchEvent(new Event("pagehide"));
+  await new Promise(resolve => setTimeout(resolve, 350)); await tick();
+  assert.equal(calls.length, count);
+});
+
 test("an out-of-range bookmark moves to the final available page", async () => {
   const expanded = [...fixtures, ...Array.from({ length: 6 }, (_, i) => fixture(i + 11))];
   respond = url => pageResponse(url, expanded);
   location.searchParams.set("page", "99"); await controller("news");
-  assert.equal(nodes.get("news-page").textContent, "Trang 2 / 2"); assert.equal(location.searchParams.get("page"), "2");
+  assert.equal(nodes.get("news-pages").children[1].attributes["aria-current"], "page"); assert.equal(location.searchParams.get("page"), "2");
 });
 test("article detail displays the API content, author/date and real related links", async () => {
   location = new URL("http://127.0.0.1:3000/frontend/templates/public/article.html?slug=article-10");

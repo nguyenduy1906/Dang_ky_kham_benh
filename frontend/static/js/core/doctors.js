@@ -50,7 +50,7 @@ export function portrait(doctor) {
   return holder;
 }
 export function doctorCard(doctor, { showFee = false } = {}) {
-  const detail = `doctor-detail.html?id=${encodeURIComponent(doctor.doctor_profile_id)}`;
+  const detail = `doctor_detail.html?id=${encodeURIComponent(doctor.doctor_profile_id)}`;
   const card = element("article", "", "directory-card");
   const photo = element("a", "", "directory-photo"); photo.href = detail; photo.append(portrait(doctor));
   const body = element("div", "", "directory-card-body");

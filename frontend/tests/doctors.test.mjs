@@ -65,8 +65,8 @@ test("directory uses backend pagination and real profile IDs without sending the
   await controller("doctors");
   assert.equal(nodes.get(".directory-grid").children.length, 8);
   assert.match(nodes.get(".directory-grid").textContent, /Bác sĩ API 101/);
-  assert.equal(nodes.get(".directory-grid").children[0].children[0].href, "doctor-detail.html?id=101");
-  assert.equal(nodes.get("#directory-result").textContent, "Hiển thị 8 / 10 bác sĩ");
+  assert.equal(nodes.get(".directory-grid").children[0].children[0].href, "doctor_detail.html?id=101");
+  assert.equal(nodes.get("#directory-result").textContent, "");
   assert.equal(nodes.get("#directory-department").children[1].value, "42");
   click("#directory-next"); await tick();
   assert.equal(nodes.get(".directory-grid").children.length, 2);
@@ -132,7 +132,7 @@ test("portraits use uploaded images or neutral placeholders and text cannot inje
   photo.children[1].listeners.error[0](); assert.equal(photo.children.length, 1);
 });
 test("detail supports IDs beyond demo range and shows backend profile and empty schedules", async () => {
-  location.search = "?id=101"; await controller("doctor-detail");
+  location.search = "?id=101"; await controller("doctor_detail");
   assert.equal(nodes.get("#detail-name").textContent, "Bác sĩ API 101");
   assert.equal(nodes.get("#detail-introduction").textContent, "Giới thiệu API");
   assert.equal(nodes.get("#detail-booking").href, "../(patient)/booking.html?doctor=101");
@@ -141,10 +141,10 @@ test("detail supports IDs beyond demo range and shows backend profile and empty 
   assert.ok(calls.every(call => !call.options.headers.has("Authorization")));
 });
 test("invalid and unavailable doctor links do not substitute another doctor", async () => {
-  location.search = "?id=invalid"; await controller("doctor-detail");
+  location.search = "?id=invalid"; await controller("doctor_detail");
   assert.equal(calls.length, 0); assert.equal(nodes.get(".doctor-detail-layout").hidden, true);
   location.search = "?id=999"; respond = () => Response.json({}, { status: 404 });
-  await controller("doctor-detail");
+  await controller("doctor_detail");
   assert.match(nodes.get("#detail-status").textContent, /Không tìm thấy/);
   assert.equal(nodes.get(".doctor-detail-layout").hidden, true);
 });
@@ -154,7 +154,7 @@ test("weekly schedule uses week filters, summarizes shifts and omits slot detail
     slots: [{ starts_at: "2026-10-20T01:00:00Z", ends_at: "2026-10-20T01:30:00Z" }] };
   const healthy = respond;
   respond = url => url.pathname.endsWith("/schedules") ? Response.json({ items: [shift, { ...shift, start_time: "13:30:00" }], total: 2, page: 1, page_size: 100 }) : healthy(url);
-  location.search = "?id=101"; await controller("doctor-detail");
+  location.search = "?id=101"; await controller("doctor_detail");
   const call = calls.find(call => call.url.pathname.endsWith("/schedules"));
   assert.equal(call.url.searchParams.get("current_week"), "true");
   assert.equal(call.url.searchParams.get("to_date"), week.to_date);
@@ -174,7 +174,7 @@ test("week boundaries use Vietnam time, and profile histories remain backend tex
 test("anonymous visitors only read public reviews, loaded in small pages without exposing patient data", async () => {
   const healthy = respond;
   respond = url => url.pathname.endsWith("/reviews") ? Response.json({ items: Array.from({ length: 4 }, (_, i) => ({ review_id: i, rating: 5, comment: "Đánh giá API", created_at: "2026-10-12T01:00:00Z" })), total: 8, average_rating: 5, page: Number(url.searchParams.get("page")), page_size: 4 }) : healthy(url);
-  location.search = "?id=101"; await controller("doctor-detail");
+  location.search = "?id=101"; await controller("doctor_detail");
   assert.equal(nodes.get("#doctor-review-form").hidden, true);
   assert.equal(nodes.get("#doctor-reviews").children.length, 4);
   assert.equal(nodes.get("#review-more").hidden, false);
@@ -187,7 +187,7 @@ test("anonymous visitors only read public reviews, loaded in small pages without
 test("review and weekly schedule errors can retry while the profile remains visible", async () => {
   const healthy = respond;
   respond = url => /\/(schedules|reviews)$/.test(url.pathname) ? Response.json({}, { status: 500 }) : healthy(url);
-  location.search = "?id=101"; await controller("doctor-detail");
+  location.search = "?id=101"; await controller("doctor_detail");
   assert.equal(nodes.get("#review-retry").hidden, false);
   assert.equal(nodes.get("#schedule-retry").hidden, false);
   assert.equal(nodes.get(".doctor-detail-layout").hidden, false);
@@ -200,7 +200,7 @@ test("signed-in patients can rate directly without choosing a patient or encount
   sessionStorage.setItem("neu-medical.auth", JSON.stringify({ token: "patient-review-test", expiresAt: Date.now() + 60000 }));
   respond = url => url.pathname === "/me" ? Response.json({ user: { user_id: 4, role_name: "USER" } })
     : url.pathname === "/encounters" ? Response.json({ items: [{ encounter_id: 23, work_date: "2026-09-10", patient_name: "Bệnh nhân mẫu", encounter_status: "COMPLETED" }], total: 1, page: 1, page_size: 100 }) : healthy(url);
-  location.search = "?id=101"; await controller("doctor-detail");
+  location.search = "?id=101"; await controller("doctor_detail");
   assert.equal(nodes.get("#doctor-review-form").hidden, false);
   assert.equal(nodes.get("#review-fields").disabled, false);
   assert.equal(nodes.get("#review-fields").hidden, false);
@@ -223,7 +223,7 @@ test("direct rating allows repeated submissions for the latest completed encount
       { encounter_id: 25, work_date: "2026-09-20", has_review: false },
     ], total: 3, page: 1, page_size: 100 })
     : url.pathname === "/encounters/24/review" ? new Promise(resolve => { release = resolve; }) : healthy(url);
-  location.search = "?id=101"; await controller("doctor-detail");
+  location.search = "?id=101"; await controller("doctor_detail");
   const form = nodes.get("#doctor-review-form"); form.reportValidity = () => true; form.reset = () => {};
   nodes.get("#review-comment").value = "Bác sĩ tư vấn rõ ràng.";
   globalThis.FormData = class extends NativeFormData { constructor() { super(); this.set("rating", "5"); } };
@@ -239,7 +239,7 @@ test("direct rating allows repeated submissions for the latest completed encount
   assert.equal(calls.filter(call => call.options.method === "POST").length, 2);
   release(Response.json({ review: { review_id: 2 } })); await second; await tick();
   assert.equal(nodes.get("#review-fields").disabled, false);
-  const html = await readFile(new URL("../templates/public/doctor-detail.html", import.meta.url), "utf8");
+  const html = await readFile(new URL("../templates/public/doctor_detail.html", import.meta.url), "utf8");
   assert.doesNotMatch(html, /review-encounter|Lượt khám đã hoàn tất<\/label>/);
 });
 

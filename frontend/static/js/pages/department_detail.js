@@ -2,7 +2,7 @@ import { getDepartment } from "../api/catalog.js";
 import { element, portrait, doctorCard } from "../core/doctors.js";
 import { thumbnailUrl } from "../core/articles.js";
 import { enableDragScroll } from "../core/booking.js";
-import { displayText } from "../core/display-text.js";
+import { displayText } from "../core/display_text.js";
 const $ = selector => document.querySelector(selector);
 const id = Number(new URLSearchParams(location.search).get("id"));
 let request;
@@ -23,7 +23,7 @@ function list(values) {
 }
 function leader(doctor, position, department) {
   const card = element("article", "", "department-leader-card"), link = element("a");
-  link.href = `doctor-detail.html?id=${encodeURIComponent(doctor.doctor_profile_id)}`; link.append(portrait(doctor));
+  link.href = `doctor_detail.html?id=${encodeURIComponent(doctor.doctor_profile_id)}`; link.append(portrait(doctor));
   const body = element("div"), name = element("h3"), nameLink = element("a", doctor.full_name); nameLink.href = link.href; name.append(nameLink);
   const more = element("a", "Xem hồ sơ bác sĩ →"); more.href = link.href;
   body.append(element("p", position, "department-leader-role"), name, element("p", doctor.academic_degree || "Học vị đang cập nhật"), element("p", doctor.specialization || department.name), more);

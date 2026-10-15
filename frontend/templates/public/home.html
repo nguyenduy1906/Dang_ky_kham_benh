@@ -4,15 +4,15 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Trang chủ | NEU Medical</title>
-    <link rel="stylesheet" href="../../static/css/home.css?v=20261015-consultation" />
-    <link rel="stylesheet" href="../../static/css/public-pages.css?v=20261014-interface-update" />
+    <link rel="stylesheet" href="../../static/css/home.css?v=20261015-vietnamese-motto" />
+    <link rel="stylesheet" href="../../static/css/public_pages.css?v=20261014-interface-update" />
     <script src="../../static/js/core/navigation.js?v=20261013-auth1" defer></script>
     <script src="../../static/js/core/public.js?v=20261014-interface-update" defer></script>
     <script src="../../static/js/pages/home.js?v=20261014-departments" type="module"></script>
     <link rel="stylesheet" href="../../static/css/contact.css?v=20261014-interface-update" />
     <script src="../../static/js/pages/contact.js?v=20261015-home-consultation" type="module"></script>
-    <link rel="stylesheet" href="../../static/css/news.css?v=20261013-articles" />
-    <script src="../../static/js/pages/news.js?v=20261014-interface-update" type="module"></script>
+    <link rel="stylesheet" href="../../static/css/news.css?v=20261015-live-search" />
+    <script src="../../static/js/pages/news.js?v=20261015-live-search" type="module"></script>
   </head>
   <body class="home-page">
     <a class="skip-link" href="#main">Đến nội dung chính</a>
@@ -31,7 +31,7 @@
         <a class="brand" href="home.html"
           ><img
             class="brand-logo"
-            src="../../static/assets/logo_neu.png"
+            src="../../static/assets/bieu_trung_neu.png"
             alt="Logo NEU Medical"
             width="68"
             height="68"
@@ -58,9 +58,9 @@
       <section class="hero" aria-label="Giới thiệu dịch vụ khám bệnh, kéo hoặc vuốt để chuyển ảnh" tabindex="0">
         <div class="hero-carousel" id="hero-carousel" aria-label="Banner giới thiệu dịch vụ NEU Medical" aria-roledescription="trình chiếu">
           <div class="hero-slides" id="hero-slides">
-            <div class="hero-slide"><img class="hero-photo" src="../../static/assets/banners/media-1-sharp.png" alt="Chăm sóc sức khỏe cộng đồng — NEU Medical" /></div>
-            <div class="hero-slide" aria-hidden="true"><img class="hero-photo" src="../../static/assets/banners/media-2-sharp.svg" alt="Tư vấn tiêm chủng — NEU Medical" /></div>
-            <div class="hero-slide" aria-hidden="true"><img class="hero-photo" src="../../static/assets/banners/media-3-sharp.png" alt="Khám chuyên khoa — NEU Medical" /></div>
+            <div class="hero-slide"><img class="hero-photo" src="../../static/assets/banners/benh_vien_neu.png" alt="Chăm sóc sức khỏe cộng đồng — NEU Medical" /></div>
+            <div class="hero-slide" aria-hidden="true"><img class="hero-photo" src="../../static/assets/banners/tu_van_va_tiem_chung.svg" alt="Tư vấn tiêm chủng — NEU Medical" /></div>
+            <div class="hero-slide" aria-hidden="true"><img class="hero-photo" src="../../static/assets/banners/dich_vu_kham_chuyen_khoa.png" alt="Khám chuyên khoa — NEU Medical" /></div>
           </div>
         </div>
       </section>
@@ -89,8 +89,8 @@
         <button class="service" data-panel="guide">
           <span class="service-icon" aria-hidden="true">▤</span
           ><span
-            ><strong>Hướng dẫn khám bệnh</strong
-            ><span>Chuẩn bị thông tin trước khi đến khám</span></span
+            ><strong>Tin tức & Sức khỏe</strong
+            ><span>Khám phá tin tức, hoạt động và sự kiện y tế</span></span
           ><span class="service-arrow" aria-hidden="true">↗</span>
         </button>
       </section>
@@ -107,11 +107,11 @@
           </div>
           <div class="department-pictures">
             <img
-              src="../../static/assets/clinic/nội_khoa.jpg"
+              src="../../static/assets/clinic/thiet_bi_chup_c_arm.jpg"
               alt="Không gian khám nội khoa"
               loading="lazy"
             /><img
-              src="../../static/assets/clinic/media-chup-xquang.jpg"
+              src="../../static/assets/clinic/chup_cong_huong_tu.jpg"
               alt="Thiết bị chẩn đoán hình ảnh"
               loading="lazy"
             />
@@ -123,7 +123,7 @@
           <div>
             <img
               class="banner-logo"
-              src="../../static/assets/logo_neu.png"
+              src="../../static/assets/bieu_trung_neu.png"
               alt="NEU Medical"
               loading="lazy"
             />
@@ -132,7 +132,7 @@
           </div>
           <img
             class="booking-photo"
-            src="../../static/assets/clinic/media-da-khoa.jpg"
+            src="../../static/assets/clinic/phong_kham_da_khoa.jpg"
             alt="Không gian khám bệnh"
             loading="lazy"
           />
@@ -149,8 +149,10 @@
           <p class="news-status" id="news-status" role="status" aria-live="polite">Đang tải bài viết…</p>
           <button class="news-retry" id="news-retry" type="button" hidden>Thử lại</button>
           <div class="news-grid" id="news-grid" aria-busy="true"></div>
-          <nav class="news-pagination" id="news-pagination" aria-label="Phân trang tin tức" hidden>
-            <button type="button" id="news-prev">Trang trước</button><span id="news-page" aria-live="polite"></span><button type="button" id="news-next">Trang sau</button>
+          <nav class="news-pagination directory-pagination" id="news-pagination" aria-label="Phân trang tin tức" hidden>
+            <button type="button" id="news-prev" aria-label="Trang trước">‹</button>
+            <div id="news-pages"></div>
+            <button type="button" id="news-next">Tiếp theo ›</button>
           </nav>
           <noscript>Vui lòng bật JavaScript để xem tin tức.</noscript>
         </div>

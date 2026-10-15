@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { demoPaymentPayload, qrMatrix } from "../static/js/core/payment-qr.js";
-import { readDraft, saveDraft } from "../static/js/core/booking-draft.js";
+import { demoPaymentPayload, qrMatrix } from "../static/js/core/payment_qr.js";
+import { readDraft, saveDraft } from "../static/js/core/booking_draft.js";
 const nativeInterval = globalThis.setInterval;
 globalThis.setInterval = (...args) => nativeInterval(...args).unref();
 
@@ -54,7 +54,7 @@ function fixture({ uncertain = false, encounterId, failCreate = false, failSave 
   const events = {};
   globalThis.window = { addEventListener: (name, handler) => { events[name] = handler; }, dispatchEvent() {} };
   const navigation = [];
-  globalThis.location = { href: `http://localhost:3000/frontend/templates/(patient)/booking-review.html?draft=${id}`, search: `?draft=${id}`, assign(url) { navigation.push(url); }, replace() {} };
+  globalThis.location = { href: `http://localhost:3000/frontend/templates/(patient)/booking_review.html?draft=${id}`, search: `?draft=${id}`, assign(url) { navigation.push(url); }, replace() {} };
   globalThis.history = { replaceState() {} };
   const draft = { user_id: 1, patient_id: 2, doctor_profile_id: 7, schedule_id: 9, work_date: "2030-01-15", appointment_time: "08:00", symptoms: "Test only", uncertain, encounter_id: encounterId };
   saveDraft(draft, id);
@@ -115,7 +115,7 @@ async function until(predicate, message) {
 }
 test("opening review has no mutations; payment click creates one hold and shows QR with server amount", async () => {
   const f = fixture();
-  await import("../static/js/pages/booking-review.js?initial"); await loaded(f);
+  await import("../static/js/pages/booking_review.js?initial"); await loaded(f);
   assert.equal(f.get("#booking-payment").hidden, true);
   assert.equal(f.calls.filter(c => c.method === "POST").length, 0);
   const click = f.get("#booking-confirm").events.click;
@@ -134,7 +134,7 @@ test("opening review has no mutations; payment click creates one hold and shows 
 });
 test("an uncertain submission is reconciled without repeating the hold POST", async () => {
   const f = fixture({ failCreate: true });
-  await import("../static/js/pages/booking-review.js?uncertain"); await loaded(f);
+  await import("../static/js/pages/booking_review.js?uncertain"); await loaded(f);
   await f.get("#booking-confirm").events.click();
   assert.equal(readDraft(id, 1).uncertain, true, f.get("#booking-dialog-status").textContent);
   assert.equal(f.get("#booking-confirm").disabled, true);
@@ -146,7 +146,7 @@ test("an uncertain submission is reconciled without repeating the hold POST", as
 });
 test("resuming a hold keeps QR hidden until payment is explicitly opened", async () => {
   const f = fixture({ encounterId: 3 });
-  await import("../static/js/pages/booking-review.js?resume"); await loaded(f);
+  await import("../static/js/pages/booking_review.js?resume"); await loaded(f);
   assert.equal(f.get("#booking-payment").hidden, true);
   await f.get("#booking-confirm").events.click();
   assert.equal(f.calls.filter(c => c.path === "/encounters/online").length, 0);
@@ -154,7 +154,7 @@ test("resuming a hold keeps QR hidden until payment is explicitly opened", async
   f.events.pagehide();
 });
 test("edited patient fields are saved through PATCH before creating the booking", async () => {
-  const f = fixture(); await import("../static/js/pages/booking-review.js?edit"); await loaded(f);
+  const f = fixture(); await import("../static/js/pages/booking_review.js?edit"); await loaded(f);
   assert.equal(f.get("#booking-review-field-0").readOnly, false);
   assert.equal(f.get("#booking-review-field-3").readOnly, true);
   f.get("#booking-review-field-0").value = "Updated test name";
@@ -166,7 +166,7 @@ test("edited patient fields are saved through PATCH before creating the booking"
   f.events.pagehide();
 });
 test("failed profile update preserves edits and prevents booking/payment POSTs", async () => {
-  const f = fixture({ failSave: true }); await import("../static/js/pages/booking-review.js?failed-edit"); await loaded(f);
+  const f = fixture({ failSave: true }); await import("../static/js/pages/booking_review.js?failed-edit"); await loaded(f);
   f.get("#booking-review-field-0").value = "Updated test name";
   await f.get("#booking-confirm").events.click();
   assert.equal(f.calls.filter(c => c.method === "POST").length, 0);
@@ -175,7 +175,7 @@ test("failed profile update preserves edits and prevents booking/payment POSTs",
 });
 
 test("review omits the manual save button and removed instruction", async () => {
-  const f = fixture(); await import("../static/js/pages/booking-review.js?autosave-ui"); await loaded(f);
+  const f = fixture(); await import("../static/js/pages/booking_review.js?autosave-ui"); await loaded(f);
   try {
     const form = f.get("#booking-patient-form");
     assert.equal(form.querySelectorAll("button").some(node => node.textContent === "Lưu thông tin"), false);
@@ -185,7 +185,7 @@ test("review omits the manual save button and removed instruction", async () => 
 });
 
 test("typing automatically saves patient changes without creating a hold or payment", async () => {
-  const f = fixture(); await import("../static/js/pages/booking-review.js?autosave-input"); await loaded(f);
+  const f = fixture(); await import("../static/js/pages/booking_review.js?autosave-input"); await loaded(f);
   try {
     const field = f.get("#booking-review-field-6"); field.value = "New database address";
     assert.equal(typeof field.events.input, "function");
@@ -202,7 +202,7 @@ test("typing automatically saves patient changes without creating a hold or paym
 test("change saves immediately and serializes newer edits behind an in-flight PATCH", async () => {
   const firstSave = deferred();
   const f = fixture({ beforeSave: (_, count) => count === 1 ? firstSave.promise : undefined });
-  await import("../static/js/pages/booking-review.js?autosave-queue"); await loaded(f);
+  await import("../static/js/pages/booking_review.js?autosave-queue"); await loaded(f);
   try {
     const field = f.get("#booking-review-field-0");
     field.value = "First changed name";
@@ -227,7 +227,7 @@ test("change saves immediately and serializes newer edits behind an in-flight PA
 
 test("server-normalized patient values replace the saved input", async () => {
   const f = fixture({ normalizePatient: patient => ({ health_insurance: patient.health_insurance?.toUpperCase() }) });
-  await import("../static/js/pages/booking-review.js?autosave-normalized"); await loaded(f);
+  await import("../static/js/pages/booking_review.js?autosave-normalized"); await loaded(f);
   try {
     const field = f.get("#booking-review-field-2"); field.value = "ab12345678";
     assert.equal(typeof field.events.blur, "function");
@@ -240,7 +240,7 @@ test("server-normalized patient values replace the saved input", async () => {
 
 test("failed automatic PATCH keeps edits and can retry without an uncertain booking", async () => {
   const f = fixture({ failSave: count => count === 1 });
-  await import("../static/js/pages/booking-review.js?autosave-retry"); await loaded(f);
+  await import("../static/js/pages/booking_review.js?autosave-retry"); await loaded(f);
   try {
     const field = f.get("#booking-review-field-0"); field.value = "Retry changed name";
     assert.equal(typeof field.events.change, "function");
@@ -263,7 +263,7 @@ test("failed automatic PATCH keeps edits and can retry without an uncertain book
 test("payment waits for a pending patient PATCH and does not create an uncertain booking on PATCH failure", async () => {
   const saving = deferred();
   const f = fixture({ failSave: true, beforeSave: () => saving.promise });
-  await import("../static/js/pages/booking-review.js?autosave-payment-wait"); await loaded(f);
+  await import("../static/js/pages/booking_review.js?autosave-payment-wait"); await loaded(f);
   try {
     const field = f.get("#booking-review-field-0"); field.value = "Pending changed name";
     assert.equal(typeof field.events.change, "function");
@@ -283,7 +283,7 @@ test("payment waits for a pending patient PATCH and does not create an uncertain
 test("back navigation flushes edited patient data before leaving the review", async () => {
   const saving = deferred();
   const f = fixture({ beforeSave: () => saving.promise });
-  await import("../static/js/pages/booking-review.js?autosave-back"); await loaded(f);
+  await import("../static/js/pages/booking_review.js?autosave-back"); await loaded(f);
   try {
     const field = f.get("#booking-review-field-6"); field.value = "Address saved before leaving";
     const back = f.get("#booking-back").events.click();
@@ -298,7 +298,7 @@ test("back navigation flushes edited patient data before leaving the review", as
 test("late patient PATCH response after pagehide cannot restore the private review", async () => {
   const saving = deferred();
   const f = fixture({ beforeSave: () => saving.promise });
-  await import("../static/js/pages/booking-review.js?autosave-late"); await loaded(f);
+  await import("../static/js/pages/booking_review.js?autosave-late"); await loaded(f);
   try {
     const field = f.get("#booking-review-field-0"); field.value = "Late changed name";
     assert.equal(typeof field.events.change, "function");
@@ -324,7 +324,7 @@ test("QR excludes medical/patient information and rejects real or inactive trans
 });
 test("late API responses after leaving cannot restore the private review page", async () => {
   let release; const doctorGate = new Promise(resolve => { release = resolve; });
-  const f = fixture({ doctorGate }); await import("../static/js/pages/booking-review.js?late");
+  const f = fixture({ doctorGate }); await import("../static/js/pages/booking_review.js?late");
   f.events.pagehide(); release();
   for (let i = 0; i < 8; i++) await new Promise(resolve => setImmediate(resolve));
   assert.equal(f.get("#booking-review-page").hidden, true);
