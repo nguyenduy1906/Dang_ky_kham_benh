@@ -26,6 +26,7 @@ let encounter, payment, ticket, countdown, reviewRequest, requestedEncounterId, 
 let paymentVisible = false, draft;
 let pageVersion = 0;
 let active = true;
+let patientAutosave;
 const draftKey = new URLSearchParams(location.search).get("draft");
 const selectedPatient = () => patients.find(p => String(p.patient_id) === String(draft?.patient_id));
 function errorMessage(error) {
@@ -68,10 +69,15 @@ function busyDialog(value) {
   if (!value) $("#booking-payment-status").textContent = ui.dialogStatus.textContent;
 }
 function renderReview() {
+  stopPatientAutosave();
   const patient = encounter ? patients.find(p => String(p.patient_id) === String(encounter.patient_id)) : selectedPatient();
   const doctor = encounter ? doctors.find(d => String(d.doctor_profile_id) === String(encounter.doctor_profile_id)) : selectedDoctor;
   const fields = el("div", "", "booking-patient-fields");
   const editable = patient?.user_id === actor?.user_id && !patient?.archived_at;
+  const form = el("form"); form.id = "booking-patient-form";
+  const status = el("p", "", "booking-review-hint"); status.id = "booking-patient-status"; status.setAttribute("role", "status");
+  const autosave = { form, status, editable, patientId: patient?.patient_id, version: pageVersion };
+  patientAutosave = autosave;
   const keys = ["full_name", "id_card", "health_insurance", "phone", "dob", "gender", "address", "symptoms"];
   const patientValues = [
     ["Họ và tên người khám", patient?.full_name || encounter?.patient_name], ["Số CCCD / Mã định danh", patient?.id_card],
@@ -94,19 +100,18 @@ function renderReview() {
     if (index === 7) { input.rows = 3; input.addEventListener("input", () => {
       if (draft && !encounter && !submissionUncertain) { draft.symptoms = input.value; reviewRequest.symptoms = input.value; saveDraft(draft, draftKey); }
     }); }
+    else if (!input.readOnly) {
+      input.addEventListener("input", () => queuePatientSave(autosave));
+      const flush = () => savePatientEdits(autosave).catch(() => {});
+      input.addEventListener("change", flush);
+      input.addEventListener("blur", flush);
+    }
     holder.append(name, input); fields.append(holder);
   }
-  const hint = el("p", editable ? "Bạn có thể sửa thông tin cơ bản tại đây. Số điện thoại liên kết được đổi tại tài khoản chủ hồ sơ." : "Hồ sơ được chia sẻ để đặt khám; chỉ chủ hồ sơ có quyền sửa thông tin cá nhân.", "booking-review-hint");
-  const form = el("form"); form.id = "booking-patient-form";
-  const save = el("button", "Lưu thông tin", "outline-button"); save.type = "submit"; save.hidden = !editable;
-  const status = el("p", "", "booking-review-hint"); status.id = "booking-patient-status"; status.setAttribute("role", "status");
-  form.append(fields, hint, save, status);
+  form.append(fields, status);
   form.addEventListener("submit", async event => {
     event.preventDefault(); if (busy || !form.reportValidity()) return;
-    busyDialog(true);
-    try { await savePatientEdits(); status.textContent = "Đã lưu thông tin qua hệ thống."; }
-    catch (error) { status.textContent = errorMessage(error); }
-    finally { busyDialog(false); }
+    await savePatientEdits(autosave).catch(() => {});
   });
   $("#booking-review-patient").replaceChildren(form);
   ui.review.replaceChildren();
@@ -129,19 +134,66 @@ function renderReview() {
   if (patient?.health_insurance) ui.review.append(el("p", "Quyền lợi BHYT được đối chiếu khi tiếp nhận tại bệnh viện.", "booking-review-hint"));
   $("#booking-review-total").textContent = money(encounter?.deposit_amount_snapshot ?? doctor?.consultation_fee);
 }
-async function savePatientEdits() {
-  const patient = encounter ? patients.find(p => String(p.patient_id) === String(encounter.patient_id)) : selectedPatient();
-  if (!patient || patient.user_id !== actor.user_id) return;
-  const form = $("#booking-patient-form"), changes = {};
-  for (const key of ["full_name", "id_card", "health_insurance", "dob", "gender", "address"]) {
-    const value = form.elements.namedItem(key).value.trim() || null;
-    if (value !== (patient[key] || null)) changes[key] = value;
+function currentPatientForm(context) {
+  return active && context === patientAutosave && context.version === pageVersion;
+}
+function stopPatientAutosave() {
+  clearTimeout(patientAutosave?.timer);
+  patientAutosave = undefined;
+}
+function queuePatientSave(context) {
+  if (!currentPatientForm(context)) return;
+  clearTimeout(context.timer);
+  context.status.textContent = "Đang chờ lưu thông tin…";
+  context.timer = setTimeout(() => savePatientEdits(context).catch(() => {}), 600);
+}
+async function savePatientEdits(context = patientAutosave) {
+  if (!context || !currentPatientForm(context) || !context.editable) return;
+  clearTimeout(context.timer);
+  if (context.pending) {
+    await context.pending;
+    return savePatientEdits(context);
   }
-  if (!Object.keys(changes).length) return;
-  if (!(changes.dob === undefined ? patient.dob : changes.dob) && !(changes.id_card === undefined ? patient.id_card : changes.id_card)) throw new Error("Vui lòng giữ ngày sinh hoặc số CCCD để phân biệt hồ sơ.");
-  const result = await updatePatient(patient.patient_id, changes);
-  if (!result.patient) throw new Error("Chưa nhận được hồ sơ cập nhật từ hệ thống.");
-  patients = patients.map(p => p.patient_id === patient.patient_id ? result.patient : p);
+  const request = (async () => {
+    try {
+      const patient = patients.find(item => String(item.patient_id) === String(context.patientId));
+      if (!patient || patient.user_id !== actor.user_id || patient.archived_at) return;
+      const changes = {};
+      for (const key of ["full_name", "id_card", "health_insurance", "dob", "gender", "address"]) {
+        const input = context.form.elements.namedItem(key);
+        if (input.checkValidity?.() === false) throw new Error("Vui lòng kiểm tra định dạng thông tin vừa sửa.");
+        const value = input.value.trim() || null;
+        if (value !== (patient[key] || null)) changes[key] = value;
+      }
+      if (!Object.keys(changes).length) {
+        context.status.textContent = context.saved ? "Đã tự lưu thông tin." : "";
+        return false;
+      }
+      if (changes.full_name === null) throw new Error("Vui lòng nhập họ và tên người khám.");
+      if (!(changes.dob === undefined ? patient.dob : changes.dob) && !(changes.id_card === undefined ? patient.id_card : changes.id_card)) throw new Error("Vui lòng giữ ngày sinh hoặc số CCCD để phân biệt hồ sơ.");
+      context.status.textContent = "Đang lưu thông tin…";
+      const result = await updatePatient(patient.patient_id, changes);
+      if (!currentPatientForm(context) || !hasSession()) return false;
+      if (!result.patient || String(result.patient.patient_id) !== String(patient.patient_id)) throw new Error("Chưa nhận được hồ sơ cập nhật từ hệ thống.");
+      patients = patients.map(item => item.patient_id === patient.patient_id ? result.patient : item);
+      for (const [key, sent] of Object.entries(changes)) {
+        const input = context.form.elements.namedItem(key);
+        if ((input.value.trim() || null) === sent) input.value = result.patient[key] ?? "";
+      }
+      context.status.textContent = "Đã tự lưu thông tin.";
+      context.saved = true;
+      return true;
+    } catch (error) {
+      if (currentPatientForm(context)) context.status.textContent = `Chưa lưu được thông tin. ${errorMessage(error)}`;
+      throw error;
+    }
+  })();
+  context.pending = request;
+  let saved;
+  try { saved = await request; }
+  finally { if (context.pending === request) context.pending = undefined; }
+  // Edits made while PATCH was in flight are sent only after its response.
+  if (saved && currentPatientForm(context)) return savePatientEdits(context);
 }
 function rememberEncounter() {
   requestedEncounterId = encounter.encounter_id;
@@ -219,22 +271,33 @@ async function recoverSubmission() {
 async function refreshBooking(id = encounter?.encounter_id || requestedEncounterId) {
   if (busy) return;
   if (id) requestedEncounterId = id;
+  const version = pageVersion;
   busyDialog(true);
   ui.dialogStatus.textContent = "Đang cập nhật trạng thái từ hệ thống…";
   try {
+    await savePatientEdits();
+    if (!active || version !== pageVersion || !hasSession()) return;
     if (id) await readBooking(id);
     else if (submissionUncertain) await recoverSubmission();
     else throw new Error("Chưa có lượt khám để cập nhật.");
-  } catch (error) { ui.dialogStatus.textContent = errorMessage(error); ui.refresh.hidden = false; }
-  finally { busyDialog(false); if (submissionUncertain) ui.confirm.disabled = true; }
+  } catch (error) { if (active && version === pageVersion) { ui.dialogStatus.textContent = errorMessage(error); ui.refresh.hidden = false; } }
+  finally { if (active && version === pageVersion) { busyDialog(false); if (submissionUncertain) ui.confirm.disabled = true; } }
 }
 ui.confirm.addEventListener("click", async () => {
   if (busy || submissionUncertain || (!encounter && !reviewRequest) || (encounter && encounter.encounter_status !== "HOLDING")) return;
   if (!$("#booking-patient-form").reportValidity()) return;
   busyDialog(true);
-  ui.dialogStatus.textContent = "Đang gửi yêu cầu giữ chỗ…";
+  const version = pageVersion;
   try {
     await savePatientEdits();
+  } catch (error) {
+    if (active && version === pageVersion) ui.dialogStatus.textContent = `Chưa lưu được thông tin người khám. ${errorMessage(error)}`;
+    busyDialog(false);
+    return;
+  }
+  if (!active || version !== pageVersion || !hasSession()) { busyDialog(false); return; }
+  ui.dialogStatus.textContent = "Đang gửi yêu cầu giữ chỗ…";
+  try {
     if (!encounter) {
       draft.uncertain = true; saveDraft(draft, draftKey);
       const result = await createOnline(reviewRequest);
@@ -267,18 +330,23 @@ ui.confirm.addEventListener("click", async () => {
 });
 async function paymentAction(action) {
   if (busy || encounter?.encounter_status !== "HOLDING") return;
+  const version = pageVersion;
   busyDialog(true);
   ui.dialogStatus.textContent = "Đang xử lý thanh toán trên hệ thống…";
   try {
+    await savePatientEdits();
+    if (!active || version !== pageVersion || !hasSession()) return;
     await action();
+    if (!active || version !== pageVersion || !hasSession()) return;
     await readBooking(encounter.encounter_id);
     if (payment?.transaction_status === "FAILED" && encounter.encounter_status === "HOLDING") {
       ui.dialogStatus.textContent = "Thanh toán thất bại. Bạn có thể tạo phiên mới khi thời gian giữ chỗ còn hiệu lực.";
     }
   } catch (error) {
+    if (!active || version !== pageVersion) return;
     try { await readBooking(encounter.encounter_id); } catch { /* No mutation retry after an uncertain result. */ }
     ui.dialogStatus.textContent = errorMessage(error) + " Bấm cập nhật trạng thái để đối chiếu trước khi thử lại.";
-  } finally { busyDialog(false); }
+  } finally { if (active && version === pageVersion) busyDialog(false); }
 }
 ui.paymentCreate.addEventListener("click", () => paymentAction(() => createIntent(encounter.encounter_id, { payment_method: ui.method.value })));
 $("#booking-payment-success").addEventListener("click", () => {
@@ -289,25 +357,51 @@ $("#booking-payment-failed").addEventListener("click", () => {
 });
 ui.cancel.addEventListener("click", async () => {
   if (busy || encounter?.encounter_status !== "HOLDING") return;
+  const version = pageVersion;
   busyDialog(true);
   try {
+    await savePatientEdits();
+    if (!active || version !== pageVersion || !hasSession()) return;
     await cancel(encounter.encounter_id, { reason: "Người đặt khám hủy giữ chỗ trên giao diện" });
     await readBooking(encounter.encounter_id);
-  } catch (error) { ui.dialogStatus.textContent = errorMessage(error); }
-  finally { busyDialog(false); }
+  } catch (error) { if (active && version === pageVersion) ui.dialogStatus.textContent = errorMessage(error); }
+  finally { if (active && version === pageVersion) busyDialog(false); }
 });
 ui.refresh.addEventListener("click", () => refreshBooking());
-$("#booking-back").addEventListener("click", () => { if (!busy) location.assign(backUrl()); });
+async function leaveReview(destination) {
+  if (busy) return;
+  busyDialog(true);
+  const version = pageVersion;
+  try {
+    await savePatientEdits();
+    if (active && version === pageVersion && hasSession()) location.assign(destination);
+  } catch (error) {
+    if (active && version === pageVersion) ui.dialogStatus.textContent = `Chưa lưu được thông tin người khám. ${errorMessage(error)}`;
+  } finally { busyDialog(false); }
+}
+$("#booking-back").addEventListener("click", () => leaveReview(backUrl()));
+document.addEventListener?.("click", event => {
+  if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  const link = event.target.closest?.("a[href]");
+  if (!link || (link.target && link.target !== "_self") || link.hasAttribute("download")) return;
+  const destination = new URL(link.href, location.href), current = new URL(location.href);
+  if (destination.origin !== current.origin || (destination.pathname === current.pathname && destination.search === current.search)) return;
+  event.preventDefault();
+  leaveReview(destination.href);
+}, true);
 $("#booking-payment-close").addEventListener("click", () => { if (!busy) ui.paymentModal.close(); });
 ui.paymentModal.addEventListener("cancel", event => { if (busy) event.preventDefault(); });
 ui.paymentModal.addEventListener("close", () => { paymentVisible = false; if (encounter?.encounter_status === "HOLDING") ui.confirm.hidden = false; });
 window.addEventListener("pagehide", () => {
+  stopPatientAutosave();
   active = false; pageVersion++; ui.dialog.hidden = true;
   if (ui.paymentModal.open) ui.paymentModal.close();
   clearInterval(countdown); countdown = undefined;
 });
 
 async function start() {
+  stopPatientAutosave();
+  busy = false;
   active = true;
   const version = ++pageVersion;
   const auth = $("#booking-auth-status");
@@ -352,6 +446,7 @@ async function start() {
 }
 $("#booking-auth-status button").addEventListener("click", start);
 window.addEventListener("neu:auth-change", () => {
+  stopPatientAutosave();
   active = false; pageVersion++; ui.dialog.hidden = true;
   if (ui.paymentModal.open) ui.paymentModal.close();
   if (!hasSession()) location.replace(loginUrl(new URL(location.href)).href);

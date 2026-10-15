@@ -47,7 +47,9 @@ async function load() {
     // A removed article or an old bookmark can leave the requested page out of range.
     if (page > lastPage) { page = lastPage; saveFilters(); return load(); }
     grid.replaceChildren(...result.items.map(articleCard));
-    status.textContent = result.total ? `${result.total} bài viết${category ? ` · ${category}` : ""}` : "Chưa có bài viết phù hợp.";
+    status.textContent = result.total
+      ? (home ? "" : `${result.total} bài viết${category ? ` · ${category}` : ""}`)
+      : "Chưa có bài viết phù hợp.";
     document.querySelector("#news-page").textContent = `Trang ${result.page} / ${lastPage}`;
     previous.disabled = result.page <= 1; next.disabled = result.page >= lastPage;
     pager.hidden = lastPage <= 1;

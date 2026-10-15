@@ -25,7 +25,7 @@ const ui = {
   from: $("#schedule-from"), to: $("#schedule-to"), reviewSubmit: $("#appointment-review-submit"),
 };
 enableDragScroll(ui.days);
-let doctors = [], patients = [], schedules = [], selectedDoctor, selectedDate = "", selectedSlot, actor;
+let doctors = [], departments = [], patients = [], schedules = [], selectedDoctor, selectedDate = "", selectedSlot, actor;
 let loading = false, checking = false, scheduleVersion = 0, scheduleAbort;
 function errorMessage(error) {
   if (error.status === 401) {
@@ -72,9 +72,33 @@ function updateInsurance() {
     : "Mã thẻ được lưu trong hồ sơ; quyền lợi BHYT cần được bệnh viện đối chiếu.";
   updateReviewState();
 }
+const normalize = value => value.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
+function renderDepartments() {
+  const term = normalize($("#department-search").value.trim());
+  const holder = $("#booking-departments");
+  const choices = [{ department_id: "", name: "Tất cả chuyên khoa" }, ...departments]
+    .filter(department => normalize(department.name).includes(term));
+  holder.replaceChildren(...choices.map(department => {
+    const id = String(department.department_id);
+    const button = el("button", "", "booking-department");
+    button.type = "button";
+    button.dataset.departmentId = id;
+    button.setAttribute("aria-pressed", String(ui.departments.value === id));
+    const label = el("span");
+    const count = doctors.filter(doctor => !id || String(doctor.department_id) === id).length;
+    label.append(el("strong", department.name), el("small", `${count} bác sĩ`));
+    const icon = el("span", "+", "booking-department-icon"); icon.setAttribute("aria-hidden", "true");
+    button.append(icon, label);
+    button.addEventListener("click", () => {
+      ui.departments.value = id;
+      holder.querySelectorAll("button").forEach(item => item.setAttribute("aria-pressed", String(item === button)));
+      renderDoctors();
+    });
+    return button;
+  }));
+  $("#department-empty").hidden = choices.length > 0;
+}
 function renderDoctors() {
-  $(".appointment-results").prepend(ui.schedule);
-  const normalize = value => value.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
   const term = normalize($("#appointment-search").value.trim());
   const department = ui.departments.value;
   const visible = doctors.filter(d => (!department || String(d.department_id) === department) && normalize(d.full_name).includes(term));
@@ -85,7 +109,8 @@ function renderDoctors() {
     card.dataset.bookingId = doctor.doctor_profile_id;
     const info = el("div", "", "booking-doctor-info");
     info.append(el("h2", doctor.full_name), el("p", `Chuyên khoa: ${doctor.department_name}`));
-    if (doctor.specialization) info.append(el("span", doctor.specialization));
+    if (doctor.academic_degree) info.append(el("span", doctor.academic_degree));
+    if (doctor.experience_years != null) info.append(el("span", `${doctor.experience_years} năm kinh nghiệm`));
     const profileUrl = `../public/doctor-detail.html?id=${encodeURIComponent(doctor.doctor_profile_id)}`;
     const profile = el("a", "Xem hồ sơ bác sĩ →", "booking-profile-link");
     profile.href = profileUrl;
@@ -103,7 +128,6 @@ function renderDoctors() {
     if (chosen) button.setAttribute("aria-controls", "chosen-schedule");
     button.addEventListener("click", () => selectDoctor(doctor));
     card.append(photoLink, info, price, button);
-    if (chosen) card.append(ui.schedule);
     ui.doctors.append(card);
   }
   if (selectedDoctor && !visible.includes(selectedDoctor)) clearDoctor();
@@ -127,7 +151,9 @@ function clearDoctor() {
   ui.slots.replaceChildren();
   ui.days.scrollLeft = 0;
   clearSlot();
-  ui.schedule.hidden = true;
+  ui.schedule.hidden = false;
+  ui.scheduleStatus.textContent = "Chọn bác sĩ để xem lịch khám còn trống.";
+  ui.slots.append(el("p", "Các khung giờ có thể đặt sẽ hiển thị sau khi chọn bác sĩ.", "field-note"));
   ui.schedule.setAttribute("aria-busy", "false");
 }
 async function selectDoctor(doctor, { scrollToDoctor = false } = {}) {
@@ -145,11 +171,10 @@ async function selectDoctor(doctor, { scrollToDoctor = false } = {}) {
   renderDoctors();
   await loadSchedules();
   if (scrollToDoctor && selectedDoctor?.doctor_profile_id === doctor.doctor_profile_id && !ui.main.inert) {
-    // Wait until the selected card includes its loaded days and time slots.
+    // Keep the calendar in the right column when opening a preselected doctor.
     await new Promise(resolve => requestAnimationFrame(resolve));
     if (selectedDoctor?.doctor_profile_id === doctor.doctor_profile_id && !ui.main.inert) {
-      ui.doctors.querySelector(`[data-booking-id="${doctor.doctor_profile_id}"]`)
-        ?.scrollIntoView({ block: "start", behavior: "instant" });
+      ui.schedule.scrollIntoView({ block: "start", behavior: "instant" });
     }
   }
 }
@@ -195,6 +220,8 @@ function renderDays() {
     button.type = "button";
     button.setAttribute("aria-pressed", String(day === selectedDate));
     button.append(el("strong", new Intl.DateTimeFormat("vi-VN", { weekday: "short", timeZone: "Asia/Saigon" }).format(date)), el("span", dateLabel(day)));
+    const count = schedules.filter(schedule => schedule.work_date === day).reduce((total, schedule) => total + schedule.slots.length, 0);
+    button.append(el("small", `${count} khung giờ`));
     button.addEventListener("click", () => {
       if (selectedDate === day) return;
       selectedDate = day;
@@ -210,7 +237,8 @@ function renderSlots() {
   shift.replaceChildren(new Option("Chọn khung giờ", ""));
   for (const schedule of schedules.filter(s => s.work_date === selectedDate)) {
     const group = el("div", "", "booking-time-slots");
-    group.append(el("h3", `${schedule.start_time.slice(0, 5)}–${schedule.end_time.slice(0, 5)} · ${schedule.room_name}`));
+    const shiftName = Number(schedule.start_time.slice(0, 2)) < 12 ? "Buổi sáng" : "Buổi chiều";
+    group.append(el("h3", `${shiftName} (${schedule.start_time.slice(0, 5)}–${schedule.end_time.slice(0, 5)}) · ${schedule.room_name}`));
     const grid = el("div", "", "time-slot-grid");
     for (const slot of schedule.slots) {
       const key = `${schedule.schedule_id}/${slot.appointment_time}`;
@@ -219,6 +247,7 @@ function renderSlots() {
       button.type = "button";
       button.setAttribute("aria-pressed", String(active));
       shift.add(new Option(button.textContent, key));
+      button.append(el("small", active ? "Đang chọn" : "Còn trống"));
       button.addEventListener("click", () => { selectedSlot = { schedule, slot, key }; renderSlots(); updateReviewState(); });
       grid.append(button);
     }
@@ -229,6 +258,11 @@ function renderSlots() {
 }
 function updateReviewState() {
   ui.reviewSubmit.disabled = !selectedSlot;
+  $("#booking-total-fee").textContent = selectedDoctor ? money(selectedDoctor.consultation_fee) : "Chưa chọn bác sĩ";
+  $("#booking-selection-summary").textContent = selectedSlot
+    ? `${selectedDoctor.full_name} · ${dateLabel(selectedSlot.schedule.work_date)} · ${clock(selectedSlot.slot.starts_at)}–${clock(selectedSlot.slot.ends_at)} · ${selectedSlot.schedule.room_name}`
+    : (selectedDoctor ? `${selectedDoctor.full_name} · Vui lòng chọn khung giờ khám.` : "Bạn chưa chọn khung giờ khám.");
+  $("#booking-selection-fee").textContent = selectedSlot ? `Phí khám: ${money(selectedDoctor.consultation_fee)}` : "";
 }
 async function loadData() {
   if (loading) return;
@@ -246,23 +280,26 @@ async function loadData() {
   try {
     const failed = results.find(result => result.status === "rejected");
     if (failed) throw failed.reason;
-    doctors = results[0].value; patients = results[1].value; actor = results[3].value.user;
+    doctors = results[0].value; patients = results[1].value; departments = results[2].value.items; actor = results[3].value.user;
     ui.departments.replaceChildren(new Option("Tất cả chuyên khoa", ""));
     for (const department of results[2].value.items) ui.departments.add(new Option(department.name, department.department_id));
-    renderPatients(); renderDoctors();
-    ui.data.textContent = "Thông tin bác sĩ, giá khám và hồ sơ được lấy từ hệ thống.";
+    renderPatients(); renderDepartments(); renderDoctors();
+    ui.data.textContent = "";
     ui.patients.disabled = false;
     $("#add-relative").disabled = false;
     const query = new URLSearchParams(location.search);
     if (!query.get("doctor") && results[2].value.items.some(department => String(department.department_id) === query.get("department"))) {
       ui.departments.value = query.get("department");
-      document.querySelector('[data-booking-mode="department"]').click();
-      renderDoctors();
+      renderDepartments(); renderDoctors();
     }
     const key = query.get("draft"), draft = readDraft(key, actor.user_id);
     if (draft) { ui.from.value = draft.from_date || draft.work_date; ui.to.value = draft.to_date || ""; }
     const doctor = doctors.find(d => String(d.doctor_profile_id) === query.get("doctor"));
-    if (doctor) await selectDoctor(doctor, { scrollToDoctor: !query.get("encounter") });
+    if (doctor) {
+      ui.departments.value = String(doctor.department_id);
+      renderDepartments();
+      await selectDoctor(doctor, { scrollToDoctor: !query.get("encounter") });
+    }
     if (draft && doctor && String(draft.doctor_profile_id) === String(doctor.doctor_profile_id)) {
       renderPatients(draft.patient_id); $("#appointment-symptoms").value = draft.symptoms;
       const schedule = schedules.find(s => String(s.schedule_id) === String(draft.schedule_id));
@@ -360,14 +397,9 @@ ui.patients.addEventListener("change", updateInsurance);
 document.querySelectorAll('[name="insurance"]').forEach(radio => radio.addEventListener("change", () => {
   $("#insurance-field").hidden = $('[name="insurance"]:checked').value !== "yes";
 }));
-document.querySelectorAll("[data-booking-mode]").forEach(button => button.addEventListener("click", () => {
-  const departmentMode = button.dataset.bookingMode === "department";
-  document.querySelectorAll("[data-booking-mode]").forEach(item => {
-    const active = item === button; item.classList.toggle("selected", active); item.setAttribute("aria-pressed", String(active));
-  });
-  $("#appointment-department-field").hidden = !departmentMode;
-  if (!departmentMode) { ui.departments.value = ""; renderDoctors(); }
-}));
+$("#department-search").addEventListener("input", renderDepartments);
+$("#booking-day-prev").addEventListener("click", () => ui.days.scrollBy({ left: -300, behavior: "smooth" }));
+$("#booking-day-next").addEventListener("click", () => ui.days.scrollBy({ left: 300, behavior: "smooth" }));
 $("#appointment-search").addEventListener("input", renderDoctors);
 ui.departments.addEventListener("change", renderDoctors);
 function changeRange() {
