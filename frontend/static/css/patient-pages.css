@@ -2,6 +2,44 @@
 .patient-header {
   background: white;
 }
+.patient-account-link {
+  display: grid;
+  place-items: center;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  margin-left: auto;
+  border: 1px solid #c7e0d2;
+  border-radius: 50%;
+  color: var(--deep);
+  background: #edf7f1;
+}
+.patient-account-link svg { width: 27px; height: 27px; }
+.patient-account-link:hover { background: #dcefe3; border-color: var(--green); }
+.profile-page { background: #f5f8f6; }
+.profile-page .patient-heading, .profile-layout { max-width: 1120px; margin-left: auto; margin-right: auto; }
+.profile-layout { display: block; }
+.profile-layout[hidden] { display: none; }
+.profile-layout .patient-panel { width: 100%; margin: 0; border-radius: 8px; }
+.profile-fields { margin: 22px 0 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.profile-fields > div { min-width: 0; padding-top: 16px; border-top: 1px solid #e5ece7; }
+.profile-fields dt { color: var(--muted); font-size: 13px; margin-bottom: 9px; }
+.profile-fields dd { color: var(--ink); margin: 0; line-height: 1.7; font-size: 15px; overflow-wrap: anywhere; }
+.profile-fields input { width: 100%; min-width: 0; padding: 11px 12px; border: 1px solid #b7cec0; border-radius: 5px; background: white; color: var(--ink); font: inherit; }
+.profile-fields input:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.profile-fields input:disabled { background: #f5f8f6; }
+.profile-edit-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.profile-message { padding: 12px 15px; margin: 20px 0 0; border: 1px solid #c7e0d2; border-radius: 5px; color: var(--deep); background: #edf7f1; font-size: 14px; line-height: 1.6; }
+.profile-message[data-state="error"] { border-color: #e5c1b9; color: #8d3021; background: #fff5f2; }
+@media (max-width: 700px) {
+  .patient-header .identity:has(.patient-account-link) { flex-wrap: nowrap; gap: 12px; }
+  .patient-header .identity:has(.patient-account-link) .brand { flex: 1; min-width: 0; gap: 9px; }
+  .patient-header .identity:has(.patient-account-link) .brand-logo { width: 46px; height: 46px; }
+  .patient-header .identity:has(.patient-account-link) .brand strong { font-size: 17px; }
+  .patient-header .identity:has(.patient-account-link) .brand small { font-size: 10px; }
+  .patient-account-link { flex-basis: 44px; width: 44px; height: 44px; }
+  .profile-fields { grid-template-columns: 1fr; gap: 16px; }
+}
 .auth-pending .appointment-page { display: none; }
 .appointment-page [hidden], #booking-auth-status [hidden],
 #booking-review-page[hidden], #booking-review-page [hidden], #booking-payment-modal [hidden], #relative-dialog [hidden], #insurance-dialog [hidden],

@@ -1,7 +1,7 @@
 import { listDoctors } from "../api/doctor.js";
 import { listDepartments } from "../api/catalog.js";
 import { allPages } from "../core/booking.js";
-import { doctorPage, element } from "../core/doctors.js";
+import { doctorPage, element, experience, profileSections } from "../core/doctors.js";
 import { thumbnailUrl } from "../core/articles.js";
 
 // Keep the header, banner and service tiles together in the first desktop view.
@@ -47,9 +47,22 @@ async function loadHomeDepartments() {
 }
 loadHomeDepartments();
 const doctorTrack = document.querySelector("#doctor-track");
-const previousDoctor = document.querySelector(".slider-prev");
-const nextDoctor = document.querySelector(".slider-next");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+let doctorTimer;
+function runDoctorTimer() {
+  clearInterval(doctorTimer);
+  if (reducedMotion.matches || document.hidden) return;
+  doctorTimer = setInterval(() => {
+    const keyboardFocus = doctorTrack.closest(".doctor-slider").contains(document.activeElement)
+      && document.activeElement.matches(":focus-visible");
+    if (keyboardFocus || doctorTrack.querySelector(".doctor-card:hover")
+      || doctorTrack.classList.contains("is-dragging")
+      || doctorTrack.getAttribute("aria-busy") === "true"
+      || doctorTrack.scrollWidth <= doctorTrack.clientWidth + 2) return;
+    if (doctorTrack.scrollLeft >= doctorTrack.scrollWidth - doctorTrack.clientWidth - 2) doctorTrack.scrollTo({ left: 0, behavior: "smooth" });
+    else moveDoctors(1);
+  }, 10000);
+}
 function moveDoctors(direction) {
   const card = doctorTrack.querySelector(".doctor-card");
   if (!card) return;
@@ -59,23 +72,6 @@ function moveDoctors(direction) {
     behavior: reducedMotion.matches ? "instant" : "smooth",
   });
 }
-function updateDoctorSlider() {
-  const card = doctorTrack.querySelector(".doctor-card");
-  const count = doctorTrack.querySelectorAll(".doctor-card").length;
-  if (!card) { previousDoctor.disabled = nextDoctor.disabled = true; return; }
-  const step = card.getBoundingClientRect().width + parseFloat(getComputedStyle(doctorTrack).gap);
-  const first = Math.round(doctorTrack.scrollLeft / step) + 1;
-  const visible = Math.max(
-    1,
-    Math.round((doctorTrack.clientWidth + parseFloat(getComputedStyle(doctorTrack).gap)) / step),
-  );
-  previousDoctor.disabled = doctorTrack.scrollLeft <= 1;
-  nextDoctor.disabled =
-    doctorTrack.scrollLeft >= doctorTrack.scrollWidth - doctorTrack.clientWidth - 2;
-  document.querySelector(".slider-status").textContent =
-    `Bác sĩ ${first}–${Math.min(count, first + visible - 1)} / ${count}`;
-}
-
 async function loadHomeDoctors() {
   const status = document.querySelector(".slider-status");
   status.textContent = "Đang tải bác sĩ…";
@@ -85,21 +81,36 @@ async function loadHomeDoctors() {
     const cards = doctors.map(doctor => {
       const card = element("a", "", "doctor-card");
       card.href = `doctor-detail.html?id=${encodeURIComponent(doctor.doctor_profile_id)}`;
+      const photo = element("div", "", "doctor-photo");
       const src = thumbnailUrl(doctor.avatar_url);
-      const missing = element("span", "Chưa có ảnh");
+      const missing = element("span", "Chưa có ảnh", "doctor-photo-placeholder");
       if (src) {
         const image = document.createElement("img");
         image.src = src; image.alt = `Ảnh ${doctor.full_name}`; image.loading = "lazy";
         image.addEventListener("error", () => image.replaceWith(missing), { once: true });
-        card.append(image);
-      } else card.append(missing);
-      card.append(element("span", doctor.department_name), element("strong", doctor.full_name));
+        photo.append(image);
+      } else photo.append(missing);
+      const highlights = element("div", "", "doctor-highlights");
+      const sections = profileSections(doctor.introduction);
+      const facts = [
+        doctor.academic_degree,
+        doctor.experience_years == null ? null : experience(doctor),
+        doctor.specialization,
+        ...sections.education,
+        ...sections.work,
+      ].filter(Boolean);
+      const list = element("ul");
+      list.append(...(facts.length ? facts : ["Thông tin thành tích đang cập nhật."])
+        .map(fact => element("li", fact)));
+      highlights.append(element("p", "Thành tích nổi bật", "doctor-highlights-title"), list);
+      photo.append(highlights);
+      card.append(photo, element("span", doctor.department_name), element("strong", doctor.full_name));
       return card;
     });
     doctorTrack.replaceChildren(...cards);
     doctorTrack.scrollLeft = 0;
     status.textContent = doctors.length ? "" : "Chưa có hồ sơ bác sĩ.";
-    updateDoctorSlider();
+    runDoctorTimer();
   } catch {
     status.textContent = "Không tải được bác sĩ. ";
     const retry = element("button", "Thử lại", "outline-button"); retry.type = "button";
@@ -107,17 +118,16 @@ async function loadHomeDoctors() {
   } finally { doctorTrack.setAttribute("aria-busy", "false"); }
 }
 loadHomeDoctors();
-previousDoctor.addEventListener("click", () => moveDoctors(-1));
-nextDoctor.addEventListener("click", () => moveDoctors(1));
-doctorTrack.addEventListener("scroll", updateDoctorSlider, { passive: true });
 doctorTrack.addEventListener("keydown", (event) => {
   if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
     event.preventDefault();
     moveDoctors(event.key === "ArrowRight" ? 1 : -1);
   }
 });
-window.addEventListener("resize", updateDoctorSlider);
-updateDoctorSlider();
+document.addEventListener("visibilitychange", runDoctorTimer);
+reducedMotion.addEventListener("change", runDoctorTimer);
+window.addEventListener("pagehide", () => clearInterval(doctorTimer));
+window.addEventListener("pageshow", runDoctorTimer);
 
 // Share mouse-drag scrolling between both home carousels.
 function enableMouseDrag(track) {

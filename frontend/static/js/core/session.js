@@ -8,6 +8,7 @@ export const portalUrl = new URL("(patient)/portal.html", templates);
 export const bookingUrl = new URL("(patient)/booking.html", templates);
 export const bookingReviewUrl = new URL("(patient)/booking-review.html", templates);
 export const appointmentsUrl = new URL("(patient)/appointments.html", templates);
+export const profileUrl = new URL("(patient)/profile.html", templates);
 const signInUrl = new URL("auth/login.html", templates);
 const patientOnlyMessage = "Giao diện hiện chỉ hỗ trợ đăng nhập bằng tài khoản bệnh nhân. Giao diện cho các vai trò khác chưa được triển khai.";
 let verification;
@@ -59,9 +60,9 @@ export async function signIn(credentials) {
   announce();
 }
 
-export async function verifySession() {
+export async function getSessionUser() {
   const session = readSession();
-  if (!session) return false;
+  if (!session) return null;
   if (verification?.token === session.token) return verification.promise;
   const promise = (async () => {
     try {
@@ -70,14 +71,14 @@ export async function verifySession() {
       // Also reject staff sessions saved before this frontend restriction was added.
       if (result.user.role_name !== "USER") {
         if (readSession()?.token === session.token) clearSession();
-        return false;
+        return null;
       }
       // A logout/new login during this request must not revive the previous session.
-      return readSession()?.token === session.token;
+      return readSession()?.token === session.token ? result.user : null;
     } catch (error) {
       if (error.status === 401 || error.status === 403) {
         if (readSession()?.token === session.token) clearSession();
-        return false;
+        return null;
       }
       throw error;
     } finally {
@@ -86,6 +87,10 @@ export async function verifySession() {
   })();
   verification = { token: session.token, promise };
   return promise;
+}
+
+export async function verifySession() {
+  return Boolean(await getSessionUser());
 }
 
 export async function signOut() {
@@ -103,7 +108,8 @@ export function returnUrl(value) {
     const url = new URL(value || homeUrl.href, location.href);
     if (url.origin === homeUrl.origin && url.protocol === homeUrl.protocol &&
         !url.username && !url.password &&
-        [homeUrl.pathname, portalUrl.pathname, bookingUrl.pathname, bookingReviewUrl.pathname, appointmentsUrl.pathname].includes(url.pathname)) return url;
+        [homeUrl.pathname, portalUrl.pathname, bookingUrl.pathname, bookingReviewUrl.pathname, appointmentsUrl.pathname,
+          profileUrl.pathname].includes(url.pathname)) return url;
   } catch { /* Never redirect to an untrusted next URL. */ }
   return new URL(homeUrl);
 }
