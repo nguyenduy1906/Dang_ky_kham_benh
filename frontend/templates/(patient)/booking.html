@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="../../static/css/patient_pages.css?v=20261015-account" />
     <link rel="stylesheet" href="../../static/css/booking_page.css?v=20261015" />
     <script src="../../static/js/core/public.js?v=20261014-interface-update" defer></script>
-    <script type="module" src="../../static/js/pages/booking.js?v=20261015-booking-layout"></script>
+    <script type="module" src="../../static/js/pages/booking.js?v=20261017-proxy-registration"></script>
   </head>
   <body class="auth-pending">
     <a class="skip-link" href="#main">Đến nội dung chính</a>
@@ -60,7 +60,7 @@
             <div id="chosen-schedule" class="booking-calendar" aria-busy="false">
               <section class="booking-step" aria-labelledby="chosen-schedule-title">
                 <div class="booking-step-heading"><h2 id="chosen-schedule-title">Chọn ngày khám</h2><div class="booking-day-navigation"><button type="button" id="booking-day-prev" aria-label="Xem các ngày trước">‹</button><button type="button" id="booking-day-next" aria-label="Xem các ngày tiếp theo">›</button></div></div>
-                <details class="booking-range-options"><summary>Chọn khoảng ngày</summary><div class="booking-date-range"><div><label for="schedule-from">Từ ngày</label><input id="schedule-from" type="date" /></div><div><label for="schedule-to">Đến ngày</label><input id="schedule-to" type="date" /></div></div><p id="schedule-range-error" class="range-error" role="status"></p></details>
+                <div hidden><input id="schedule-from" type="hidden" /><input id="schedule-to" type="hidden" /><p id="schedule-range-error"></p></div>
                 <p id="schedule-status" role="status">Chọn bác sĩ để xem lịch khám còn trống.</p><button id="schedule-retry" type="button" class="add-relative-button" hidden>Tải lại lịch khám</button>
                 <div id="appointment-day-buttons" class="appointment-day-buttons" role="group" aria-label="Chọn ngày khám"></div>
                 <div hidden><label for="appointment-date">Ngày khám</label><select id="appointment-date" tabindex="-1"><option value="">Chọn ngày khám</option></select><label for="appointment-shift">Ca khám</label><select id="appointment-shift" tabindex="-1"><option value="">Chọn ca khám</option></select></div>
@@ -75,8 +75,7 @@
               <div class="booking-step-heading"><h2 id="booking-patient-title">Thông tin người khám</h2></div>
               <div class="booking-patient-grid">
                 <div class="appointment-field"><label for="appointment-patient">Người tới khám *</label><select id="appointment-patient" required><option value="">Đang tải hồ sơ…</option></select><button type="button" class="add-relative-button" id="add-relative">＋ Thêm hồ sơ người khám</button><p class="field-note" id="relative-status" role="status"></p></div>
-                <div class="appointment-field"><label for="appointment-location">Cơ sở khám</label><select id="appointment-location"><option>NEU Medical — 207 Giải Phóng</option></select><fieldset class="appointment-insurance"><legend>Sử dụng Bảo hiểm y tế</legend><label><input type="radio" name="insurance" value="no" checked /> Không</label><label><input type="radio" name="insurance" value="yes" /> Có</label></fieldset></div>
-                <div class="appointment-field booking-patient-full" id="insurance-field" hidden><label for="appointment-insurance-code">Mã thẻ BHYT</label><input id="appointment-insurance-code" maxlength="15" readonly /><button type="button" id="edit-insurance" class="add-relative-button">Nhập / sửa thông tin thẻ</button><p id="insurance-local-status" class="field-note" role="status"></p></div>
+                <div class="appointment-field"><label for="appointment-location">Cơ sở khám</label><select id="appointment-location"><option>NEU Medical — 207 Giải Phóng</option></select></div>
                 <div class="appointment-field booking-patient-full"><label for="appointment-symptoms">Vấn đề sức khỏe gặp phải *</label><textarea id="appointment-symptoms" required rows="3" maxlength="2000" placeholder="Mô tả ngắn gọn triệu chứng..."></textarea></div>
               </div>
             </section>
@@ -84,7 +83,7 @@
         </div>
         <div class="booking-workspace-footer">
           <a href="portal.html" class="outline-button">← Về trang bệnh nhân</a>
-          <div class="booking-footer-checkout"><div><span>Phí khám · Thanh toán ở bước tiếp theo</span><strong id="booking-total-fee">Chưa chọn bác sĩ</strong></div><button id="appointment-review-submit" class="solid-button" type="submit" disabled>Tiếp tục nhập thông tin →</button></div>
+          <div class="booking-footer-checkout"><div><span>Phí khám · Thanh toán ở bước tiếp theo</span><strong id="booking-total-fee">Chưa chọn bác sĩ</strong></div><button id="appointment-review-submit" class="solid-button" type="submit">Kiểm tra thông tin →</button></div>
           <p id="appointment-status" role="status"></p>
         </div>
       </form>
@@ -115,9 +114,9 @@
               <a href="portal.html">Đặt lịch khám</a>
               <a href="../public/contact.html#consultation">Đăng ký tư vấn</a>
               <a href="../public/contact.html">Liên hệ hỗ trợ</a>
-              <button type="button" data-panel="privacy">Chính sách bảo mật</button>
-              <button type="button" data-panel="terms">Điều khoản sử dụng</button>
-              <button type="button" data-panel="insurance">Thông tin bảo hiểm y tế</button>
+              <button type="button">Chính sách bảo mật</button>
+              <button type="button">Điều khoản sử dụng</button>
+              <button type="button">Thông tin bảo hiểm y tế</button>
             </nav>
           </section>
           <section class="footer-column footer-location" aria-label="Vị trí bệnh viện">
@@ -225,28 +224,6 @@
         </label>
         <p id="relative-form-status" role="status"></p>
         <button type="submit" class="solid-button relative-submit">Lưu hồ sơ</button>
-      </form>
-    </dialog>
-    <dialog id="insurance-dialog" aria-labelledby="insurance-title">
-      <div class="dialog-heading">
-        <h2 id="insurance-title">Thông tin thẻ BHYT</h2>
-        <button
-          type="button"
-          id="insurance-close"
-          class="dialog-close"
-          aria-label="Đóng thông tin thẻ"
-        >
-          ×
-        </button>
-      </div>
-
-      <form id="insurance-form">
-        <label for="insurance-document">Mã thẻ BHYT</label>
-        <input id="insurance-document" pattern="[A-Za-z0-9]{10,15}" maxlength="15"
-          title="Nhập 10–15 chữ hoặc số; để trống nếu muốn xóa mã thẻ" />
-        <p class="field-note">Lưu mã thẻ vào hồ sơ người khám. Mã thẻ chưa được đối chiếu quyền lợi bảo hiểm.</p>
-        <p id="insurance-form-status" role="status"></p>
-        <button type="submit" class="solid-button relative-submit">Lưu mã thẻ</button>
       </form>
     </dialog>
   </body>

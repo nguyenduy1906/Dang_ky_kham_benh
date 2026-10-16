@@ -143,6 +143,7 @@ CREATE TABLE IF NOT EXISTS encounter (
     consultation_fee_snapshot BIGINT CHECK (consultation_fee_snapshot >= 0),
     deposit_amount_snapshot   BIGINT CHECK (deposit_amount_snapshot >= 0),
     symptoms             text,
+    registration_details jsonb CHECK (registration_details IS NULL OR jsonb_typeof(registration_details) = 'object'),
     encounter_status         text NOT NULL DEFAULT 'CONFIRMED'
         CHECK (encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED','CANCELLED','NO_SHOW','EXPIRED')),
     ticket_code          TEXT UNIQUE,

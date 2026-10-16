@@ -46,7 +46,7 @@ async function loadSpecialties() {
       !Number.isInteger(item.department_id) || item.department_id < 1 || typeof item.name !== "string" || !item.name.trim())) {
       throw new Error("Danh sách chuyên khoa không hợp lệ.");
     }
-    option.textContent = "Chưa xác định chuyên khoa";
+    option.textContent = "Lựa chọn chuyên khoa";
     specialty.replaceChildren(option, ...result.items.map(item => {
       const node = document.createElement("option");
       node.value = String(item.department_id); node.textContent = item.name; return node;

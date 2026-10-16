@@ -1,5 +1,5 @@
 import * as authApi from "../api/auth.js";
-import { signIn, clearSession, returnUrl } from "../core/session.js";
+import { signIn, clearSession, returnUrl, workspaceUrl } from "../core/session.js";
 
 const card = document.querySelector("#auth-card");
 const params = new URLSearchParams(location.search);
@@ -54,9 +54,13 @@ loginForm.addEventListener("submit", async event => {
   busy(loginForm, true, "Đang đăng nhập…");
   message(loginStatus, "");
   try {
-    await signIn({ identifier, password });
+    const user = await signIn({ identifier, password });
     document.querySelector("#login-password").value = "";
-    location.replace(returnUrl(params.get("next")).href);
+    let destination = returnUrl(params.get("next"), user.role_name);
+    if (user.role_name === "ADMIN" && destination.pathname === new URL("../components/profile.html", workspaceUrl("ADMIN")).pathname) {
+      destination = workspaceUrl("ADMIN");
+    }
+    location.replace(destination.href);
   } catch (error) {
     message(loginStatus, error.message);
   } finally { busy(loginForm, false, "Đăng nhập"); }

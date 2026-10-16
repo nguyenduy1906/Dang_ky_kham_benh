@@ -6,10 +6,12 @@ const nativeInterval = globalThis.setInterval;
 globalThis.setInterval = (...args) => nativeInterval(...args).unref();
 
 class Node {
-  constructor(tag = "div") { this.tagName = tag.toUpperCase(); this.children = []; this.hidden = false; this.events = {}; this.namespaceURI = "http://www.w3.org/2000/svg"; }
+  constructor(tag = "div") { this.tagName = tag.toUpperCase(); this.children = []; this.textContent = ""; this.hidden = false; this.events = {}; this.namespaceURI = "http://www.w3.org/2000/svg"; }
   append(...nodes) { this.children.push(...nodes); }
   replaceChildren(...nodes) { this.children = nodes; }
   setAttribute(name, value) { this[name] = value; }
+  scrollIntoView(options) { this.scrolled = options; }
+  focus() { this.focused = true; }
   addEventListener(name, handler) { this.events[name] = handler; }
   querySelector(selector) { return this.querySelectorAll(selector)[0]; }
   querySelectorAll(selector) {
@@ -36,7 +38,7 @@ class Node {
   }
 }
 const id = "11111111-1111-4111-8111-111111111111";
-function fixture({ uncertain = false, encounterId, failCreate = false, failSave = false, doctorGate, beforeSave, normalizePatient } = {}) {
+function fixture({ uncertain = false, encounterId, failCreate = false, failSave = false, doctorGate, beforeSave, normalizePatient, patientFields = {}, symptoms = "Test only" } = {}) {
   const nodes = new Map();
   const get = selector => {
     const find = node => node.id === selector.slice(1) ? node : node.children.map(find).find(Boolean);
@@ -56,28 +58,22 @@ function fixture({ uncertain = false, encounterId, failCreate = false, failSave 
   const navigation = [];
   globalThis.location = { href: `http://localhost:3000/frontend/templates/(patient)/booking_review.html?draft=${id}`, search: `?draft=${id}`, assign(url) { navigation.push(url); }, replace() {} };
   globalThis.history = { replaceState() {} };
-  const draft = { user_id: 1, patient_id: 2, doctor_profile_id: 7, schedule_id: 9, work_date: "2030-01-15", appointment_time: "08:00", symptoms: "Test only", uncertain, encounter_id: encounterId };
+  const draft = { user_id: 1, patient_id: 2, doctor_profile_id: 7, schedule_id: 9, work_date: "2030-01-15", appointment_time: "08:00", symptoms, uncertain, encounter_id: encounterId };
   saveDraft(draft, id);
   const row = { encounter_id: 3, patient_id: 2, doctor_profile_id: 7, schedule_id: 9, patient_name: "Test patient", doctor_name: "Test doctor", department_name: "Mắt", room_name: "204", work_date: "2030-01-15", estimated_exam_at: "2030-01-15T08:00:00+07:00", appointment_end_at: "2030-01-15T08:15:00+07:00", consultation_fee_snapshot: "260000", deposit_amount_snapshot: "260000", symptoms: "Test only", encounter_status: "HOLDING", hold_expires_at: new Date(Date.now() + 600000).toISOString() };
-  const patient = { patient_id: 2, user_id: 1, full_name: "Test patient", phone: "0912345678", dob: "2000-01-01" };
+  const patient = { patient_id: 2, user_id: 1, full_name: "Test patient", phone: "0912345678", id_card: "001090123456", dob: "2000-01-01", ...patientFields };
   const calls = []; let payment, saveCount = 0;
   globalThis.fetch = async (url, options) => {
     const path = new URL(url).pathname; calls.push({ path, method: options.method, body: options.body });
     let data;
-    if (path === "/me") data = { user: { user_id: 1, role_name: "USER" } };
+    if (path === "/me") data = { user: { user_id: 1, role_name: "USER", phone: "0912345678" } };
     else if (path === "/doctors") { if (doctorGate) await doctorGate; data = { items: [{ doctor_profile_id: 7, full_name: "Test doctor", department_name: "Mắt", consultation_fee: 260000 }], total: 1 }; }
     else if (path === "/patients") data = { items: [patient], total: 1 };
-    else if (path === "/patients/2") {
-      const changes = JSON.parse(options.body), count = ++saveCount;
-      if (beforeSave) await beforeSave(changes, count);
-      if (typeof failSave === "function" ? failSave(count) : failSave) return Response.json({ error: { message: "Thông tin trùng hồ sơ", code: "PATIENT_IDENTITY_CONFLICT" } }, { status: 409 });
-      Object.assign(patient, changes);
-      if (normalizePatient) Object.assign(patient, normalizePatient({ ...patient }, changes));
-      data = { patient };
-    }
+    else if (path === "/patients/2") throw new Error("Booking must never update the original patient");
     else if (path.endsWith("/schedules")) data = { items: [{ schedule_id: 9, work_date: "2030-01-15", start_time: "08:00", room_name: "204", schedule_status: "OPEN", slots: [{ appointment_time: "08:00", starts_at: row.estimated_exam_at, ends_at: row.appointment_end_at }] }], total: 1 };
     else if (path === "/encounters/online") {
       if (failCreate) return Response.json({ error: { message: "Server error" } }, { status: 500 });
+      const body = JSON.parse(options.body); row.registration_details = body.registration_details; row.symptoms = body.symptoms;
       data = { encounter: row };
     }
     else if (path === "/encounters") data = { items: [row], total: 1 };
@@ -88,6 +84,14 @@ function fixture({ uncertain = false, encounterId, failCreate = false, failSave 
     else if (path.endsWith("/payments")) data = { items: payment ? [payment] : [], total: payment ? 1 : 0 };
     else if (path === "/demo/payments/4/result") { payment.transaction_status = "SUCCESS"; row.encounter_status = "CONFIRMED"; row.ticket_code = "TEST-ONLY"; data = { payment }; }
     else if (path === "/encounters/3/ticket") data = { ticket: { ticket_code: "TEST-ONLY" } };
+    else if (path === "/encounters/3/registration") {
+      const body = JSON.parse(options.body), count = ++saveCount;
+      if (beforeSave) await beforeSave(body, count);
+      if (failSave) return Response.json({ error: { message: "Không lưu được đăng ký", code: "REGISTRATION_FAILED" } }, { status: 500 });
+      row.registration_details = body.registration_details; row.symptoms = body.symptoms;
+      if (normalizePatient) Object.assign(row.registration_details, normalizePatient(row.registration_details));
+      data = { encounter: row };
+    }
     else if (path === "/encounters/3") data = { encounter: row };
     else throw new Error(`Unexpected API ${path}`);
     return Response.json(data);
@@ -153,168 +157,188 @@ test("resuming a hold keeps QR hidden until payment is explicitly opened", async
   assert.equal(f.get("#booking-qr").hidden, false);
   f.events.pagehide();
 });
-test("edited patient fields are saved through PATCH before creating the booking", async () => {
-  const f = fixture(); await import("../static/js/pages/booking_review.js?edit"); await loaded(f);
-  assert.equal(f.get("#booking-review-field-0").readOnly, false);
-  assert.equal(f.get("#booking-review-field-3").readOnly, true);
-  f.get("#booking-review-field-0").value = "Updated test name";
-  await f.get("#booking-confirm").events.click();
-  const patch = f.calls.findIndex(c => c.method === "PATCH");
-  assert.deepEqual(JSON.parse(f.calls[patch].body), { full_name: "Updated test name" });
-  assert.ok(patch < f.calls.findIndex(c => c.path === "/encounters/online"));
-  assert.equal(f.get("#booking-review-field-0").value, "Updated test name");
-  f.events.pagehide();
-});
-test("failed profile update preserves edits and prevents booking/payment POSTs", async () => {
-  const f = fixture({ failSave: true }); await import("../static/js/pages/booking_review.js?failed-edit"); await loaded(f);
-  f.get("#booking-review-field-0").value = "Updated test name";
-  await f.get("#booking-confirm").events.click();
-  assert.equal(f.calls.filter(c => c.method === "POST").length, 0);
-  assert.equal(f.get("#booking-review-field-0").value, "Updated test name");
-  assert.match(f.get("#booking-dialog-status").textContent, /trùng/);
-});
-
-test("review omits the manual save button and removed instruction", async () => {
-  const f = fixture(); await import("../static/js/pages/booking_review.js?autosave-ui"); await loaded(f);
+test("typing registration details only changes the draft, never the account or original patient", async () => {
+  const f = fixture({ patientFields: { user_id: null } });
+  await import("../static/js/pages/booking_review.js?draft-only"); await loaded(f);
   try {
-    const form = f.get("#booking-patient-form");
-    assert.equal(form.querySelectorAll("button").some(node => node.textContent === "Lưu thông tin"), false);
-    assert.equal(form.querySelectorAll("p").some(node => /Bạn có thể sửa thông tin cơ bản tại đây/.test(node.textContent)), false);
-    assert.equal(f.calls.filter(c => c.method === "PATCH").length, 0);
+    for (let index = 0; index < 8; index++) assert.equal(f.get(`#booking-review-field-${index}`).readOnly, false);
+    const address = f.get("#booking-review-field-6"); address.value = "Địa chỉ khai cho lần này"; address.events.input();
+    const phone = f.get("#booking-review-field-3"); phone.value = "+84 912.345.678"; phone.events.input();
+    assert.equal(readDraft(id, 1).registration_details.address, address.value);
+    assert.equal(readDraft(id, 1).registration_details.phone, "0912345678");
+    assert.equal(f.patient.address, undefined);
+    assert.equal(f.calls.filter(c => ["POST", "PATCH"].includes(c.method)).length, 0);
+    await f.get("#booking-back").events.click();
+    assert.equal(f.navigation.length, 1);
+    assert.equal(f.calls.filter(c => ["POST", "PATCH"].includes(c.method)).length, 0);
   } finally { f.events.pagehide(); }
 });
 
-test("typing automatically saves patient changes without creating a hold or payment", async () => {
-  const f = fixture(); await import("../static/js/pages/booking_review.js?autosave-input"); await loaded(f);
+test("payment sends the entered registration snapshot and leaves the original patient unchanged", async () => {
+  const f = fixture(); await import("../static/js/pages/booking_review.js?snapshot-create"); await loaded(f);
   try {
-    const field = f.get("#booking-review-field-6"); field.value = "New database address";
-    assert.equal(typeof field.events.input, "function");
-    field.events.input();
-    assert.equal(f.calls.filter(c => c.method === "PATCH").length, 0, "input should debounce writes");
-    await new Promise(resolve => setTimeout(resolve, 650));
-    await until(() => f.patient.address === field.value, "debounced input did not reach the patient API");
-    assert.deepEqual(JSON.parse(f.calls.find(c => c.method === "PATCH").body), { address: "New database address" });
-    assert.equal(f.calls.filter(c => c.method === "POST").length, 0);
-    assert.notEqual(field.disabled, true);
-  } finally { f.events.pagehide(); }
-});
-
-test("change saves immediately and serializes newer edits behind an in-flight PATCH", async () => {
-  const firstSave = deferred();
-  const f = fixture({ beforeSave: (_, count) => count === 1 ? firstSave.promise : undefined });
-  await import("../static/js/pages/booking_review.js?autosave-queue"); await loaded(f);
-  try {
-    const field = f.get("#booking-review-field-0");
-    field.value = "First changed name";
-    assert.equal(typeof field.events.change, "function");
-    const firstChange = field.events.change();
-    await until(() => f.calls.some(c => c.method === "PATCH"), "change did not start a PATCH");
-    assert.notEqual(field.disabled, true, "saving must not interrupt typing");
-    field.value = "Latest changed name";
-    const secondChange = field.events.change();
-    for (let i = 0; i < 5; i++) await new Promise(resolve => setImmediate(resolve));
-    assert.equal(f.calls.filter(c => c.method === "PATCH").length, 1, "PATCH requests must be sequential");
-    assert.equal(field.value, "Latest changed name");
-    firstSave.resolve(); await Promise.all([firstChange, secondChange]);
-    await until(() => f.patient.full_name === "Latest changed name", "newer edit was lost after the first PATCH completed");
-    const patches = f.calls.filter(c => c.method === "PATCH");
-    assert.equal(patches.length, 2);
-    assert.equal(JSON.parse(patches[1].body).full_name, "Latest changed name");
-    assert.equal(field.value, "Latest changed name");
-    assert.equal(f.calls.filter(c => c.method === "POST").length, 0);
-  } finally { firstSave.resolve(); f.events.pagehide(); }
-});
-
-test("server-normalized patient values replace the saved input", async () => {
-  const f = fixture({ normalizePatient: patient => ({ health_insurance: patient.health_insurance?.toUpperCase() }) });
-  await import("../static/js/pages/booking_review.js?autosave-normalized"); await loaded(f);
-  try {
-    const field = f.get("#booking-review-field-2"); field.value = "ab12345678";
-    assert.equal(typeof field.events.blur, "function");
-    await field.events.blur();
-    await until(() => field.value === "AB12345678", "saved input did not use the normalized API response");
-    assert.equal(f.patient.health_insurance, "AB12345678");
-    assert.equal(f.calls.filter(c => c.method === "POST").length, 0);
-  } finally { f.events.pagehide(); }
-});
-
-test("failed automatic PATCH keeps edits and can retry without an uncertain booking", async () => {
-  const f = fixture({ failSave: count => count === 1 });
-  await import("../static/js/pages/booking_review.js?autosave-retry"); await loaded(f);
-  try {
-    const field = f.get("#booking-review-field-0"); field.value = "Retry changed name";
-    assert.equal(typeof field.events.change, "function");
-    await field.events.change();
-    await until(() => /trùng/.test(f.get("#booking-patient-status").textContent), "automatic PATCH failure was not shown");
-    assert.equal(field.value, "Retry changed name");
-    assert.equal(f.patient.full_name, "Test patient");
-    assert.equal(f.calls.filter(c => c.method === "POST").length, 0);
-    assert.equal(readDraft(id, 1).uncertain, false);
-    assert.notEqual(f.get("#booking-confirm").hidden, true);
-    assert.notEqual(f.get("#booking-confirm").disabled, true);
+    f.get("#booking-review-field-0").value = "Tên khai trong lần đăng ký";
+    f.get("#booking-review-field-6").value = "Địa chỉ tiếp nhận";
     await f.get("#booking-confirm").events.click();
-    assert.equal(f.patient.full_name, "Retry changed name");
-    assert.equal(f.calls.filter(c => c.method === "PATCH").length, 2);
-    assert.equal(f.calls.filter(c => c.path === "/encounters/online").length, 1);
-    assert.equal(f.calls.filter(c => c.path.endsWith("/payment-intents")).length, 1);
+    const call = f.calls.find(c => c.path === "/encounters/online");
+    const details = JSON.parse(call.body).registration_details;
+    assert.equal(details.full_name, "Tên khai trong lần đăng ký");
+    assert.equal(details.address, "Địa chỉ tiếp nhận");
+    assert.equal(f.patient.full_name, "Test patient");
+    assert.equal(f.calls.filter(c => c.method === "PATCH" && ["/me", "/patients/2"].includes(c.path)).length, 0);
+    assert.equal(f.get("#booking-review-field-0").value, details.full_name);
   } finally { f.events.pagehide(); }
 });
 
-test("payment waits for a pending patient PATCH and does not create an uncertain booking on PATCH failure", async () => {
-  const saving = deferred();
-  const f = fixture({ failSave: true, beforeSave: () => saving.promise });
-  await import("../static/js/pages/booking_review.js?autosave-payment-wait"); await loaded(f);
+test("partial registration drafts survive rerendering without writing to the server", async () => {
+  const f = fixture({ encounterId: 3 });
+  await import("../static/js/pages/booking_review.js?draft-render"); await loaded(f);
   try {
-    const field = f.get("#booking-review-field-0"); field.value = "Pending changed name";
-    assert.equal(typeof field.events.change, "function");
-    const change = field.events.change();
-    await until(() => f.calls.some(c => c.method === "PATCH"), "change did not start a PATCH");
-    const paymentClick = f.get("#booking-confirm").events.click();
-    for (let i = 0; i < 5; i++) await new Promise(resolve => setImmediate(resolve));
-    assert.equal(f.calls.filter(c => c.method === "POST").length, 0);
-    saving.resolve(); await Promise.all([change, paymentClick]);
-    assert.equal(f.calls.filter(c => c.method === "POST").length, 0);
-    assert.equal(readDraft(id, 1).uncertain, false);
-    assert.equal(field.value, "Pending changed name");
-    assert.notEqual(f.get("#booking-confirm").hidden, true, "patient conflict must not hide payment as though the slot was lost");
-  } finally { saving.resolve(); f.events.pagehide(); }
+    const address = f.get("#booking-review-field-6"); address.value = "Nơi lưu trú hiện tại"; address.events.input();
+    const name = f.get("#booking-review-field-0"); name.value = ""; name.events.input();
+    await f.get("#booking-refresh").events.click();
+    assert.equal(f.get("#booking-review-field-6").value, address.value);
+    assert.equal(f.get("#booking-review-field-0").value, "");
+    assert.equal(f.calls.filter(c => ["POST", "PATCH"].includes(c.method)).length, 0);
+  } finally { f.events.pagehide(); }
 });
 
-test("back navigation flushes edited patient data before leaving the review", async () => {
-  const saving = deferred();
-  const f = fixture({ beforeSave: () => saving.promise });
-  await import("../static/js/pages/booking_review.js?autosave-back"); await loaded(f);
+test("payment marks missing fields, scrolls and focuses the first error without creating a hold", async () => {
+  const f = fixture({ symptoms: "" });
+  await import("../static/js/pages/booking_review.js?validation-missing"); await loaded(f);
   try {
-    const field = f.get("#booking-review-field-6"); field.value = "Address saved before leaving";
-    const back = f.get("#booking-back").events.click();
-    await until(() => f.calls.some(c => c.method === "PATCH"), "back did not flush changed patient data");
-    assert.equal(f.navigation.length, 0);
-    saving.resolve(); await back;
-    await until(() => f.navigation.length === 1, "back did not navigate after the save completed");
-    assert.equal(f.patient.address, "Address saved before leaving");
-  } finally { saving.resolve(); f.events.pagehide(); }
+    const name = f.get("#booking-review-field-0"), symptoms = f.get("#booking-review-field-7");
+    name.value = "   "; symptoms.value = "   "; symptoms.events.input();
+    await f.get("#booking-confirm").events.click();
+    assert.equal(name["aria-invalid"], "true");
+    assert.equal(symptoms["aria-invalid"], "true");
+    assert.match(f.get("#booking-review-field-0-error").textContent, /họ và tên/);
+    assert.equal(name.focused, true);
+    assert.equal(name.scrolled.block, "center");
+    assert.equal(f.calls.filter(c => ["POST", "PATCH"].includes(c.method)).length, 0);
+    assert.notEqual(f.get("#booking-payment-modal").open, true);
+    name.value = "Valid name"; name.events.input();
+    assert.equal(name["aria-invalid"], "false");
+    assert.equal(f.get("#booking-review-field-0-error").hidden, true);
+    await f.get("#booking-confirm").events.click();
+    assert.equal(symptoms.focused, true);
+    symptoms.value = "New symptom description"; symptoms.events.input();
+    await f.get("#booking-confirm").events.click();
+    const request = f.calls.find(c => c.path === "/encounters/online");
+    assert.equal(JSON.parse(request.body).symptoms, symptoms.value);
+    assert.equal(f.get("#booking-payment-modal").open, true);
+  } finally { f.events.pagehide(); }
 });
 
-test("late patient PATCH response after pagehide cannot restore the private review", async () => {
-  const saving = deferred();
-  const f = fixture({ beforeSave: () => saving.promise });
-  await import("../static/js/pages/booking_review.js?autosave-late"); await loaded(f);
+test("CCCD is required even with a DOB; optional fields can stay empty", async () => {
+  const f = fixture({ patientFields: { id_card: null } });
+  await import("../static/js/pages/booking_review.js?required-id"); await loaded(f);
   try {
-    const field = f.get("#booking-review-field-0"); field.value = "Late changed name";
-    assert.equal(typeof field.events.change, "function");
-    const change = field.events.change();
-    await until(() => f.calls.some(c => c.method === "PATCH"), "change did not start a PATCH");
-    f.events.pagehide();
-    const valueAtLeave = field.value;
-    const statusAtLeave = f.get("#booking-patient-status").textContent;
-    saving.resolve(); await change;
-    for (let i = 0; i < 5; i++) await new Promise(resolve => setImmediate(resolve));
-    assert.equal(f.get("#booking-review-page").hidden, true);
-    assert.equal(field.value, valueAtLeave);
-    assert.equal(f.get("#booking-patient-status").textContent, statusAtLeave);
-    assert.equal(f.calls.filter(c => c.method === "POST").length, 0);
-  } finally { saving.resolve(); f.events.pagehide(); }
+    const idCard = f.get("#booking-review-field-1");
+    assert.equal(idCard.required, true);
+    await f.get("#booking-confirm").events.click();
+    assert.equal(idCard.focused, true);
+    assert.match(f.get("#booking-review-field-1-error").textContent, /nhập số cccd/i);
+    assert.equal(f.calls.filter(c => ["POST", "PATCH"].includes(c.method)).length, 0);
+    idCard.value = "123456789012"; idCard.events.input();
+    f.get("#booking-review-field-4").value = "";
+    await f.get("#booking-confirm").events.click();
+    assert.equal(f.get("#booking-payment-modal").open, true);
+    for (const index of [2, 4, 5, 6]) assert.notEqual(f.get(`#booking-review-field-${index}`).required, true);
+  } finally { f.events.pagehide(); }
 });
+
+test("invalid ID, insurance, phone and future DOB block payment and point to the field", async () => {
+  const f = fixture();
+  await import("../static/js/pages/booking_review.js?validation-format"); await loaded(f);
+  try {
+    for (const [index, value, original] of [[1, "123", "001090123456"], [2, "bad", ""], [3, "abc", "0912345678"], [4, "2999-01-01", "2000-01-01"]]) {
+      const field = f.get(`#booking-review-field-${index}`); field.value = value;
+      await f.get("#booking-confirm").events.click();
+      assert.equal(field.focused, true);
+      assert.equal(field["aria-invalid"], "true");
+      assert.equal(f.get(`#booking-review-field-${index}-error`).hidden, false);
+      field.value = original;
+    }
+    assert.equal(f.calls.filter(c => ["POST", "PATCH"].includes(c.method)).length, 0);
+  } finally { f.events.pagehide(); }
+});
+
+test("a delegate can enter every field and save only this encounter's registration", async () => {
+  const f = fixture({ encounterId: 3, patientFields: { user_id: 99 } });
+  await import("../static/js/pages/booking_review.js?delegate-registration"); await loaded(f);
+  try {
+    for (let index = 0; index < 8; index++) assert.equal(f.get(`#booking-review-field-${index}`).readOnly, false);
+    f.get("#booking-review-field-1").value = "123456789012";
+    f.get("#booking-review-field-6").value = "Địa chỉ do người đặt hộ khai";
+    const symptoms = f.get("#booking-review-field-7"); symptoms.value = "Triệu chứng mới"; symptoms.events.input();
+    assert.equal(f.calls.filter(c => c.method === "PATCH").length, 0);
+    await f.get("#booking-confirm").events.click();
+    const patch = f.calls.findIndex(c => c.path === "/encounters/3/registration");
+    assert.equal(JSON.parse(f.calls[patch].body).registration_details.id_card, "123456789012");
+    assert.ok(patch < f.calls.findIndex(c => c.path.endsWith("/payment-intents")));
+    assert.equal(f.calls.filter(c => c.path === "/encounters/online").length, 0);
+    assert.equal(f.calls.filter(c => c.method === "PATCH" && ["/me", "/patients/2"].includes(c.path)).length, 0);
+    assert.equal(f.patient.address, undefined);
+    assert.equal(f.get("#booking-payment-modal").open, true);
+  } finally { f.events.pagehide(); }
+});
+
+test("filled-in registration does not need to match stored patient details", async () => {
+  for (const encounterId of [undefined, 3]) {
+    const f = fixture({ encounterId });
+    await import(`../static/js/pages/booking_review.js?no-comparison-${encounterId}`); await loaded(f);
+    try {
+      f.get("#booking-review-field-0").value = "Tên nhập trên form";
+      f.get("#booking-review-field-1").value = "123456789012";
+      f.get("#booking-review-field-3").value = "0987654321";
+      await f.get("#booking-confirm").events.click();
+      assert.equal(f.get("#booking-payment-modal").open, true);
+      assert.equal(f.patient.full_name, "Test patient");
+      assert.equal(f.patient.phone, "0912345678");
+      assert.equal(f.patient.id_card, "001090123456");
+      assert.equal(f.calls.filter(c => c.method === "PATCH" && ["/me", "/patients/2"].includes(c.path)).length, 0);
+    } finally { f.events.pagehide(); }
+  }
+});
+
+test("only entering a phone highlights the other required fields without any server mutation", async () => {
+  const f = fixture();
+  await import("../static/js/pages/booking_review.js?only-phone"); await loaded(f);
+  try {
+    for (const index of [0, 1, 7]) f.get(`#booking-review-field-${index}`).value = "";
+    await f.get("#booking-confirm").events.click();
+    for (const index of [0, 1, 7]) assert.equal(f.get(`#booking-review-field-${index}`)["aria-invalid"], "true");
+    assert.equal(f.get("#booking-review-field-0").focused, true);
+    assert.equal(f.calls.filter(c => ["POST", "PATCH"].includes(c.method)).length, 0);
+    assert.equal(f.get("#booking-patient-form").querySelectorAll("p").some(node => /Nhập thông tin người được khám cho lần đăng ký này/.test(node.textContent)), false);
+  } finally { f.events.pagehide(); }
+});
+
+test("failed registration save preserves input and blocks payment", async () => {
+  const f = fixture({ encounterId: 3, failSave: true });
+  await import("../static/js/pages/booking_review.js?registration-failed"); await loaded(f);
+  try {
+    const field = f.get("#booking-review-field-6"); field.value = "Chưa lưu được";
+    await f.get("#booking-confirm").events.click();
+    assert.equal(field.value, "Chưa lưu được");
+    assert.equal(f.calls.filter(c => c.method === "POST").length, 0);
+    assert.notEqual(f.get("#booking-payment-modal").open, true);
+  } finally { f.events.pagehide(); }
+});
+
+test("leaving during a registration save cannot open payment from a late response", async () => {
+  const saving = deferred();
+  const f = fixture({ encounterId: 3, beforeSave: () => saving.promise });
+  await import("../static/js/pages/booking_review.js?registration-late"); await loaded(f);
+  const click = f.get("#booking-confirm").events.click();
+  await until(() => f.calls.some(c => c.method === "PATCH"), "Registration save did not start");
+  f.events.pagehide(); saving.resolve(); await click;
+  assert.equal(f.get("#booking-review-page").hidden, true);
+  assert.notEqual(f.get("#booking-payment-modal").open, true);
+  assert.equal(f.calls.filter(c => c.method === "POST").length, 0);
+});
+
 test("QR excludes medical/patient information and rejects real or inactive transactions", () => {
   const p = { transaction_status: "PENDING", transaction_code: "DEMO-" + "b".repeat(32), amount: "260000", patient_name: "Private name", symptoms: "Private symptoms" };
   const text = demoPaymentPayload(p);

@@ -22,7 +22,7 @@ allDepartments.addEventListener("click", () => {
   const expanded = allDepartments.getAttribute("aria-expanded") !== "true";
   document
     .querySelectorAll(".department-row")
-    .forEach((row, index) => (row.hidden = !expanded && index >= 5));
+    .forEach((row, index) => (row.hidden = !expanded && index >= 6));
   allDepartments.setAttribute("aria-expanded", String(expanded));
   allDepartments.textContent = expanded ? "Thu gọn" : "Xem tất cả";
 });
@@ -35,9 +35,9 @@ async function loadHomeDepartments() {
       const link = element("a", "", "department-row");
       link.href = `department_detail.html?id=${encodeURIComponent(department.department_id)}`;
       link.append(element("span", department.name), element("span", "→"));
-      link.hidden = index >= 5 && allDepartments.getAttribute("aria-expanded") !== "true"; return link;
+      link.hidden = index >= 6 && allDepartments.getAttribute("aria-expanded") !== "true"; return link;
     }));
-    allDepartments.hidden = result.items.length <= 5;
+    allDepartments.hidden = result.items.length <= 6;
     if (!result.items.length) holder.append(element("p", "Chưa có chuyên khoa đang hoạt động."));
   } catch {
     holder.replaceChildren(element("p", "Không tải được chuyên khoa."));
@@ -179,7 +179,40 @@ function enableMouseDrag(track) {
   );
 }
 enableMouseDrag(doctorTrack);
-enableMouseDrag(document.querySelector(".event-track"));
+const eventTrack = document.querySelector(".event-track");
+enableMouseDrag(eventTrack);
+
+let eventTimer;
+function moveEvents(direction) {
+  const card = eventTrack.querySelector(".article-card");
+  if (!card) return;
+  const step = card.getBoundingClientRect().width + (parseFloat(getComputedStyle(eventTrack).gap) || 0);
+  eventTrack.scrollBy({ left: direction * step, behavior: reducedMotion.matches ? "instant" : "smooth" });
+}
+function runEventTimer() {
+  clearInterval(eventTimer);
+  if (reducedMotion.matches || document.hidden) return;
+  eventTimer = setInterval(() => {
+    const keyboardFocus = eventTrack.contains(document.activeElement)
+      && document.activeElement.matches(":focus-visible");
+    if (keyboardFocus || eventTrack.querySelector(".article-card:hover")
+      || eventTrack.classList.contains("is-dragging")
+      || eventTrack.scrollWidth <= eventTrack.clientWidth + 2) return;
+    if (eventTrack.scrollLeft >= eventTrack.scrollWidth - eventTrack.clientWidth - 2) {
+      eventTrack.scrollTo({ left: 0, behavior: "smooth" });
+    } else moveEvents(1);
+  }, 10000);
+}
+eventTrack.addEventListener("keydown", event => {
+  if (!["ArrowRight", "ArrowLeft"].includes(event.key)) return;
+  event.preventDefault();
+  moveEvents(event.key === "ArrowRight" ? 1 : -1);
+});
+document.addEventListener("visibilitychange", runEventTimer);
+reducedMotion.addEventListener("change", runEventTimer);
+window.addEventListener("pagehide", () => clearInterval(eventTimer));
+window.addEventListener("pageshow", runEventTimer);
+runEventTimer();
 
 
 // Four full-size banner photos: automatic every five seconds, mouse/touch dragging.

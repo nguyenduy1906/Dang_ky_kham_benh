@@ -70,6 +70,9 @@ def validate_update(data):
 
 def parse_list_query(args):
     page, page_size = page_params(args)
+    phone = (args.get('phone') or '').strip()
     return {'q': (args.get('q') or '').strip()[:100] or None,
+            'phone': normalize_phone(phone) if phone else None,
+            'booked_by_me': bool_arg(args, 'booked_by_me'),
             'include_archived': bool_arg(args, 'include_archived'),
             'page': page, 'page_size': page_size}

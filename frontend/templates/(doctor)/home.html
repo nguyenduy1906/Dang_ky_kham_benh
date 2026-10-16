@@ -1,193 +1,29 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Bác sĩ | NEU Medical</title>
-
-  <link rel="stylesheet" href="../../static/css2/doctor.css">
-  <script src="../../static/js2/doctor.js" defer></script>
+  <title>Tổng quan công việc | NEU Medical</title>
+  <link rel="stylesheet" href="../../static/css/staff_workspace.css">
+  <link rel="stylesheet" href="../../static/css/doctor.css">
+  <script type="module" src="../../static/js/pages/doctor.js" blocking="render"></script>
 </head>
-
-<body class="doctor-page">
-  <div class="doctor-layout">
-    <aside class="sidebar">
-      <a class="brand" href="../public/home.html">
-        NEU Medical
-      </a>
-      <p>Khu vực bác sĩ</p>
-
-      <nav aria-label="Menu bác sĩ">
-        <a href="#overview">Tổng quan</a>
-        <a href="#schedule">Phòng được phân công</a>
-        <a href="#encounters">Lượt khám được giao</a>
-        <a href="#clinical">Bệnh án & đơn thuốc</a>
-        <a href="#history">Lịch sử khám</a>
-        <a href="#profile">Hồ sơ chuyên môn</a>
-      </nav>
-    </aside>
-
-    <main class="main-content">
-      <header class="page-header">
-        <div>
-          <p class="eyebrow">KHÔNG GIAN LÀM VIỆC</p>
-          <h1>Tổng quan bác sĩ</h1>
-        </div>
-        <span class="preview-label">Bản xem trước giao diện</span>
-      </header>
-
-      <p class="preview-note">
-        Dữ liệu dưới đây chỉ dùng minh họa, chưa kết nối hệ thống.
-      </p>
-
-      <section id="overview" aria-labelledby="overview-title">
-        <h2 id="overview-title">Tổng quan ca mẫu</h2>
-
-        <div class="summary-grid">
-          <article class="summary-card">
-            <span>Lượt khám được giao</span>
-            <strong>3</strong>
-          </article>
-
-          <article class="summary-card">
-            <span>Đang chờ khám</span>
-            <strong>2</strong>
-          </article>
-
-          <article class="summary-card">
-            <span>Đang khám</span>
-            <strong>1</strong>
-          </article>
-        </div>
-      </section>
-
-      <section id="schedule" class="panel" aria-labelledby="schedule-title">
-        <h2 id="schedule-title">Phòng được phân công</h2>
-        <p class="muted">Chọn phòng và ca để vào danh sách bệnh nhân được giao.</p>
-
-        <dl class="schedule-details">
-          <div>
-            <dt>Thời gian</dt>
-            <dd>08:00 – 11:30</dd>
-          </div>
-          <div>
-            <dt>Phòng khám</dt>
-            <dd>Phòng 201</dd>
-          </div>
-          <div>
-            <dt>Chuyên khoa</dt>
-            <dd>Nội tổng quát</dd>
-          </div>
-        </dl>
-        <div class="actions"><button type="button" id="enter-room">Vào phòng 201 · Ca sáng</button><button type="button" id="leave-preview" class="secondary">Xem biểu mẫu báo nghỉ</button></div>
-      </section>
-
-      <section id="encounters" class="panel" hidden
-               aria-labelledby="encounters-title">
-        <div class="section-heading"><div><p class="eyebrow">PHÒNG 201 / CA SÁNG / NỘI TỔNG QUÁT</p><h2 id="encounters-title" tabindex="-1">Bệnh nhân trong phòng</h2></div><button type="button" id="back-to-rooms" class="secondary">← Chọn lại phòng</button></div>
-        <p class="muted">08:00 – 11:30 · Danh sách mẫu theo khung giờ tăng dần. Thứ tự thực tế do hệ thống cung cấp khi tích hợp.</p>
-
-        <div class="search-field">
-          <label for="patient-search">Tìm theo tên hoặc mã phiếu</label>
-          <input id="patient-search" type="search"
-                 placeholder="Nhập tên hoặc mã phiếu…">
-        </div>
-
-        <div class="search-field"><label for="status-filter">Trạng thái lượt khám</label><select id="status-filter"><option value="">Tất cả trạng thái</option><option value="Chờ khám">Chờ khám</option><option value="Đang khám">Đang khám</option></select></div>
-        <div class="table-wrapper">
-          <table>
-            <caption class="visually-hidden">
-              Danh sách lượt khám minh họa được giao cho bác sĩ
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Mã phiếu</th>
-                <th scope="col">Bệnh nhân</th>
-                <th scope="col">Khung giờ</th>
-                <th scope="col">Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody id="encounter-list">
-              <tr>
-                <td>MINHHOA-001</td>
-                <td>Bệnh nhân mẫu A</td>
-                <td>08:00 – 08:15</td>
-                <td><span class="status waiting">Chờ khám</span></td>
-              </tr>
-              <tr>
-                <td>MINHHOA-002</td>
-                <td>Bệnh nhân mẫu B</td>
-                <td>08:15 – 08:30</td>
-                <td><span class="status examining">Đang khám</span></td>
-              </tr>
-              <tr>
-                <td>MINHHOA-003</td>
-                <td>Bệnh nhân mẫu C</td>
-                <td>08:30 – 08:45</td>
-                <td><span class="status waiting">Chờ khám</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <p id="search-result" role="status">Hiển thị 3 lượt khám minh họa.</p>
-      </section>
-      <section id="clinical" class="panel" aria-labelledby="clinical-title" hidden>
-        <div class="section-heading">
-          <div><p class="eyebrow">KHÔNG LƯU DỮ LIỆU</p><h2 id="clinical-title">Bệnh án & đơn thuốc</h2></div>
-          <span class="status examining">Bản nháp trình bày</span>
-        </div>
-        <p class="muted">Thử nhập nội dung và xem trước bố cục. Tải lại trang sẽ xóa nội dung nhập. Không dùng thông tin bệnh nhân thật.</p>
-        <form id="clinical-form">
-          <div class="form-grid">
-            <label>Lượt khám minh họa
-              <select name="encounter" id="clinical-encounter"><option>MINHHOA-001 — Bệnh nhân mẫu A</option><option>MINHHOA-002 — Bệnh nhân mẫu B</option><option>MINHHOA-003 — Bệnh nhân mẫu C</option></select>
-            </label>
-            <label>Chẩn đoán <span aria-hidden="true">*</span>
-              <input name="diagnosis" required maxlength="1000" placeholder="Nhập nội dung để xem trước">
-            </label>
-            <label>Hướng điều trị<textarea name="treatment" rows="3" maxlength="3000"></textarea></label>
-            <label>Ghi chú bác sĩ<textarea name="notes" rows="3" maxlength="3000"></textarea></label>
-          </div>
-          <div class="section-heading prescription-heading"><h3>Đơn thuốc</h3><button type="button" id="add-medication" class="secondary">+ Thêm dòng thuốc</button></div>
-          <p class="muted">Có thể để trống đơn thuốc. Đây là biểu mẫu trình bày, không phải hướng dẫn điều trị.</p>
-          <div id="medications"></div>
-          <div class="actions"><button type="submit">Xem trước bệnh án</button><button type="reset" class="secondary">Xóa nội dung nhập</button></div>
-        </form>
-      </section>
-
-      <section id="history" class="panel" aria-labelledby="history-title">
-        <h2 id="history-title">Lịch sử khám</h2>
-        <div class="empty-state"><span class="empty-symbol" aria-hidden="true">—</span><h3>Chưa có lịch sử khám</h3><p>Lịch sử của các lượt khám được giao sẽ hiển thị tại đây khi hệ thống được tích hợp.</p></div>
-      </section>
-
-      <section id="profile" class="panel" aria-labelledby="profile-title">
-        <h2 id="profile-title">Hồ sơ chuyên môn</h2>
-        <div class="profile-layout">
-          <div class="avatar" aria-label="Ảnh đại diện chưa cập nhật">BS</div>
-          <div><h3>Bác sĩ minh họa</h3><p class="muted">Nội tổng quát · Thông tin phục vụ xem trước giao diện</p><dl class="schedule-details"><div><dt>Học vị / chức danh</dt><dd>Chưa cập nhật</dd></div><div><dt>Kinh nghiệm</dt><dd>Chưa cập nhật</dd></div><div><dt>Thông tin liên hệ</dt><dd>Chưa cập nhật</dd></div></dl></div>
-        </div>
-        <details><summary>Giới thiệu và chuyên môn</summary><p class="muted">Thông tin đào tạo, kinh nghiệm và chuyên môn sẽ được bổ sung khi có hồ sơ được xác nhận.</p></details>
-      </section>
-      <footer class="workspace-footer">NEU Medical · Không gian bác sĩ · Giao diện minh họa</footer>
-    </main>
+<body class="staff-page doctor-page staff-auth-pending" data-role="doctor" data-page="overview">
+  <a class="skip-link" href="#main-content">Đến nội dung chính</a>
+  <noscript>Bạn cần bật JavaScript để sử dụng khu vực nhân viên.</noscript>
+  <div class="staff-shell">
+    <aside id="staff-sidebar" class="staff-sidebar"></aside>
+    <div class="staff-main">
+      <header id="staff-topbar" class="staff-topbar"></header>
+      <div id="staff-access" class="staff-access" role="status">Đang kiểm tra quyền truy cập…</div>
+      <main id="main-content" class="staff-content" tabindex="-1" inert>
+        <header class="page-header"><div><p class="eyebrow">NEU MEDICAL · KHÔNG GIAN NHÂN VIÊN</p><h1>Tổng quan công việc</h1><p>Theo dõi lịch làm việc và lượt khám được giao.</p></div><button id="page-refresh" class="secondary" type="button">Tải lại dữ liệu</button></header>
+        <p id="page-status" class="scope-note" role="status" hidden></p>
+        <div id="page-body" aria-live="polite"></div>
+      </main>
+      <footer class="staff-footer">NEU Medical · Hệ thống quản lý khám bệnh</footer>
+    </div>
   </div>
-  <dialog id="preview-dialog" aria-labelledby="dialog-title">
-    <div class="section-heading"><h2 id="dialog-title">Chi tiết lượt khám</h2><button type="button" id="close-dialog" class="secondary" aria-label="Đóng hộp thoại">Đóng ×</button></div>
-    <div id="dialog-content"></div>
-    <p class="preview-note">Chỉ xem trước giao diện. Không lưu dữ liệu hoặc thay đổi trạng thái lượt khám.</p>
-  </dialog>
-  <template id="medication-template">
-    <fieldset class="medication-row">
-      <legend>Thuốc</legend>
-      <div class="form-grid">
-        <label>Tên thuốc *<input data-field="name" required maxlength="200" placeholder="Tên thuốc minh họa"></label>
-        <label>Liều dùng<input data-field="dosage" maxlength="200" placeholder="Nội dung để xem trước"></label>
-        <label>Số lượng *<input data-field="quantity" type="number" min="1" step="1" value="1" required></label>
-        <label>Hướng dẫn sử dụng<input data-field="instructions" maxlength="500"></label>
-      </div>
-      <button type="button" class="secondary remove-medication">Xóa dòng thuốc</button>
-    </fieldset>
-  </template>
+  <dialog id="staff-dialog" aria-labelledby="staff-dialog-title"><div class="section-heading"><h2 id="staff-dialog-title">Thông tin</h2><button id="staff-dialog-close" class="secondary" type="button" aria-label="Đóng hộp thoại">Đóng ×</button></div><div id="staff-dialog-content"></div></dialog>
 </body>
 </html>

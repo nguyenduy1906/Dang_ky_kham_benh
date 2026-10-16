@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="../../static/css/patient_pages.css?v=20261015-profile-edit" />
     <script src="../../static/js/core/public.js?v=20261014-interface-update" defer></script>
     <script type="module" src="../../static/js/pages/profile.js?v=20261015-edit"></script>
+    <script type="module" src="../../static/js/pages/change_password.js"></script>
   </head>
   <body class="auth-pending">
     <a class="skip-link" href="#main">Đến nội dung chính</a>
@@ -31,7 +32,7 @@
     <main id="main" class="appointment-page profile-page" inert>
       <div class="patient-heading">
         <nav class="patient-breadcrumb" aria-label="Đường dẫn trang"><a href="portal.html">Trang bệnh nhân</a><span aria-hidden="true">/</span><span aria-current="page">Thông tin cá nhân</span></nav>
-        <div class="booking-heading-row"><h1>Thông tin cá nhân</h1><button id="profile-edit" type="button" class="outline-button" aria-controls="profile-form" disabled>Chỉnh sửa thông tin</button></div>
+        <div class="booking-heading-row"><h1>Thông tin cá nhân</h1><div class="profile-heading-actions"><button id="profile-edit" type="button" class="outline-button" aria-controls="profile-form" disabled>Chỉnh sửa thông tin</button><button type="button" id="profile-change-password" class="outline-button" aria-controls="change-password-dialog" disabled>Đổi mật khẩu</button></div></div>
       </div>
       <section id="profile-details" class="profile-layout" aria-label="Thông tin tài khoản của bạn" hidden>
         <section class="patient-panel profile-information" aria-labelledby="profile-information-title">
@@ -51,9 +52,21 @@
               <button id="profile-cancel" type="button" class="outline-button">Hủy</button>
             </div>
           </form>
+          <p id="profile-password-message" class="profile-message" role="status" hidden></p>
         </section>
       </section>
     </main>
+    <dialog id="change-password-dialog" class="record-lookup-dialog" aria-labelledby="change-password-title">
+      <div class="dialog-heading"><h2 id="change-password-title">Đổi mật khẩu</h2><button type="button" class="dialog-close" id="change-password-close" aria-label="Đóng đổi mật khẩu">×</button></div>
+      <form id="change-password-form">
+        <label for="password-current">Mật khẩu hiện tại</label><input id="password-current" type="password" autocomplete="current-password" maxlength="128" required>
+        <label for="password-new">Mật khẩu mới</label><input id="password-new" type="password" autocomplete="new-password" minlength="12" maxlength="128" required aria-describedby="password-guidance">
+        <p id="password-guidance" class="lookup-status">Từ 12 đến 128 ký tự, có ít nhất một chữ cái và một chữ số.</p>
+        <label for="password-confirm">Nhập lại mật khẩu mới</label><input id="password-confirm" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+        <p id="change-password-status" class="lookup-status" role="status" aria-live="polite"></p>
+        <button type="submit" id="change-password-submit" class="solid-button lookup-submit">Xác nhận đổi mật khẩu</button>
+      </form>
+    </dialog>
     <footer class="compact-footer">
       <div class="compact-footer-wrap">
         <div class="compact-footer-grid">
@@ -80,9 +93,9 @@
               <a href="portal.html">Đặt lịch khám</a>
               <a href="../public/contact.html#consultation">Đăng ký tư vấn</a>
               <a href="../public/contact.html">Liên hệ hỗ trợ</a>
-              <button type="button" data-panel="privacy">Chính sách bảo mật</button>
-              <button type="button" data-panel="terms">Điều khoản sử dụng</button>
-              <button type="button" data-panel="insurance">Thông tin bảo hiểm y tế</button>
+              <button type="button">Chính sách bảo mật</button>
+              <button type="button">Điều khoản sử dụng</button>
+              <button type="button">Thông tin bảo hiểm y tế</button>
             </nav>
           </section>
           <section class="footer-column footer-location" aria-label="Vị trí bệnh viện">

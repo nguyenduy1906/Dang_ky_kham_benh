@@ -1,6 +1,7 @@
 """Đầu mối gói 3 cho quyền truy cập và transaction lượt khám."""
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
+from psycopg.types.json import Jsonb
 from backend.app.services.appointment_slot_service import reserve_interval
 from backend.app.services import patient_service
 from backend.app.schemas.auth_schema import normalize_phone
@@ -38,6 +39,20 @@ def get_encounter(actor, encounter_id):
     with get_db_connection() as db:
         row = _visible(db, actor, encounter_id)
     return {'encounter': _present(row)}
+
+
+def update_registration(actor, encounter_id, fields):
+    require_role(actor, 'USER')
+    with get_db_connection() as db:
+        _visible(db, actor, encounter_id)
+        encounter, _ = locked_context(db, encounter_id)
+        _visible(db, actor, encounter_id)
+        if (encounter['encounter_type'] != 'ONLINE' or encounter['encounter_status'] != 'HOLDING'
+                or utc_now() >= encounter['hold_expires_at']):
+            raise conflict('Chỉ sửa thông tin đăng ký khi lượt khám còn giữ chỗ', 'INVALID_ENCOUNTER_STATUS')
+        db.execute('UPDATE encounter SET symptoms=%s,registration_details=%s WHERE encounter_id=%s',
+                   (fields['symptoms'], Jsonb(fields['registration_details']), encounter_id))
+        return {'encounter': _present(_visible(db, actor, encounter_id))}
 
 
 def get_ticket(actor, encounter_id):
@@ -178,6 +193,8 @@ def create_online(actor, fields):
         # Quyết định mới: cọc bằng toàn bộ giá đăng ký khám của bác sĩ.
         start, finish = reserve_interval(db, schedule, fields['appointment_time'])
         booking_fields = {k: v for k, v in fields.items() if k != 'appointment_time'}
+        if 'registration_details' in booking_fields:
+            booking_fields['registration_details'] = Jsonb(booking_fields['registration_details'])
         row = model.create_encounter(db, {
             **booking_fields, 'encounter_type': 'ONLINE', 'encounter_status': 'HOLDING',
             'doctor_profile_id': doctor['doctor_profile_id'], 'room_id': schedule['room_id'],
@@ -250,6 +267,9 @@ def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIEN
     if operation == 'cancel' and cancel_origin == 'HOSPITAL':
         require_role(actor, 'ADMIN', 'RECEPTIONIST')
     with get_db_connection() as db:
+        if operation == 'check-in':
+            visible = _visible(db, actor, encounter_id)
+            _patient_for_booking(db, visible['patient_id'], actor, online=False)
         encounter, schedules = locked_context(db, encounter_id)
         _visible(db, actor, encounter_id)
         schedule = schedules[encounter['schedule_id']]

@@ -8,7 +8,7 @@ const search = $("#directory-search"), department = $("#directory-department");
 const grid = $(".directory-grid"), status = $("#directory-result"), empty = $("#directory-empty");
 const retry = $("#directory-retry"), pager = $(".directory-pagination");
 const previous = $("#directory-prev"), next = $("#directory-next"), pages = $("#directory-pages");
-const chips = $(".directory-chips"), departmentStatus = $("#directory-department-status");
+const departmentStatus = $("#directory-department-status");
 const params = new URLSearchParams(location.search);
 let page = Number(params.get("page")) || 1;
 if (!Number.isInteger(page) || page < 1 || page > 100000) page = 1;
@@ -43,19 +43,13 @@ function saveFilters() {
   const active = $('.site-header #main-nav a[aria-current="page"]');
   if (active) active.href = url.href;
 }
-function selectChips() {
-  chips.querySelectorAll("[data-doctor-chip]").forEach(button => {
-    const active = button.dataset.doctorChip === departmentId;
-    button.classList.toggle("selected", active); button.setAttribute("aria-pressed", String(active));
-  });
-}
 async function load() {
   clearTimeout(timer);
   const current = ++version;
   request?.abort(); request = new AbortController(); loading = true;
-  currentDoctors = []; grid.replaceChildren(); grid.setAttribute("aria-busy", "true");
-  status.textContent = "Đang tải bác sĩ…"; empty.hidden = true; retry.hidden = true; pager.hidden = true;
-  selectChips();
+  grid.setAttribute("aria-busy", "true");
+  if (!grid.children.length) status.textContent = "Đang tải bác sĩ…";
+  empty.hidden = true; retry.hidden = true;
   try {
     const result = doctorPage(await listDoctors({ q: search.value.trim(), department_id: departmentId, page, page_size: 8 },
       { auth: false, signal: request.signal }));
@@ -102,12 +96,6 @@ async function loadDepartments() {
       const option = element("option", item.name); option.value = String(item.department_id); return option;
     }));
     department.value = departmentId;
-    const buttons = [{ department_id: "", name: "Tất cả" }, ...result.items.slice(0, 4)].map(item => {
-      const button = element("button", item.name); button.type = "button"; button.dataset.doctorChip = String(item.department_id);
-      button.addEventListener("click", () => { departmentId = button.dataset.doctorChip; department.value = departmentId; page = 1; load(); });
-      return button;
-    });
-    chips.replaceChildren(element("span", "CHUYÊN KHOA:"), ...buttons);
     department.disabled = false; departmentStatus.textContent = "";
     await load();
   } catch (error) {

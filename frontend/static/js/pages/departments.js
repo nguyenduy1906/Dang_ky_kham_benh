@@ -42,7 +42,6 @@ function render() {
 function changePage(number) {
   if (number < 1 || number > totalPages || number === page) return;
   page = number; render();
-  grid.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 async function load() {
   request?.abort(); request = new AbortController(); const signal = request.signal;

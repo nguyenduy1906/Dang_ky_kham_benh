@@ -12,6 +12,11 @@ export function getEncounter(encounterId, options = {}) {
   return apiRequest(`/encounters/${pathSegment(encounterId)}`, { ...options, method: "GET" });
 }
 
+/** PATCH /encounters/<int:encounter_id>/registration — thông tin nhập cho lần đặt khám. */
+export function updateRegistration(encounterId, data, options = {}) {
+  return apiRequest(`/encounters/${pathSegment(encounterId)}/registration`, { ...options, method: "PATCH", data });
+}
+
 /** GET /encounters/<int:encounter_id>/ticket */
 export function getTicket(encounterId, options = {}) {
   return apiRequest(`/encounters/${pathSegment(encounterId)}/ticket`, { ...options, method: "GET" });

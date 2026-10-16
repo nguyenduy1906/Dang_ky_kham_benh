@@ -1,7 +1,7 @@
 import test, { beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { clearSession, profileUrl, loginUrl } from "../static/js/core/session.js";
+import { clearSession, profileUrl, loginUrl, workspaceUrl } from "../static/js/core/session.js";
 
 class Element {
   children = []; listeners = {}; hidden = false; inert = false; textContent = "";
@@ -217,6 +217,7 @@ test("staff accounts cannot display their private information on the patient pro
   await controller();
   assert.equal(nodes.get("profile-details").hidden, true);
   assert.equal(nodes.get("profile-full-name").textContent, "");
-  assert.equal(stored.size, 0);
+  assert.equal(stored.size, 1);
+  assert.equal(redirects.at(-1).href, workspaceUrl("ADMIN").href);
   assert.equal(loginUrl(profileUrl).searchParams.get("next"), profileUrl.href);
 });

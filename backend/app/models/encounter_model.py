@@ -12,7 +12,7 @@ SELECT = '''SELECT e.*, p.full_name AS patient_name, p.user_id AS owner_id,
  JOIN room r ON r.room_id=s.room_id'''
 
 COLUMNS = ('encounter_type', 'patient_id', 'doctor_profile_id', 'schedule_id', 'room_id',
-           'created_by_id', 'consultation_fee_snapshot', 'deposit_amount_snapshot', 'symptoms',
+           'created_by_id', 'consultation_fee_snapshot', 'deposit_amount_snapshot', 'symptoms', 'registration_details',
            'encounter_status', 'ticket_code', 'appointment_end_at', 'estimated_exam_at', 'hold_expires_at', 'checked_in_at')
 UPDATABLE = {'doctor_profile_id', 'schedule_id', 'room_id', 'encounter_status', 'ticket_code', 'appointment_end_at',
              'estimated_exam_at', 'checked_in_at', 'cancelled_by_id', 'cancel_reason', 'cancelled_at',

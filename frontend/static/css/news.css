@@ -15,6 +15,7 @@
 .article-card-category { font-size: 13px; color: var(--green); line-height: 1.5; }
 .article-body { gap: 12px; }
 .article-body strong { overflow-wrap: anywhere; }
+[data-article-feed="news"] .article-card { border-radius: 5px; overflow: hidden; }
 .home-page #news-filters { flex: 1; justify-content: flex-end; max-width: 900px; gap: 8px 20px; }
 .home-page #news-filters button { font-size: 14px; padding: 8px 0; }
 @media (max-width: 760px) {

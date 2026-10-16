@@ -148,7 +148,7 @@ test("a late response cannot overwrite newer filters, and failed requests offer 
   finish(pageResponse(new URL("http://127.0.0.1:5000/articles?page_size=12")));
   await tick(); assert.match(nodes.get("news-grid").textContent, /Bài viết 99/);
   respond = () => { throw new Error("offline"); }; submit(); await tick();
-  assert.equal(nodes.get("news-grid").children.length, 0); assert.equal(nodes.get("news-retry").hidden, false);
+  assert.match(nodes.get("news-grid").textContent, /Bài viết 99/); assert.equal(nodes.get("news-retry").hidden, false);
   respond = url => pageResponse(url); click("news-retry"); await tick(); assert.equal(nodes.get("news-grid").children.length, 10);
 });
 test("numbered news pages request the chosen backend page and keep active filters", async () => {

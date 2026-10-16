@@ -8,14 +8,36 @@ STATUSES = ('HOLDING', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED',
             'CANCELLED', 'NO_SHOW', 'EXPIRED')
 
 
+def validate_registration_details(data):
+    from backend.app.schemas.patient_schema import validate_create
+    from backend.app.utils.database_helpers import jsonable
+    data = ensure_object(data)
+    if set(data) - {'full_name', 'phone', 'id_card', 'dob', 'gender', 'address', 'health_insurance'}:
+        raise bad_request('Thông tin đăng ký chứa trường không được phép')
+    fields = validate_create(data)
+    fields.pop('confirm_shared_phone')
+    return jsonable(fields)
+
+
+def validate_registration(data):
+    data = ensure_object(data)
+    if set(data) != {'registration_details', 'symptoms'}:
+        raise bad_request('Chỉ nhận registration_details và symptoms')
+    return {'registration_details': validate_registration_details(data['registration_details']),
+            'symptoms': text_field(data, 'symptoms', required=True, max_len=5000)}
+
+
 def validate_online(data):
     data = ensure_object(data)
-    if set(data) - {'patient_id', 'schedule_id', 'appointment_time', 'symptoms'}:
-        raise bad_request('Chỉ nhận patient_id, schedule_id, appointment_time, symptoms; giá/trạng thái do server chốt')
-    return {'patient_id': int_field(data, 'patient_id', required=True, minimum=1),
+    if set(data) - {'patient_id', 'schedule_id', 'appointment_time', 'symptoms', 'registration_details'}:
+        raise bad_request('Chỉ nhận patient_id, schedule_id, appointment_time, symptoms, registration_details; giá/trạng thái do server chốt')
+    fields = {'patient_id': int_field(data, 'patient_id', required=True, minimum=1),
             'schedule_id': int_field(data, 'schedule_id', required=True, minimum=1),
             'appointment_time': appointment_time(data.get('appointment_time')),
             'symptoms': text_field(data, 'symptoms', max_len=5000)}
+    if 'registration_details' in data:
+        fields['registration_details'] = validate_registration_details(data['registration_details'])
+    return fields
 
 
 def validate_reason(data, *, required=False):

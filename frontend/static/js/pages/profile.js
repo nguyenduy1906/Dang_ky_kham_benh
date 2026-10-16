@@ -1,5 +1,5 @@
 import { updateMe } from "../api/auth.js";
-import { clearSession, getSessionUser, hasSession, loginUrl } from "../core/session.js";
+import { clearSession, getSessionUser, hasSession, loginUrl, workspaceUrl } from "../core/session.js";
 
 const $ = selector => document.querySelector(selector);
 const main = $("#main"), status = $("#profile-auth-status"), details = $("#profile-details");
@@ -43,6 +43,8 @@ function suspend() {
   setEditing(false);
   notify();
   editButton.disabled = true;
+  const passwordButton = $("#profile-change-password");
+  if (passwordButton) passwordButton.disabled = true;
   document.body.classList.add("auth-pending");
   main.inert = true;
   details.hidden = true;
@@ -69,6 +71,8 @@ function render(fresh) {
   }
   setEditing(false);
   editButton.disabled = false;
+  const passwordButton = $("#profile-change-password");
+  if (passwordButton) passwordButton.disabled = false;
   details.hidden = false;
   status.hidden = true;
   main.inert = false;
@@ -84,6 +88,7 @@ async function load() {
     const fresh = await getSessionUser();
     if (current !== version) return;
     if (!fresh) { signIn(); return; }
+    if (fresh.role_name !== "USER") { location.replace(workspaceUrl(fresh.role_name).href); return; }
     render(fresh);
   } catch (error) {
     if (current !== version) return;

@@ -43,8 +43,9 @@ async function load() {
   const current = ++version;
   loading = true;
   request?.abort(); request = new AbortController();
-  grid.replaceChildren(); grid.setAttribute("aria-busy", "true");
-  status.textContent = "Đang tải bài viết…"; retry.hidden = true; pager.hidden = true;
+  grid.setAttribute("aria-busy", "true");
+  if (!grid.children.length) status.textContent = "Đang tải bài viết…";
+  retry.hidden = true;
   try {
     const result = await articlePage({ page, page_size: pageSize, q: query, category }, { signal: request.signal });
     if (current !== version) return;

@@ -83,7 +83,8 @@ _REASON = _body({'reason': {'type': 'string', 'example': 'Bệnh nhân đổi k�
                            'Đúng mốc 5 giờ được nhận; sau mốc này hoặc trong ca bị từ chối với 409/SCHEDULE_TOO_LATE. '
                            'Lượt đã HOLDING vẫn có 10 phút để thanh toán.',
             'security': _SECURITY, 'parameters': [_body({'patient_id': {'type': 'integer'},
-                'schedule_id': {'type': 'integer'}, 'appointment_time': {'type': 'string', 'example': '08:30'}, 'symptoms': {'type': 'string'}}, ('patient_id', 'schedule_id', 'appointment_time'))],
+                'schedule_id': {'type': 'integer'}, 'appointment_time': {'type': 'string', 'example': '08:30'}, 'symptoms': {'type': 'string'},
+                'registration_details': {'type': 'object', 'description': 'Thông tin khai riêng cho lần khám, không sửa hồ sơ gốc'}}, ('patient_id', 'schedule_id', 'appointment_time'))],
             'responses': {**_ACTION_RESPONSES, 201: {'description': 'HOLDING, giữ quota và giá/cọc snapshot'}}})
 def online():
     return jsonify(encounter_service.create_online(current_user(), encounter_schema.validate_online(request.get_json(silent=True)))), 201
@@ -101,6 +102,17 @@ def cancel(encounter_id):
     fields = encounter_schema.validate_cancel({} if data is None else data)
     return jsonify(encounter_service.action(current_user(), encounter_id, 'cancel', fields['reason'],
                                            cancel_origin=fields['cancel_origin']))
+
+
+@encounter_bp.patch('/encounters/<int:encounter_id>/registration')
+@login_required
+@swag_from({'tags': ['Encounters'], 'summary': 'Lưu thông tin khai cho lần khám, giữ nguyên hồ sơ gốc',
+            'security': _SECURITY, 'parameters': [_ID, _body({'symptoms': {'type': 'string', 'maxLength': 5000},
+                'registration_details': {'type': 'object', 'description': 'Họ tên, số điện thoại, CCCD hoặc ngày sinh và thông tin tiếp nhận'}}, ('registration_details', 'symptoms'))],
+            'responses': _ACTION_RESPONSES})
+def update_registration(encounter_id):
+    fields = encounter_schema.validate_registration(request.get_json(silent=True))
+    return jsonify(encounter_service.update_registration(current_user(), encounter_id, fields))
 
 
 @encounter_bp.post('/staff/encounters/walk-in')

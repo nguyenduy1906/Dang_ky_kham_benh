@@ -6,11 +6,12 @@
     <title>Hồ sơ sức khỏe | NEU Medical</title>
     <link rel="stylesheet" href="../../static/css/home.css?v=20261015-vietnamese-motto" />
     <link rel="stylesheet" href="../../static/css/public_pages.css?v=20261014-interface-update" />
-    <link rel="stylesheet" href="../../static/css/patient_pages.css?v=20261015-account" />
+    <link rel="stylesheet" href="../../static/css/patient_pages.css?v=20261017-phone-lookup" />
     <script src="../../static/js/core/public.js?v=20261014-interface-update" defer></script>
     <script src="../../static/js/pages/patient_pages.js" defer></script>
+    <script type="module" src="../../static/js/pages/records.js?v=20261017-phone-lookup"></script>
   </head>
-  <body>
+  <body class="auth-pending">
     <a class="skip-link" href="#main">Đến nội dung chính</a>
     <header class="patient-header">
       <div class="identity">
@@ -23,29 +24,37 @@
         </a>
       </div>
     </header>
-    <main id="main" class="appointment-page">
+    <div id="records-auth-status" class="section-wrap booking-auth-status" role="status"><p>Đang kiểm tra đăng nhập…</p><button type="button" class="solid-button" hidden>Thử lại</button><noscript>Bạn cần bật JavaScript để xem kết quả khám.</noscript></div>
+    <main id="main" class="appointment-page records-page" inert>
       <div class="patient-heading">
         <nav class="patient-breadcrumb" aria-label="Đường dẫn trang">
-          <a href="portal.html">Trang chủ</a><span aria-hidden="true">/</span><span aria-current="page">Hồ sơ sức khỏe</span>
+          <a href="portal.html">Trang bệnh nhân</a><span aria-hidden="true">/</span><span aria-current="page">Hồ sơ sức khỏe</span>
         </nav>
         <h1>Hồ sơ sức khỏe</h1>
       </div>
       <div class="records-layout">
         <aside class="records-sidebar" aria-label="Hồ sơ bệnh nhân">
-          <button type="button" class="outline-button record-lookup-trigger" data-open-record-lookup>
-            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M10 5h18l7 7v17M10 5v37h15M28 5v8h7M17 21h11M17 28h6"/><circle cx="31" cy="32" r="7"/><path d="m36 37 7 7"/></svg>
-            Tra cứu kết quả khám bệnh
-          </button>
           <div class="patient-panel records-profile-placeholder">
             <h2>Hồ sơ bệnh nhân</h2>
-            <p>Danh sách người bệnh sẽ hiển thị sau khi kết nối tài khoản.</p>
+            <p id="records-profiles-status" role="status" aria-live="polite">Đang tải hồ sơ…</p>
+            <button id="records-profiles-retry" type="button" class="outline-button" hidden>Thử lại</button>
+            <div id="records-profiles"></div>
           </div>
         </aside>
-        <section class="records-welcome" aria-labelledby="records-welcome-title">
+        <section class="records-main" aria-label="Kết quả khám bệnh">
+          <header class="records-main-heading"><h2>Kết quả khám bệnh</h2><button type="button" class="outline-button" data-open-record-lookup>Tra cứu kết quả</button></header>
+          <div class="records-welcome" id="records-welcome" aria-labelledby="records-welcome-title">
           <svg class="records-illustration" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="4" aria-hidden="true"><path d="M60 101 20 63C-5 37 35 7 60 36c25-29 65 1 40 27Z"/><path d="M27 62h17l9-20 14 37 9-17h18"/></svg>
           <h2 id="records-welcome-title">Xem và lưu trữ kết quả khám trực tuyến</h2>
           <p>BỆNH VIỆN NEU MEDICAL</p>
-          <button type="button" class="outline-button" data-open-record-lookup>Tra cứu kết quả khám bệnh</button>
+          </div>
+          <div id="records-history" class="records-history" hidden>
+            <h3 id="records-history-title">Lịch sử khám</h3>
+            <p id="records-history-status" role="status" aria-live="polite"></p>
+            <button type="button" id="records-history-retry" class="outline-button" hidden>Thử lại</button>
+            <div id="records-encounters"></div>
+            <nav class="records-pagination" aria-label="Phân trang lịch sử khám"><button type="button" id="records-prev" class="outline-button" disabled>Trang trước</button><span id="records-page"></span><button type="button" id="records-next" class="outline-button" disabled>Trang sau</button></nav>
+          </div>
         </section>
       </div>
     </main>
@@ -54,29 +63,20 @@
         <h2 id="record-lookup-title">Tra cứu kết quả khám bệnh</h2>
         <button type="button" class="dialog-close" id="record-lookup-close" aria-label="Đóng tra cứu kết quả">×</button>
       </div>
-      <div class="patient-tabs" role="tablist" aria-label="Cách tra cứu kết quả" data-tab-group>
-        <button type="button" role="tab" id="lookup-cccd-tab" aria-selected="true" aria-controls="lookup-cccd-panel" data-lookup-method="cccd">Theo số CCCD</button>
-        <button type="button" role="tab" id="lookup-code-tab" aria-selected="false" aria-controls="lookup-code-panel" tabindex="-1" data-lookup-method="code">Theo mã người bệnh</button>
-      </div>
-      <div id="lookup-cccd-panel" role="tabpanel" aria-labelledby="lookup-cccd-tab">
-        <p class="lookup-instructions">Vui lòng nhập thông tin trùng khớp với các thông tin đã khai báo tại bệnh viện.</p>
-      </div>
-      <div id="lookup-code-panel" role="tabpanel" aria-labelledby="lookup-code-tab" hidden>
-        <p class="lookup-instructions">Tra cứu bằng mã người bệnh đã được cấp khi tiếp nhận tại bệnh viện.</p>
-      </div>
+      <p class="lookup-instructions">Nhập số điện thoại người bạn đã từng đặt khám hộ.</p>
       <form id="record-lookup-form">
-        <label for="lookup-patient">Họ và tên của bệnh nhân *</label>
-        <select id="lookup-patient" required>
-          <option value="">Chọn hồ sơ bệnh nhân</option>
-          <option value="preview">Bản thân</option>
-        </select>
-        <div id="lookup-identifier-field" hidden>
-          <label for="lookup-identifier" id="lookup-identifier-label">Số CCCD *</label>
-          <input id="lookup-identifier" inputmode="numeric" maxlength="12" pattern="(?:[0-9]{9}|[0-9]{12})" title="CCCD gồm 9 hoặc 12 chữ số" />
-        </div>
+        <label for="lookup-phone">Số điện thoại *</label>
+        <input id="lookup-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" required aria-describedby="record-lookup-status" />
+        <div id="record-lookup-matches" class="record-lookup-matches"></div>
         <p id="record-lookup-status" class="lookup-status" role="status"></p>
-        <button type="submit" class="solid-button lookup-submit">Tra cứu</button>
+        <button id="record-lookup-submit" type="submit" class="solid-button lookup-submit">Tra cứu</button>
       </form>
+    </dialog>
+    <dialog id="record-result-dialog" class="record-result-dialog" aria-labelledby="record-result-title">
+      <div class="dialog-heading"><h2 id="record-result-title">Kết quả khám bệnh</h2><button id="record-result-close" type="button" class="dialog-close" aria-label="Đóng kết quả khám">×</button></div>
+      <p id="record-result-status" role="status" aria-live="polite"></p>
+      <button id="record-result-retry" type="button" class="outline-button" hidden>Thử lại</button>
+      <div id="record-result-content"></div>
     </dialog>
     <footer class="compact-footer">
       <div class="compact-footer-wrap">
@@ -104,9 +104,9 @@
               <a href="portal.html">Đặt lịch khám</a>
               <a href="../public/contact.html#consultation">Đăng ký tư vấn</a>
               <a href="../public/contact.html">Liên hệ hỗ trợ</a>
-              <button type="button" data-panel="privacy">Chính sách bảo mật</button>
-              <button type="button" data-panel="terms">Điều khoản sử dụng</button>
-              <button type="button" data-panel="insurance">Thông tin bảo hiểm y tế</button>
+              <button type="button">Chính sách bảo mật</button>
+              <button type="button">Điều khoản sử dụng</button>
+              <button type="button">Thông tin bảo hiểm y tế</button>
             </nav>
           </section>
           <section class="footer-column footer-location" aria-label="Vị trí bệnh viện">

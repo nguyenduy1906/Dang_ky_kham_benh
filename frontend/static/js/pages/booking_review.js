@@ -1,7 +1,7 @@
 import { listDoctors } from "../api/doctor.js";
-import { listPatients, updatePatient } from "../api/patient.js";
+import { listPatients } from "../api/patient.js";
 import { listDoctorSchedules } from "../api/schedule.js";
-import { createOnline, getEncounter, getTicket, listEncounters, cancel } from "../api/encounter.js";
+import { createOnline, getEncounter, getTicket, listEncounters, cancel, updateRegistration } from "../api/encounter.js";
 import { createIntent, listEncounterPayments, setDemoResult } from "../api/payment.js";
 import { getMe } from "../api/auth.js";
 import { verifySession, hasSession, clearSession, loginUrl } from "../core/session.js";
@@ -26,8 +26,8 @@ let encounter, payment, ticket, countdown, reviewRequest, requestedEncounterId, 
 let paymentVisible = false, draft;
 let pageVersion = 0;
 let active = true;
-let patientAutosave;
-const draftKey = new URLSearchParams(location.search).get("draft");
+let registrationForm;
+let draftKey = new URLSearchParams(location.search).get("draft");
 const selectedPatient = () => patients.find(p => String(p.patient_id) === String(draft?.patient_id));
 function errorMessage(error) {
   if (error.status === 401) { clearSession(); location.replace(loginUrl(new URL(location.href)).href); return "Phiên đăng nhập đã hết hạn."; }
@@ -69,21 +69,23 @@ function busyDialog(value) {
   if (!value) $("#booking-payment-status").textContent = ui.dialogStatus.textContent;
 }
 function renderReview() {
-  stopPatientAutosave();
+  clearRegistrationForm();
   const patient = encounter ? patients.find(p => String(p.patient_id) === String(encounter.patient_id)) : selectedPatient();
   const doctor = encounter ? doctors.find(d => String(d.doctor_profile_id) === String(encounter.doctor_profile_id)) : selectedDoctor;
   const fields = el("div", "", "booking-patient-fields");
-  const editable = patient?.user_id === actor?.user_id && !patient?.archived_at;
-  const form = el("form"); form.id = "booking-patient-form";
+  const editable = !submissionUncertain && (!encounter || encounter.encounter_status === "HOLDING");
+  const intake = draft?.registration_details || encounter?.registration_details || patient || {};
+  const form = el("form"); form.id = "booking-patient-form"; form.noValidate = true;
   const status = el("p", "", "booking-review-hint"); status.id = "booking-patient-status"; status.setAttribute("role", "status");
-  const autosave = { form, status, editable, patientId: patient?.patient_id, version: pageVersion };
-  patientAutosave = autosave;
+  const symptomsEditable = !submissionUncertain && (!encounter || encounter.encounter_status === "HOLDING");
+  const autosave = { form, status, editable, symptomsEditable, patientId: patient?.patient_id, version: pageVersion, controls: [] };
+  registrationForm = autosave;
   const keys = ["full_name", "id_card", "health_insurance", "phone", "dob", "gender", "address", "symptoms"];
   const patientValues = [
-    ["Họ và tên người khám", patient?.full_name || encounter?.patient_name], ["Số CCCD / Mã định danh", patient?.id_card],
-    ["Số thẻ BHYT", patient?.health_insurance], ["Số điện thoại liên hệ", patient?.phone],
-    ["Ngày sinh", patient?.dob], ["Giới tính", patient?.gender], ["Địa chỉ", patient?.address],
-    ["Vấn đề sức khỏe / Triệu chứng", encounter?.symptoms || reviewRequest?.symptoms],
+    ["Họ và tên người khám", Object.hasOwn(intake, "full_name") ? intake.full_name : encounter?.patient_name], ["Số CCCD / Mã định danh", intake.id_card],
+    ["Số thẻ BHYT", intake.health_insurance], ["Số điện thoại liên hệ", intake.phone],
+    ["Ngày sinh", intake.dob], ["Giới tính", intake.gender], ["Địa chỉ", intake.address],
+    ["Vấn đề sức khỏe / Triệu chứng", draft?.symptoms ?? encounter?.symptoms ?? reviewRequest?.symptoms],
   ];
   for (const [index, [label, value]] of patientValues.entries()) {
     const holder = el("div", "", index >= 6 ? "booking-patient-full" : "");
@@ -91,27 +93,35 @@ function renderReview() {
     const input = el(index === 7 ? "textarea" : "input");
     input.id = name.htmlFor; input.name = keys[index]; input.value = value || "";
     input.placeholder = "Chưa cung cấp";
-    input.readOnly = index === 7 ? Boolean(encounter || submissionUncertain) : !editable || index === 3;
+    input.readOnly = index === 7 ? !symptomsEditable : !editable;
     input.maxLength = [150, 12, 15, 20, 10, 20, 255, 5000][index];
-    if (index === 0 || index === 7) input.required = true;
+    if ([0, 1, 3, 7].includes(index)) { input.required = true; name.textContent += " *"; }
     if (index === 1) input.pattern = "[0-9]{9}|[0-9]{12}";
     if (index === 2) input.pattern = "[A-Za-z0-9]{10,15}";
     if (index === 4) { input.type = "date"; input.max = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Saigon" }); }
-    if (index === 7) { input.rows = 3; input.addEventListener("input", () => {
-      if (draft && !encounter && !submissionUncertain) { draft.symptoms = input.value; reviewRequest.symptoms = input.value; saveDraft(draft, draftKey); }
-    }); }
-    else if (!input.readOnly) {
-      input.addEventListener("input", () => queuePatientSave(autosave));
-      const flush = () => savePatientEdits(autosave).catch(() => {});
+    if (index === 3) input.type = "tel";
+    const error = el("p", "", "booking-field-error");
+    error.id = `${input.id}-error`; error.hidden = true;
+    input.setAttribute("aria-describedby", error.id);
+    autosave.controls.push({ input, error, label });
+    if (index === 7) input.rows = 3;
+    if (!input.readOnly) {
+      input.addEventListener("input", () => {
+        if (autosave.validationShown) validatePatientForm(autosave, false);
+        saveRegistrationDraft(autosave);
+      });
+      const flush = () => saveRegistrationDraft(autosave);
       input.addEventListener("change", flush);
       input.addEventListener("blur", flush);
     }
-    holder.append(name, input); fields.append(holder);
+    holder.append(name, input, error);
+    fields.append(holder);
   }
+  form.append(el("p", "Các mục có * là bắt buộc: họ tên, CCCD / mã định danh, số điện thoại và triệu chứng.", "booking-required-hint"));
   form.append(fields, status);
   form.addEventListener("submit", async event => {
-    event.preventDefault(); if (busy || !form.reportValidity()) return;
-    await savePatientEdits(autosave).catch(() => {});
+    event.preventDefault(); if (busy || !validatePatientForm(autosave)) return;
+    saveRegistrationDraft(autosave);
   });
   $("#booking-review-patient").replaceChildren(form);
   ui.review.replaceChildren();
@@ -135,70 +145,88 @@ function renderReview() {
   $("#booking-review-total").textContent = money(encounter?.deposit_amount_snapshot ?? doctor?.consultation_fee);
 }
 function currentPatientForm(context) {
-  return active && context === patientAutosave && context.version === pageVersion;
+  return active && context === registrationForm && context.version === pageVersion;
 }
-function stopPatientAutosave() {
-  clearTimeout(patientAutosave?.timer);
-  patientAutosave = undefined;
+function normalizedPhone(value) {
+  const phone = value.replace(/[\s.-]/g, "");
+  return /^\+?84[35789]\d{8}$/.test(phone) ? `0${phone.replace(/^\+?84/, "")}` : phone;
 }
-function queuePatientSave(context) {
-  if (!currentPatientForm(context)) return;
-  clearTimeout(context.timer);
-  context.status.textContent = "Đang chờ lưu thông tin…";
-  context.timer = setTimeout(() => savePatientEdits(context).catch(() => {}), 600);
-}
-async function savePatientEdits(context = patientAutosave) {
-  if (!context || !currentPatientForm(context) || !context.editable) return;
-  clearTimeout(context.timer);
-  if (context.pending) {
-    await context.pending;
-    return savePatientEdits(context);
+function patientFieldError(context, input, label) {
+  const value = input.value.trim();
+  if (input.required && !value) return input.readOnly ? `Vui lòng nhờ chủ hồ sơ bổ sung ${label.toLocaleLowerCase("vi")}.` : `Vui lòng nhập ${label.toLocaleLowerCase("vi")}.`;
+  if (input.name === "phone" && !/^\+?\d{9,15}$/.test(normalizedPhone(value))) return "Số điện thoại cần có từ 9 đến 15 chữ số.";
+  if (!input.checkValidity()) {
+    return ({ id_card: "CCCD / mã định danh phải gồm 9 hoặc 12 chữ số.", health_insurance: "Số thẻ BHYT phải gồm 10–15 chữ hoặc số.", dob: "Ngày sinh không hợp lệ hoặc ở tương lai." })[input.name] || `Vui lòng kiểm tra ${label.toLocaleLowerCase("vi")}.`;
   }
-  const request = (async () => {
-    try {
-      const patient = patients.find(item => String(item.patient_id) === String(context.patientId));
-      if (!patient || patient.user_id !== actor.user_id || patient.archived_at) return;
-      const changes = {};
-      for (const key of ["full_name", "id_card", "health_insurance", "dob", "gender", "address"]) {
-        const input = context.form.elements.namedItem(key);
-        if (input.checkValidity?.() === false) throw new Error("Vui lòng kiểm tra định dạng thông tin vừa sửa.");
-        const value = input.value.trim() || null;
-        if (value !== (patient[key] || null)) changes[key] = value;
-      }
-      if (!Object.keys(changes).length) {
-        context.status.textContent = context.saved ? "Đã tự lưu thông tin." : "";
-        return false;
-      }
-      if (changes.full_name === null) throw new Error("Vui lòng nhập họ và tên người khám.");
-      if (!(changes.dob === undefined ? patient.dob : changes.dob) && !(changes.id_card === undefined ? patient.id_card : changes.id_card)) throw new Error("Vui lòng giữ ngày sinh hoặc số CCCD để phân biệt hồ sơ.");
-      context.status.textContent = "Đang lưu thông tin…";
-      const result = await updatePatient(patient.patient_id, changes);
-      if (!currentPatientForm(context) || !hasSession()) return false;
-      if (!result.patient || String(result.patient.patient_id) !== String(patient.patient_id)) throw new Error("Chưa nhận được hồ sơ cập nhật từ hệ thống.");
-      patients = patients.map(item => item.patient_id === patient.patient_id ? result.patient : item);
-      for (const [key, sent] of Object.entries(changes)) {
-        const input = context.form.elements.namedItem(key);
-        if ((input.value.trim() || null) === sent) input.value = result.patient[key] ?? "";
-      }
-      context.status.textContent = "Đã tự lưu thông tin.";
-      context.saved = true;
-      return true;
-    } catch (error) {
-      if (currentPatientForm(context)) context.status.textContent = `Chưa lưu được thông tin. ${errorMessage(error)}`;
-      throw error;
+  return "";
+}
+function validatePatientForm(context = registrationForm, focus = true) {
+  if (!context) return false;
+  context.validationShown = true;
+  let first;
+  for (const control of context.controls) {
+    const message = patientFieldError(context, control.input, control.label);
+    control.error.textContent = message; control.error.hidden = !message;
+    control.input.setAttribute("aria-invalid", String(Boolean(message)));
+    if (message && !first) first = control;
+  }
+  if (first) {
+    ui.dialogStatus.textContent = `Chưa thể thanh toán. ${first.error.textContent}`;
+    if (focus) {
+      first.input.scrollIntoView({ block: "center", behavior: "auto" });
+      first.input.focus({ preventScroll: true });
     }
-  })();
-  context.pending = request;
-  let saved;
-  try { saved = await request; }
-  finally { if (context.pending === request) context.pending = undefined; }
-  // Edits made while PATCH was in flight are sent only after its response.
-  if (saved && currentPatientForm(context)) return savePatientEdits(context);
+    return false;
+  }
+  if (ui.dialogStatus.textContent.startsWith("Chưa thể thanh toán.")) ui.dialogStatus.textContent = "";
+  return true;
+}
+function clearRegistrationForm() {
+  registrationForm = undefined;
+}
+function registrationValues(context) {
+  return Object.fromEntries(context.controls.filter(({ input }) => input.name !== "symptoms").map(({ input }) =>
+    [input.name, (input.name === "phone" ? normalizedPhone(input.value.trim()) : input.value.trim()) || null]));
+}
+function saveRegistrationDraft(context = registrationForm) {
+  if (!context || !currentPatientForm(context) || !context.editable) return;
+  if (!draft) return;
+  draft.registration_details = registrationValues(context);
+  draft.symptoms = context.form.elements.namedItem("symptoms").value.trim();
+  if (reviewRequest) Object.assign(reviewRequest, draftRequest(draft));
+  try {
+    saveDraft(draft, draftKey);
+    context.status.textContent = "Thông tin đang nhập được giữ tạm cho lần đặt khám này.";
+  } catch { context.status.textContent = "Trình duyệt không lưu được bản nhập tạm. Hãy giữ trang mở và thử lại."; }
+}
+async function saveRegistration(context = registrationForm) {
+  if (!context || !currentPatientForm(context)) return;
+  saveRegistrationDraft(context);
+  if (!encounter || !context.editable) return;
+  const registration_details = registrationValues(context);
+  const symptoms = context.form.elements.namedItem("symptoms").value.trim();
+  context.status.textContent = "Đang lưu thông tin đăng ký…";
+  const result = await updateRegistration(encounter.encounter_id, { registration_details, symptoms });
+  if (!currentPatientForm(context) || !hasSession()) return;
+  if (result.encounter?.encounter_id !== encounter.encounter_id) throw new Error("Chưa nhận được thông tin đăng ký từ hệ thống.");
+  encounter = result.encounter;
+  if (draft) {
+    draft.registration_details = encounter.registration_details;
+    draft.symptoms = encounter.symptoms;
+    saveDraft(draft, draftKey);
+  }
+  context.status.textContent = "Đã lưu thông tin đăng ký của lần khám này.";
 }
 function rememberEncounter() {
   requestedEncounterId = encounter.encounter_id;
+  if (!draft) {
+    draft = { user_id: actor.user_id, patient_id: encounter.patient_id, doctor_profile_id: encounter.doctor_profile_id,
+      schedule_id: encounter.schedule_id, registration_details: encounter.registration_details, symptoms: encounter.symptoms };
+    draftKey = saveDraft(draft);
+  }
   const url = new URL(location.href);
   url.searchParams.set("encounter", encounter.encounter_id);
+  url.searchParams.set("draft", draftKey);
   history.replaceState(null, "", url);
   if (draft) { draft.encounter_id = encounter.encounter_id; draft.uncertain = false; saveDraft(draft, draftKey); }
 }
@@ -275,7 +303,7 @@ async function refreshBooking(id = encounter?.encounter_id || requestedEncounter
   busyDialog(true);
   ui.dialogStatus.textContent = "Đang cập nhật trạng thái từ hệ thống…";
   try {
-    await savePatientEdits();
+    saveRegistrationDraft();
     if (!active || version !== pageVersion || !hasSession()) return;
     if (id) await readBooking(id);
     else if (submissionUncertain) await recoverSubmission();
@@ -285,13 +313,13 @@ async function refreshBooking(id = encounter?.encounter_id || requestedEncounter
 }
 ui.confirm.addEventListener("click", async () => {
   if (busy || submissionUncertain || (!encounter && !reviewRequest) || (encounter && encounter.encounter_status !== "HOLDING")) return;
-  if (!$("#booking-patient-form").reportValidity()) return;
+  if (!validatePatientForm()) return;
   busyDialog(true);
   const version = pageVersion;
   try {
-    await savePatientEdits();
+    await saveRegistration();
   } catch (error) {
-    if (active && version === pageVersion) ui.dialogStatus.textContent = `Chưa lưu được thông tin người khám. ${errorMessage(error)}`;
+    if (active && version === pageVersion) ui.dialogStatus.textContent = `Chưa lưu được thông tin đăng ký. ${errorMessage(error)}`;
     busyDialog(false);
     return;
   }
@@ -334,7 +362,6 @@ async function paymentAction(action) {
   busyDialog(true);
   ui.dialogStatus.textContent = "Đang xử lý thanh toán trên hệ thống…";
   try {
-    await savePatientEdits();
     if (!active || version !== pageVersion || !hasSession()) return;
     await action();
     if (!active || version !== pageVersion || !hasSession()) return;
@@ -360,7 +387,7 @@ ui.cancel.addEventListener("click", async () => {
   const version = pageVersion;
   busyDialog(true);
   try {
-    await savePatientEdits();
+    saveRegistrationDraft();
     if (!active || version !== pageVersion || !hasSession()) return;
     await cancel(encounter.encounter_id, { reason: "Người đặt khám hủy giữ chỗ trên giao diện" });
     await readBooking(encounter.encounter_id);
@@ -373,7 +400,7 @@ async function leaveReview(destination) {
   busyDialog(true);
   const version = pageVersion;
   try {
-    await savePatientEdits();
+    saveRegistrationDraft();
     if (active && version === pageVersion && hasSession()) location.assign(destination);
   } catch (error) {
     if (active && version === pageVersion) ui.dialogStatus.textContent = `Chưa lưu được thông tin người khám. ${errorMessage(error)}`;
@@ -393,14 +420,14 @@ $("#booking-payment-close").addEventListener("click", () => { if (!busy) ui.paym
 ui.paymentModal.addEventListener("cancel", event => { if (busy) event.preventDefault(); });
 ui.paymentModal.addEventListener("close", () => { paymentVisible = false; if (encounter?.encounter_status === "HOLDING") ui.confirm.hidden = false; });
 window.addEventListener("pagehide", () => {
-  stopPatientAutosave();
+  clearRegistrationForm();
   active = false; pageVersion++; ui.dialog.hidden = true;
   if (ui.paymentModal.open) ui.paymentModal.close();
   clearInterval(countdown); countdown = undefined;
 });
 
 async function start() {
-  stopPatientAutosave();
+  clearRegistrationForm();
   busy = false;
   active = true;
   const version = ++pageVersion;
@@ -446,7 +473,7 @@ async function start() {
 }
 $("#booking-auth-status button").addEventListener("click", start);
 window.addEventListener("neu:auth-change", () => {
-  stopPatientAutosave();
+  clearRegistrationForm();
   active = false; pageVersion++; ui.dialog.hidden = true;
   if (ui.paymentModal.open) ui.paymentModal.close();
   if (!hasSession()) location.replace(loginUrl(new URL(location.href)).href);

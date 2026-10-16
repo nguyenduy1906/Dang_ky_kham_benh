@@ -179,6 +179,7 @@ erDiagram
         bigint consultation_fee_snapshot "VND; NULL với dữ liệu cũ chưa rõ giá"
         bigint deposit_amount_snapshot "VND; NULL với dữ liệu cũ chưa rõ giá"
         text symptoms
+        jsonb registration_details "Thông tin khai cho lần khám; không ghi đè hồ sơ gốc"
         text encounter_status "NOT NULL; HOLDING, CONFIRMED, CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW, EXPIRED"
         text ticket_code "UNIQUE; phát sau thanh toán"
         timestamptz appointment_end_at "NOT NULL"
