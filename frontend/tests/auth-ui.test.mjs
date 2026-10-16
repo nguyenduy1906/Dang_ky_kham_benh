@@ -87,15 +87,15 @@ test("successful login uses the backend token and returns to the requested porta
   assert.equal(nodes.get("login-password").value, "");
   assert.equal(JSON.parse(stored.get("neu-medical.auth")).token, "test-token");
 });
-test("staff login stays on the login form with a clear message and no saved token", async () => {
+test("staff login opens the server-assigned workspace even when next targets a patient page", async () => {
   nodes.get("login-identifier").value = "staff@example.test";
   nodes.get("login-password").value = "Test-password-123";
-  for (const role of ["ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST"]) {
+  for (const [role, target] of [["ADMIN", "(admin)/home.html"], ["DOCTOR", "(doctor)/home.html"], ["NURSE", "(nurse)/home.html"], ["RECEPTIONIST", "(reception)/home.html"]]) {
     response = () => Response.json({ access_token: "staff-token", token_type: "Bearer", expires_in: 7200,
       user: { user_id: 2, role_name: role } });
     await submit("login");
-    assert.match(nodes.get("login-status").textContent, /chỉ hỗ trợ đăng nhập bằng tài khoản bệnh nhân/);
-    assert.equal(stored.size, 0); assert.equal(destination, null);
+    assert.ok(decodeURIComponent(destination).endsWith(target));
+    assert.equal(JSON.parse(stored.get("neu-medical.auth")).token, "staff-token");
     assert.equal(nodes.get("login-form").submit.disabled, false);
   }
 });

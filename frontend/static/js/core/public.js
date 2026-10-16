@@ -66,20 +66,17 @@ toggle?.addEventListener("click", () => {
   document.querySelector("#main-nav").classList.toggle("open", open);
 });
 
-// Only sign-in/sign-out actions for now; a personal page will be added later.
+// Show the sign-out action only while an account is signed in.
 const accountActions = document.querySelector(".topbar-inner > div");
 if (accountActions) {
-  const signIn = document.createElement("a");
-  signIn.href = "../auth/login.html";
-  signIn.textContent = "Đăng nhập";
-  accountActions.prepend(signIn);
   import("./session.js").then(auth => {
     const signOut = document.createElement("button");
     signOut.type = "button";
+    signOut.className = "topbar-signout";
     signOut.textContent = "Đăng xuất";
     const renderAccount = () => {
-      if (auth.hasSession()) signIn.replaceWith(signOut);
-      else signOut.replaceWith(signIn);
+      if (auth.hasSession()) accountActions.append(signOut);
+      else signOut.remove();
     };
     renderAccount();
     window.addEventListener("neu:auth-change", renderAccount);
@@ -95,5 +92,5 @@ if (accountActions) {
         if (auth.isPortal(new URL(location.href))) location.replace(auth.loginUrl().href);
       }
     });
-  }).catch(() => { /* Keep the sign-in link available if modules cannot load. */ });
+  }).catch(() => { /* Public navigation remains available if modules cannot load. */ });
 }

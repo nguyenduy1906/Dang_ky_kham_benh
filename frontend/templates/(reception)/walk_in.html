@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Khách khám trực tiếp | NEU Medical</title>
+  <link rel="stylesheet" href="../../static/css/staff_workspace.css">
+  <link rel="stylesheet" href="../../static/css/reception.css">
+  <script type="module" src="../../static/js/pages/reception.js"></script>
+</head>
+<body class="staff-page reception-page staff-auth-pending" data-role="reception" data-page="walk_in">
+  <a class="skip-link" href="#main-content">Đến nội dung chính</a>
+  <div id="staff-access" class="staff-access" role="status">Đang kiểm tra quyền truy cập…</div>
+  <noscript>Bạn cần bật JavaScript để sử dụng khu vực nhân viên.</noscript>
+  <div class="staff-shell">
+    <aside id="staff-sidebar" class="staff-sidebar"></aside>
+    <div class="staff-main">
+      <header id="staff-topbar" class="staff-topbar"></header>
+      <main id="main-content" class="staff-content" tabindex="-1" inert>
+        <header class="page-header"><div><p class="eyebrow">NEU MEDICAL · KHÔNG GIAN NHÂN VIÊN</p><h1>Khách khám trực tiếp</h1><p>Chọn đúng hồ sơ và bác sĩ để tiếp nhận khám trực tiếp.</p></div><button id="page-refresh" class="secondary" type="button">Tải lại dữ liệu</button></header>
+        <p id="page-status" class="scope-note" role="status" hidden></p>
+        <div id="page-body" aria-live="polite"></div>
+      </main>
+      <footer class="staff-footer">NEU Medical · Hệ thống quản lý khám bệnh</footer>
+    </div>
+  </div>
+  <dialog id="staff-dialog" aria-labelledby="staff-dialog-title"><div class="section-heading"><h2 id="staff-dialog-title">Thông tin</h2><button id="staff-dialog-close" class="secondary" type="button" aria-label="Đóng hộp thoại">Đóng ×</button></div><div id="staff-dialog-content"></div></dialog>
+</body>
+</html>

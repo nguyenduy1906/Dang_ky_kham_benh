@@ -23,6 +23,25 @@ beforeEach(() => {
 });
 const login = () => session.signIn({ identifier: "frontend@example.test", password: "Test-password-123" });
 
+test("changing password replaces the revoked token without storing passwords", async () => {
+  await login();
+  response = () => Response.json({ access_token: "rotated-token", token_type: "Bearer", expires_in: 7200, message: "Đã đổi mật khẩu" });
+  await session.changeOwnPassword({ current_password: "Old-password-123", new_password: "New-password-123" });
+  assert.equal(new URL(requests.at(-1).url).pathname, "/me/change-password");
+  assert.equal(requests.at(-1).headers.get("Authorization"), "Bearer test-token");
+  const saved = JSON.parse(values.get("neu-medical.auth")); assert.equal(saved.token, "rotated-token");
+  assert.deepEqual(Object.keys(saved).sort(), ["expiresAt", "token"]);
+});
+test("late password change cannot overwrite a new session", async () => {
+  await login(); let finish;
+  response = () => new Promise(resolve => { finish = resolve; });
+  const changing = session.changeOwnPassword({ current_password: "Old-password-123", new_password: "New-password-123" });
+  session.clearSession(); values.set("neu-medical.auth", JSON.stringify({ token: "another-session", expiresAt: Date.now() + 60000 }));
+  finish(Response.json({ access_token: "stale-token", token_type: "Bearer", expires_in: 7200 }));
+  await assert.rejects(changing, error => error.code === "SESSION_CHANGED");
+  assert.equal(JSON.parse(values.get("neu-medical.auth")).token, "another-session");
+});
+
 test("login stores only the backend token and expiry, never credentials or user data", async () => {
   await login();
   assert.equal(session.hasSession(), true);
@@ -87,24 +106,43 @@ test("next preserves a chosen doctor and rejects external/unsupported destinatio
     assert.equal(session.returnUrl(value).href, session.homeUrl.href);
   }
 });
-test("staff and missing/unknown roles cannot save a frontend login session", async () => {
-  for (const role of ["ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST", "UNKNOWN", undefined]) {
+test("hospital staff can sign in, while unknown or missing roles cannot", async () => {
+  for (const role of ["ADMIN", "DOCTOR", "NURSE", "RECEPTIONIST"]) {
+    response = () => Response.json({ access_token: "staff-token", token_type: "Bearer", expires_in: 7200,
+      user: { user_id: 2, role_name: role } });
+    assert.equal((await login()).role_name, role);
+    assert.equal(session.hasSession(), true);
+    response = () => Response.json({ user: { user_id: 2, role_name: role } });
+    assert.equal(await session.verifySession(), false, "staff must not pass the patient-page guard");
+    assert.equal(session.hasSession(), true, "patient guard must not destroy a valid staff session");
+    assert.equal((await session.getSessionUser()).role_name, role);
+    session.clearSession();
+  }
+  for (const role of ["UNKNOWN", "constructor", "__proto__", undefined]) {
     response = () => Response.json({ access_token: "staff-token", token_type: "Bearer", expires_in: 7200,
       user: { user_id: 2, role_name: role } });
     await assert.rejects(login(), { code: "CLIENT_ROLE_NOT_SUPPORTED" });
     assert.equal(session.hasSession(), false);
-    assert.equal(values.size, 0);
   }
 });
-test("me rejects old staff sessions and a patient's role changed by the backend", async () => {
-  await login();
-  response = () => Response.json({ user: { user_id: 1, role_name: "ADMIN" } });
-  assert.equal(await session.verifySession(), false);
-  assert.equal(session.hasSession(), false);
-  for (const role of ["DOCTOR", "NURSE", "RECEPTIONIST", undefined]) {
-    values.set("neu-medical.auth", JSON.stringify({ token: "old-staff-token", expiresAt: Date.now() + 7200000 }));
-    response = () => Response.json({ user: { user_id: 2, role_name: role } });
-    assert.equal(await session.verifySession(), false);
-    assert.equal(values.size, 0);
+test("role-specific return URLs reject cross-role and crafted destinations", () => {
+  for (const [role, folder] of [["ADMIN", "admin"], ["DOCTOR", "doctor"], ["NURSE", "nurse"], ["RECEPTIONIST", "reception"]]) {
+    const home = session.workspaceUrl(role);
+    const own = new URL(`../(${folder})/home.html`, session.profileUrl);
+    assert.equal(session.returnUrl(own.href, role).href, own.href);
+    for (const input of ["https://unlisted.example/", session.portalUrl.href, new URL("../(other)/home.html", home).href, "javascript:alert(1)", "//unlisted.example"])
+      assert.equal(session.returnUrl(input, role).href, home.href);
+    assert.equal(session.returnUrl(null, role).href, home.href);
+    const profile = new URL("../components/profile.html?role=admin", session.profileUrl);
+    assert.equal(session.returnUrl(profile.href, role).pathname, profile.pathname, "shared profile derives actual role from /me");
   }
+});
+test("a backend role change is rechecked and invalid backend roles clear the session", async () => {
+  await login();
+  response = () => Response.json({ user: { user_id: 1, role_name: "DOCTOR" } });
+  assert.equal(await session.verifySession(), false);
+  assert.equal((await session.getSessionUser()).role_name, "DOCTOR");
+  response = () => Response.json({ user: { user_id: 1, role_name: "UNKNOWN" } });
+  assert.equal(await session.getSessionUser(), null);
+  assert.equal(session.hasSession(), false);
 });

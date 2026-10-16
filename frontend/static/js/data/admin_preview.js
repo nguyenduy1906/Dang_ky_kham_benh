@@ -1,0 +1,55 @@
+// Static presentation content only. These records are not an API or persisted data.
+const active = "Đang hoạt động";
+export const sections = [
+  ["TỔNG QUAN", [["home", "Tổng quan", "grid"]]],
+  ["VẬN HÀNH KHÁM BỆNH", [["encounters", "Lượt khám", "record"], ["patients", "Bệnh nhân", "people"], ["schedule", "Lịch làm việc", "calendar"], ["assignments", "Phân công y tá", "cross"]]],
+  ["QUẢN LÝ DANH MỤC", [["doctors", "Bác sĩ", "doctor"], ["departments", "Chuyên khoa", "building"], ["rooms", "Phòng khám", "door"]]],
+  ["QUẢN TRỊ & HỆ THỐNG", [["users", "Tài khoản", "person"], ["articles", "Tin tức & bài viết", "record"], ["payments", "Thanh toán", "card"], ["statistics", "Báo cáo & thống kê", "chart"], ["audit", "Nhật ký hoạt động", "history"], ["configuration", "Cấu hình hệ thống", "settings"]]],
+];
+export const pages = {
+  home: { title: "Tổng quan quản trị", description: "Theo dõi hoạt động khám bệnh và truy cập nhanh các khu vực quản lý." },
+  encounters: { title: "Quản lý lượt khám", description: "Theo dõi các lượt khám trực tuyến và trực tiếp trong cùng hệ thống.", note: "Theo dõi lượt khám theo mã phiếu và khung giờ. Tiếp nhận, chuyển bác sĩ và khám bệnh thuộc khu vực nghiệp vụ tương ứng.", columns: ["Mã lượt khám", "Bệnh nhân", "Bác sĩ", "Hình thức", "Ngày khám", "Khung giờ", "Mã phiếu", "Trạng thái"], rows: [
+    ["EC-1028", "Nguyễn Minh Anh", "BS. Trần Thu Hà", "Trực tuyến", "16/10/2026", "08:00–08:30", "NEU-1028", "Đã xác nhận"],
+    ["EC-1027", "Trần Gia Bảo", "BS. Nguyễn Đức Long", "Trực tiếp", "16/10/2026", "08:30–09:00", "NEU-1027", "Đã tiếp nhận"],
+    ["EC-1026", "Lê Hoàng Nam", "BS. Phạm Huyền Trang", "Trực tuyến", "16/10/2026", "09:00–09:15", "NEU-1026", "Đang khám"],
+    ["EC-1025", "Phạm Ngọc Linh", "BS. Trần Thu Hà", "Trực tuyến", "16/10/2026", "09:30–10:00", "Chưa phát phiếu", "Chờ đặt cọc"],
+    ["EC-1024", "Đỗ Quang Huy", "BS. Lê Anh Tuấn", "Trực tiếp", "16/10/2026", "08:00–08:15", "NEU-1024", "Hoàn thành"],
+    ["EC-1023", "Hoàng Thanh Mai", "BS. Nguyễn Đức Long", "Trực tuyến", "15/10/2026", "10:00–10:30", "NEU-1023", "Đã hủy"],
+    ["EC-1022", "Nguyễn Minh Anh", "BS. Trần Thu Hà", "Trực tuyến", "15/10/2026", "10:30–11:00", "NEU-1022", "Hoàn thành"],
+    ["EC-1021", "Trần Gia Bảo", "BS. Nguyễn Đức Long", "Trực tuyến", "15/10/2026", "11:00–11:30", "Chưa phát phiếu", "Hết hạn"],
+    ["EC-1020", "Lê Hoàng Nam", "BS. Phạm Huyền Trang", "Trực tiếp", "15/10/2026", "14:00–14:15", "NEU-1020", "Hoàn thành"],
+    ["EC-1019", "Hoàng Thanh Mai", "BS. Lê Anh Tuấn", "Trực tuyến", "15/10/2026", "15:00–15:15", "NEU-1019", "Không đến"],
+  ] },
+  patients: { title: "Quản lý bệnh nhân", description: "Thông tin người được khám, độc lập với tài khoản đăng nhập.", note: "Một tài khoản có thể quản lý nhiều hồ sơ gia đình. Các hồ sơ mẫu dưới đây chỉ dùng để xem bố cục.", add: "Thêm bệnh nhân", edit: true, columns: ["Mã BN", "Họ và tên", "Ngày sinh", "Số điện thoại", "Loại hồ sơ", "Trạng thái"], rows: [
+    ["BN-001", "Nguyễn Minh Anh", "12/03/1998", "090 000 1101", "Bản thân", active], ["BN-002", "Trần Gia Bảo", "20/07/2016", "090 000 1102", "Người thân", active], ["BN-003", "Lê Hoàng Nam", "02/11/1987", "090 000 1103", "Trực tiếp", active], ["BN-004", "Phạm Ngọc Linh", "01/01/1993", "090 000 1104", "Bản thân", active], ["BN-005", "Đỗ Quang Huy", "14/08/1976", "090 000 1105", "Trực tiếp", active], ["BN-006", "Hoàng Thanh Mai", "25/05/1990", "090 000 1106", "Bản thân", "Đã lưu trữ"],
+  ] },
+  schedule: { title: "Lịch làm việc", description: "Quản lý bác sĩ, ca khám, phòng và giới hạn tiếp nhận.", note: "Mỗi ca gồm các khung giờ khám. Thời lượng và giới hạn tiếp nhận trong bảng là dữ liệu minh họa.", add: "Tạo lịch làm việc", edit: true, columns: ["Mã ca", "Bác sĩ", "Phòng", "Ngày", "Thời gian", "Lượt đã đặt", "Trạng thái"], rows: [
+    ["CA-101", "BS. Trần Thu Hà", "Phòng 201", "16/10/2026", "07:30–11:30", "6/8", "Đang mở"], ["CA-102", "BS. Nguyễn Đức Long", "Phòng 203", "16/10/2026", "07:30–11:30", "8/8", "Đang mở"], ["CA-103", "BS. Phạm Huyền Trang", "Phòng 301", "16/10/2026", "08:00–12:00", "11/16", "Đang mở"], ["CA-104", "BS. Lê Anh Tuấn", "Phòng 302", "16/10/2026", "13:00–17:00", "7/16", "Đang mở"], ["CA-105", "BS. Trần Thu Hà", "Phòng 202", "17/10/2026", "13:00–17:00", "3/8", "Đang mở"], ["CA-106", "BS. Nguyễn Đức Long", "Phòng 203", "17/10/2026", "07:30–11:30", "0/8", "Đã đóng"],
+  ] },
+  assignments: { title: "Phân công y tá", description: "Theo dõi phân công y tá theo từng ca làm việc.", note: "Lịch sử phân công được giữ lại khi thu hồi. Các thao tác ở đây chỉ mở bản xem trước.", add: "Phân công y tá", revoke: true, columns: ["Mã phân công", "Y tá", "Mã ca", "Bác sĩ phụ trách", "Ngày", "Trạng thái"], rows: [
+    ["PC-001", "Nguyễn Thị Mai", "CA-101", "BS. Trần Thu Hà", "16/10/2026", "Đang phân công"], ["PC-002", "Trần Thùy Dương", "CA-102", "BS. Nguyễn Đức Long", "16/10/2026", "Đang phân công"], ["PC-003", "Bùi Thu Hà", "CA-103", "BS. Phạm Huyền Trang", "16/10/2026", "Đang phân công"], ["PC-004", "Nguyễn Thị Mai", "CA-106", "BS. Nguyễn Đức Long", "17/10/2026", "Đã thu hồi"],
+  ] },
+  doctors: { title: "Quản lý bác sĩ", description: "Hồ sơ chuyên môn, chuyên khoa phụ trách và giá khám.", add: "Thêm bác sĩ", edit: true, columns: ["Mã BS", "Bác sĩ", "Chuyên khoa", "Học vị", "Kinh nghiệm", "Giá khám", "Trạng thái"], rows: [
+    ["BS-001", "BS. Trần Thu Hà", "Nội tổng quát", "ThS.BS", "9 năm", "250.000 ₫", active], ["BS-002", "BS. Nguyễn Đức Long", "Nhi khoa", "BS.CKI", "12 năm", "300.000 ₫", active], ["BS-003", "BS. Phạm Huyền Trang", "Da liễu", "ThS.BS", "7 năm", "220.000 ₫", active], ["BS-004", "BS. Lê Anh Tuấn", "Tai Mũi Họng", "BS.CKII", "15 năm", "350.000 ₫", active], ["BS-005", "BS. Lương Hải Yến", "Nội tổng quát", "BS.CKI", "6 năm", "220.000 ₫", "Tạm ngưng"],
+  ] },
+  departments: { title: "Quản lý chuyên khoa", description: "Danh mục chuyên khoa và thông tin giới thiệu tại cơ sở.", add: "Thêm chuyên khoa", edit: true, columns: ["Mã", "Chuyên khoa", "Mã viết tắt", "Mô tả", "Số bác sĩ", "Trạng thái"], rows: [
+    ["K-001", "Nội tổng quát", "NOI", "Khám các bệnh lý nội khoa", "2", active], ["K-002", "Nhi khoa", "NHI", "Chăm sóc sức khỏe trẻ em", "1", active], ["K-003", "Da liễu", "DALIEU", "Khám và điều trị da liễu", "1", active], ["K-004", "Tai Mũi Họng", "TMH", "Khám chuyên khoa tai mũi họng", "1", active], ["K-005", "Ngoại tổng quát", "NGOAI", "Khám bệnh lý ngoại khoa", "0", "Tạm ngưng"],
+  ] },
+  rooms: { title: "Quản lý phòng khám", description: "Theo dõi phòng khám và chuyên khoa tương ứng.", add: "Thêm phòng khám", edit: true, columns: ["Mã", "Phòng khám", "Chuyên khoa", "Vị trí", "Trạng thái"], rows: [
+    ["P-201", "Phòng 201", "Nội tổng quát", "Tầng 2", active], ["P-202", "Phòng 202", "Nội tổng quát", "Tầng 2", active], ["P-203", "Phòng 203", "Nhi khoa", "Tầng 2", active], ["P-301", "Phòng 301", "Da liễu", "Tầng 3", active], ["P-302", "Phòng 302", "Tai Mũi Họng", "Tầng 3", active],
+  ] },
+  users: { title: "Quản lý tài khoản", description: "Danh sách tài khoản và thông tin nhân viên.", note: "Tài khoản nhân viên do quản trị viên tạo. Bản giao diện chưa tạo tài khoản, thay đổi trạng thái hoặc cấp quyền thực tế.", add: "Tạo tài khoản", edit: true, lock: true, columns: ["Mã", "Người dùng", "Email", "Vai trò", "Trạng thái"], rows: [
+    ["TK-001", "Quản trị viên mẫu", "admin@example.com", "Quản trị viên", active], ["TK-002", "Trần Thu Hà", "ha.tran@example.com", "Bác sĩ", active], ["TK-003", "Nguyễn Đức Long", "long.nguyen@example.com", "Bác sĩ", active], ["TK-004", "Phạm Huyền Trang", "trang.pham@example.com", "Bác sĩ", active], ["TK-005", "Hoàng Thảo Vy", "vy.hoang@example.com", "Lễ tân", active], ["TK-006", "Nguyễn Thị Mai", "mai.nguyen@example.com", "Y tá", active], ["TK-007", "Nguyễn Minh Anh", "anh.nguyen@example.com", "Người dùng", active], ["TK-008", "Hoàng Thanh Mai", "thanhmai@example.com", "Người dùng", "Đã khóa"],
+  ] },
+  articles: { title: "Quản lý tin tức", description: "Nội dung đăng tải trên website khám bệnh.", add: "Viết bài mới", edit: true, columns: ["Mã bài", "Tiêu đề", "Danh mục", "Tác giả", "Ngày tạo", "Trạng thái"], rows: [
+    ["BV-001", "Hướng dẫn đặt lịch khám trực tuyến", "Hướng dẫn", "Quản trị viên", "14/10/2026", "Đã xuất bản"], ["BV-002", "Lưu ý trước khi đi khám sức khỏe", "Kiến thức sức khỏe", "Quản trị viên", "13/10/2026", "Đã xuất bản"], ["BV-003", "Thông báo điều chỉnh thời gian tiếp nhận", "Thông báo", "Quản trị viên", "12/10/2026", "Bản nháp"], ["BV-004", "Các bước chuẩn bị hồ sơ khám", "Hướng dẫn", "Quản trị viên", "11/10/2026", "Bản nháp"],
+  ] },
+  payments: { title: "Giao dịch thanh toán", description: "Theo dõi các khoản đặt cọc, phí khám và hoàn tiền.", note: "Toàn bộ giao dịch bên dưới là dữ liệu minh họa cho giao diện, chưa kết nối thanh toán.", columns: ["Mã giao dịch", "Lượt khám", "Bệnh nhân", "Loại", "Số tiền", "Thời điểm", "Trạng thái"], rows: [
+    ["TT-1081", "EC-1028", "Nguyễn Minh Anh", "Đặt cọc", "250.000 ₫", "16/10/2026 07:31", "Thành công"], ["TT-1080", "EC-1027", "Trần Gia Bảo", "Phí khám", "300.000 ₫", "16/10/2026 07:28", "Thành công"], ["TT-1079", "EC-1026", "Lê Hoàng Nam", "Đặt cọc", "220.000 ₫", "16/10/2026 07:10", "Thành công"], ["TT-1078", "EC-1025", "Phạm Ngọc Linh", "Đặt cọc", "250.000 ₫", "16/10/2026 07:45", "Đang chờ"], ["TT-1077", "EC-1024", "Đỗ Quang Huy", "Phí khám", "350.000 ₫", "16/10/2026 08:55", "Thành công"], ["TT-1076", "EC-1023", "Hoàng Thanh Mai", "Hoàn tiền", "150.000 ₫", "15/10/2026 15:20", "Thành công"], ["TT-1075", "EC-1022", "Nguyễn Minh Anh", "Đặt cọc", "250.000 ₫", "15/10/2026 07:05", "Thành công"],
+  ] },
+  statistics: { title: "Báo cáo & thống kê", description: "Phân bố lượt khám và giao dịch từ bộ dữ liệu minh họa của giao diện." },
+  audit: { title: "Nhật ký hoạt động", description: "Theo dõi các thay đổi quan trọng và người thực hiện.", note: "Nhật ký minh họa chỉ để xem, không có thao tác chỉnh sửa hoặc xóa.", columns: ["Mã", "Người thực hiện", "Hành động", "Đối tượng", "Thời điểm", "Nội dung"], rows: [
+    ["LG-401", "Quản trị viên", "Tạo lịch làm việc", "CA-105", "16/10/2026 09:20", "Thiết lập ca cho BS. Trần Thu Hà"], ["LG-400", "Hệ thống mẫu", "Hết hạn giữ chỗ", "EC-1021", "15/10/2026 08:12", "Khung giờ được giải phóng"], ["LG-399", "Hoàng Thảo Vy", "Tiếp nhận lượt khám", "EC-1027", "16/10/2026 08:05", "Xác nhận bệnh nhân đã đến"], ["LG-398", "Quản trị viên", "Phân công y tá", "PC-003", "15/10/2026 17:30", "Phân công Bùi Thu Hà vào ca CA-103"], ["LG-397", "Quản trị viên", "Cập nhật bài viết", "BV-002", "15/10/2026 10:10", "Cập nhật nội dung giới thiệu"],
+  ] },
+  configuration: { title: "Cấu hình hệ thống", description: "Xem trước cách trình bày các thiết lập và thông tin cơ sở." },
+};

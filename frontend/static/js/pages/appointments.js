@@ -1,8 +1,8 @@
-import { listEncounters, getEncounter, getTicket } from "../api/encounter.js";
+import { listEncounters, getEncounter, getTicket, cancel } from "../api/encounter.js";
 import { listPatients } from "../api/patient.js";
 import { listDoctors } from "../api/doctor.js";
 import { allPages, dateLabel, clock, money } from "../core/booking.js";
-import { statusLabels, isUpcoming, filterAppointments, appointmentActionUrl } from "../core/appointments.js";
+import { statusLabels, isUpcoming, filterAppointments, appointmentActionUrl, cancellationNotice } from "../core/appointments.js";
 import { thumbnailUrl } from "../core/articles.js";
 import { protectPatientPage } from "../core/patient_access.js";
 
@@ -15,7 +15,7 @@ function el(tag, text = "", className = "") {
 }
 const ui = {
   list: $("#appointments-list"), status: $("#appointments-status"), patient: $("#appointments-patient"),
-  filter: $("#appointments-status-filter"), retry: $("#appointments-retry"), refresh: $("#appointments-refresh"),
+  filter: $("#appointments-status-filter"), retry: $("#appointments-retry"),
   dialog: $("#appointment-detail-dialog"), detail: $("#appointment-detail-content"),
   detailStatus: $("#appointment-detail-status"), detailRetry: $("#appointment-detail-retry"), action: $("#appointment-detail-action"),
 };
@@ -24,6 +24,7 @@ const params = new URLSearchParams(location.search);
 let items = [], doctors = [], view = params.get("view") === "history" ? "history" : "upcoming";
 let page = Math.max(1, Number.parseInt(params.get("page"), 10) || 1), loading = false, initialized = false, version = 0, controller;
 let detailVersion = 0, detailController, detailId;
+let cancellationBusy = false;
 const perPage = 6;
 for (const [value, label] of Object.entries(statusLabels)) ui.filter.add(new Option(label, value));
 if (Object.hasOwn(statusLabels, params.get("status"))) ui.filter.value = params.get("status");
@@ -101,6 +102,13 @@ function render() {
       link.href = appointmentActionUrl({ ...item, encounter_status: "COMPLETED" });
       actions.append(link);
     }
+    if (isUpcoming(item) && ["HOLDING", "CONFIRMED"].includes(item.encounter_status)) {
+      const cancelButton = el("button", "Hủy lịch", "appointment-cancel-button");
+      cancelButton.type = "button";
+      cancelButton.setAttribute("aria-label", `Hủy lịch của ${item.patient_name} ngày ${dateLabel(item.work_date)}`);
+      cancelButton.addEventListener("click", () => openCancellation(item.encounter_id));
+      actions.append(cancelButton);
+    }
     card.append(metadata, actions);
     ui.list.append(card);
   }
@@ -126,7 +134,7 @@ async function load() {
   ui.status.textContent = "Đang tải lịch đã đăng ký…";
   ui.retry.hidden = true;
   $("#appointments-empty").hidden = $("#appointments-pagination").hidden = true;
-  ui.refresh.disabled = ui.patient.disabled = ui.filter.disabled = true;
+  ui.patient.disabled = ui.filter.disabled = true;
   tabs.forEach(tab => { tab.disabled = true; });
   const results = await Promise.allSettled([
     allPages(listEncounters, {}, { signal: controller.signal }),
@@ -158,12 +166,14 @@ async function load() {
     if (current === version) {
       loading = false;
       ui.list.setAttribute("aria-busy", "false");
-      ui.refresh.disabled = ui.patient.disabled = ui.filter.disabled = false;
+      ui.patient.disabled = ui.filter.disabled = false;
       tabs.forEach(tab => { tab.disabled = false; });
     }
   }
 }
 async function loadDetail() {
+  const heading = $("#appointment-detail-title");
+  if (heading) heading.textContent = "Thông tin lịch khám";
   detailController?.abort();
   detailController = new AbortController();
   const current = ++detailVersion;
@@ -199,6 +209,83 @@ async function loadDetail() {
     ui.detailRetry.hidden = false;
   }
 }
+
+async function openCancellation(id) {
+  if (cancellationBusy) return;
+  detailController?.abort();
+  detailController = new AbortController();
+  const current = ++detailVersion;
+  const heading = $("#appointment-detail-title");
+  if (heading) heading.textContent = "Xác nhận hủy lịch khám";
+  ui.detail.replaceChildren();
+  ui.detailRetry.hidden = ui.action.hidden = true;
+  ui.detailStatus.textContent = "Đang kiểm tra trạng thái lịch khám…";
+  ui.dialog.showModal();
+  try {
+    const { encounter } = await getEncounter(id, { signal: detailController.signal });
+    if (current !== detailVersion) return;
+    details(ui.detail, [["Người khám", encounter.patient_name], ["Bác sĩ", encounter.doctor_name], ["Ngày khám", dateLabel(encounter.work_date)], ["Khung giờ", `${clock(encounter.estimated_exam_at)}–${clock(encounter.appointment_end_at)}`], ["Tiền cọc đã chốt", money(encounter.deposit_amount_snapshot)]]);
+    const warning = el("p", "Bạn có chắc muốn hủy lịch khám này? Khung giờ sẽ được trả lại và phiếu khám không còn hiệu lực.", "appointment-cancel-warning");
+    const policy = el("p", "", "appointment-cancel-policy");
+    const notice = cancellationNotice(encounter);
+    policy.textContent = notice.message;
+    ui.detail.append(warning, policy);
+    ui.detailStatus.textContent = "";
+    if (!notice.allowed) { warning.hidden = true; return; }
+    ui.detail.append(el("p", "Nếu lịch bị ảnh hưởng do bệnh viện hoặc bác sĩ, vui lòng liên hệ tiếp nhận để ghi nhận đúng nguyên nhân và chính sách hoàn tiền.", "appointment-cancel-hint"));
+    const reasonLabel = el("label", "Lý do hủy lịch (không bắt buộc)");
+    const reason = el("textarea");
+    reason.maxLength = 1000; reason.rows = 3;
+    reasonLabel.append(reason);
+    const actions = el("div", "", "appointment-card-actions");
+    const keep = el("button", "Giữ lịch khám", "outline-button"); keep.type = "button";
+    const confirm = el("button", "Xác nhận hủy lịch", "appointment-cancel-button"); confirm.type = "button";
+    actions.append(keep, confirm); ui.detail.append(reasonLabel, actions);
+    keep.addEventListener("click", () => ui.dialog.close());
+    confirm.addEventListener("click", async () => {
+      if (cancellationBusy || current !== detailVersion) return;
+      const latest = cancellationNotice(encounter);
+      if (!latest.allowed) { ui.detailStatus.textContent = latest.message; confirm.disabled = true; return; }
+      // Reconfirm if the 12-hour refund boundary passed while the dialog was open.
+      if (policy.textContent !== latest.message) { policy.textContent = latest.message; ui.detailStatus.textContent = "Điều kiện hoàn cọc vừa thay đổi theo thời gian. Vui lòng đọc lại cảnh báo và bấm xác nhận nếu vẫn muốn hủy."; return; }
+      cancellationBusy = true;
+      confirm.disabled = keep.disabled = reason.disabled = true;
+      $("#appointment-detail-close").disabled = true;
+      ui.detailStatus.textContent = "Đang gửi yêu cầu hủy lịch…";
+      try {
+        const result = await cancel(id, { reason: reason.value.trim() || "Bệnh nhân chủ động hủy lịch khám", cancel_origin: "PATIENT" });
+        if (current !== detailVersion) return;
+        if (result.encounter?.encounter_id !== id || result.encounter?.encounter_status !== "CANCELLED") throw new Error("Phản hồi chưa xác nhận lịch đã hủy. Vui lòng tải lại danh sách để kiểm tra.");
+        // Reflect only the record confirmed by the backend, then refresh the list.
+        items = items.map(item => item.encounter_id === id ? { ...item, ...result.encounter } : item);
+        render();
+        ui.detail.replaceChildren();
+        ui.detail.append(el("p", "Đã hủy lịch khám. Phiếu khám này không còn hiệu lực.", "appointment-cancel-success"), el("p", "Hủy lịch chưa phải là xác nhận hoàn tiền. Bạn có thể kiểm tra lượt khám trong mục Lịch sử; việc hoàn tiền được xử lý riêng theo chính sách."));
+        ui.detailStatus.textContent = "Hệ thống đã xác nhận hủy lịch thành công.";
+        await load();
+      } catch (error) {
+        if (current !== detailVersion) return;
+        ui.detailStatus.textContent = errorText(error);
+        if ([403, 404, 409].includes(error.status)) {
+          confirm.disabled = true;
+          ui.detailStatus.textContent += " Lịch có thể đã thay đổi trạng thái hoặc không còn được phép hủy. Vui lòng tải lại danh sách.";
+        } else {
+          confirm.disabled = false;
+          if (!error.status) ui.detailStatus.textContent += " Chưa xác định yêu cầu đã được xử lý hay chưa; hãy tải lại danh sách trước khi thử lại.";
+        }
+      } finally {
+        cancellationBusy = false;
+        if (current === detailVersion) {
+          keep.disabled = reason.disabled = false;
+          $("#appointment-detail-close").disabled = false;
+        }
+      }
+    });
+    keep.focus();
+  } catch (error) {
+    if (current === detailVersion) ui.detailStatus.textContent = errorText(error);
+  }
+}
 function switchView(next) { view = next; page = 1; render(); }
 tabs.forEach((tab, index) => {
   tab.addEventListener("click", () => switchView(tab.dataset.view));
@@ -211,14 +298,17 @@ tabs.forEach((tab, index) => {
 for (const input of [ui.patient, ui.filter]) input.addEventListener("change", () => { page = 1; render(); });
 $("#appointments-prev").addEventListener("click", () => { page--; render(); });
 $("#appointments-next").addEventListener("click", () => { page++; render(); });
-ui.retry.addEventListener("click", load); ui.refresh.addEventListener("click", load);
+ui.retry.addEventListener("click", load);
 ui.detailRetry.addEventListener("click", loadDetail);
-$("#appointment-detail-close").addEventListener("click", () => ui.dialog.close());
+$("#appointment-detail-close").addEventListener("click", () => { if (!cancellationBusy) ui.dialog.close(); });
+ui.dialog.addEventListener("cancel", event => { if (cancellationBusy) event.preventDefault(); });
 ui.dialog.addEventListener("close", () => { detailVersion++; detailController?.abort(); });
 const errorText = protectPatientPage({
   main: $("#main"), status: $("#appointments-auth-status"), onAccess: load,
   onSuspend: () => {
     version++; detailVersion++; controller?.abort(); detailController?.abort(); loading = false;
     ui.list.replaceChildren(); ui.detail.replaceChildren();
+    cancellationBusy = false;
+    $("#appointment-detail-close").disabled = false;
   },
 });

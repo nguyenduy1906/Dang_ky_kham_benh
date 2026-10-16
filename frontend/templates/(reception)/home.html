@@ -1,101 +1,29 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lễ tân | NEU Medical</title>
-  <link rel="stylesheet" href="../../static/css2/reception.css">
-  <script src="../../static/js2/reception.js" defer></script>
+  <title>Tổng quan tiếp nhận | NEU Medical</title>
+  <link rel="stylesheet" href="../../static/css/staff_workspace.css">
+  <link rel="stylesheet" href="../../static/css/reception.css">
+  <script type="module" src="../../static/js/pages/reception.js"></script>
 </head>
-<body class="reception-page">
+<body class="staff-page reception-page staff-auth-pending" data-role="reception" data-page="overview">
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>
-  <div class="workspace">
-    <aside class="sidebar">
-      <a class="brand" href="../public/home.html">NEU Medical</a><p>Khu vực lễ tân</p>
-      <nav aria-label="Menu lễ tân">
-        <a href="#overview" aria-current="location">Tổng quan</a>
-        <a href="#encounters">Tra cứu & tiếp nhận</a>
-        <a href="#walk-in">Khách khám trực tiếp</a>
-        <a href="#patient-profile">Hồ sơ bệnh nhân</a>
-        <a href="#coordination">Chọn phòng / ca</a>
-      </nav>
-      <div class="sidebar-note">Tiếp đón chu đáo<br>Điều phối thuận tiện</div>
-    </aside>
-    <main id="main-content" tabindex="-1">
-      <header class="page-header"><div><p class="eyebrow">KHÔNG GIAN LÀM VIỆC</p><h1>Tổng quan lễ tân</h1><p class="muted">Tra cứu lịch hẹn và theo dõi tình trạng tiếp nhận.</p></div><span class="preview-label">Bản xem trước giao diện</span></header>
-      <p class="preview-note">Dữ liệu minh họa · Chưa kết nối hệ thống · Không tạo hồ sơ, tiếp nhận hoặc thay đổi lượt khám thật.</p>
-      <section id="overview" aria-labelledby="overview-title">
-        <h2 id="overview-title">Tổng quan danh sách mẫu</h2>
-        <div class="summary-grid">
-          <article class="summary-card"><span>Lượt khám</span><strong>4</strong><small>Trong danh sách minh họa</small></article>
-          <article class="summary-card"><span>Chờ check-in</span><strong>2</strong><small>Lịch hẹn online</small></article>
-          <article class="summary-card"><span>Đã tiếp nhận</span><strong>1</strong><small>Đang chờ khám</small></article>
-          <article class="summary-card"><span>Đang khám</span><strong>1</strong><small>Theo trạng thái mẫu</small></article>
-        </div>
-      </section>
-      <section id="encounters" class="panel" aria-labelledby="encounters-title" hidden>
-        <div class="section-heading"><div><p class="eyebrow" id="selected-room">PHÒNG / CA ĐƯỢC CHỌN</p><h2 id="encounters-title" tabindex="-1">Danh sách tiếp nhận trong phòng</h2></div><button type="button" id="back-to-rooms" class="secondary">← Chọn lại phòng</button></div>
-        <p class="muted">Danh sách mẫu theo khung giờ tăng dần. Thứ tự thực tế do hệ thống cung cấp khi tích hợp.</p>
-        <div class="filters">
-          <label class="search-label">Tên, mã hồ sơ hoặc mã phiếu<input id="search" type="search" placeholder="Nhập thông tin cần tìm…"></label>
-          <label>Hình thức<select id="type-filter"><option value="">Tất cả hình thức</option><option value="online">Online</option><option value="walk-in">Trực tiếp</option></select></label>
-          <label>Trạng thái<select id="status-filter"><option value="">Tất cả trạng thái</option><option value="confirmed">Chờ check-in</option><option value="checked-in">Đã tiếp nhận</option><option value="examining">Đang khám</option></select></label>
-          <button id="reset-filters" type="button" class="secondary">Xóa bộ lọc</button>
-        </div>
-        <div class="table-wrapper" role="region" aria-label="Danh sách tiếp nhận minh họa" tabindex="0">
-          <table><caption class="visually-hidden">Các lượt khám minh họa, dùng khung giờ và mã phiếu</caption>
-            <thead><tr><th scope="col">Mã phiếu / hồ sơ</th><th scope="col">Bệnh nhân</th><th scope="col">Hình thức</th><th scope="col">Khung giờ / phòng</th><th scope="col">Trạng thái</th><th scope="col">Thao tác xem trước</th></tr></thead>
-            <tbody id="encounter-list">
-              <tr data-type="online" data-status="confirmed"><td>MINHHOA-001<small>HS-MAU-01</small></td><td>Bệnh nhân mẫu A</td><td>Online</td><td>08:00 – 08:15<small>Phòng 201 · Bác sĩ mẫu A</small></td><td><span class="badge amber">Chờ check-in</span></td><td><button type="button" class="secondary detail-button">Chi tiết</button> <button type="button" class="checkin-button">Xem check-in</button></td></tr>
-              <tr data-type="walk-in" data-status="checked-in"><td>MINHHOA-002<small>HS-MAU-02</small></td><td>Bệnh nhân mẫu B</td><td>Trực tiếp</td><td>08:15 – 08:30<small>Phòng 201 · Bác sĩ mẫu A</small></td><td><span class="badge green">Đã tiếp nhận</span></td><td><button type="button" class="secondary detail-button">Chi tiết</button></td></tr>
-              <tr data-type="online" data-status="examining"><td>MINHHOA-003<small>HS-MAU-03</small></td><td>Bệnh nhân mẫu C</td><td>Online</td><td>08:30 – 08:45<small>Phòng 202 · Bác sĩ mẫu B</small></td><td><span class="badge blue">Đang khám</span></td><td><button type="button" class="secondary detail-button">Chi tiết</button></td></tr>
-              <tr data-type="online" data-status="confirmed"><td>MINHHOA-004<small>HS-MAU-04</small></td><td>Bệnh nhân mẫu D</td><td>Online</td><td>08:45 – 09:00<small>Phòng 202 · Bác sĩ mẫu B</small></td><td><span class="badge amber">Chờ check-in</span></td><td><button type="button" class="secondary detail-button">Chi tiết</button> <button type="button" class="checkin-button">Xem check-in</button></td></tr>
-            </tbody>
-          </table>
-        </div>
-        <p id="search-result" role="status" aria-live="polite">Hiển thị 4 lượt khám minh họa.</p>
-        <div id="no-results" class="empty-state" hidden><h3>Không tìm thấy lượt khám</h3><p>Thử đổi từ khóa hoặc xóa bộ lọc.</p></div>
-        <p class="scope-note">Lịch online được tiếp nhận trên lượt khám đã có. Không tạo thêm lượt khám trực tiếp cho cùng lịch hẹn.</p>
-      </section>
-      <section id="walk-in" class="panel" aria-labelledby="walkin-title">
-        <div class="section-heading"><h2 id="walkin-title">Khách khám trực tiếp</h2><span class="badge green">Biểu mẫu minh họa</span></div>
-        <p class="muted">Tra cứu và chọn đúng hồ sơ trước. Khung giờ, mã phiếu và khả năng tiếp nhận sẽ do hệ thống xác định khi tích hợp.</p>
-        <form id="walkin-form">
-          <div class="form-grid">
-            <label>Hồ sơ minh họa *<select name="Hồ sơ" required><option value="">Chọn hồ sơ đã có</option><option>HS-MAU-02 — Bệnh nhân mẫu B</option><option>HS-MAU-05 — Bệnh nhân mẫu E</option></select></label>
-            <label>Chuyên khoa<select name="Chuyên khoa"><option>Nội tổng quát</option></select></label>
-            <label>Ca dự kiến *<select name="Ca dự kiến" required><option value="">Chọn ca để xem bố cục</option><option>Ca sáng · 08:00 – 11:30 · Phòng 201 · Bác sĩ mẫu A</option><option>Ca chiều · 13:30 – 17:00 · Phòng 202 · Bác sĩ mẫu B</option></select></label>
-            <label>Lý do đến khám<textarea name="Lý do đến khám" rows="3" maxlength="1000" placeholder="Chỉ nhập nội dung minh họa"></textarea></label>
-          </div>
-          <div class="actions"><button type="submit">Xem trước thông tin tiếp nhận</button><button type="reset" class="secondary">Xóa nội dung</button></div>
-        </form>
-      </section>
-      <section id="patient-profile" class="panel" aria-labelledby="profile-title">
-        <h2 id="profile-title">Hồ sơ bệnh nhân mới</h2>
-        <p class="muted">Chỉ xem trước biểu mẫu cho trường hợp chưa có hồ sơ. Không nhập dữ liệu cá nhân thật. Mỗi người được khám có hồ sơ riêng; không gộp hồ sơ theo số điện thoại.</p>
-        <form id="profile-form">
-          <div class="form-grid">
-            <label>Họ và tên *<input name="Họ và tên" required maxlength="150" placeholder="Tên minh họa"></label>
-            <label>Ngày sinh *<input name="Ngày sinh" type="date" required></label>
-            <label>Giới tính<select name="Giới tính"><option>Chưa cung cấp</option><option>Nam</option><option>Nữ</option><option>Khác</option></select></label>
-            <label>Số điện thoại<input name="Số điện thoại" type="tel" maxlength="20" placeholder="Chỉ dùng thông tin minh họa"></label>
-            <label>Mã BHYT<input name="Mã BHYT" maxlength="30"></label>
-            <label>Địa chỉ<input name="Địa chỉ" maxlength="300"></label>
-          </div>
-          <div class="actions"><button type="submit">Xem trước hồ sơ</button><button type="reset" class="secondary">Xóa nội dung</button></div>
-        </form>
-      </section>
-      <section id="coordination" class="panel" aria-labelledby="coordination-title">
-        <p class="eyebrow">BƯỚC 1 · CHỌN PHÒNG / CA</p><h2 id="coordination-title">Phòng khám tiếp nhận</h2>
-        <div class="shift-grid">
-          <article class="shift-card"><p class="eyebrow">PHÒNG 201 · NỘI TỔNG QUÁT</p><h3>08:00 – 11:30</h3><p>Bác sĩ mẫu A</p><p class="muted">2 lượt khám minh họa · Số chỗ còn lại chưa có dữ liệu thật.</p><button type="button" data-room="201">Vào phòng 201 · Ca sáng</button></article>
-          <article class="shift-card"><p class="eyebrow">PHÒNG 202 · NỘI TỔNG QUÁT</p><h3>08:00 – 11:30</h3><p>Bác sĩ mẫu B</p><p class="muted">2 lượt khám minh họa · Số chỗ còn lại chưa có dữ liệu thật.</p><button type="button" data-room="202">Vào phòng 202 · Ca sáng</button></article>
-        </div>
-        <p class="scope-note">Chưa triển khai chuyển bác sĩ, đánh dấu vắng hoặc thu phí khi chưa tích hợp và xác minh quyền thao tác. Lễ tân không xem nội dung bệnh án/đơn thuốc.</p>
-      </section>
-      <footer>NEU Medical · Không gian lễ tân · Giao diện minh họa</footer>
-    </main>
+  <div id="staff-access" class="staff-access" role="status">Đang kiểm tra quyền truy cập…</div>
+  <noscript>Bạn cần bật JavaScript để sử dụng khu vực nhân viên.</noscript>
+  <div class="staff-shell">
+    <aside id="staff-sidebar" class="staff-sidebar"></aside>
+    <div class="staff-main">
+      <header id="staff-topbar" class="staff-topbar"></header>
+      <main id="main-content" class="staff-content" tabindex="-1" inert>
+        <header class="page-header"><div><p class="eyebrow">NEU MEDICAL · KHÔNG GIAN NHÂN VIÊN</p><h1>Tổng quan tiếp nhận</h1><p>Theo dõi lượt khám và hỗ trợ người bệnh đến viện.</p></div><button id="page-refresh" class="secondary" type="button">Tải lại dữ liệu</button></header>
+        <p id="page-status" class="scope-note" role="status" hidden></p>
+        <div id="page-body" aria-live="polite"></div>
+      </main>
+      <footer class="staff-footer">NEU Medical · Hệ thống quản lý khám bệnh</footer>
+    </div>
   </div>
-  <dialog id="preview-dialog" aria-labelledby="dialog-title"><div class="section-heading"><h2 id="dialog-title">Xem trước</h2><button type="button" id="close-dialog" class="secondary">Đóng ×</button></div><div id="dialog-content"></div><p class="preview-note">Chỉ xem trước. Không gửi yêu cầu, lưu dữ liệu, cấp mã phiếu hoặc thay đổi trạng thái lượt khám. Nội dung nhập mất khi tải lại trang.</p></dialog>
+  <dialog id="staff-dialog" aria-labelledby="staff-dialog-title"><div class="section-heading"><h2 id="staff-dialog-title">Thông tin</h2><button id="staff-dialog-close" class="secondary" type="button" aria-label="Đóng hộp thoại">Đóng ×</button></div><div id="staff-dialog-content"></div></dialog>
 </body>
 </html>

@@ -23,7 +23,7 @@
           <div>
             <a href="contact.html">Liên hệ hỗ trợ</a
             ><a href="../(patient)/portal.html">Đặt lịch khám</a
-            ><span class="language" aria-label="Ngôn ngữ tiếng Việt">🇻🇳</span>
+            >
           </div>
         </div>
       </div>
@@ -65,13 +65,13 @@
         </div>
       </section>
       <section class="services" aria-label="Tiện ích dành cho bệnh nhân">
-        <button class="service" data-panel="contact">
+        <a class="service" href="contact.html">
           <span class="service-icon" aria-hidden="true">☎</span
           ><span
             ><strong>Liên hệ hỗ trợ</strong
             ><span>Thông tin liên hệ và hướng dẫn đăng ký khám</span></span
           ><span class="service-arrow" aria-hidden="true">↗</span>
-        </button>
+        </a>
         <button class="service" data-panel="booking">
           <span class="service-icon" aria-hidden="true">▦</span
           ><span
@@ -79,20 +79,20 @@
             ><span>Chọn bác sĩ và ca khám phù hợp tại website</span></span
           ><span class="service-arrow" aria-hidden="true">↗</span>
         </button>
-        <button class="service" data-panel="doctors">
+        <a class="service" href="doctors.html">
           <span class="service-icon" aria-hidden="true">♧</span
           ><span
             ><strong>Đội ngũ bác sĩ</strong
             ><span>Tìm hiểu bác sĩ và chuyên khoa khám bệnh</span></span
           ><span class="service-arrow" aria-hidden="true">↗</span>
-        </button>
-        <button class="service" data-panel="guide">
+        </a>
+        <a class="service" href="news.html?category=Ki%E1%BA%BFn%20th%E1%BB%A9c%20s%E1%BB%A9c%20kh%E1%BB%8Fe">
           <span class="service-icon" aria-hidden="true">▤</span
           ><span
             ><strong>Tin tức & Sức khỏe</strong
             ><span>Khám phá tin tức, hoạt động và sự kiện y tế</span></span
           ><span class="service-arrow" aria-hidden="true">↗</span>
-        </button>
+        </a>
       </section>
       </div>
       <section class="departments-section" id="departments" aria-labelledby="departments-title">
@@ -128,12 +128,12 @@
               loading="lazy"
             />
             <h2 id="booking-banner-title">LỊCH KHÁM,<br />TƯ VẤN THEO YÊU CẦU</h2>
-            <button class="solid-button" data-panel="booking">Xem lịch khám →</button>
+            <button class="solid-button booking-schedule-button" data-panel="booking">Xem lịch khám →</button>
           </div>
           <img
             class="booking-photo"
-            src="../../static/assets/clinic/phong_kham_da_khoa.jpg"
-            alt="Không gian khám bệnh"
+            src="../../static/assets/medical_specialty/khoa_moi_tong_quat.png"
+            alt="Bác sĩ dùng ống nghe khám cho người bệnh tại phòng khám"
             loading="lazy"
           />
         </div>
@@ -159,10 +159,10 @@
       </section>
       <section class="events-section" id="other-news" aria-labelledby="events-title">
         <div class="section-wrap">
-          <h2 id="events-title">Tin tức khác</h2>
+          <h2 id="events-title">Các sự kiện nổi bật</h2>
           <p class="news-status" id="other-news-status" role="status" aria-live="polite">Đang tải bài viết…</p>
           <button class="news-retry" id="other-news-retry" type="button" hidden>Thử lại</button>
-          <div class="event-track" tabindex="0" aria-label="Bài viết khác, cuộn ngang để xem thêm"></div>
+          <div class="event-track" tabindex="0" aria-label="Các sự kiện nổi bật, cuộn ngang để xem thêm"></div>
         </div>
       </section>
       <section class="doctors-section" id="doctors" aria-labelledby="doctors-title">
@@ -212,7 +212,7 @@
               <li><strong>Hướng dẫn rõ ràng</strong><span>Thông tin dễ hiểu để bạn chủ động trước khi đến khám.</span></li>
               <li><strong>Đồng hành cùng gia đình</strong><span>Hỗ trợ lựa chọn dịch vụ khám cho bạn và người thân.</span></li>
             </ul>
-            <a class="outline-button" href="about.html">Tìm hiểu về NEU Medical →</a>
+            <a class="solid-button booking-schedule-button" href="about.html">Tìm hiểu về NEU Medical →</a>
           </div>
         </div>
       </section>
@@ -243,9 +243,9 @@
               <a href="../(patient)/portal.html">Đặt lịch khám</a>
               <a href="contact.html#consultation">Đăng ký tư vấn</a>
               <a href="contact.html">Liên hệ hỗ trợ</a>
-              <button type="button" data-panel="privacy">Chính sách bảo mật</button>
-              <button type="button" data-panel="terms">Điều khoản sử dụng</button>
-              <button type="button" data-panel="insurance">Thông tin bảo hiểm y tế</button>
+              <button type="button">Chính sách bảo mật</button>
+              <button type="button">Điều khoản sử dụng</button>
+              <button type="button">Thông tin bảo hiểm y tế</button>
             </nav>
           </section>
           <section class="footer-column footer-location" aria-label="Vị trí bệnh viện">

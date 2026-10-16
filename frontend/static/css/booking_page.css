@@ -1,8 +1,20 @@
-.booking-workspace { background: #f6f8f7; padding: 24px 28px 36px; }
+.booking-workspace { background: #f6f8f7; padding: 12px 28px 36px; }
 .booking-workspace .patient-heading, .booking-notice, #appointment-form { max-width: 1400px; margin-left: auto; margin-right: auto; }
-.booking-notice { display: flex; gap: 12px; align-items: flex-start; padding: 14px 18px; margin-bottom: 22px; border: 1px solid #c8e0d2; border-left: 3px solid var(--green); background: #edf7f1; color: var(--deep); border-radius: 6px; }
+.booking-notice { display: flex; gap: 12px; align-items: flex-start; padding: 14px 18px; margin-bottom: 22px; border: 1px solid #efcaca; background: #fff3f2; color: #a52626; border-radius: 5px; }
+.booking-workspace .booking-doctor > .solid-button,
+.booking-workspace #add-relative { border-radius: 5px; }
 .booking-notice > span { font-size: 20px; }
 .booking-notice p { margin: 0; font-size: 13px; line-height: 1.7; }
+.booking-workspace .booking-validation-error {
+  outline: 2px solid #bd3030;
+  outline-offset: 3px;
+  background-color: #fff4f2;
+  scroll-margin-block: 100px;
+}
+.booking-validation-message { color: #a52626; font-size: 13px; font-weight: 600; line-height: 1.6; margin: 12px 0 0; }
+.booking-workspace .patient-heading { padding-top: 0; padding-bottom: 12px; margin-bottom: 0; }
+.booking-workspace .booking-heading-row { margin-top: 10px; }
+.booking-workspace .booking-notice { margin-top: 0; margin-bottom: 16px; }
 .booking-columns { display: grid; grid-template-columns: minmax(320px, .78fr) minmax(0, 1.22fr); gap: 24px; align-items: start; }
 .booking-choice-column, .booking-calendar-column, .booking-calendar { display: grid; gap: 20px; min-width: 0; }
 .booking-step { min-width: 0; background: white; border: 1px solid #d6e2db; border-radius: 8px; padding: 20px; }
@@ -78,7 +90,7 @@
   .booking-departments { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
-  .booking-workspace { padding: 20px 16px 30px; }
+  .booking-workspace { padding: 12px 16px 30px; }
   .booking-columns { grid-template-columns: 1fr; }
   .booking-departments { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 230px; }
   .booking-doctors-step .booking-doctor-list { max-height: 440px; }
@@ -93,3 +105,8 @@
 @media (max-width: 420px) {
   .booking-workspace .time-slot-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+.booking-workspace .booking-doctor { border-radius: 5px; }
+/* Consistent content-panel corners throughout booking. */
+.booking-workspace .booking-step,
+.booking-workspace .booking-selection,
+.booking-workspace .booking-workspace-footer { border-radius: 5px; }

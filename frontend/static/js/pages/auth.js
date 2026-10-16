@@ -54,9 +54,9 @@ loginForm.addEventListener("submit", async event => {
   busy(loginForm, true, "Đang đăng nhập…");
   message(loginStatus, "");
   try {
-    await signIn({ identifier, password });
+    const user = await signIn({ identifier, password });
     document.querySelector("#login-password").value = "";
-    location.replace(returnUrl(params.get("next")).href);
+    location.replace(returnUrl(params.get("next"), user.role_name).href);
   } catch (error) {
     message(loginStatus, error.message);
   } finally { busy(loginForm, false, "Đăng nhập"); }
