@@ -99,6 +99,20 @@ test("staff login opens the server-assigned workspace even when next targets a p
     assert.equal(nodes.get("login-form").submit.disabled, false);
   }
 });
+test("admin login replaces a stale profile destination with dashboard and preserves admin deep links", async () => {
+  for (const [next, expected] of [["components/profile.html?role=admin", "(admin)/home.html"], ["(admin)/users.html", "(admin)/users.html"]]) {
+    location.searchParams.set("next", new URL(`../${next}`, portalUrl).href);
+    nodes.get("login-form").listeners.submit = [];
+    await import(`data:text/javascript;base64,${Buffer.from(source + `\n// admin destination ${importCount++}`).toString("base64")}`);
+    nodes.get("login-identifier").value = "admin@example.test";
+    nodes.get("login-password").value = "Test-password-123";
+    response = () => Response.json({ access_token: "admin-token", token_type: "Bearer", expires_in: 7200,
+      user: { user_id: 1, role_name: "ADMIN" } });
+    await submit("login");
+    assert.ok(decodeURIComponent(destination).endsWith(expected), destination);
+  }
+});
+
 test("registration validates contact/confirmation and does not sign in automatically", async () => {
   validRegistration(); nodes.get("register-confirm").value = "Mismatch-123";
   await submit("register"); assert.equal(calls.length, 0);

@@ -116,9 +116,10 @@ class PatientAccountTests(unittest.TestCase):
             self.assertFalse(sms.called)
 
     def test_distinct_phone_delegate_only_reads_own_bookings(self):
+        self.client.post('/patients', headers=self.headers('ADMIN'), json=self.payload(relationship='PARENT'))
         created = self.client.post('/patients', headers=self.headers('USER'),
                                    json=self.payload(relationship='PARENT'))
-        self.assertEqual(created.status_code, 201, created.json)
+        self.assertEqual(created.status_code, 200, created.json)
         patient = created.json['patient']
         self.assertNotEqual(patient['user_id'], self.actors['USER']['user_id'])
         recipient = self.actor_headers(patient['user_id'])
@@ -147,6 +148,60 @@ class PatientAccountTests(unittest.TestCase):
         self.assertIn(patient['patient_id'], [p['patient_id'] for p in saved])
         self.assertEqual(self.client.patch(f"/patients/{patient['patient_id']}", headers=self.headers('USER'),
                                            json={'address': 'Do not replace'}).status_code, 403)
+
+    def test_phone_lookup_only_returns_people_actually_booked_by_the_signed_in_user(self):
+        headers = self.headers('USER')
+        people = [self.payload(relationship='PARENT'), self.payload(full_name='Người thứ hai', id_card='001090123457', relationship='PARENT')]
+        ids = []
+        for fields in people:
+            self.client.post('/patients', headers=self.headers('ADMIN'), json=fields)
+            saved = self.client.post('/patients', headers=headers, json=fields)
+            self.assertEqual(saved.status_code, 200, saved.json)
+            ids.append(saved.json['patient']['patient_id'])
+        query = {'phone': '+84 931.234.567', 'booked_by_me': 'true', 'include_archived': 'true', 'page_size': 1}
+        self.assertEqual(self.client.get('/patients', headers=headers, query_string=query).json['total'], 0)
+        with get_db_connection() as db:
+            db.execute("UPDATE encounter SET patient_id=%s,created_by_id=%s,encounter_type='ONLINE' WHERE encounter_id=1",
+                       (ids[0], self.actors['USER']['user_id']))
+            recipient = auth_model.get_user_by_phone(db, people[0]['phone'])
+            db.execute("UPDATE encounter SET patient_id=%s,created_by_id=%s,encounter_type='ONLINE' WHERE encounter_id=2",
+                       (ids[1], recipient['user_id']))
+        found = self.client.get('/patients', headers=headers, query_string=query)
+        self.assertEqual(found.status_code, 200, found.json)
+        self.assertEqual(found.json['total'], 1)
+        self.assertEqual([item['patient_id'] for item in found.json['items']], [ids[0]])
+        self.assertEqual(self.client.get('/patients', headers=headers, query_string={**query, 'phone': '0909999999'}).json['total'], 0)
+        self.assertEqual(self.client.get('/patients', headers=headers, query_string={**query, 'phone': '123'}).status_code, 400)
+        self.assertEqual(self.client.get('/patients', query_string=query).status_code, 401)
+        self.assertEqual(self.client.get('/patients', headers=self.headers('ADMIN'), query_string=query).status_code, 403)
+        self.assertEqual(self.client.get('/patients', headers=headers, query_string={**query, 'page': 2}).json['items'], [])
+        with get_db_connection() as db:
+            db.execute('UPDATE patient SET archived_at=now() WHERE patient_id=%s', (ids[0],))
+        self.assertEqual(self.client.get('/patients', headers=headers, query_string=query).json['total'], 1)
+        self.assertEqual(self.client.get('/patients', headers=headers, query_string={**query, 'include_archived': 'false'}).json['total'], 0)
+
+    def test_saved_relative_matches_phone_and_name_without_overwriting_their_profile_or_account(self):
+        created = self.client.post('/patients', headers=self.headers('ADMIN'), json=self.payload())
+        self.assertEqual(created.status_code, 201, created.json)
+        pid = created.json['patient']['patient_id']
+        uid = created.json['patient']['user_id']
+        with get_db_connection() as db:
+            original_patient = dict(db.execute('SELECT * FROM patient WHERE patient_id=%s', (pid,)).fetchone())
+            original_user = dict(auth_model.get_user_by_id(db, uid))
+        entered = self.payload(full_name='  NGƯỜI   KHÁM KIỂM THỬ  ', phone='+84 931.234.567',
+                               id_card='001090123457', dob='1991-02-03', address='Địa chỉ khai thêm',
+                               gender='Khác', health_insurance='AB12345678', relationship='PARENT')
+        saved = self.client.post('/patients', headers=self.headers('USER'), json=entered)
+        self.assertEqual(saved.status_code, 200, saved.json)
+        self.assertEqual(saved.json['patient']['patient_id'], pid)
+        self.assertFalse(saved.json['account_created'])
+        listed = self.client.get('/patients', headers=self.headers('USER')).json['items']
+        self.assertEqual(sum(item['patient_id'] == pid for item in listed), 1)
+        self.assertEqual(self.client.patch(f'/patients/{pid}', headers=self.headers('USER'),
+                                           json={'address': entered['address']}).status_code, 403)
+        with get_db_connection() as db:
+            self.assertEqual(dict(db.execute('SELECT * FROM patient WHERE patient_id=%s', (pid,)).fetchone()), original_patient)
+            self.assertEqual(dict(auth_model.get_user_by_id(db, uid)), original_user)
 
     def test_concurrent_creation_reuses_account_and_patient(self):
         def create():

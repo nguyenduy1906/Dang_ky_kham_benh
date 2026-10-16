@@ -6,10 +6,10 @@
     <title>Hồ sơ sức khỏe | NEU Medical</title>
     <link rel="stylesheet" href="../../static/css/home.css?v=20261015-vietnamese-motto" />
     <link rel="stylesheet" href="../../static/css/public_pages.css?v=20261014-interface-update" />
-    <link rel="stylesheet" href="../../static/css/patient_pages.css?v=20261015-account" />
+    <link rel="stylesheet" href="../../static/css/patient_pages.css?v=20261017-phone-lookup" />
     <script src="../../static/js/core/public.js?v=20261014-interface-update" defer></script>
     <script src="../../static/js/pages/patient_pages.js" defer></script>
-    <script type="module" src="../../static/js/pages/records.js"></script>
+    <script type="module" src="../../static/js/pages/records.js?v=20261017-phone-lookup"></script>
   </head>
   <body class="auth-pending">
     <a class="skip-link" href="#main">Đến nội dung chính</a>
@@ -63,25 +63,11 @@
         <h2 id="record-lookup-title">Tra cứu kết quả khám bệnh</h2>
         <button type="button" class="dialog-close" id="record-lookup-close" aria-label="Đóng tra cứu kết quả">×</button>
       </div>
-      <div class="patient-tabs" role="tablist" aria-label="Cách tra cứu kết quả" data-tab-group>
-        <button type="button" role="tab" id="lookup-cccd-tab" aria-selected="true" aria-controls="lookup-cccd-panel" data-lookup-method="cccd">Theo số CCCD</button>
-        <button type="button" role="tab" id="lookup-code-tab" aria-selected="false" aria-controls="lookup-code-panel" tabindex="-1" data-lookup-method="code">Theo mã người bệnh</button>
-      </div>
-      <div id="lookup-cccd-panel" role="tabpanel" aria-labelledby="lookup-cccd-tab">
-        <p class="lookup-instructions">Vui lòng nhập thông tin trùng khớp với các thông tin đã khai báo tại bệnh viện.</p>
-      </div>
-      <div id="lookup-code-panel" role="tabpanel" aria-labelledby="lookup-code-tab" hidden>
-        <p class="lookup-instructions">Nhập mã hồ sơ hiển thị trong danh sách người bệnh của tài khoản. Chỉ tra cứu các lần khám bạn được phép xem.</p>
-      </div>
+      <p class="lookup-instructions">Nhập số điện thoại người bạn đã từng đặt khám hộ.</p>
       <form id="record-lookup-form">
-        <label for="lookup-patient">Họ và tên của bệnh nhân *</label>
-        <select id="lookup-patient" required>
-          <option value="">Chọn hồ sơ bệnh nhân</option>
-        </select>
-        <div id="lookup-identifier-field" hidden>
-          <label for="lookup-identifier" id="lookup-identifier-label">Số CCCD *</label>
-          <input id="lookup-identifier" inputmode="numeric" maxlength="12" pattern="(?:[0-9]{9}|[0-9]{12})" title="CCCD gồm 9 hoặc 12 chữ số" />
-        </div>
+        <label for="lookup-phone">Số điện thoại *</label>
+        <input id="lookup-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" required aria-describedby="record-lookup-status" />
+        <div id="record-lookup-matches" class="record-lookup-matches"></div>
         <p id="record-lookup-status" class="lookup-status" role="status"></p>
         <button id="record-lookup-submit" type="submit" class="solid-button lookup-submit">Tra cứu</button>
       </form>

@@ -27,6 +27,7 @@ const ui = {
 enableDragScroll(ui.days);
 let doctors = [], departments = [], patients = [], schedules = [], selectedDoctor, selectedDate = "", selectedSlot, actor;
 let loading = false, checking = false, scheduleVersion = 0, scheduleAbort;
+const registrationEntries = new Map();
 function errorMessage(error) {
   if (error.status === 401) {
     for (const dialog of document.querySelectorAll("dialog[open]")) dialog.close();
@@ -358,7 +359,7 @@ ui.form.addEventListener("submit", event => {
     const key = saveDraft({ user_id: actor.user_id, patient_id: patient.patient_id,
       doctor_profile_id: selectedDoctor.doctor_profile_id, schedule_id: selectedSlot.schedule.schedule_id,
       work_date: selectedSlot.schedule.work_date, from_date: ui.from.value, to_date: ui.to.value,
-      appointment_time: selectedSlot.slot.appointment_time, symptoms });
+      appointment_time: selectedSlot.slot.appointment_time, symptoms, registration_details: registrationEntries.get(patient.patient_id) });
     location.assign(`booking_review.html?draft=${encodeURIComponent(key)}`);
   } catch { $("#appointment-status").textContent = "Trình duyệt không cho phép lưu thông tin tạm. Vui lòng bật lưu trữ để tiếp tục."; }
 });
@@ -389,8 +390,10 @@ $("#relative-form").addEventListener("submit", async event => {
   status.textContent = "Đang lưu hồ sơ…";
   try {
     const result = await createPatient(payload);
+    const { confirm_shared_phone, relationship, ...entry } = payload;
+    registrationEntries.set(result.patient.patient_id, entry);
     patients = await allPages(listPatients); renderPatients(result.patient.patient_id);
-    $("#relative-dialog").close(); $("#relative-status").textContent = "Đã lưu hồ sơ người khám.";
+    $("#relative-dialog").close(); $("#relative-status").textContent = "Đã thêm người khám để đặt lịch. Lễ tân sẽ đối chiếu khi người bệnh đến viện.";
   } catch (error) {
     status.textContent = errorMessage(error);
     if (error.code === "CONFIRM_SHARED_PHONE") $("#shared-phone-confirmation").hidden = false;

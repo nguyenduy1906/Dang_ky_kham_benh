@@ -23,6 +23,16 @@ body {
   font-family: var(--font-ui);
   background: #faf8f0;
 }
+/* Scroll the logo/contact area away, then keep only the public menu visible. */
+.site-header {
+  position: sticky;
+  top: calc(-1 * var(--public-header-hidden-height, 114px));
+  z-index: 20;
+}
+html:has(body > .site-header) {
+  scroll-padding-top: calc(var(--public-navigation-height, 47px) + 16px);
+}
+body:has(> .site-header) > .skip-link { position: fixed; z-index: 30; }
 button,
 a {
   -webkit-tap-highlight-color: transparent;

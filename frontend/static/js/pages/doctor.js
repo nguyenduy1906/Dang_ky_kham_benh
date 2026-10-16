@@ -1,5 +1,4 @@
-import { staffReady, avatarUrl } from "../core/staff_workspace.js";
-import * as doctors from "../api/doctor.js";
+import { staffReady } from "../core/staff_workspace.js";
 import * as schedules from "../api/schedule.js";
 import * as encounters from "../api/encounter.js";
 import * as records from "../api/medical_record.js";
@@ -14,7 +13,6 @@ if (user) {
   if (page === "overview") await run(overview);
   if (page === "schedule") await schedulePage();
   if (page === "encounters" || page === "history") await initEncounterList({ role: "doctor", completed: page === "history" });
-  if (page === "professional") await run(professional);
   if (page === "clinical") await run(clinical);
 }
 
@@ -30,7 +28,7 @@ async function overview() {
   $("#page-body").innerHTML = stats([["Lượt khám hôm nay", all.total, date(work_date)], ["Đã check-in", waiting.total, "Sẵn sàng chờ khám"], ["Đang khám", active.total, "Trong phạm vi được giao"]]) +
     panel("Ca làm việc hôm nay", shiftCards(shifts.items), '<a href="schedule.html">Xem lịch làm việc →</a>') +
     panel("Lượt khám trong ngày", table(["Người bệnh", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", "Thao tác"], upcoming.items.map(e => `<tr>${encounterColumns(e)}<td><a class="button-link secondary" href="clinical.html?encounter_id=${e.encounter_id}">Mở lượt khám</a></td></tr>`)), '<a href="encounters.html">Tất cả lượt được giao →</a>') +
-    panel("Khu vực làm việc", '<div class="doctor-shortcuts"><a href="clinical.html"><h3>Bệnh án & đơn thuốc</h3><p>Ghi chẩn đoán và điều trị cho lượt khám được giao.</p></a><a href="history.html"><h3>Lịch sử khám</h3><p>Xem và bổ sung bệnh án sau hoàn tất, có lưu lý do.</p></a><a href="professional.html"><h3>Hồ sơ chuyên môn</h3><p>Cập nhật giới thiệu và ảnh đại diện bác sĩ.</p></a></div>');
+    panel("Khu vực làm việc", '<div class="doctor-shortcuts"><a href="clinical.html"><h3>Bệnh án & đơn thuốc</h3><p>Ghi chẩn đoán và điều trị cho lượt khám được giao.</p></a><a href="history.html"><h3>Lịch sử khám</h3><p>Xem và bổ sung bệnh án sau hoàn tất, có lưu lý do.</p></a><a href="../components/profile.html?role=doctor"><h3>Hồ sơ cá nhân</h3><p>Cập nhật thông tin cá nhân, chuyên môn và ảnh đại diện.</p></a></div>');
 }
 function shiftCards(items, allowLeave = false) {
   return items.length ? `<div class="shift-grid">${items.map(s => `<article class="shift-card"><div class="section-heading"><h3>${esc(s.room_name)}</h3>${badge(s.schedule_status)}</div><p class="doctor-shift-time">${esc(s.start_time.slice(0, 5))} — ${esc(s.end_time.slice(0, 5))}</p>${facts([["Ngày làm việc", date(s.work_date)], ["Chuyên khoa", s.department_name], ["Đã đặt / sức chứa", `${s.booked_count} / ${s.max_quota}`], ["Thời lượng lượt khám", `${s.slot_minutes} phút`], ...(s.unavailable_reason ? [["Lý do nghỉ", s.unavailable_reason]] : [])])}<div class="actions"><a class="button-link" href="encounters.html?schedule_id=${s.schedule_id}">Xem lượt trong ca →</a>${allowLeave && s.work_date >= today() && ["OPEN", "FULL"].includes(s.schedule_status) ? `<button class="secondary" data-leave="${s.schedule_id}">Báo nghỉ ca này</button>` : ""}</div></article>`).join("")}</div>` : empty("Chưa có ca làm việc trong khoảng đã chọn.");
@@ -57,31 +55,6 @@ async function schedulePage() {
   form.addEventListener("submit", event => { event.preventDefault(); load(); });
   form.addEventListener("reset", event => { event.preventDefault(); form.elements.from_date.value = ""; form.elements.to_date.value = ""; load(); });
   await load();
-}
-async function professional() {
-  let doctor = (await doctors.getOwnProfile()).doctor;
-  $("#page-body").innerHTML = panel("Thông tin bác sĩ", `<div class="doctor-professional-banner"><div class="doctor-avatar" id="professional-avatar">BS</div><div><p class="eyebrow" id="professional-department"></p><h2>${esc(user.full_name)}</h2><p id="professional-summary" class="muted"></p></div></div><div id="professional-facts"></div><form id="avatar-form"><label>Ảnh đại diện<input name="file" id="professional-photo" type="file" accept="image/jpeg,image/png,image/webp" required></label><p class="muted">JPEG, PNG hoặc WebP, tối đa 2 MB.</p><button type="submit">Cập nhật ảnh đại diện</button><p role="status" class="form-feedback"></p></form>`) +
-    panel("Cập nhật chuyên môn", `<form id="professional-form"><div class="form-grid"><label>Học vị / chức danh<input name="academic_degree" maxlength="100"></label><label>Số năm kinh nghiệm<input name="experience_years" type="number" min="0" max="80" step="1"></label><label class="full-width">Chuyên môn<input name="specialization" maxlength="200"></label><label class="full-width">Giới thiệu<textarea name="introduction" rows="5" maxlength="5000"></textarea></label></div><div class="actions"><button type="submit">Lưu hồ sơ chuyên môn</button><button type="reset" class="secondary">Khôi phục</button></div><p role="status" class="form-feedback"></p></form><p class="scope-note">Khoa, phí khám và trạng thái hoạt động do quản trị quản lý.</p>`);
-  const form = $("#professional-form");
-  function render() {
-    for (const key of ["academic_degree", "experience_years", "specialization", "introduction"]) { form.elements[key].value = doctor[key] ?? ""; form.elements[key].defaultValue = doctor[key] ?? ""; }
-    $("#professional-department").textContent = doctor.department_name;
-    $("#professional-summary").textContent = [doctor.academic_degree, doctor.specialization].filter(Boolean).join(" · ");
-    $("#professional-facts").innerHTML = facts([["Phí khám", money(doctor.consultation_fee)], ["Kinh nghiệm", doctor.experience_years === null ? "Chưa cập nhật" : `${doctor.experience_years} năm`], ["Trạng thái", doctor.is_active ? "Đang hoạt động" : "Ngừng hoạt động"]]);
-    const url = avatarUrl(doctor.avatar_url);
-    $("#professional-avatar").innerHTML = url ? `<img src="${esc(url)}" class="staff-avatar-image" alt="Ảnh ${esc(user.full_name)}">` : "BS";
-    $("#professional-avatar img")?.addEventListener("error", () => { $("#professional-avatar").textContent = "BS"; });
-  }
-  render();
-  form.addEventListener("submit", event => {
-    event.preventDefault(); const data = Object.fromEntries(new FormData(form)); data.experience_years = data.experience_years === "" ? null : Number(data.experience_years);
-    submit(form, async () => { doctor = (await doctors.updateOwnProfile(data)).doctor; render(); });
-  });
-  $("#avatar-form").addEventListener("submit", event => {
-    event.preventDefault(); const file = $("#professional-photo").files[0];
-    if (!file || !["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 2 * 1024 * 1024) { status("Chọn ảnh JPEG, PNG hoặc WebP, tối đa 2 MB.", true); return; }
-    submit(event.currentTarget, async () => { doctor = (await doctors.uploadAvatar(file)).doctor; render(); $("#avatar-form").reset(); }, "Đã cập nhật ảnh đại diện.");
-  });
 }
 async function clinical() {
   const requested = new URLSearchParams(location.search).get("encounter_id");

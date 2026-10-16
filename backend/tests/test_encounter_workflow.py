@@ -51,6 +51,96 @@ class EncounterWorkflowTests(unittest.TestCase):
                        "VALUES (%s,'DEPOSIT',100000,'CARD','SUCCESS')", (encounter_id,))
             return service.confirm_paid_online(db, encounter_id, self.actors['ADMIN']['user_id'])
 
+    def test_registration_snapshot_preserves_profile_slot_and_permissions(self):
+        self.fixture()
+        eid = self.book()
+        url = f'/encounters/{eid}/registration'
+        headers = self.headers('USER')
+        with get_db_connection() as db:
+            patient = dict(db.execute('SELECT * FROM patient WHERE patient_id=1').fetchone())
+        details = {key: str(patient[key]) if patient[key] is not None else None for key in
+                   ('full_name', 'phone', 'id_card', 'dob', 'gender', 'address', 'health_insurance')}
+        details['address'] = 'Địa chỉ khai cho lần khám'
+        payload = {'registration_details': details, 'symptoms': 'Đau đầu'}
+        self.assertEqual(self.client.patch(url, json=payload).status_code, 401)
+        for role in ('ADMIN', 'NURSE'):
+            self.assertEqual(self.client.patch(url, headers=self.headers(role), json=payload).status_code, 403)
+        for data in ({}, {**payload, 'symptoms': ' '}, {**payload, 'encounter_status': 'CONFIRMED'}):
+            self.assertEqual(self.client.patch(url, headers=headers, json=data).status_code, 400)
+        before = self.client.get(f'/encounters/{eid}', headers=headers).json['encounter']
+        with get_db_connection() as db:
+            other = db.execute("SELECT u.user_id FROM users u JOIN role r ON r.role_id=u.role_id "
+                               "WHERE r.role_name='USER' AND u.user_id<>%s LIMIT 1", (self.actors['USER']['user_id'],)).fetchone()
+            other_actor = auth_model.get_user_by_id(db, other['user_id'])
+        other_headers = {'Authorization': 'Bearer ' + create_access_token(other_actor)}
+        self.assertEqual(self.client.patch(url, headers=other_headers, json=payload).status_code, 404)
+        response = self.client.patch(url, headers=headers, json=payload)
+        self.assertEqual(response.status_code, 200, response.json)
+        self.assertEqual(response.json['encounter']['symptoms'], 'Đau đầu')
+        self.assertEqual(response.json['encounter']['registration_details']['address'], details['address'])
+        for key in ('estimated_exam_at', 'appointment_end_at', 'hold_expires_at', 'deposit_amount_snapshot', 'encounter_status'):
+            self.assertEqual(response.json['encounter'][key], before[key])
+        with get_db_connection() as db:
+            self.assertEqual(db.execute('SELECT booked_count FROM work_schedule WHERE schedule_id=1').fetchone()['booked_count'], 1)
+        with get_db_connection() as db:
+            self.assertEqual(dict(db.execute('SELECT * FROM patient WHERE patient_id=1').fetchone()), patient)
+        mismatch = {**payload, 'registration_details': {**details, 'phone': '0987654321'}}
+        accepted = self.client.patch(url, headers=headers, json=mismatch)
+        self.assertEqual(accepted.status_code, 200, accepted.json)
+        self.assertEqual(accepted.json['encounter']['registration_details']['phone'], '0987654321')
+        with get_db_connection() as db:
+            self.assertEqual(dict(db.execute('SELECT * FROM patient WHERE patient_id=1').fetchone()), patient)
+        self.now += timedelta(minutes=10)
+        self.assertEqual(self.client.patch(url, headers=headers, json=payload).status_code, 409)
+        self.now -= timedelta(minutes=10)
+        self.pay(eid)
+        self.assertEqual(self.client.patch(url, headers=headers, json=payload).status_code, 409)
+        self.assertEqual(self.client.get(f'/encounters/{eid}', headers=headers).json['encounter']['symptoms'], 'Đau đầu')
+
+    def test_proxy_booking_defers_account_creation_until_reception_checks_in(self):
+        self.fixture()
+        headers = self.headers('USER')
+        intake = dict(full_name='Người đặt hộ khai', phone='0931234567', id_card='001090123456',
+                      dob='1990-05-20', address='Địa chỉ ban đầu', relationship='PARENT')
+        with get_db_connection() as db:
+            users_before = db.execute('SELECT COUNT(*) n FROM users').fetchone()['n']
+        added = self.client.post('/patients', headers=headers, json=intake)
+        self.assertEqual(added.status_code, 201, added.json)
+        self.assertFalse(added.json['account_created'])
+        self.assertFalse(added.json['account_exists'])
+        pid = added.json['patient']['patient_id']
+        self.assertIsNone(added.json['patient']['user_id'])
+        repeated = self.client.post('/patients', headers=headers, json={**intake, 'dob': '1991-01-01', 'id_card': '001090123457', 'address': 'Khai thêm'})
+        self.assertEqual(repeated.status_code, 200, repeated.json)
+        self.assertEqual(repeated.json['patient']['patient_id'], pid)
+        details = {key: value for key, value in intake.items() if key != 'relationship'}
+        details.update(full_name='Tên khai trên phiếu', address='Nơi lưu trú cho lần khám')
+        payload = dict(patient_id=pid, schedule_id=1, appointment_time='10:00', symptoms='Đau đầu', registration_details=details)
+        payload['registration_details']['id_card'] = '001090123457'
+        booked = self.client.post('/encounters/online', headers=headers, json=payload)
+        self.assertEqual(booked.status_code, 201, booked.json)
+        eid = booked.json['encounter']['encounter_id']
+        self.assertEqual(booked.json['encounter']['registration_details']['address'], details['address'])
+        self.pay(eid)
+        with get_db_connection() as db:
+            patient = db.execute('SELECT * FROM patient WHERE patient_id=%s', (pid,)).fetchone()
+            self.assertIsNone(patient['user_id'])
+            self.assertEqual(patient['full_name'], intake['full_name'])
+            self.assertEqual(patient['address'], intake['address'])
+            self.assertEqual(db.execute('SELECT COUNT(*) n FROM users').fetchone()['n'], users_before)
+        check_in = f'/staff/encounters/{eid}/check-in'
+        self.assertEqual(self.client.post(check_in, headers=headers).status_code, 403)
+        for _ in range(2):
+            response = self.client.post(check_in, headers=self.headers('ADMIN'))
+            self.assertEqual(response.status_code, 200, response.json)
+        with get_db_connection() as db:
+            patient = db.execute('SELECT * FROM patient WHERE patient_id=%s', (pid,)).fetchone()
+            self.assertIsNotNone(patient['user_id'])
+            self.assertEqual(auth_model.get_user_by_id(db, patient['user_id'])['phone'], intake['phone'])
+            self.assertEqual(db.execute('SELECT COUNT(*) n FROM users').fetchone()['n'], users_before + 1)
+            self.assertEqual(patient['full_name'], intake['full_name'])
+            self.assertEqual(patient['address'], intake['address'])
+
     def test_payment_result_uses_send_email_and_is_idempotent(self):
         self.fixture()
         eid = self.book()

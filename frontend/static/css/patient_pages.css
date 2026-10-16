@@ -18,6 +18,19 @@
 }
 .patient-header {
   background: white;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+html:has(body > .patient-header) {
+  scroll-padding-top: calc(var(--patient-header-height, 116px) + 16px);
+}
+body:has(> .patient-header) > .skip-link { position: fixed; z-index: 30; }
+@media (min-width: 761px) {
+  .patient-header ~ main .appointment-sidebar {
+    top: calc(var(--patient-header-height, 116px) + 20px);
+    max-height: calc(100dvh - var(--patient-header-height, 116px) - 40px);
+  }
 }
 .patient-account-link {
   display: grid;
@@ -102,6 +115,12 @@
 .booking-confirm-dialog .booking-patient-fields label { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
 .booking-patient-fields input, .booking-patient-fields textarea { width: 100%; padding: 12px; border: 1px solid #d6e4de; border-radius: 5px; background: #f9fbfa; font: inherit; font-size: 14px; box-sizing: border-box; color: #263b33; }
 .booking-patient-fields textarea { resize: vertical; min-height: 92px; }
+.booking-patient-fields [aria-invalid="true"] { border-color: #bd3030; outline: 2px solid #bd3030; outline-offset: 2px; background: #fff4f2; }
+.booking-patient-fields input, .booking-patient-fields textarea { scroll-margin-block: 110px; }
+.booking-field-error { margin: 8px 0 0; color: #a52626; font-size: 13px; line-height: 1.5; }
+.booking-field-hint, .booking-required-hint { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.booking-field-hint { margin: 8px 0 0; }
+.booking-required-hint { margin: 0 0 20px; }
 .booking-review-hint { font-size: 13px; color: var(--muted); margin: 18px 0 0; }
 .booking-review-doctor { display: flex; gap: 14px; align-items: center; padding: 14px; background: #eef7f1; border: 1px solid #dcebe2; border-radius: 5px; }
 .booking-review-doctor .booking-portrait { width: 58px; height: 72px; flex-basis: 58px; background: white; }
@@ -469,9 +488,10 @@
   width: 100%;
   margin-top: 12px;
 }
-#lookup-identifier-field {
-  margin-top: 20px;
-}
+.record-lookup-matches { display: grid; gap: 10px; margin-top: 16px; }
+#record-lookup-form label { display: block; margin-bottom: 10px; font-weight: 600; }
+#lookup-phone { display: block; width: 100%; min-height: 46px; padding: 12px; box-sizing: border-box; border: 1px solid #b7cec0; border-radius: 0; background: white; color: var(--ink); font: inherit; }
+#lookup-phone:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 .appointments-panel {
   padding: 0;
 }

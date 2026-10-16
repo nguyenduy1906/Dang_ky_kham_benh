@@ -309,6 +309,7 @@ WHERE template.schedule_id BETWEEN 1 AND 10;
 
 -- 9. ENCOUNTER
 -- Các lượt mẫu không bị hủy: cancel_origin/refund_reference_at mặc định NULL.
+-- registration_details để NULL cho lịch sử cũ chưa có bản khai riêng của lần khám.
 INSERT INTO encounter
 (encounter_id, encounter_type, patient_id, doctor_profile_id, schedule_id, room_id, created_by_id, consultation_fee_snapshot, deposit_amount_snapshot, symptoms,
  encounter_status, ticket_code, estimated_exam_at, appointment_end_at, qr_code, hold_expires_at, checked_in_at,

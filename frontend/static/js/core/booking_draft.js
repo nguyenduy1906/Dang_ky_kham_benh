@@ -13,5 +13,6 @@ export function readDraft(key, userId) {
   } catch { return null; }
 }
 export function draftRequest(draft) {
-  return { patient_id: draft.patient_id, schedule_id: draft.schedule_id, appointment_time: draft.appointment_time, symptoms: draft.symptoms };
+  return { patient_id: draft.patient_id, schedule_id: draft.schedule_id, appointment_time: draft.appointment_time, symptoms: draft.symptoms,
+    ...(draft.registration_details ? { registration_details: draft.registration_details } : {}) };
 }

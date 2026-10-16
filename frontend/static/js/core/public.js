@@ -1,5 +1,28 @@
 import("./contact_info.js").then(module => module.initContactInfo());
 
+// Only inner patient pages keep the compact header pinned while scrolling.
+const patientHeader = document.querySelector("body > .patient-header");
+if (patientHeader) {
+  const updateHeaderHeight = () => document.documentElement.style.setProperty("--patient-header-height", `${patientHeader.getBoundingClientRect().height}px`);
+  updateHeaderHeight();
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(updateHeaderHeight).observe(patientHeader);
+}
+
+const publicHeader = document.querySelector("body > .site-header");
+const publicNavigation = publicHeader?.querySelector(".navigation");
+if (publicNavigation) {
+  const updateNavigationHeight = () => {
+    const height = publicNavigation.getBoundingClientRect().height;
+    document.documentElement.style.setProperty("--public-navigation-height", `${height}px`);
+    document.documentElement.style.setProperty("--public-header-hidden-height", `${publicHeader.getBoundingClientRect().height - height}px`);
+  };
+  updateNavigationHeight();
+  if (typeof ResizeObserver !== "undefined") {
+    const observer = new ResizeObserver(updateNavigationHeight);
+    observer.observe(publicHeader); observer.observe(publicNavigation);
+  }
+}
+
 const panels = {
   privacy: [
     "Chính sách bảo mật",

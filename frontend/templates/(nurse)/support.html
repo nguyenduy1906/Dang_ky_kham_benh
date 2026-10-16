@@ -6,16 +6,16 @@
   <title>Phạm vi hỗ trợ | NEU Medical</title>
   <link rel="stylesheet" href="../../static/css/staff_workspace.css">
   <link rel="stylesheet" href="../../static/css/nurse.css">
-  <script type="module" src="../../static/js/pages/nurse.js"></script>
+  <script type="module" src="../../static/js/pages/nurse.js" blocking="render"></script>
 </head>
 <body class="staff-page nurse-page staff-auth-pending" data-role="nurse" data-page="support">
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>
-  <div id="staff-access" class="staff-access" role="status">Đang kiểm tra quyền truy cập…</div>
   <noscript>Bạn cần bật JavaScript để sử dụng khu vực nhân viên.</noscript>
   <div class="staff-shell">
     <aside id="staff-sidebar" class="staff-sidebar"></aside>
     <div class="staff-main">
       <header id="staff-topbar" class="staff-topbar"></header>
+      <div id="staff-access" class="staff-access" role="status">Đang kiểm tra quyền truy cập…</div>
       <main id="main-content" class="staff-content" tabindex="-1" inert>
         <header class="page-header"><div><p class="eyebrow">NEU MEDICAL · KHÔNG GIAN NHÂN VIÊN</p><h1>Phạm vi hỗ trợ</h1><p>Theo dõi công việc và đọc thông tin chăm sóc trong ca.</p></div><button id="page-refresh" class="secondary" type="button">Tải lại dữ liệu</button></header>
         <p id="page-status" class="scope-note" role="status" hidden></p>

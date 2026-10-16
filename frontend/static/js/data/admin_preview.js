@@ -1,11 +1,6 @@
 // Static presentation content only. These records are not an API or persisted data.
 const active = "Đang hoạt động";
-export const sections = [
-  ["TỔNG QUAN", [["home", "Tổng quan", "grid"]]],
-  ["VẬN HÀNH KHÁM BỆNH", [["encounters", "Lượt khám", "record"], ["patients", "Bệnh nhân", "people"], ["schedule", "Lịch làm việc", "calendar"], ["assignments", "Phân công y tá", "cross"]]],
-  ["QUẢN LÝ DANH MỤC", [["doctors", "Bác sĩ", "doctor"], ["departments", "Chuyên khoa", "building"], ["rooms", "Phòng khám", "door"]]],
-  ["QUẢN TRỊ & HỆ THỐNG", [["users", "Tài khoản", "person"], ["articles", "Tin tức & bài viết", "record"], ["payments", "Thanh toán", "card"], ["statistics", "Báo cáo & thống kê", "chart"], ["audit", "Nhật ký hoạt động", "history"], ["configuration", "Cấu hình hệ thống", "settings"]]],
-];
+export { adminSections as sections } from "./admin_navigation.js";
 export const pages = {
   home: { title: "Tổng quan quản trị", description: "Theo dõi hoạt động khám bệnh và truy cập nhanh các khu vực quản lý." },
   encounters: { title: "Quản lý lượt khám", description: "Theo dõi các lượt khám trực tuyến và trực tiếp trong cùng hệ thống.", note: "Theo dõi lượt khám theo mã phiếu và khung giờ. Tiếp nhận, chuyển bác sĩ và khám bệnh thuộc khu vực nghiệp vụ tương ứng.", columns: ["Mã lượt khám", "Bệnh nhân", "Bác sĩ", "Hình thức", "Ngày khám", "Khung giờ", "Mã phiếu", "Trạng thái"], rows: [

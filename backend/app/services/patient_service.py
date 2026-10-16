@@ -48,6 +48,8 @@ def _require_write(actor, patient):
 
 def list_patients(actor, query):
     owner_filter = actor['user_id'] if actor['role_name'] == constants.ROLE_USER else None
+    if query.get('booked_by_me') and owner_filter is None:
+        raise forbidden()
     if owner_filter is None and actor['role_name'] not in STAFF_READ:
         raise forbidden()
     with get_db_connection() as db:
@@ -55,6 +57,7 @@ def list_patients(actor, query):
             db, user_id=owner_filter,
             nurse_id=actor['user_id'] if actor['role_name'] == constants.ROLE_NURSE else None,
             q=query['q'], include_archived=query['include_archived'],
+            phone=query.get('phone'), booked_by_id=actor['user_id'] if query.get('booked_by_me') else None,
             limit=query['page_size'], offset=(query['page'] - 1) * query['page_size'])
     return {'items': [_present(r, actor) for r in rows], 'total': total,
             'page': query['page'], 'page_size': query['page_size']}
@@ -101,41 +104,53 @@ def create_patient(actor, fields):
                        'và bệnh án của người này trong tài khoản của bạn?', 'CONFIRM_SHARED_PHONE')
     with get_db_connection() as db:
         db.execute('SELECT pg_advisory_xact_lock(78124003)')
-        matches = patient_model.find_identity(db, fields)
+        matches = (patient_model.find_booking_contact(db, fields) if role == constants.ROLE_USER
+                   else patient_model.find_identity(db, fields))
         if len(matches) > 1:
             raise conflict('Có nhiều hồ sơ trùng thông tin; cần lễ tân kiểm tra', 'PATIENT_IDENTITY_CONFLICT')
         row = matches[0] if matches else None
         if row:
-            if (row['phone'] != fields['phone']
-                    or ' '.join(row['full_name'].split()).casefold()
-                    != ' '.join(fields['full_name'].split()).casefold()
+            if role in STAFF_WRITE and (row['phone'] != fields['phone']
+                    or ' '.join(row['full_name'].split()).casefold() != ' '.join(fields['full_name'].split()).casefold()
                     or (row['dob'] and fields.get('dob') and row['dob'] != fields['dob'])
                     or (row['id_card'] and fields.get('id_card') and row['id_card'] != fields['id_card'])):
                 raise conflict('Thông tin không khớp hồ sơ đã lưu; cần lễ tân kiểm tra',
                                'PATIENT_IDENTITY_CONFLICT')
             if row['archived_at'] is not None:
                 raise conflict('Hồ sơ đã được lưu trữ', 'PATIENT_ARCHIVED')
-        account, created = _account_for_patient(db, fields)
-        if requested_owner is not None and requested_owner != account['user_id']:
+        if role == constants.ROLE_USER:
+            account = auth_model.get_user_by_phone(db, fields['phone'])
+            created = False
+            if account is not None:
+                account, _ = _account_for_patient(db, fields)
+        else:
+            account, created = _account_for_patient(db, fields)
+        if requested_owner is not None and (account is None or requested_owner != account['user_id']):
             raise bad_request('user_id phải là tài khoản của số điện thoại bệnh nhân')
-        fields['user_id'] = account['user_id']
+        fields['user_id'] = account['user_id'] if account else None
         if row:
-            if row['user_id'] is None:
+            if row['user_id'] is None and role in STAFF_WRITE:
                 db.execute('UPDATE patient SET user_id=%s WHERE patient_id=%s',
                            (account['user_id'], row['patient_id']))
                 row = patient_model.get_patient(db, row['patient_id'])
-            elif row['user_id'] != account['user_id']:
+            elif row['user_id'] is not None and (account is None or row['user_id'] != account['user_id']):
                 raise conflict('Hồ sơ đang liên kết với tài khoản khác; cần lễ tân kiểm tra',
                                'PATIENT_IDENTITY_CONFLICT')
         else:
-            row = patient_model.create_patient(db, fields)
-        if role == constants.ROLE_USER and actor['user_id'] != account['user_id']:
+            try:
+                with db.transaction():
+                    row = patient_model.create_patient(db, fields)
+            except pg_errors.UniqueViolation:
+                raise conflict('Thông tin đã được sử dụng trong hồ sơ khác. Vui lòng kiểm tra họ tên và số điện thoại.',
+                               'PATIENT_IDENTITY_CONFLICT') from None
+        if role == constants.ROLE_USER and actor['user_id'] != row['user_id']:
             relationship = fields.get('relationship') or 'OTHER'
             patient_model.add_delegate(db, row['patient_id'], actor['user_id'],
                                        relationship if relationship != 'SELF' else 'OTHER')
     return {'patient': _present(row, actor), 'patient_reused': bool(matches),
-            'account_created': created, 'account_exists': not created,
-            'message': ('Đã tạo tài khoản theo số điện thoại; bệnh nhân dùng Quên mật khẩu để đăng nhập'
+            'account_created': created, 'account_exists': account is not None and not created,
+            'message': ('Đã ghi nhận người khám; lễ tân đối chiếu và tạo tài khoản khi người bệnh đến viện'
+                        if account is None else 'Đã tạo tài khoản theo số điện thoại; bệnh nhân dùng Quên mật khẩu để đăng nhập'
                         if created else 'Tài khoản đã tồn tại; sử dụng hồ sơ bệnh nhân đã chọn')}
 
 

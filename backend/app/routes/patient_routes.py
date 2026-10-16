@@ -22,6 +22,8 @@ def list_patients():
     parameters:
       - {in: query, name: q, type: string}
       - {in: query, name: include_archived, type: boolean}
+      - {in: query, name: phone, type: string, description: Lọc chính xác theo số điện thoại}
+      - {in: query, name: booked_by_me, type: boolean, description: USER chỉ tìm người đã có lượt online do mình đặt}
       - {in: query, name: page, type: integer}
       - {in: query, name: page_size, type: integer}
     responses:

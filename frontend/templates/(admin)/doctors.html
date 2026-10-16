@@ -6,16 +6,17 @@
   <title>Quản lý bác sĩ | NEU Medical</title>
   <link rel="stylesheet" href="../../static/css/staff_workspace.css">
   <link rel="stylesheet" href="../../static/css/admin.css">
-  <script type="module" src="../../static/js/pages/admin.js"></script>
+  <script type="module" src="../../static/js/pages/admin.js?v=20261017-admin-access" blocking="render"></script>
 </head>
-<body class="staff-page admin-page" data-page="doctors">
+<body class="staff-page admin-page staff-auth-pending" data-role="admin" data-page="doctors">
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>
   <button type="button" id="menu-backdrop" class="staff-menu-backdrop" aria-label="Đóng menu quản trị" hidden></button>
   <div class="staff-shell">
     <aside class="staff-sidebar" id="staff-sidebar"></aside>
     <div class="staff-main">
       <header class="staff-topbar" id="staff-topbar"></header>
-      <main class="staff-content" id="main-content" tabindex="-1">
+      <div id="staff-access" class="staff-access" role="status">Đang kiểm tra quyền quản trị…</div>
+      <main class="staff-content" id="main-content" tabindex="-1" inert>
         <header class="page-header" id="page-header"><div><p class="eyebrow">NEU MEDICAL / QUẢN TRỊ</p><h1 id="page-title">Quản lý bác sĩ</h1><p id="page-description"></p></div></header>
         <div id="page-body"></div>
         <noscript><p class="admin-note">Bật JavaScript để xem các bảng và tương tác giao diện admin. Đây là bản xem trước, chưa kết nối API.</p></noscript>

@@ -1,11 +1,11 @@
 import test, { beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { isUpcoming, filterAppointments, appointmentActionUrl, cancellationNotice } from "../static/js/core/appointments.js";
+import { isUpcoming, isDueSoon, filterAppointments, appointmentActionUrl, cancellationNotice } from "../static/js/core/appointments.js";
 
 const now = Date.parse("2030-01-01T00:00:00Z");
 const future = { encounter_id: 1, patient_id: 2, doctor_profile_id: 3, encounter_status: "CONFIRMED",
-  estimated_exam_at: "2030-01-02T01:00:00Z", appointment_end_at: "2030-01-02T01:30:00Z" };
+  work_date: "2030-01-02", estimated_exam_at: "2030-01-02T01:00:00Z", appointment_end_at: "2030-01-02T01:30:00Z" };
 test("upcoming requires both an active state and a future interval; stale holds belong to history", () => {
   assert.equal(isUpcoming(future, now), true);
   assert.equal(isUpcoming({ ...future, encounter_status: "HOLDING", hold_expires_at: "2029-12-31T23:59:00Z" }, now), false);
@@ -14,11 +14,40 @@ test("upcoming requires both an active state and a future interval; stale holds 
   assert.equal(isUpcoming(future, Date.parse("2030-01-03")), false);
 });
 test("history and upcoming preserve per-patient identity and sort in opposite time order", () => {
-  const second = { ...future, encounter_id: 2, patient_id: 4, estimated_exam_at: "2030-01-03T01:00:00Z" };
+  const second = { ...future, encounter_id: 2, patient_id: 4, estimated_exam_at: "2030-01-02T02:00:00Z" };
   assert.deepEqual(filterAppointments([second, future], {}, now).map(e => e.encounter_id), [1, 2]);
   assert.deepEqual(filterAppointments([second, future], { patient: "2" }, now).map(e => e.encounter_id), [1]);
   assert.equal(filterAppointments([future], { status: "HOLDING" }, now).length, 0);
   assert.deepEqual(filterAppointments([second, future], { view: "history" }, Date.parse("2031-01-01")).map(e => e.encounter_id), [2, 1]);
+});
+
+test("near appointments use Vietnam calendar days, including the exact midnight boundary", () => {
+  const beforeMidnight = Date.parse("2030-01-01T16:59:59Z");
+  const twoDaysAway = { ...future, work_date: "2030-01-03" };
+  assert.equal(isDueSoon(future, beforeMidnight), true);
+  assert.equal(isDueSoon(twoDaysAway, beforeMidnight), false);
+  assert.equal(isDueSoon(twoDaysAway, beforeMidnight + 1000), true);
+  assert.equal(isDueSoon({ ...future, work_date: "2029-12-31" }, now), false);
+  assert.equal(isDueSoon({ ...future, work_date: null }, now), false);
+  assert.equal(isDueSoon({ ...future, work_date: "2030-01-01" }, Date.parse("2029-12-31T16:00:00Z")), true);
+});
+
+test("near appointments ignore exam hours while history and cancellation keep their existing rules", () => {
+  const afternoon = Date.parse("2030-01-01T08:00:00Z");
+  const earlierToday = { ...future, work_date: "2030-01-01", estimated_exam_at: "2030-01-01T01:00:00Z", appointment_end_at: "2030-01-01T01:30:00Z" };
+  assert.equal(isDueSoon(earlierToday, afternoon), true);
+  assert.deepEqual(filterAppointments([earlierToday], {}, afternoon), [earlierToday]);
+  assert.deepEqual(filterAppointments([earlierToday], { view: "history" }, afternoon), [earlierToday]);
+  assert.equal(cancellationNotice(earlierToday, afternoon).allowed, false);
+  const later = { ...future, work_date: "2030-01-03", estimated_exam_at: "2030-01-03T01:00:00Z", appointment_end_at: "2030-01-03T01:30:00Z" };
+  assert.deepEqual(filterAppointments([later], {}, now), []);
+  assert.deepEqual(filterAppointments([later], { view: "history" }, now), []);
+  for (const status of ["COMPLETED", "CANCELLED", "EXPIRED", "NO_SHOW"]) {
+    const ended = { ...future, encounter_status: status };
+    assert.equal(isDueSoon(ended, now), false);
+    assert.deepEqual(filterAppointments([ended], { view: "history" }, now), [ended]);
+  }
+  assert.equal(isDueSoon({ ...future, encounter_status: "HOLDING", hold_expires_at: "2029-12-31T23:59:00Z" }, now), false);
 });
 test("resume uses the encounter id; a new appointment uses the doctor profile id", () => {
   assert.equal(new URL(appointmentActionUrl({ ...future, encounter_status: "HOLDING" })).searchParams.get("encounter"), "1");
@@ -52,7 +81,8 @@ const historyItem = id => ({ ...future, encounter_id: id, patient_id: id, encoun
   patient_name: `Người khám ${id}`, doctor_name: "Bác sĩ API", room_name: "Phòng API", ticket_code: `NEU-${id}`,
   consultation_fee_snapshot: "250000", deposit_amount_snapshot: "75000", symptoms: "Nội dung từ backend" });
 const tick = async () => { for (let i = 0; i < 8; i++) await new Promise(resolve => setImmediate(resolve)); };
-beforeEach(() => {
+beforeEach(t => {
+  t.mock.method(Date, "now", () => now);
   nodes = new Map(); calls = [];
   for (const id of ["main", "appointments-auth-status", "appointments-list", "appointments-status", "appointments-patient",
     "appointments-status-filter", "appointments-retry", "appointments-refresh", "appointments-empty", "appointments-pagination",

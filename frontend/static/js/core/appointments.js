@@ -6,13 +6,23 @@ export const statusLabels = Object.freeze({
   CANCELLED: "Đã hủy", NO_SHOW: "Không tới khám",
 });
 const active = new Set(["HOLDING", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
+const calendarVN = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit",
+});
 export function isUpcoming(encounter, now = Date.now()) {
   const end = new Date(encounter.appointment_end_at).getTime();
   const unexpiredHold = encounter.encounter_status !== "HOLDING" || new Date(encounter.hold_expires_at).getTime() > now;
   return active.has(encounter.encounter_status) && Number.isFinite(end) && end > now && unexpiredHold;
 }
+export function isDueSoon(encounter, now = Date.now()) {
+  const today = calendarVN.format(new Date(now));
+  const days = (Date.parse(`${encounter.work_date}T00:00:00+07:00`) - Date.parse(`${today}T00:00:00+07:00`)) / 86400000;
+  const unexpiredHold = encounter.encounter_status !== "HOLDING" || new Date(encounter.hold_expires_at).getTime() > now;
+  return active.has(encounter.encounter_status) && days >= 0 && days < 2 && unexpiredHold;
+}
 export function filterAppointments(items, { view = "upcoming", patient = "", status = "" } = {}, now = Date.now()) {
-  return items.filter(item => isUpcoming(item, now) === (view === "upcoming") &&
+  // The near-date list is narrower; history keeps its existing time/status rules.
+  return items.filter(item => (view === "upcoming" ? isDueSoon(item, now) : !isUpcoming(item, now)) &&
     (!patient || String(item.patient_id) === String(patient)) && (!status || item.encounter_status === status))
     .sort((a, b) => (view === "upcoming" ? 1 : -1) *
       (new Date(a.estimated_exam_at) - new Date(b.estimated_exam_at)) || b.encounter_id - a.encounter_id);

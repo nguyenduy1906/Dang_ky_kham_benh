@@ -1,7 +1,11 @@
 import { sections, pages } from "../data/admin_preview.js";
 import { initializeSidebarCollapse } from "../core/sidebar_collapse.js";
 
-// UI-only workspace: no authentication, API requests or business mutations.
+import { requireAdmin } from "../core/admin_access.js";
+import { signOut, loginUrl, hasSession } from "../core/session.js";
+
+// Management screens remain presentation-only; verify the existing session at entry.
+window.addEventListener("pageshow", event => { if (event.persisted) { suspendAdmin(); location.reload(); } });
 const $ = selector => document.querySelector(selector);
 const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const shapes = {
@@ -43,8 +47,21 @@ function showDialog(title, body) {
 }
 dialog.addEventListener("close", () => dialogTrigger?.focus());
 $("#dialog-close").addEventListener("click", () => dialog.close());
-$("#staff-sidebar").innerHTML = `<a class="staff-brand" href="home.html"><img src="../../static/assets/bieu_trung_neu.png" alt="Biểu trưng NEU"><span><strong>NEU Medical</strong><small>KHÔNG GIAN QUẢN TRỊ</small></span></a><nav aria-label="Điều hướng quản trị">${sections.map(([title, items]) => `<p class="staff-nav-label">${title}</p>${items.map(([id, label, symbol]) => `<a href="${id === "home" ? "home" : id}.html" ${key === id ? 'aria-current="page"' : ""}>${icon(symbol)}<span>${label}</span>${id === "encounters" ? '<span class="admin-count">10</span>' : ""}</a>`).join("")}`).join("")}</nav><div class="staff-sidebar-bottom admin-logout"><a href="../auth/login.html" title="Đăng xuất"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 3H3v18h6M10 12h11M17 8l4 4-4 4"/></svg><span>Đăng xuất</span></a></div><div class="admin-sidebar-footer"><span>NEU Medical Admin</span><span>Giao diện mẫu</span></div>`;
-$("#staff-topbar").innerHTML = `<div class="staff-topbar-left"><button type="button" class="staff-menu-toggle" aria-label="Mở menu quản trị" aria-expanded="false" aria-controls="staff-sidebar">${icon("menu")}</button><div class="staff-breadcrumb"><span>Quản trị hệ thống</span><span aria-hidden="true">›</span><strong>${esc(page.title)}</strong></div></div><div class="staff-topbar-right"><span class="admin-preview">Dữ liệu minh họa</span><div class="admin-account"><span class="staff-initials" aria-hidden="true">QT</span><div><strong>Quản trị viên</strong><small>Bản xem trước</small></div></div></div>`;
+$("#staff-sidebar").innerHTML = `<a class="staff-brand" href="home.html"><img src="../../static/assets/bieu_trung_neu.png" alt="Biểu trưng NEU"><span><strong>NEU Medical</strong><small>KHÔNG GIAN QUẢN TRỊ</small></span></a><nav aria-label="Điều hướng quản trị">${sections.map(([title, items]) => `<p class="staff-nav-label">${title}</p>${items.map(([id, label, symbol]) => `<a href="${id === "home" ? "home" : id}.html" ${key === id ? 'aria-current="page"' : ""}>${icon(symbol)}<span>${label}</span>${id === "encounters" ? '<span class="admin-count">10</span>' : ""}</a>`).join("")}`).join("")}</nav><div class="staff-sidebar-bottom admin-logout"><button type="button" id="admin-signout" title="Đăng xuất"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 3H3v18h6M10 12h11M17 8l4 4-4 4"/></svg><span>Đăng xuất</span></button></div><div class="admin-sidebar-footer"><span>NEU Medical Admin</span><span>Giao diện mẫu</span></div>`;
+$("#staff-topbar").innerHTML = `<div class="staff-topbar-left"><button type="button" class="staff-menu-toggle" aria-label="Mở menu quản trị" aria-expanded="false" aria-controls="staff-sidebar">${icon("menu")}</button><div class="staff-breadcrumb"><span>Quản trị hệ thống</span><span aria-hidden="true">›</span><strong>${esc(page.title)}</strong></div></div><div class="staff-topbar-right"><span class="admin-preview">Dữ liệu minh họa</span><div class="admin-account"><span class="staff-initials" aria-hidden="true">QT</span><div><strong id="admin-account-name">Quản trị viên</strong><small>Quản trị viên</small></div></div></div>`;
+$("#admin-signout").addEventListener("click", async event => {
+  event.currentTarget.disabled = true;
+  try { await signOut(); }
+  catch { /* The local session is cleared even if the backend is unavailable. */ }
+  finally { location.replace(loginUrl().href); }
+});
+function suspendAdmin() {
+  document.body.classList.add("staff-auth-pending");
+  $("#main-content").inert = true;
+}
+window.addEventListener("neu:auth-change", () => {
+  if (!hasSession()) { suspendAdmin(); location.replace(loginUrl(new URL(location.href)).href); }
+});
 $("#page-title").textContent = page.title;
 $("#page-description").textContent = page.description;
 document.title = `${page.title} | NEU Medical`;
@@ -72,6 +89,11 @@ document.addEventListener("keydown", event => {
   }
 });
 matchMedia("(max-width: 960px)").addEventListener("change", event => { if (!event.matches) setMenu(false); });
+
+// Mount the public shell first; only render page data after verifying /me.
+const administrator = await requireAdmin();
+if (administrator) {
+$("#admin-account-name").textContent = administrator.full_name;
 
 function cell(value, index, config) {
   const heading = config.columns[index];
@@ -191,3 +213,5 @@ if (page.rows) listPage();
 else if (key === "home") homePage();
 else if (key === "statistics") statisticsPage();
 else if (key === "configuration") configurationPage();
+
+}

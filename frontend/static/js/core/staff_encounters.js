@@ -3,6 +3,14 @@ import * as records from "../api/medical_record.js";
 import { getPatient } from "../api/patient.js";
 import { $, esc, date, time, facts, panel, dialog, badge, empty, encounterSummary, encounterColumns, table, statusOptions, pagination, run, submit, showError } from "./staff_ui.js";
 
+export function registrationSummary(encounter) {
+  const entry = encounter.registration_details;
+  if (!entry) return "";
+  return panel("Thông tin khai khi đặt khám", facts([["Họ tên khai", entry.full_name], ["Số điện thoại", entry.phone],
+    ["CCCD / mã định danh", entry.id_card], ["Ngày sinh", date(entry.dob)], ["Giới tính", entry.gender],
+    ["Địa chỉ khai", entry.address], ["BHYT", entry.health_insurance]]));
+}
+
 export async function readMedicalRecord(encounter) {
   let record;
   try { record = (await records.getRecord(encounter.encounter_id)).medical_record; }
@@ -41,6 +49,7 @@ export function initEncounterList({ role, completed = false, assignments = [] })
       const e = (await api.getEncounter(button.dataset.detail)).encounter;
       const history = await api.listStatusHistory(e.encounter_id, { page_size: 100 });
       let clinical = "";
+      if (role === "reception") clinical += registrationSummary(e);
       if (role === "nurse") {
         const { patient } = await getPatient(e.patient_id);
         clinical += panel("Thông tin người bệnh", facts([["Ngày sinh", date(patient.dob)], ["Giới tính", patient.gender], ["Điện thoại", patient.phone], ["BHYT", patient.health_insurance]]));
@@ -64,7 +73,7 @@ export function initEncounterList({ role, completed = false, assignments = [] })
     })));
     $("#encounter-list").querySelectorAll("[data-checkin]").forEach(button => button.addEventListener("click", () => {
       const e = rows.find(item => item.encounter_id === Number(button.dataset.checkin));
-      dialog("Xác nhận check-in", encounterSummary(e) + '<form id="checkin-form"><p>Đối chiếu danh tính người bệnh và phiếu trước khi tiếp nhận.</p><button type="submit">Xác nhận check-in</button><p role="status" class="form-feedback"></p></form>');
+      dialog("Xác nhận check-in", encounterSummary(e) + registrationSummary(e) + '<form id="checkin-form"><p>Đối chiếu giấy tờ, số điện thoại và phiếu với người bệnh có mặt. Khi xác nhận tiếp nhận, hệ thống tạo tài khoản cho người bệnh nếu chưa có.</p><button type="submit">Xác nhận check-in</button><p role="status" class="form-feedback"></p></form>');
       $("#checkin-form").addEventListener("submit", event => { event.preventDefault(); submit(event.currentTarget, async () => { await api.checkIn(e.encounter_id); await load(page); }, "Đã check-in lượt khám."); });
     }));
   }

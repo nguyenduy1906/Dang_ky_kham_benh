@@ -1,4 +1,4 @@
-import { listPatients, getPatient, listEncounters } from "../api/patient.js";
+import { listPatients, listEncounters } from "../api/patient.js";
 import { getRecord, listPrescriptionItems } from "../api/medical_record.js";
 import { allPages, dateLabel, clock } from "../core/booking.js";
 import { statusLabels } from "../core/appointments.js";
@@ -11,10 +11,10 @@ const ui = {
   profiles: $("#records-profiles"), profileStatus: $("#records-profiles-status"), profileRetry: $("#records-profiles-retry"),
   history: $("#records-history"), historyTitle: $("#records-history-title"), historyStatus: $("#records-history-status"), historyRetry: $("#records-history-retry"),
   encounters: $("#records-encounters"), prev: $("#records-prev"), next: $("#records-next"), page: $("#records-page"),
-  lookup: $("#record-lookup-dialog"), form: $("#record-lookup-form"), patient: $("#lookup-patient"), identifier: $("#lookup-identifier"), lookupStatus: $("#record-lookup-status"), lookupSubmit: $("#record-lookup-submit"),
+  lookup: $("#record-lookup-dialog"), form: $("#record-lookup-form"), phone: $("#lookup-phone"), matches: $("#record-lookup-matches"), lookupStatus: $("#record-lookup-status"), lookupSubmit: $("#record-lookup-submit"),
   result: $("#record-result-dialog"), resultStatus: $("#record-result-status"), resultRetry: $("#record-result-retry"), resultContent: $("#record-result-content"),
 };
-let profiles = [], selected = null, currentPage = 1, lastEncounter = null, method = "cccd";
+let profiles = [], selected = null, currentPage = 1, lastEncounter = null;
 let profileVersion = 0, historyVersion = 0, resultVersion = 0, lookupVersion = 0;
 let profileController, historyController, resultController, lookupController;
 function facts(target, pairs) {
@@ -23,10 +23,8 @@ function facts(target, pairs) {
   target.append(dl);
 }
 function renderProfiles() {
-  ui.profiles.replaceChildren(); ui.patient.replaceChildren(new Option("Chọn hồ sơ bệnh nhân", ""));
+  ui.profiles.replaceChildren();
   for (const p of profiles) {
-    const text = `${p.full_name} · ${p.dob ? dateLabel(p.dob) : "Chưa có ngày sinh"}${p.is_archived ? " · Đã lưu trữ" : ""}`;
-    ui.patient.add(new Option(text, p.patient_id));
     const button = el("button", "", "record-profile-button"); button.type = "button";
     button.dataset.patientId = String(p.patient_id);
     button.setAttribute("aria-pressed", String(String(p.patient_id) === String(selected)));
@@ -37,7 +35,7 @@ function renderProfiles() {
 async function loadProfiles() {
   const version = ++profileVersion;
   profileController?.abort(); profileController = new AbortController();
-  profiles = []; selected = null; ui.profiles.replaceChildren(); ui.patient.replaceChildren(new Option("Chọn hồ sơ bệnh nhân", ""));
+  profiles = []; selected = null; ui.profiles.replaceChildren();
   ui.profileStatus.textContent = "Đang tải hồ sơ người bệnh…"; ui.profileRetry.hidden = true;
   try {
     const data = await allPages(listPatients, { include_archived: true }, { signal: profileController.signal });
@@ -117,42 +115,53 @@ async function showResult(encounter) {
     ui.resultRetry.hidden = error.code === "MEDICAL_RECORD_NOT_FOUND" || [401, 403, 404].includes(error.status);
   }
 }
-function updateLookup() {
+function normalizedPhone(value) {
+  const phone = value.trim().replace(/[\s.-]/g, "");
+  return /^\+?84[35789]\d{8}$/.test(phone) ? `0${phone.replace(/^\+?84/, "")}` : phone;
+}
+function resetLookup() {
   lookupVersion++; lookupController?.abort(); ui.lookupSubmit.disabled = false;
-  ui.lookupStatus.textContent = ""; ui.identifier.value = "";
-  $("#lookup-identifier-field").hidden = !ui.patient.value; ui.identifier.required = Boolean(ui.patient.value);
-  $("#lookup-identifier-label").textContent = method === "cccd" ? "Số CCCD *" : "Mã hồ sơ *";
-  ui.identifier.pattern = method === "cccd" ? "(?:[0-9]{9}|[0-9]{12})" : "[0-9]{1,20}";
-  ui.identifier.maxLength = method === "cccd" ? 12 : 20; ui.identifier.inputMode = "numeric";
-  ui.identifier.title = method === "cccd" ? "CCCD gồm 9 hoặc 12 chữ số" : "Mã hồ sơ dạng số trong danh sách người bệnh";
+  ui.lookupStatus.textContent = ""; ui.matches.replaceChildren();
+  ui.phone.setCustomValidity("");
 }
 document.querySelectorAll("[data-open-record-lookup]").forEach(button => button.addEventListener("click", () => {
-  ui.patient.value = selected === null ? "" : String(selected); updateLookup(); ui.lookup.showModal();
+  resetLookup(); ui.phone.value = ""; ui.lookup.showModal(); ui.phone.focus();
 }));
-ui.patient.addEventListener("change", updateLookup);
-ui.lookup.querySelector("[data-tab-group]").addEventListener("patient-tab-change", event => { method = event.detail.dataset.lookupMethod; updateLookup(); });
+ui.phone.addEventListener("input", resetLookup);
 ui.form.addEventListener("submit", async event => {
-  event.preventDefault(); if (ui.lookupSubmit.disabled || !ui.form.reportValidity()) return;
-  const profile = profiles.find(p => String(p.patient_id) === ui.patient.value);
-  if (!profile) { ui.lookupStatus.textContent = "Vui lòng chọn hồ sơ trong danh sách tài khoản."; return; }
+  event.preventDefault(); if (ui.lookupSubmit.disabled) return;
+  const phone = normalizedPhone(ui.phone.value);
+  ui.phone.setCustomValidity(/^\+?\d{9,15}$/.test(phone) ? "" : "Vui lòng nhập số điện thoại hợp lệ (9–15 chữ số).");
+  if (!ui.form.reportValidity()) return;
   const version = ++lookupVersion;
   lookupController?.abort(); lookupController = new AbortController();
-  ui.lookupSubmit.disabled = true; ui.lookupStatus.textContent = "Đang đối chiếu hồ sơ…";
-  const value = ui.identifier.value.trim(), requestedMethod = method;
+  ui.lookupSubmit.disabled = true; ui.lookupStatus.textContent = "Đang tra cứu…"; ui.matches.replaceChildren();
   try {
-    const { patient } = await getPatient(profile.patient_id, { signal: lookupController.signal });
+    const matches = await allPages(listPatients, { phone, booked_by_me: true, include_archived: true }, { signal: lookupController.signal });
     if (version !== lookupVersion) return;
-    if (patient.patient_id !== profile.patient_id) throw new Error("Phản hồi không khớp hồ sơ đã chọn.");
-    if (requestedMethod === "cccd" && !patient.id_card) { ui.lookupStatus.textContent = "Hồ sơ chưa có CCCD có thể đối chiếu. Vui lòng dùng mã hồ sơ hoặc chọn trực tiếp hồ sơ trong danh sách."; return; }
-    const expected = requestedMethod === "cccd" ? String(patient.id_card).trim() : String(patient.patient_id);
-    if (value !== expected) { ui.lookupStatus.textContent = "Thông tin không khớp hồ sơ đã chọn. Vui lòng kiểm tra lại."; return; }
-    await loadHistory(profile.patient_id);
-    if (version === lookupVersion) ui.lookup.close();
+    const found = matches.filter(p => normalizedPhone(p.phone || "") === phone);
+    if (!found.length) {
+      ui.lookupStatus.textContent = "Không tìm thấy người bệnh có số điện thoại này mà bạn đã từng đặt khám hộ.";
+      return;
+    }
+    const choose = profile => {
+      if (version !== lookupVersion) return;
+      if (!profiles.some(p => p.patient_id === profile.patient_id)) { profiles.push(profile); renderProfiles(); }
+      ui.lookup.close();
+      loadHistory(profile.patient_id);
+    };
+    if (found.length === 1) { choose(found[0]); return; }
+    ui.lookupStatus.textContent = `Có ${found.length} người bệnh dùng số điện thoại này. Chọn người cần xem kết quả.`;
+    for (const profile of found) {
+      const button = el("button", "", "record-profile-button"); button.type = "button";
+      button.append(el("strong", profile.full_name), el("small", profile.dob ? dateLabel(profile.dob) : "Chưa có ngày sinh"));
+      button.addEventListener("click", () => choose(profile)); ui.matches.append(button);
+    }
   } catch (error) { if (version === lookupVersion) ui.lookupStatus.textContent = errorText(error); }
   finally { if (version === lookupVersion) ui.lookupSubmit.disabled = false; }
 });
 $("#record-lookup-close").addEventListener("click", () => ui.lookup.close());
-ui.lookup.addEventListener("close", () => { lookupVersion++; lookupController?.abort(); ui.lookupSubmit.disabled = false; ui.identifier.value = ""; ui.lookupStatus.textContent = ""; });
+ui.lookup.addEventListener("close", () => { lookupVersion++; lookupController?.abort(); ui.lookupSubmit.disabled = false; ui.phone.value = ""; ui.phone.setCustomValidity(""); ui.matches.replaceChildren(); ui.lookupStatus.textContent = ""; });
 $("#record-result-close").addEventListener("click", () => ui.result.close());
 ui.result.addEventListener("close", () => { resultVersion++; resultController?.abort(); ui.resultContent.replaceChildren(); ui.resultStatus.textContent = ""; });
 ui.profileRetry.addEventListener("click", loadProfiles);
@@ -166,9 +175,9 @@ const errorText = protectPatientPage({
     profileVersion++; historyVersion++; resultVersion++; lookupVersion++;
     for (const controller of [profileController, historyController, resultController, lookupController]) controller?.abort();
     profiles = []; selected = null; lastEncounter = null;
-    for (const node of [ui.profiles, ui.encounters, ui.resultContent, ui.patient]) node.replaceChildren();
+    for (const node of [ui.profiles, ui.encounters, ui.resultContent, ui.matches]) node.replaceChildren();
     for (const node of [ui.profileStatus, ui.historyTitle, ui.historyStatus, ui.lookupStatus, ui.resultStatus, ui.page]) node.textContent = "";
-    ui.identifier.value = ""; ui.lookupSubmit.disabled = false; ui.history.hidden = true;
+    ui.phone.value = ""; ui.phone.setCustomValidity(""); ui.matches.replaceChildren(); ui.lookupSubmit.disabled = false; ui.history.hidden = true;
     $("#records-welcome").hidden = false;
     ui.lookup.close(); ui.result.close();
   },

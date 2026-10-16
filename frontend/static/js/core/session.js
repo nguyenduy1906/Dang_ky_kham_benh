@@ -127,9 +127,9 @@ export function returnUrl(value, role = "USER") {
   try {
     const url = new URL(value || fallback.href, location.href);
     const relative = decodeURIComponent(url.pathname.slice(templates.pathname.length));
-    const staffFiles = { ADMIN: ["home", "encounters", "patients", "schedule", "assignments", "doctors", "departments", "rooms", "users", "articles", "payments", "statistics", "audit", "configuration"], DOCTOR: ["home", "schedule", "encounters", "clinical", "history", "professional"], NURSE: ["home", "assignments", "patients", "support"], RECEPTIONIST: ["home", "encounters", "walk_in", "patients", "coordination"] };
+    const staffFiles = { ADMIN: ["home", "encounters", "patients", "schedule", "assignments", "doctors", "departments", "rooms", "users", "articles", "payments", "statistics", "audit", "configuration"], DOCTOR: ["home", "schedule", "encounters", "clinical", "history"], NURSE: ["home", "assignments", "patients", "support"], RECEPTIONIST: ["home", "encounters", "walk_in", "patients", "coordination"] };
     const folder = { ADMIN: "admin", DOCTOR: "doctor", NURSE: "nurse", RECEPTIONIST: "reception" }[role];
-    const staffAllowed = role !== "USER" && (relative === "components/profile.html" || (staffFiles[role] || []).some(file => relative === `(${folder})/${file}.html`));
+    const staffAllowed = role !== "USER" && ((role !== "ADMIN" && relative === "components/profile.html") || (staffFiles[role] || []).some(file => relative === `(${folder})/${file}.html`));
     if (url.origin === homeUrl.origin && url.protocol === homeUrl.protocol &&
         url.pathname.startsWith(templates.pathname) &&
         !url.username && !url.password &&

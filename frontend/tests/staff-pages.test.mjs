@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { staffRoles, resolveStaffRole, canOpenStaffPage, avatarUrl } from "../static/js/core/staff_workspace.js";
 import { returnUrl, workspaceUrl, profileUrl } from "../static/js/core/session.js";
+import { adminSections } from "../static/js/data/admin_navigation.js";
 
 const templates = new URL("../templates/", import.meta.url);
 test("staff permissions require the exact backend role; a query parameter grants no access", () => {
@@ -12,7 +13,8 @@ test("staff permissions require the exact backend role; a query parameter grants
     for (const other of ["doctor", "nurse", "reception", "admin"].filter(r => r !== local))
       assert.equal(canOpenStaffPage(server, other, "overview"), false);
   }
-  assert.equal(canOpenStaffPage("ADMIN", "admin", "profile"), true);
+  assert.equal(canOpenStaffPage("ADMIN", "admin", "profile"), false);
+  assert.equal(canOpenStaffPage("ADMIN", "admin", "home"), true);
   assert.equal(canOpenStaffPage("ADMIN", "doctor", "overview"), false);
   for (const role of ["USER", "constructor", "__proto__", "doctor", undefined])
     for (const page of ["overview", "profile"]) assert.equal(canOpenStaffPage(role, "doctor", page), false);
@@ -25,25 +27,39 @@ test("all sidebar pages exist, load an authenticated module and contain no hardc
       const html = await readFile(new URL(`(${role})/${filename}`, templates), "utf8");
       assert.ok(html.includes(`data-role="${role}"`)); assert.ok(html.includes(`data-page="${page}"`));
       assert.match(html, /staff-auth-pending/); assert.match(html, /<main[^>]* inert>/);
-      assert.match(html, new RegExp(`type="module" src="../../static/js/pages/${role}.js"`));
-      assert.doesNotMatch(html, /minh họa|MINHHOA|Bệnh nhân mẫu|chưa kết nối/i);
+      assert.match(html, new RegExp(`type="module" src="../../static/js/pages/${role}\.js(?:\\?[^" ]*)?"`));
+      if (role !== "admin") assert.doesNotMatch(html, /minh họa|MINHHOA|Bệnh nhân mẫu|chưa kết nối/i);
     }
     if (config.pages.length) {
       const script = await readFile(new URL(`../static/js/pages/${role}.js`, import.meta.url), "utf8");
-      assert.match(script, /await staffReady/); assert.doesNotMatch(script, /MINHHOA|HS-MAU|Bệnh nhân mẫu/);
+      assert.match(script, role === "admin" ? /await requireAdmin/ : /await staffReady/);
+      assert.doesNotMatch(script, /MINHHOA|HS-MAU|Bệnh nhân mẫu/);
     }
   }
 });
-test("staff profile is shared with future admin, and stays separate from the patient profile", async () => {
+test("staff profile stays available to hospital staff while admin keeps its own workspace", async () => {
   const html = await readFile(new URL("components/profile.html", templates), "utf8");
   assert.match(html, /pages\/staff_profile.js/); assert.doesNotMatch(html, /role-picker|minh họa/i);
   assert.notEqual(profileUrl.pathname, new URL("components/profile.html", templates).pathname);
+  const adminKeys = adminSections.flatMap(([, items]) => items.map(([key]) => key));
+  assert.deepEqual(staffRoles.admin.pages.map(([key]) => key), adminKeys);
+  assert.ok(adminKeys.includes("home") && adminKeys.includes("users"));
   for (const role of ["DOCTOR", "NURSE", "RECEPTIONIST", "ADMIN"]) {
     const shared = new URL("components/profile.html", templates);
     globalThis.location = workspaceUrl(role);
-    assert.equal(returnUrl(shared.href, role).href, shared.href);
+    assert.equal(returnUrl(shared.href, role).href, role === "ADMIN" ? workspaceUrl(role).href : shared.href);
     assert.equal(returnUrl(profileUrl.href, role).href, workspaceUrl(role).href);
   }
+});
+
+test("doctor navigation uses the merged personal profile and removes the retired professional page", async () => {
+  assert.equal(staffRoles.doctor.pages.some(([key]) => key === "professional"), false);
+  await assert.rejects(readFile(new URL("(doctor)/professional.html", templates), "utf8"), { code: "ENOENT" });
+  const script = await readFile(new URL("../static/js/pages/doctor.js", import.meta.url), "utf8");
+  assert.match(script, /components\/profile\.html\?role=doctor/);
+  assert.doesNotMatch(script, /professional\.html|async function professional/);
+  globalThis.location = workspaceUrl("DOCTOR");
+  assert.equal(returnUrl(new URL("(doctor)/professional.html", templates).href, "DOCTOR").href, workspaceUrl("DOCTOR").href);
 });
 test("doctor avatars use only backend uploads and reject external or executable image URLs", () => {
   const path = "/uploads/avatars/" + "a".repeat(32) + ".jpg";

@@ -1,6 +1,6 @@
 import { apiRequest, pathSegment } from "../core/api.js";
 
-/** Bộ lọc: q, include_archived, page, page_size. Tạo hồ sơ gửi nguyên dữ liệu, gồm confirm_shared_phone khi người gọi đã xác nhận; không tự xác nhận hoặc tạo tài khoản ở FE. */
+/** Bộ lọc: q, phone, booked_by_me, include_archived, page, page_size. Tạo hồ sơ gửi nguyên dữ liệu, gồm confirm_shared_phone khi người gọi đã xác nhận; không tự xác nhận hoặc tạo tài khoản ở FE. */
 
 /** GET /patients */
 export function listPatients(params = {}, options = {}) {

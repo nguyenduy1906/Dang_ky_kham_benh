@@ -2,11 +2,12 @@ import { getSessionUser, loginUrl, workspaceUrl, signOut, clearSession, hasSessi
 import { API_CONFIG } from "../config.js";
 import { getOwnProfile } from "../api/doctor.js";
 import { initializeSidebarCollapse } from "./sidebar_collapse.js";
+import { adminSections } from "../data/admin_navigation.js";
 
 export const backendRoles = Object.freeze({ DOCTOR: "doctor", NURSE: "nurse", RECEPTIONIST: "reception", ADMIN: "admin" });
 export function canOpenStaffPage(roleName, requestedRole, page) {
   const actual = Object.hasOwn(backendRoles, roleName) ? backendRoles[roleName] : null;
-  return Boolean(actual && (page === "profile" || (actual !== "admin" && actual === requestedRole)));
+  return Boolean(actual && (page === "profile" ? actual !== "admin" : actual === requestedRole));
 }
 export function avatarUrl(value) {
   if (typeof value !== "string" || !/^\/uploads\/avatars\/[0-9a-f]{32}\.(jpg|png|webp)$/.test(value)) return "";
@@ -19,7 +20,6 @@ export const staffRoles = Object.freeze({
     ["encounters", "Lượt khám được giao", "encounters.html", "people"],
     ["clinical", "Bệnh án & đơn thuốc", "clinical.html", "record"],
     ["history", "Lịch sử khám", "history.html", "history"],
-    ["professional", "Hồ sơ chuyên môn", "professional.html", "badge"],
   ] },
   nurse: { label: "Y tá", initials: "YT", description: "Đồng hành cùng bác sĩ, chăm sóc người bệnh", pages: [
     ["overview", "Tổng quan", "home.html", "overview"],
@@ -34,8 +34,10 @@ export const staffRoles = Object.freeze({
     ["patients", "Hồ sơ bệnh nhân", "patients.html", "badge"],
     ["coordination", "Chọn phòng / ca", "coordination.html", "calendar"],
   ] },
-  // Admin will use the same personal profile when its workspace is implemented.
-  admin: { label: "Quản trị viên", initials: "QT", description: "Hồ sơ nhân viên bệnh viện", pages: [] },
+  admin: { label: "Quản trị viên", initials: "QT", description: "Không gian quản trị bệnh viện", pages:
+    adminSections.flatMap(([, items]) => items.map(([key, label]) => [key, label, `${key}.html`,
+      ({ home: "overview", encounters: "record", patients: "people", schedule: "calendar", assignments: "calendar", doctors: "badge", users: "people", audit: "history" })[key] || "record"])),
+  },
 });
 
 export function resolveStaffRole(value) {
@@ -66,7 +68,7 @@ function mountStaffWorkspace() {
   const role = getStaffRole(), configuration = staffRoles[role];
   if (role) document.body.dataset.role = role;
   const templates = new URL("../../../templates/", import.meta.url);
-  const publicHome = new URL("public/home.html", templates).href;
+  const workspaceHome = new URL(role ? `(${role})/home.html` : "components/profile.html", templates).href;
   const profileUrl = new URL("components/profile.html", templates);
   if (role) profileUrl.searchParams.set("role", role);
   const current = document.body.dataset.page;
@@ -75,12 +77,12 @@ function mountStaffWorkspace() {
     return `<a href="${url}"${key === current ? ' aria-current="page"' : ""}>${icon(symbol)}<span>${label}</span></a>`;
   }).join("");
   sidebar.innerHTML = `
-    <a class="staff-brand" href="${publicHome}"><img src="${new URL("../../assets/bieu_trung_neu.png", import.meta.url).href}" width="44" height="44" alt="Logo NEU Medical"><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></a>
+    <a class="staff-brand" href="${workspaceHome}"><img src="${new URL("../../assets/bieu_trung_neu.png", import.meta.url).href}" width="44" height="44" alt="Logo NEU Medical"><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></a>
     <p class="staff-nav-label">KHÔNG GIAN LÀM VIỆC</p>
     <nav aria-label="Điều hướng ${configuration?.label.toLocaleLowerCase("vi") || "nhân viên"}">${navigation}
       <a href="${profileUrl.href}"${current === "profile" ? ' aria-current="page"' : ""}>${icon("profile")}<span>Hồ sơ cá nhân</span></a>
     </nav>
-    <div class="staff-sidebar-bottom"><p>${configuration?.description || "Thông tin cá nhân dành cho nhân viên bệnh viện"}</p><a href="${publicHome}">${icon("overview")}<span>Về trang bệnh viện</span></a><button id="staff-signout" type="button" class="secondary">${icon("logout")}<span>Đăng xuất</span></button><span>NEU Medical</span></div>`;
+    <div class="staff-sidebar-bottom"><p>${configuration?.description || "Thông tin cá nhân dành cho nhân viên bệnh viện"}</p><button id="staff-signout" type="button" class="secondary">${icon("logout")}<span>Đăng xuất</span></button><span>NEU Medical</span></div>`;
   const activeTitle = current === "profile" ? "Hồ sơ cá nhân" : configuration?.pages.find(([key]) => key === current)?.[1] || "Không gian nhân viên";
   topbar.innerHTML = `<div class="staff-topbar-left"><button class="staff-menu-toggle" type="button" id="staff-menu-toggle" aria-label="Mở điều hướng" aria-controls="staff-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><span class="staff-breadcrumb">${configuration?.label || "Nhân viên"}<span aria-hidden="true">/</span><strong>${activeTitle}</strong></span></div><div class="staff-topbar-right"><a class="staff-account" href="${profileUrl.href}" aria-label="Hồ sơ cá nhân"><span class="staff-initials" aria-hidden="true">${configuration?.initials || "NV"}</span><span id="staff-account-name">${configuration?.label || "Nhân viên"}</span>${icon("profile")}</a></div>`;
   const toggle = document.querySelector("#staff-menu-toggle");
@@ -122,10 +124,20 @@ export async function requireStaff() {
   const status = document.querySelector("#staff-access");
   const suspend = () => { document.body.classList.add("staff-auth-pending"); if (main) main.inert = true; };
   suspend();
+  // Render public navigation before waiting for /me; private content stays gated.
+  const previewRole = getStaffRole();
+  const shellMounted = Boolean(previewRole && previewRole !== "admin");
+  if (shellMounted) mountStaffWorkspace();
+  let active = true;
+  window.addEventListener("pagehide", () => { active = false; }, { once: true });
   try {
     const user = await getSessionUser();
+    if (!active) return null;
     if (!user) { location.replace(loginUrl(new URL(location.href)).href); return null; }
     const actualRole = backendRoles[user.role_name];
+    if (actualRole === "admin" && document.body.dataset.page === "profile") {
+      location.replace(workspaceUrl(user.role_name).href); return null;
+    }
     const requestedRole = getStaffRole();
     if (!canOpenStaffPage(user.role_name, requestedRole, document.body.dataset.page)) {
       if (status) {
@@ -136,8 +148,14 @@ export async function requireStaff() {
       }
       return null;
     }
+    if (shellMounted && actualRole !== previewRole) {
+      // A shared profile may be opened with another role's presentation hint.
+      // Re-enter with the verified role rather than mounting two sets of controls.
+      const url = new URL(location.href); url.searchParams.set("role", actualRole);
+      location.replace(url.href); return null;
+    }
     document.body.dataset.role = actualRole;
-    mountStaffWorkspace();
+    if (!shellMounted) mountStaffWorkspace();
     document.querySelector("#staff-account-name").textContent = user.full_name;
     if (actualRole === "doctor") {
       getOwnProfile().then(({ doctor }) => {
@@ -152,14 +170,16 @@ export async function requireStaff() {
       try { await signOut(); } catch { /* Local session is cleared by signOut. */ }
       location.replace(loginUrl(workspaceUrl(user.role_name)).href);
     });
-    window.addEventListener("pagehide", suspend);
-    window.addEventListener("pageshow", event => { if (event.persisted) location.reload(); });
+    // Keep the outgoing frame intact for native navigation snapshots.
+    // A restored document must verify its session again before showing data.
+    window.addEventListener("pageshow", event => { if (event.persisted) { suspend(); location.reload(); } });
     window.addEventListener("neu:auth-change", () => { if (!hasSession()) { suspend(); location.replace(loginUrl(location.href).href); } });
     document.body.classList.remove("staff-auth-pending");
     if (main) main.inert = false;
     if (status) status.hidden = true;
     return user;
   } catch (error) {
+    if (!active) return null;
     if (status) { status.textContent = error.message; const retry = document.createElement("button"); retry.textContent = "Thử lại"; retry.addEventListener("click", () => location.reload()); status.append(retry); }
     return null;
   }

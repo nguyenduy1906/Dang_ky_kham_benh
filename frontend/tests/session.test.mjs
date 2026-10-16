@@ -134,7 +134,7 @@ test("role-specific return URLs reject cross-role and crafted destinations", () 
       assert.equal(session.returnUrl(input, role).href, home.href);
     assert.equal(session.returnUrl(null, role).href, home.href);
     const profile = new URL("../components/profile.html?role=admin", session.profileUrl);
-    assert.equal(session.returnUrl(profile.href, role).pathname, profile.pathname, "shared profile derives actual role from /me");
+    assert.equal(session.returnUrl(profile.href, role).pathname, role === "ADMIN" ? home.pathname : profile.pathname, "admin stays in its workspace; other staff keep their shared profile");
   }
 });
 test("a backend role change is rechecked and invalid backend roles clear the session", async () => {

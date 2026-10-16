@@ -17,7 +17,7 @@ def nurse_can_view(db, patient_id, nurse_id):
                       + _nurse_scope('p.patient_id'), (patient_id, nurse_id)).fetchone() is not None
 
 
-def list_patients(db, *, user_id=None, nurse_id=None, q=None, include_archived=False, limit=20, offset=0):
+def list_patients(db, *, user_id=None, nurse_id=None, q=None, include_archived=False, phone=None, booked_by_id=None, limit=20, offset=0):
     where, params = ['TRUE'], []
     if user_id is not None:
         where.append('(user_id = %s OR EXISTS (SELECT 1 FROM patient_delegate pd '
@@ -28,6 +28,13 @@ def list_patients(db, *, user_id=None, nurse_id=None, q=None, include_archived=F
         params.append(nurse_id)
     if not include_archived:
         where.append('archived_at IS NULL')
+    if phone is not None:
+        where.append('phone=%s')
+        params.append(phone)
+    if booked_by_id is not None:
+        where.append("EXISTS (SELECT 1 FROM encounter booked WHERE booked.patient_id=patient.patient_id "
+                     "AND booked.created_by_id=%s AND booked.encounter_type='ONLINE')")
+        params.append(booked_by_id)
     if q:
         like = '%' + q.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_') + '%'
         where.append('(full_name ILIKE %s OR phone ILIKE %s OR id_card ILIKE %s)')
@@ -53,6 +60,13 @@ def can_book(db, patient_id, user_id):
 def add_delegate(db, patient_id, user_id, relationship):
     db.execute('INSERT INTO patient_delegate(patient_id,user_id,relationship) VALUES (%s,%s,%s) '
                'ON CONFLICT(patient_id,user_id) DO NOTHING', (patient_id, user_id, relationship))
+
+
+def find_booking_contact(db, fields):
+    return db.execute("SELECT * FROM patient WHERE phone=%s "
+                      "AND lower(regexp_replace(trim(full_name), '\\s+', ' ', 'g'))=%s "
+                      "ORDER BY patient_id FOR UPDATE",
+                      (fields['phone'], ' '.join(fields['full_name'].split()).lower())).fetchall()
 
 
 def find_identity(db, fields):
