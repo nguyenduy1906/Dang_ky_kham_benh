@@ -22,10 +22,11 @@ const click = (selector, attribute, value = "") => nodes.get(selector).listeners
 beforeEach(() => {
   originals = ["document", "window", "matchMedia", "fetch"].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]);
   nodes = new Map(["page-body", "nurse-record-search", "nurse-record-detail", "nurse-record-status", "nurse-record-list", "nurse-record-pages", "nurse-history-pages", "nurse-history-status", "staff-dialog", "staff-dialog-title", "staff-dialog-content"].map(id => [`#${id}`, new Node()]));
-  nodes.get("#nurse-record-search").elements = { q: Object.assign(new Node(), { value: "" }) };
+  nodes.get("#nurse-record-search").elements = { q: Object.assign(new Node(), { value: "" }), encounter_status: Object.assign(new Node(), { value: "" }) };
   windowEvents = {}; requests = [];
-  respond = async path => {
+  respond = async (path, params) => {
     if (path === "/patients") return page([patient]);
+    if (path === "/encounters") return page(params.get("encounter_status") === "COMPLETED" ? [encounter] : []);
     if (path === "/patients/41") return { patient };
     if (path === "/patients/41/encounters") return page([encounter]);
     if (path === "/encounters/501") return { encounter };
@@ -55,12 +56,12 @@ afterEach(() => {
 
 test("nurse patient search and clinical details use only existing authorized reads", async () => {
   await initNurseRecords();
-  assert.deepEqual(requests, [{ path: "/patients", params: { page: "1", page_size: "12" }, method: "GET" }]);
+  assert.deepEqual(requests.map(r => [r.path, r.params.encounter_status]), [["/patients", undefined], ["/encounters", "COMPLETED"], ["/encounters", "NO_SHOW"]]);
   assert.match(nodes.get("#nurse-record-list").innerHTML, /&lt;script&gt;/);
   assert.doesNotMatch(nodes.get("#nurse-record-list").innerHTML, /<script>/);
   click("#nurse-record-list", "data-patient", "41"); await tick();
   assert.match(nodes.get("#nurse-record-detail").innerHTML, /CHỈ XEM/);
-  assert.match(nodes.get("#nurse-record-detail").innerHTML, /Các lượt khám được phép xem/);
+  assert.match(nodes.get("#nurse-record-detail").innerHTML, /Các lượt đã khám xong hoặc không đến/);
   assert.doesNotMatch(nodes.get("#nurse-record-detail").innerHTML, /Sửa hồ sơ|Lưu|name="diagnosis"/);
   click("#nurse-record-detail", "data-record", "501"); await tick();
   assert.equal(nodes.get("#staff-dialog").open, true);
@@ -77,11 +78,11 @@ test("typing searches without submitting and clears the previously selected pati
   input.value = "  0900000041  "; input.listeners.input({});
   assert.equal(nodes.get("#nurse-record-detail").hidden, true);
   t.mock.timers.tick(251); await tick();
-  assert.equal(requests.at(-1).params.q, "0900000041");
+  assert.equal(requests.findLast(r => r.path === "/patients").params.q, "0900000041");
   assert.equal(nodes.get("#nurse-record-detail").hidden, true);
   assert.equal(nodes.get("#nurse-record-detail").innerHTML, "");
   input.value = ""; input.listeners.input({}); t.mock.timers.tick(251); await tick();
-  assert.equal(requests.at(-1).params.q, undefined);
+  assert.equal(requests.findLast(r => r.path === "/patients").params.q, undefined);
 });
 
 test("revoked access and late profile responses never restore previous patient details", async () => {
@@ -108,4 +109,54 @@ test("clinical details belonging to another patient are rejected before loading 
   assert.match(nodes.get("#nurse-history-status").textContent, /không thuộc hồ sơ/);
   assert.equal(requests.some(r => r.path.endsWith("/medical-record")), false);
   assert.notEqual(nodes.get("#staff-dialog").open, true);
+});
+
+test("archive excludes active-only patients while retaining a patient with a new visit and a completed older visit", async () => {
+  const previous = respond;
+  respond = (path, params) => {
+    if (path === "/patients") return page([patient, { ...patient, patient_id: 42, full_name: "Chỉ đang khám" }]);
+    if (path === "/encounters") return page(params.get("encounter_status") === "COMPLETED" ? [encounter, { ...encounter, encounter_id: 502, patient_id: 42, encounter_status: "IN_PROGRESS" }] : []);
+    return previous(path, params);
+  };
+  await initNurseRecords();
+  assert.match(nodes.get("#nurse-record-list").innerHTML, /data-patient="41"/);
+  assert.doesNotMatch(nodes.get("#nurse-record-list").innerHTML, /data-patient="42"/);
+  assert.equal(requests.find(r => r.path === "/patients").params.include_archived, "true");
+});
+
+test("no-show history displays attendance and visit details without requesting a medical record", async () => {
+  const missed = { ...encounter, encounter_status: "NO_SHOW" };
+  const previous = respond;
+  respond = (path, params) => {
+    if (path === "/encounters") return page(params.get("encounter_status") === "NO_SHOW" ? [missed] : []);
+    if (path === "/encounters/501") return { encounter: missed };
+    return previous(path, params);
+  };
+  await initNurseRecords();
+  assert.match(nodes.get("#nurse-record-list").innerHTML, /Không đến/);
+  click("#nurse-record-list", "data-patient", "41"); await tick();
+  assert.match(nodes.get("#nurse-record-detail").innerHTML, /Xem lượt khám/);
+  assert.doesNotMatch(nodes.get("#nurse-record-detail").innerHTML, /Xem bệnh án/);
+  click("#nurse-record-detail", "data-record", "501"); await tick();
+  assert.equal(nodes.get("#staff-dialog").open, true);
+  assert.match(nodes.get("#staff-dialog-content").innerHTML, /không đến khám/);
+  assert.equal(requests.some(r => r.path.endsWith("/medical-record")), false);
+  assert.ok(requests.every(r => r.method === "GET"));
+});
+
+test("archive filtering precedes pagination instead of hiding qualifying patients on later API pages", async () => {
+  const patients = Array.from({ length: 13 }, (_, i) => ({ ...patient, patient_id: i + 1, full_name: `Người bệnh ${i + 1}` }));
+  const previous = respond;
+  respond = (path, params) => {
+    if (path === "/patients") {
+      const current = Number(params.get("page"));
+      return { items: patients.slice((current - 1) * 12, current * 12), total: 13, page: current, page_size: 12 };
+    }
+    if (path === "/encounters") return page(params.get("encounter_status") === "COMPLETED" ? [{ ...encounter, patient_id: 13 }] : []);
+    return previous(path, params);
+  };
+  await initNurseRecords();
+  assert.match(nodes.get("#nurse-record-list").innerHTML, /data-patient="13"/);
+  assert.doesNotMatch(nodes.get("#nurse-record-list").innerHTML, /data-patient="1"/);
+  assert.ok(requests.some(r => r.path === "/patients" && r.params.page === "2"));
 });

@@ -1,6 +1,5 @@
 """Đầu mối gói 3 cho quyền truy cập và transaction lượt khám."""
 from datetime import datetime, timedelta, timezone
-from uuid import uuid4
 from psycopg.types.json import Jsonb
 from backend.app.services.appointment_slot_service import reserve_interval
 from backend.app.services import patient_service
@@ -230,8 +229,7 @@ def confirm_paid_online(db, encounter_id, actor_id):
         return False
     if schedule['schedule_status'] in ('CLOSED', 'UNAVAILABLE'):
         raise conflict('Ca đã đóng hoặc báo nghỉ; cần điều phối lượt khám', 'SCHEDULE_UNAVAILABLE')
-    ticket = 'NEU-' + uuid4().hex.upper()
-    model.update_encounter(db, encounter_id, {'encounter_status': 'CONFIRMED', 'ticket_code': ticket})
+    ticket = model.update_encounter(db, encounter_id, {'encounter_status': 'CONFIRMED'})['ticket_code']
     model.add_status(db, encounter_id, 'HOLDING', 'CONFIRMED', actor_id, 'Đã thanh toán đủ tiền; phát phiếu ' + ticket)
     return True
 
@@ -369,7 +367,6 @@ def create_walk_in(actor, fields):
         _require_available(schedule, now)
         doctor = _active_doctor(db, schedule)
         _reject_duplicate(db, fields['patient_id'], doctor['doctor_profile_id'], schedule['work_date'])
-        ticket = 'NEU-' + uuid4().hex.upper()
         start, finish = interval
         row = model.create_encounter(db, {
             'patient_id': fields['patient_id'], 'symptoms': fields.get('symptoms'),
@@ -377,7 +374,8 @@ def create_walk_in(actor, fields):
             'doctor_profile_id': doctor['doctor_profile_id'], 'schedule_id': schedule['schedule_id'],
             'room_id': schedule['room_id'], 'created_by_id': actor['user_id'],
             'consultation_fee_snapshot': doctor['consultation_fee'], 'deposit_amount_snapshot': 0,
-            'ticket_code': ticket, 'estimated_exam_at': start, 'appointment_end_at': finish, 'checked_in_at': now})
+            'estimated_exam_at': start, 'appointment_end_at': finish, 'checked_in_at': now})
+        ticket = row['ticket_code']
         _change_quota(db, schedule, 1)
         model.add_status(db, row['encounter_id'], None, 'CHECKED_IN', actor['user_id'], 'Tiếp nhận walk-in, phát phiếu ' + ticket)
         result = _present(_visible(db, actor, row['encounter_id']))

@@ -68,7 +68,7 @@ class DoctorProfileIntegrationTests(unittest.TestCase):
         self.assertEqual(public.status_code,200,public.json)
         self.assertEqual(public.json['page_size'],1)
         for row in public.json['items']:
-            self.assertEqual(set(row),{'review_id','rating','comment','created_at'})
+            self.assertEqual(set(row),{'review_id','review_code','rating','comment','created_at'})
         with get_db_connection() as db:
             row=db.execute("SELECT e.encounter_id,m.record_id FROM encounter e JOIN medical_record m USING(encounter_id) WHERE e.encounter_status='COMPLETED' ORDER BY e.encounter_id LIMIT 1").fetchone()
             db.execute('DELETE FROM review WHERE record_id=%s',(row['record_id'],))

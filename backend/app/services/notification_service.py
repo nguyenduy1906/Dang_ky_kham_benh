@@ -1,3 +1,4 @@
+from backend.app.utils.business_codes import business_code
 from backend.app.core.errors import not_found
 from backend.app.db.database import get_db_connection
 from backend.app.models import notification_model as model
@@ -17,7 +18,7 @@ def notify_status(db, encounter_id, log_id, status, note):
               'COMPLETED': 'Lượt khám đã hoàn tất', 'CANCELLED': 'Lượt khám đã hủy',
               'EXPIRED': 'Giữ chỗ khám đã hết hạn', 'NO_SHOW': 'Lượt khám được đánh dấu vắng mặt'}
     notify_encounter(db, encounter_id, f'encounter-status:{log_id}', 'ENCOUNTER_STATUS',
-                     titles[status], f'Lượt khám #{encounter_id}: {note or status}')
+                     titles[status], f'Lượt khám {business_code("LK", encounter_id)}: {note or status}')
 
 
 def listing(actor, page, size, unread_only):

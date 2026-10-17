@@ -1,14 +1,13 @@
 import { listDoctors } from "../api/doctor.js";
-import { listPatients } from "../api/patient.js";
+import { listPatients, createPatient } from "../api/patient.js";
 import { listDoctorSchedules } from "../api/schedule.js";
 import { createOnline, getEncounter, getTicket, listEncounters, cancel, updateRegistration } from "../api/encounter.js";
-import { createIntent, listEncounterPayments, setDemoResult } from "../api/payment.js";
+import { createIntent, listEncounterPayments } from "../api/payment.js";
 import { getMe } from "../api/auth.js";
 import { verifySession, hasSession, clearSession, loginUrl } from "../core/session.js";
 import { thumbnailUrl } from "../core/articles.js";
-import { allPages, availableSchedules, money, clock, dateLabel, matchingBooking } from "../core/booking.js";
+import { allPages, availableSchedules, money, clock, dateLabel, matchingBooking, patientPayload } from "../core/booking.js";
 import { readDraft, saveDraft, draftRequest } from "../core/booking_draft.js";
-import { renderDemoQr } from "../core/payment_qr.js";
 const $ = selector => document.querySelector(selector);
 function el(tag, text = "", className = "") {
   const node = document.createElement(tag); node.textContent = text;
@@ -16,19 +15,17 @@ function el(tag, text = "", className = "") {
 }
 const ui = {
   dialog: $("#booking-review-page"), review: $("#booking-review"), dialogStatus: $("#booking-dialog-status"),
-  confirm: $("#booking-confirm"), payment: $("#booking-payment"), method: $("#booking-payment-method"),
-  paymentCreate: $("#booking-payment-create"), paymentResult: $("#booking-payment-result"),
-  refresh: $("#booking-refresh"), cancel: $("#booking-cancel"),
-  paymentModal: $("#booking-payment-modal"), success: $("#booking-success"),
+  confirm: $("#booking-confirm"), refresh: $("#booking-refresh"), cancel: $("#booking-cancel"),
 };
 let doctors = [], patients = [], selectedDoctor, selectedSlot, actor, busy = false;
-let encounter, payment, ticket, countdown, reviewRequest, requestedEncounterId, submissionUncertain = false;
-let paymentVisible = false, draft;
+let encounter, payment, ticket, reviewRequest, requestedEncounterId, submissionUncertain = false;
+let draft;
 let pageVersion = 0;
 let active = true;
 let registrationForm;
 let draftKey = new URLSearchParams(location.search).get("draft");
-const selectedPatient = () => patients.find(p => String(p.patient_id) === String(draft?.patient_id));
+const selfPreview = () => draft?.patient_type === "SELF" && draft.patient_id == null && !encounter;
+const selectedPatient = () => selfPreview() ? actor : patients.find(p => String(p.patient_id) === String(draft?.patient_id));
 function errorMessage(error) {
   if (error.status === 401) { clearSession(); location.replace(loginUrl(new URL(location.href)).href); return "Phiên đăng nhập đã hết hạn."; }
   return error.message || "Không thể kết nối hệ thống. Vui lòng thử lại.";
@@ -64,9 +61,7 @@ function busyDialog(value) {
   busy = value;
   ui.dialog.setAttribute("aria-busy", String(value));
   ui.dialog.querySelectorAll("button,select,input,textarea").forEach(node => { node.disabled = value; });
-  ui.paymentModal.querySelectorAll("button,select").forEach(node => { node.disabled = value; });
-  if (!value && payment?.transaction_status === "PENDING") ui.method.disabled = true;
-  if (!value) $("#booking-payment-status").textContent = ui.dialogStatus.textContent;
+
 }
 function renderReview() {
   clearRegistrationForm();
@@ -232,44 +227,18 @@ function rememberEncounter() {
 }
 function showBooking() {
   if (!active) return;
-  clearInterval(countdown);
-  countdown = undefined;
   rememberEncounter();
   const status = encounter.encounter_status;
   const confirmed = ["CONFIRMED", "CHECKED_IN", "IN_PROGRESS", "COMPLETED"].includes(status);
   $("#booking-dialog-title").textContent = confirmed ? "Thông tin lịch khám" : status === "HOLDING" ? "Hoàn tất đăng ký khám" : "Trạng thái lịch khám";
-  ui.confirm.hidden = status !== "HOLDING" || paymentVisible;
+  ui.confirm.hidden = status !== "HOLDING" && !confirmed;
+  ui.confirm.textContent = confirmed ? "Xem thanh toán →" : "Thanh toán →";
   $("#booking-confirm-note").hidden = status !== "HOLDING";
-  ui.payment.hidden = status !== "HOLDING" || !paymentVisible;
-  ui.success.hidden = !confirmed;
-  if (paymentVisible && (status === "HOLDING" || confirmed) && !ui.paymentModal.open) ui.paymentModal.showModal();
-  if (ui.paymentModal.open && !confirmed && status !== "HOLDING") ui.paymentModal.close();
   ui.refresh.hidden = false; ui.cancel.hidden = status !== "HOLDING";
   renderReview();
-  renderDemoQr($("#booking-qr"), status === "HOLDING" && paymentVisible ? payment : null);
   ui.dialogStatus.textContent = confirmed ? "Lịch khám đã được hệ thống xác nhận. Vui lòng đến làm thủ tục trước khung giờ đã chọn ít nhất 30 phút."
     : status === "HOLDING" ? "Thanh toán trước khi giữ chỗ hết hạn để được cấp phiếu khám."
-      : "Lượt khám này không còn giữ chỗ. Bạn có thể đóng cửa sổ và chọn lịch mới.";
-  $("#booking-payment-status").textContent = ui.dialogStatus.textContent;
-  ui.paymentResult.hidden = payment?.transaction_status !== "PENDING";
-  ui.paymentCreate.hidden = payment?.transaction_status === "PENDING";
-  ui.method.disabled = payment?.transaction_status === "PENDING";
-  if (payment) ui.method.value = payment.payment_method;
-  if (status === "HOLDING") {
-    let expirationChecked = new Date(encounter.hold_expires_at) <= new Date();
-    const tick = () => {
-      const seconds = Math.max(0, Math.ceil((new Date(encounter.hold_expires_at) - Date.now()) / 1000));
-      $("#booking-countdown").textContent = seconds > 0
-        ? `Thời gian giữ chỗ còn lại: ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
-        : "Đã tới thời hạn giữ chỗ. Bấm cập nhật trạng thái để đối chiếu hệ thống.";
-      if (!seconds && !expirationChecked && !busy) {
-        expirationChecked = true;
-        clearInterval(countdown); countdown = undefined; refreshBooking();
-      }
-    };
-    tick();
-    if (!expirationChecked) countdown = setInterval(tick, 1000);
-  }
+      : "Lượt khám này không còn giữ chỗ. Bạn có thể quay lại và chọn lịch mới.";
 }
 async function readBooking(id) {
   const version = pageVersion;
@@ -311,13 +280,39 @@ async function refreshBooking(id = encounter?.encounter_id || requestedEncounter
   } catch (error) { if (active && version === pageVersion) { ui.dialogStatus.textContent = errorMessage(error); ui.refresh.hidden = false; } }
   finally { if (active && version === pageVersion) { busyDialog(false); if (submissionUncertain) ui.confirm.disabled = true; } }
 }
+function openPayment() {
+  const url = new URL("payment.html", location.href);
+  if (draftKey) url.searchParams.set("draft", draftKey);
+  if (encounter) url.searchParams.set("encounter", encounter.encounter_id);
+  location.assign(url.href);
+}
+async function ensureSelfPatient(version) {
+  if (!selfPreview()) return;
+  const form = new FormData();
+  for (const [key, value] of Object.entries(draft.registration_details || {})) {
+    if (value != null) form.set(key, value);
+  }
+  form.set("relationship", "SELF");
+  ui.dialogStatus.textContent = "Đang lưu hồ sơ người khám…";
+  const result = await createPatient(patientPayload(form));
+  if (!active || version !== pageVersion || !hasSession()) return;
+  const patient = result?.patient;
+  if (!Number.isSafeInteger(patient?.patient_id) || patient.patient_id <= 0) throw new Error("Hệ thống chưa trả về mã hồ sơ người khám hợp lệ.");
+  draft.patient_id = patient.patient_id;
+  if (!patients.some(row => row.patient_id === patient.patient_id)) patients.push(patient);
+  reviewRequest = draftRequest(draft);
+  saveDraft(draft, draftKey);
+}
 ui.confirm.addEventListener("click", async () => {
-  if (busy || submissionUncertain || (!encounter && !reviewRequest) || (encounter && encounter.encounter_status !== "HOLDING")) return;
+  if (busy || !active || !hasSession()) return;
+  if (encounter && ["CONFIRMED", "CHECKED_IN", "IN_PROGRESS", "COMPLETED"].includes(encounter.encounter_status)) { openPayment(); return; }
+  if (submissionUncertain || (!encounter && !reviewRequest && !selfPreview()) || (encounter && encounter.encounter_status !== "HOLDING")) return;
   if (!validatePatientForm()) return;
   busyDialog(true);
   const version = pageVersion;
   try {
     await saveRegistration();
+    if (active && version === pageVersion && hasSession()) await ensureSelfPatient(version);
   } catch (error) {
     if (active && version === pageVersion) ui.dialogStatus.textContent = `Chưa lưu được thông tin đăng ký. ${errorMessage(error)}`;
     busyDialog(false);
@@ -335,10 +330,9 @@ ui.confirm.addEventListener("click", async () => {
     }
     await readBooking(encounter.encounter_id);
     if (encounter.encounter_status === "HOLDING") {
-      paymentVisible = true;
-      showBooking();
-      if (payment?.transaction_status !== "PENDING") await createIntent(encounter.encounter_id, { payment_method: ui.method.value });
+      if (payment?.transaction_status !== "PENDING") await createIntent(encounter.encounter_id, { payment_method: "BANK" });
       await readBooking(encounter.encounter_id);
+      if (active && version === pageVersion && hasSession()) openPayment();
     }
   } catch (error) {
     ui.dialogStatus.textContent = errorMessage(error);
@@ -355,32 +349,6 @@ ui.confirm.addEventListener("click", async () => {
     }
     if (!encounter && !submissionUncertain && draft) { draft.uncertain = false; saveDraft(draft, draftKey); }
   } finally { busyDialog(false); if (submissionUncertain) ui.confirm.disabled = true; }
-});
-async function paymentAction(action) {
-  if (busy || encounter?.encounter_status !== "HOLDING") return;
-  const version = pageVersion;
-  busyDialog(true);
-  ui.dialogStatus.textContent = "Đang xử lý thanh toán trên hệ thống…";
-  try {
-    if (!active || version !== pageVersion || !hasSession()) return;
-    await action();
-    if (!active || version !== pageVersion || !hasSession()) return;
-    await readBooking(encounter.encounter_id);
-    if (payment?.transaction_status === "FAILED" && encounter.encounter_status === "HOLDING") {
-      ui.dialogStatus.textContent = "Thanh toán thất bại. Bạn có thể tạo phiên mới khi thời gian giữ chỗ còn hiệu lực.";
-    }
-  } catch (error) {
-    if (!active || version !== pageVersion) return;
-    try { await readBooking(encounter.encounter_id); } catch { /* No mutation retry after an uncertain result. */ }
-    ui.dialogStatus.textContent = errorMessage(error) + " Bấm cập nhật trạng thái để đối chiếu trước khi thử lại.";
-  } finally { if (active && version === pageVersion) busyDialog(false); }
-}
-ui.paymentCreate.addEventListener("click", () => paymentAction(() => createIntent(encounter.encounter_id, { payment_method: ui.method.value })));
-$("#booking-payment-success").addEventListener("click", () => {
-  if (payment?.transaction_status === "PENDING") return paymentAction(() => setDemoResult(payment.payment_id, { result: "SUCCESS" }));
-});
-$("#booking-payment-failed").addEventListener("click", () => {
-  if (payment?.transaction_status === "PENDING") return paymentAction(() => setDemoResult(payment.payment_id, { result: "FAILED" }));
 });
 ui.cancel.addEventListener("click", async () => {
   if (busy || encounter?.encounter_status !== "HOLDING") return;
@@ -416,14 +384,9 @@ document.addEventListener?.("click", event => {
   event.preventDefault();
   leaveReview(destination.href);
 }, true);
-$("#booking-payment-close").addEventListener("click", () => { if (!busy) ui.paymentModal.close(); });
-ui.paymentModal.addEventListener("cancel", event => { if (busy) event.preventDefault(); });
-ui.paymentModal.addEventListener("close", () => { paymentVisible = false; if (encounter?.encounter_status === "HOLDING") ui.confirm.hidden = false; });
 window.addEventListener("pagehide", () => {
   clearRegistrationForm();
   active = false; pageVersion++; ui.dialog.hidden = true;
-  if (ui.paymentModal.open) ui.paymentModal.close();
-  clearInterval(countdown); countdown = undefined;
 });
 
 async function start() {
@@ -446,7 +409,7 @@ async function start() {
     if (version !== pageVersion) return;
     if (requestedEncounterId) await readBooking(requestedEncounterId);
     else {
-      reviewRequest = draftRequest(draft);
+      reviewRequest = selfPreview() ? null : draftRequest(draft);
       selectedDoctor = doctors.find(d => String(d.doctor_profile_id) === String(draft.doctor_profile_id));
       if (!selectedPatient() || !selectedDoctor) throw new Error("Hồ sơ hoặc bác sĩ không còn khả dụng. Vui lòng quay lại chọn lịch.");
       const rows = await allPages((params, options) => listDoctorSchedules(draft.doctor_profile_id, params, options), { from_date: draft.work_date, to_date: draft.work_date });
@@ -460,6 +423,10 @@ async function start() {
         if (!slot) throw new Error("Khung giờ đã hết chỗ hoặc không còn nhận đặt online. Vui lòng quay lại chọn lịch khác.");
         selectedSlot = { schedule, slot };
         renderReview(); ui.confirm.hidden = false;
+        if (selfPreview()) {
+          ui.confirm.textContent = "Thanh toán →";
+          $("#booking-confirm-note").textContent = "Vui lòng kiểm tra thông tin người khám trước khi thanh toán.";
+        }
       }
     }
     if (version !== pageVersion || !hasSession()) return;
@@ -475,8 +442,7 @@ $("#booking-auth-status button").addEventListener("click", start);
 window.addEventListener("neu:auth-change", () => {
   clearRegistrationForm();
   active = false; pageVersion++; ui.dialog.hidden = true;
-  if (ui.paymentModal.open) ui.paymentModal.close();
   if (!hasSession()) location.replace(loginUrl(new URL(location.href)).href);
 });
-window.addEventListener("pageshow", event => { if (event.persisted) { paymentVisible = false; start(); } });
+window.addEventListener("pageshow", event => { if (event.persisted) start(); });
 start();

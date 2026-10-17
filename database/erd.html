@@ -28,6 +28,7 @@ erDiagram
     %% ===== 1. TÀI KHOẢN & PHÂN QUYỀN =====
 
     ROLE {
+        text role_code UK
         integer role_id PK "NOT NULL"
         text role_name UK "NOT NULL; USER, DOCTOR, RECEPTIONIST, NURSE, ADMIN"
         text description
@@ -35,6 +36,7 @@ erDiagram
     }
 
     USERS {
+        text user_code UK
         integer user_id PK "NOT NULL"
         integer role_id FK "NOT NULL"
         text full_name "NOT NULL"
@@ -62,6 +64,7 @@ erDiagram
     %% ===== 2. HỒ SƠ BỆNH NHÂN (tách khỏi tài khoản) =====
 
     PATIENT {
+        text patient_code UK
         integer patient_id PK "NOT NULL"
         integer user_id FK "chủ tài khoản, NULL nếu walk-in chưa có TK"
         text full_name "NOT NULL"
@@ -87,6 +90,7 @@ erDiagram
     %% ===== 3. BÁC SĨ, KHOA, PHÒNG =====
 
     DEPARTMENT {
+        text department_code UK
         integer department_id PK "NOT NULL"
         text name "NOT NULL"
         text description
@@ -109,6 +113,7 @@ erDiagram
     }
 
     DEPARTMENT_LEADERSHIP {
+        text leadership_code UK
         integer leadership_id PK
         integer department_id FK
         integer doctor_profile_id FK
@@ -120,6 +125,7 @@ erDiagram
     }
 
     DOCTOR_PROFILE {
+        text doctor_code UK
         integer doctor_profile_id PK "NOT NULL"
         integer user_id FK "NOT NULL; UNIQUE"
         integer department_id FK "NOT NULL"
@@ -135,6 +141,7 @@ erDiagram
     }
 
     ROOM {
+        text room_code UK
         integer room_id PK "NOT NULL"
         integer department_id FK "NOT NULL"
         text room_name "NOT NULL"
@@ -149,6 +156,7 @@ erDiagram
     %% UNIQUE (room_id, work_date, start_time)
 
     WORK_SCHEDULE {
+        text schedule_code UK
         integer schedule_id PK "NOT NULL"
         integer doctor_profile_id FK "NOT NULL"
         integer room_id FK "NOT NULL"
@@ -169,6 +177,7 @@ erDiagram
     %% department suy ra từ doctor_profile
 
     ENCOUNTER {
+        text encounter_code UK
         integer encounter_id PK "NOT NULL"
         text encounter_type "NOT NULL; ONLINE, WALK_IN"
         integer patient_id FK "NOT NULL"
@@ -197,6 +206,7 @@ erDiagram
     }
 
     ENCOUNTER_STATUS_LOG {
+        text log_code UK
         integer log_id PK "NOT NULL"
         integer encounter_id FK "NOT NULL"
         text old_status
@@ -207,6 +217,7 @@ erDiagram
     }
 
     ENCOUNTER_TRANSFER_LOG {
+        text log_code UK
         integer log_id PK "NOT NULL"
         integer encounter_id FK "NOT NULL"
         integer old_doctor_id FK "NOT NULL"
@@ -219,6 +230,7 @@ erDiagram
     %% ===== 6. THANH TOÁN =====
 
     PAYMENT {
+        text payment_code UK
         integer payment_id PK "NOT NULL"
         integer encounter_id FK "NOT NULL"
         text payment_type "NOT NULL; DEPOSIT, EXAM_FEE, REFUND"
@@ -241,6 +253,7 @@ erDiagram
     %% ===== 7. HỒ SƠ KHÁM BỆNH =====
 
     MEDICAL_RECORD {
+        text record_code UK
         integer record_id PK "NOT NULL"
         integer encounter_id FK "NOT NULL; UNIQUE"
         text diagnosis
@@ -254,6 +267,7 @@ erDiagram
     }
 
     PRESCRIPTION_ITEM {
+        text item_code UK
         integer item_id PK "NOT NULL"
         integer record_id FK "NOT NULL"
         text medication_name "NOT NULL"
@@ -265,6 +279,7 @@ erDiagram
     %% ===== 8. ĐÁNH GIÁ =====
 
     REVIEW {
+        text review_code UK
         integer review_id PK "NOT NULL"
         integer record_id FK "NOT NULL"
         integer rating "NOT NULL; 1-5"
@@ -276,6 +291,7 @@ erDiagram
     %% ===== 9. THÔNG BÁO, TIN TỨC, CẤU HÌNH =====
 
     NOTIFICATION {
+        text notification_code UK
         integer notification_id PK "NOT NULL"
         integer user_id FK "NOT NULL"
         text event_key "UNIQUE cùng user_id; chống thông báo lặp"
@@ -289,6 +305,7 @@ erDiagram
     }
 
     ARTICLE {
+        text article_code UK
         integer article_id PK "NOT NULL"
         integer author_id FK "NOT NULL"
         text title "NOT NULL"
@@ -303,6 +320,7 @@ erDiagram
     }
 
     ROLE_REQUEST {
+        text request_code UK
         integer request_id PK "NOT NULL"
         integer user_id FK "NOT NULL"
         integer requested_role_id FK "NOT NULL"
@@ -316,6 +334,7 @@ erDiagram
     }
 
     NURSE_ASSIGNMENT {
+        text assignment_code UK
         integer assignment_id PK "NOT NULL"
         integer nurse_id FK "NOT NULL"
         integer schedule_id FK "NOT NULL"
@@ -330,6 +349,7 @@ erDiagram
     ROLE ||--o{ ROLE_REQUEST : "vai_tro_duoc_yeu_cau"
     USERS |o--o{ ROLE_REQUEST : "duyet_yeu_cau"
     STAFF_LEAVE_REQUEST {
+        text request_code UK
         integer request_id PK
         integer user_id FK
         date from_date

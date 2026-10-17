@@ -1,4 +1,4 @@
--- Dữ liệu giả lập cho schema 21 bảng. File này xóa toàn bộ dữ liệu cũ.
+-- Dữ liệu giả lập cho schema 23 bảng. File này xóa toàn bộ dữ liệu cũ.
 BEGIN;
 -- Chặn dữ liệu bị mất dấu khi truyền qua shell trước khi xóa dữ liệu cũ.
 -- Nạp file UTF-8; có thể sao chép file vào container rồi dùng psql -f.
@@ -9,6 +9,32 @@ BEGIN
     END IF;
 END;
 $encoding$;
+
+-- Chặn nạp nhầm vào schema cũ trước khi xóa bất kỳ bản ghi nào.
+-- Khi thay cấu trúc, tạo lại database từ init_db.sql rồi mới chạy file này.
+DO $schema_check$
+DECLARE missing_columns text;
+BEGIN
+    WITH expected(table_name,column_name) AS (VALUES
+      ('role','role_code'),('users','user_code'),('patient','patient_code'),
+      ('department','department_code'),('doctor_profile','doctor_code'),('room','room_code'),
+      ('work_schedule','schedule_code'),('encounter','encounter_code'),
+      ('encounter_status_log','log_code'),('encounter_transfer_log','log_code'),
+      ('payment','payment_code'),('medical_record','record_code'),('prescription_item','item_code'),
+      ('review','review_code'),('notification','notification_code'),('article','article_code'),
+      ('role_request','request_code'),('nurse_assignment','assignment_code'),
+      ('department_leadership','leadership_code'),('staff_leave_request','request_code')
+    )
+    SELECT string_agg(e.table_name||'.'||e.column_name,', ') INTO missing_columns
+    FROM expected e WHERE NOT EXISTS (
+      SELECT 1 FROM information_schema.columns c WHERE c.table_schema=current_schema()
+      AND c.table_name=e.table_name AND c.column_name=e.column_name AND c.is_generated='ALWAYS'
+    );
+    IF missing_columns IS NOT NULL THEN
+      RAISE EXCEPTION 'Schema cu, chua nap du lieu: %. Tao lai cau truc tu database/init_db.sql truoc.',missing_columns;
+    END IF;
+END;
+$schema_check$;
 
 -- Xóa dữ liệu cũ để có thể chạy lại file seed nhiều lần.
 TRUNCATE TABLE
@@ -316,16 +342,16 @@ INSERT INTO encounter
  encounter_status, ticket_code, estimated_exam_at, appointment_end_at, qr_code, hold_expires_at, checked_in_at,
  cancelled_by_id, cancel_reason, cancelled_at, created_at, updated_at)
 VALUES
-(1, 'ONLINE', 1, 1, 1, 1, 4, 250000, 75000, 'Đau đầu, mệt mỏi kéo dài', 'COMPLETED', 'NEU-SAMPLE-001', '2026-09-20 08:30:00+07', '2026-09-20 08:30:00+07'::timestamptz + interval '30 minutes', 'QR-ENCOUNTER-001', NULL, '2026-09-20 08:05:00+07', NULL, NULL, NULL, '2026-09-19 20:00:00+07', '2026-09-20 09:00:00+07'),
-(2, 'WALK_IN', 2, 2, 2, 2, 2, 350000, 0, 'Đau ngực nhẹ khi vận động', 'COMPLETED', 'NEU-SAMPLE-002', '2026-09-21 09:00:00+07', '2026-09-21 09:00:00+07'::timestamptz + interval '30 minutes', NULL, NULL, '2026-09-21 08:40:00+07', NULL, NULL, NULL, '2026-09-21 08:30:00+07', '2026-09-21 10:00:00+07'),
-(3, 'ONLINE', 3, 3, 3, 3, 4, 280000, 84000, 'Ngứa và nổi mẩn đỏ ở cánh tay', 'COMPLETED', 'NEU-SAMPLE-003', '2026-09-22 14:00:00+07', '2026-09-22 14:00:00+07'::timestamptz + interval '15 minutes', 'QR-ENCOUNTER-003', NULL, '2026-09-22 13:45:00+07', NULL, NULL, NULL, '2026-09-21 19:00:00+07', '2026-09-22 14:40:00+07'),
-(4, 'WALK_IN', 4, 4, 4, 4, 2, 300000, 0, 'Trẻ sốt và ho trong hai ngày', 'COMPLETED', 'NEU-SAMPLE-004', '2026-09-23 09:30:00+07', '2026-09-23 09:30:00+07'::timestamptz + interval '30 minutes', NULL, NULL, '2026-09-23 08:55:00+07', NULL, NULL, NULL, '2026-09-23 08:50:00+07', '2026-09-23 10:10:00+07'),
-(5, 'ONLINE', 5, 5, 5, 5, 5, 380000, 114000, 'Đau bụng dưới và rối loạn chu kỳ', 'COMPLETED', 'NEU-SAMPLE-005', '2026-09-24 14:00:00+07', '2026-09-24 14:00:00+07'::timestamptz + interval '30 minutes', 'QR-ENCOUNTER-005', NULL, '2026-09-24 13:50:00+07', NULL, NULL, NULL, '2026-09-23 21:10:00+07', '2026-09-24 15:00:00+07'),
-(6, 'WALK_IN', 6, 6, 6, 6, 2, 270000, 0, 'Đau họng, nghẹt mũi', 'COMPLETED', 'NEU-SAMPLE-006', '2026-09-25 09:30:00+07', '2026-09-25 09:30:00+07'::timestamptz + interval '15 minutes', NULL, NULL, '2026-09-25 09:05:00+07', NULL, NULL, NULL, '2026-09-25 09:00:00+07', '2026-09-25 10:15:00+07'),
-(7, 'ONLINE', 7, 7, 7, 7, 4, 260000, 78000, 'Mờ mắt khi đọc gần', 'COMPLETED', 'NEU-SAMPLE-007', '2026-09-26 08:45:00+07', '2026-09-26 08:45:00+07'::timestamptz + interval '15 minutes', 'QR-ENCOUNTER-007', NULL, '2026-09-26 08:25:00+07', NULL, NULL, NULL, '2026-09-25 20:00:00+07', '2026-09-26 09:30:00+07'),
-(8, 'WALK_IN', 8, 8, 8, 8, 2, 320000, 0, 'Đau răng hàm dưới bên phải', 'COMPLETED', 'NEU-SAMPLE-008', '2026-09-27 15:00:00+07', '2026-09-27 15:00:00+07'::timestamptz + interval '15 minutes', NULL, NULL, '2026-09-27 14:35:00+07', NULL, NULL, NULL, '2026-09-27 14:30:00+07', '2026-09-27 15:50:00+07'),
-(9, 'ONLINE', 9, 9, 9, 9, 5, 360000, 108000, 'Đau khớp gối khi đi lại', 'COMPLETED', 'NEU-SAMPLE-009', '2026-09-28 09:00:00+07', '2026-09-28 09:00:00+07'::timestamptz + interval '30 minutes', 'QR-ENCOUNTER-009', NULL, '2026-09-28 08:50:00+07', NULL, NULL, NULL, '2026-09-27 18:30:00+07', '2026-09-28 10:00:00+07'),
-(10, 'WALK_IN', 10, 10, 10, 10, 2, 400000, 0, 'Đau đầu kèm mất ngủ', 'COMPLETED', 'NEU-SAMPLE-010', '2026-09-29 14:30:00+07', '2026-09-29 14:30:00+07'::timestamptz + interval '30 minutes', NULL, NULL, '2026-09-29 14:05:00+07', NULL, NULL, NULL, '2026-09-29 14:00:00+07', '2026-09-29 15:20:00+07');
+(1, 'ONLINE', 1, 1, 1, 1, 4, 250000, 75000, 'Đau đầu, mệt mỏi kéo dài', 'COMPLETED', 'PK_20260920_000001', '2026-09-20 08:30:00+07', '2026-09-20 08:30:00+07'::timestamptz + interval '30 minutes', 'PK_20260920_000001', NULL, '2026-09-20 08:05:00+07', NULL, NULL, NULL, '2026-09-19 20:00:00+07', '2026-09-20 09:00:00+07'),
+(2, 'WALK_IN', 2, 2, 2, 2, 2, 350000, 0, 'Đau ngực nhẹ khi vận động', 'COMPLETED', 'PK_20260921_000002', '2026-09-21 09:00:00+07', '2026-09-21 09:00:00+07'::timestamptz + interval '30 minutes', NULL, NULL, '2026-09-21 08:40:00+07', NULL, NULL, NULL, '2026-09-21 08:30:00+07', '2026-09-21 10:00:00+07'),
+(3, 'ONLINE', 3, 3, 3, 3, 4, 280000, 84000, 'Ngứa và nổi mẩn đỏ ở cánh tay', 'COMPLETED', 'PK_20260922_000003', '2026-09-22 14:00:00+07', '2026-09-22 14:00:00+07'::timestamptz + interval '15 minutes', 'PK_20260922_000003', NULL, '2026-09-22 13:45:00+07', NULL, NULL, NULL, '2026-09-21 19:00:00+07', '2026-09-22 14:40:00+07'),
+(4, 'WALK_IN', 4, 4, 4, 4, 2, 300000, 0, 'Trẻ sốt và ho trong hai ngày', 'COMPLETED', 'PK_20260923_000004', '2026-09-23 09:30:00+07', '2026-09-23 09:30:00+07'::timestamptz + interval '30 minutes', NULL, NULL, '2026-09-23 08:55:00+07', NULL, NULL, NULL, '2026-09-23 08:50:00+07', '2026-09-23 10:10:00+07'),
+(5, 'ONLINE', 5, 5, 5, 5, 5, 380000, 114000, 'Đau bụng dưới và rối loạn chu kỳ', 'COMPLETED', 'PK_20260924_000005', '2026-09-24 14:00:00+07', '2026-09-24 14:00:00+07'::timestamptz + interval '30 minutes', 'PK_20260924_000005', NULL, '2026-09-24 13:50:00+07', NULL, NULL, NULL, '2026-09-23 21:10:00+07', '2026-09-24 15:00:00+07'),
+(6, 'WALK_IN', 6, 6, 6, 6, 2, 270000, 0, 'Đau họng, nghẹt mũi', 'COMPLETED', 'PK_20260925_000006', '2026-09-25 09:30:00+07', '2026-09-25 09:30:00+07'::timestamptz + interval '15 minutes', NULL, NULL, '2026-09-25 09:05:00+07', NULL, NULL, NULL, '2026-09-25 09:00:00+07', '2026-09-25 10:15:00+07'),
+(7, 'ONLINE', 7, 7, 7, 7, 4, 260000, 78000, 'Mờ mắt khi đọc gần', 'COMPLETED', 'PK_20260926_000007', '2026-09-26 08:45:00+07', '2026-09-26 08:45:00+07'::timestamptz + interval '15 minutes', 'PK_20260926_000007', NULL, '2026-09-26 08:25:00+07', NULL, NULL, NULL, '2026-09-25 20:00:00+07', '2026-09-26 09:30:00+07'),
+(8, 'WALK_IN', 8, 8, 8, 8, 2, 320000, 0, 'Đau răng hàm dưới bên phải', 'COMPLETED', 'PK_20260927_000008', '2026-09-27 15:00:00+07', '2026-09-27 15:00:00+07'::timestamptz + interval '15 minutes', NULL, NULL, '2026-09-27 14:35:00+07', NULL, NULL, NULL, '2026-09-27 14:30:00+07', '2026-09-27 15:50:00+07'),
+(9, 'ONLINE', 9, 9, 9, 9, 5, 360000, 108000, 'Đau khớp gối khi đi lại', 'COMPLETED', 'PK_20260928_000009', '2026-09-28 09:00:00+07', '2026-09-28 09:00:00+07'::timestamptz + interval '30 minutes', 'PK_20260928_000009', NULL, '2026-09-28 08:50:00+07', NULL, NULL, NULL, '2026-09-27 18:30:00+07', '2026-09-28 10:00:00+07'),
+(10, 'WALK_IN', 10, 10, 10, 10, 2, 400000, 0, 'Đau đầu kèm mất ngủ', 'COMPLETED', 'PK_20260929_000010', '2026-09-29 14:30:00+07', '2026-09-29 14:30:00+07'::timestamptz + interval '30 minutes', NULL, NULL, '2026-09-29 14:05:00+07', NULL, NULL, NULL, '2026-09-29 14:00:00+07', '2026-09-29 15:20:00+07');
 
 -- Lưu quan hệ đặt hộ để có thể chọn lại hồ sơ; chỉ xem lịch sử lượt chính mình đặt.
 INSERT INTO patient_delegate(patient_id,user_id,relationship)
@@ -371,26 +397,26 @@ VALUES
 INSERT INTO payment
 (payment_id, encounter_id, payment_type, amount, payment_method, transaction_status, transaction_code, paid_at, refunded_at, created_at, updated_at)
 VALUES
-(1, 1, 'EXAM_FEE', 175000, 'EWALLET', 'SUCCESS', 'TXN20260920001', '2026-09-20 17:10:00+07', NULL, '2026-09-20 17:10:00+07', '2026-09-20 17:10:00+07'),
-(2, 2, 'EXAM_FEE', 350000, 'CASH', 'SUCCESS', 'TXN20260921002', '2026-09-21 10:05:00+07', NULL, '2026-09-21 10:00:00+07', '2026-09-21 10:05:00+07'),
-(3, 3, 'EXAM_FEE', 196000, 'BANK', 'SUCCESS', 'TXN20260922003', '2026-09-22 17:10:00+07', NULL, '2026-09-22 17:10:00+07', '2026-09-22 17:10:00+07'),
-(4, 4, 'EXAM_FEE', 300000, 'CASH', 'SUCCESS', 'TXN20260923004', '2026-09-23 10:15:00+07', NULL, '2026-09-23 10:10:00+07', '2026-09-23 10:15:00+07'),
-(5, 5, 'EXAM_FEE', 266000, 'CARD', 'SUCCESS', 'TXN20260924005', '2026-09-24 17:10:00+07', NULL, '2026-09-24 17:10:00+07', '2026-09-24 17:10:00+07'),
-(6, 6, 'EXAM_FEE', 270000, 'CASH', 'SUCCESS', 'TXN20260925006', '2026-09-25 10:20:00+07', NULL, '2026-09-25 10:15:00+07', '2026-09-25 10:20:00+07'),
-(7, 7, 'EXAM_FEE', 182000, 'EWALLET', 'SUCCESS', 'TXN20260926007', '2026-09-26 17:10:00+07', NULL, '2026-09-26 17:10:00+07', '2026-09-26 17:10:00+07'),
-(8, 8, 'EXAM_FEE', 320000, 'BANK', 'SUCCESS', 'TXN20260927008', '2026-09-27 15:55:00+07', NULL, '2026-09-27 15:50:00+07', '2026-09-27 15:55:00+07'),
-(9, 9, 'EXAM_FEE', 252000, 'CARD', 'SUCCESS', 'TXN20260928009', '2026-09-28 17:10:00+07', NULL, '2026-09-28 17:10:00+07', '2026-09-28 17:10:00+07'),
-(10, 10, 'EXAM_FEE', 400000, 'CASH', 'SUCCESS', 'TXN20260929010', '2026-09-29 15:25:00+07', NULL, '2026-09-29 15:20:00+07', '2026-09-29 15:25:00+07');
+(1, 1, 'EXAM_FEE', 175000, 'EWALLET', 'SUCCESS', 'GD_DEMO_20260920_000001', '2026-09-20 17:10:00+07', NULL, '2026-09-20 17:10:00+07', '2026-09-20 17:10:00+07'),
+(2, 2, 'EXAM_FEE', 350000, 'CASH', 'SUCCESS', 'GD_DEMO_20260921_000002', '2026-09-21 10:05:00+07', NULL, '2026-09-21 10:00:00+07', '2026-09-21 10:05:00+07'),
+(3, 3, 'EXAM_FEE', 196000, 'BANK', 'SUCCESS', 'GD_DEMO_20260922_000003', '2026-09-22 17:10:00+07', NULL, '2026-09-22 17:10:00+07', '2026-09-22 17:10:00+07'),
+(4, 4, 'EXAM_FEE', 300000, 'CASH', 'SUCCESS', 'GD_DEMO_20260923_000004', '2026-09-23 10:15:00+07', NULL, '2026-09-23 10:10:00+07', '2026-09-23 10:15:00+07'),
+(5, 5, 'EXAM_FEE', 266000, 'CARD', 'SUCCESS', 'GD_DEMO_20260924_000005', '2026-09-24 17:10:00+07', NULL, '2026-09-24 17:10:00+07', '2026-09-24 17:10:00+07'),
+(6, 6, 'EXAM_FEE', 270000, 'CASH', 'SUCCESS', 'GD_DEMO_20260925_000006', '2026-09-25 10:20:00+07', NULL, '2026-09-25 10:15:00+07', '2026-09-25 10:20:00+07'),
+(7, 7, 'EXAM_FEE', 182000, 'EWALLET', 'SUCCESS', 'GD_DEMO_20260926_000007', '2026-09-26 17:10:00+07', NULL, '2026-09-26 17:10:00+07', '2026-09-26 17:10:00+07'),
+(8, 8, 'EXAM_FEE', 320000, 'BANK', 'SUCCESS', 'GD_DEMO_20260927_000008', '2026-09-27 15:55:00+07', NULL, '2026-09-27 15:50:00+07', '2026-09-27 15:55:00+07'),
+(9, 9, 'EXAM_FEE', 252000, 'CARD', 'SUCCESS', 'GD_DEMO_20260928_000009', '2026-09-28 17:10:00+07', NULL, '2026-09-28 17:10:00+07', '2026-09-28 17:10:00+07'),
+(10, 10, 'EXAM_FEE', 400000, 'CASH', 'SUCCESS', 'GD_DEMO_20260929_000010', '2026-09-29 15:25:00+07', NULL, '2026-09-29 15:20:00+07', '2026-09-29 15:25:00+07');
 
 -- Thanh toán cọc giả lập 30%; EXAM_FEE phía trên là phần còn lại.
 INSERT INTO payment
 (payment_id, encounter_id, payment_type, amount, payment_method, transaction_status, transaction_code, paid_at, refunded_at, created_at, updated_at)
 VALUES
-(11, 1, 'DEPOSIT', 75000, 'EWALLET', 'SUCCESS', 'DEMO-DEPOSIT-001', '2026-09-19 20:02:00+07', NULL, '2026-09-19 20:02:00+07', '2026-09-19 20:02:00+07'),
-(12, 3, 'DEPOSIT', 84000, 'EWALLET', 'SUCCESS', 'DEMO-DEPOSIT-003', '2026-09-21 19:02:00+07', NULL, '2026-09-21 19:02:00+07', '2026-09-21 19:02:00+07'),
-(13, 5, 'DEPOSIT', 114000, 'EWALLET', 'SUCCESS', 'DEMO-DEPOSIT-005', '2026-09-23 21:12:00+07', NULL, '2026-09-23 21:12:00+07', '2026-09-23 21:12:00+07'),
-(14, 7, 'DEPOSIT', 78000, 'EWALLET', 'SUCCESS', 'DEMO-DEPOSIT-007', '2026-09-25 20:02:00+07', NULL, '2026-09-25 20:02:00+07', '2026-09-25 20:02:00+07'),
-(15, 9, 'DEPOSIT', 108000, 'EWALLET', 'SUCCESS', 'DEMO-DEPOSIT-009', '2026-09-27 18:32:00+07', NULL, '2026-09-27 18:32:00+07', '2026-09-27 18:32:00+07');
+(11, 1, 'DEPOSIT', 75000, 'EWALLET', 'SUCCESS', 'GD_DEMO_20260919_000011', '2026-09-19 20:02:00+07', NULL, '2026-09-19 20:02:00+07', '2026-09-19 20:02:00+07'),
+(12, 3, 'DEPOSIT', 84000, 'EWALLET', 'SUCCESS', 'GD_DEMO_20260921_000012', '2026-09-21 19:02:00+07', NULL, '2026-09-21 19:02:00+07', '2026-09-21 19:02:00+07'),
+(13, 5, 'DEPOSIT', 114000, 'EWALLET', 'SUCCESS', 'GD_DEMO_20260923_000013', '2026-09-23 21:12:00+07', NULL, '2026-09-23 21:12:00+07', '2026-09-23 21:12:00+07'),
+(14, 7, 'DEPOSIT', 78000, 'EWALLET', 'SUCCESS', 'GD_DEMO_20260925_000014', '2026-09-25 20:02:00+07', NULL, '2026-09-25 20:02:00+07', '2026-09-25 20:02:00+07'),
+(15, 9, 'DEPOSIT', 108000, 'EWALLET', 'SUCCESS', 'GD_DEMO_20260927_000015', '2026-09-27 18:32:00+07', NULL, '2026-09-27 18:32:00+07', '2026-09-27 18:32:00+07');
 
 -- 13. MEDICAL_RECORD
 -- Bệnh án mẫu chưa có bản sửa qua API: version=0 và revision_history=[] theo mặc định schema.
@@ -1889,12 +1915,177 @@ SELECT 3,monday+2,monday+2,'AFTERNOON','Dữ liệu mẫu: đề nghị nghỉ c
 SELECT setval(pg_get_serial_sequence('notification', 'notification_id'), (SELECT MAX(notification_id) FROM notification), true);
 INSERT INTO notification(user_id,event_key,notification_type,title,content,reference_type,reference_id)
 SELECT 1,'staff-leave:'||request_id||':created','STAFF_LEAVE','Đơn xin nghỉ chờ duyệt',
-       'Dữ liệu mẫu: đơn #'||request_id||' đang chờ admin duyệt.','STAFF_LEAVE_REQUEST',request_id
+       'Dữ liệu mẫu: đơn '||request_code||' đang chờ admin duyệt.','STAFF_LEAVE_REQUEST',request_id
 FROM staff_leave_request WHERE status='PENDING';
 INSERT INTO notification(user_id,event_key,notification_type,title,content,reference_type,reference_id)
 SELECT user_id,'staff-leave:'||request_id||':reviewed','STAFF_LEAVE','Kết quả đơn xin nghỉ',
        review_note,'STAFF_LEAVE_REQUEST',request_id
 FROM staff_leave_request WHERE status IN ('APPROVED','REJECTED');
+
+-- Các tình huống mẫu theo ngày nạp tại Việt Nam, giữ nguyên lịch sử tháng 09.
+-- Đồng bộ ID thủ công trước khi bổ sung bản ghi tự tăng.
+DO $sequences$
+DECLARE r record;
+BEGIN
+ FOR r IN SELECT table_name,column_name FROM information_schema.columns
+          WHERE table_schema=current_schema() AND is_identity='YES'
+ LOOP
+  EXECUTE format('SELECT setval(pg_get_serial_sequence(%L,%L), COALESCE(MAX(%I),1), MAX(%I) IS NOT NULL) FROM %I',
+                 r.table_name,r.column_name,r.column_name,r.column_name,r.table_name);
+ END LOOP;
+END;
+$sequences$;
+
+-- Bổ sung hôm qua/hôm nay; các ngày tới đã được tạo ở phần lịch đặt mới.
+WITH days AS (
+ SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date + offset_day AS work_date
+ FROM generate_series(-1,0) offset_day
+), shifts(start_time,end_time) AS (VALUES ('08:00'::time,'11:30'::time),('13:30'::time,'17:00'::time))
+INSERT INTO work_schedule(doctor_profile_id,room_id,work_date,start_time,end_time,max_quota,slot_minutes)
+SELECT d.doctor_profile_id,d.doctor_profile_id,day.work_date,s.start_time,s.end_time,
+       210 / CASE WHEN d.doctor_profile_id IN (3,6,7,8) THEN 15 ELSE 30 END,
+       CASE WHEN d.doctor_profile_id IN (3,6,7,8) THEN 15 ELSE 30 END
+FROM doctor_profile d CROSS JOIN days day CROSS JOIN shifts s
+WHERE NOT EXISTS (SELECT 1 FROM work_schedule w WHERE w.doctor_profile_id=d.doctor_profile_id
+                  AND w.work_date=day.work_date AND w.start_time=s.start_time)
+ORDER BY day.work_date,d.doctor_profile_id,s.start_time;
+
+-- Mỗi điều dưỡng một bác sĩ trong cùng buổi, không xếp ca chồng nhau.
+-- nurse@medicare.vn phụ trách BS_001; 12 điều dưỡng còn lại phụ trách BS_002..BS_013.
+INSERT INTO nurse_assignment(nurse_id,schedule_id,assigned_by_id,assigned_at,note)
+SELECT CASE WHEN s.doctor_profile_id=1 THEN 3 ELSE 26+s.doctor_profile_id END,
+       s.schedule_id,1,CURRENT_TIMESTAMP-interval '3 days','Dữ liệu mẫu: hỗ trợ tiếp nhận, hàng chờ và đọc hồ sơ trong ca'
+FROM work_schedule s
+WHERE s.doctor_profile_id BETWEEN 1 AND 13
+ AND s.work_date BETWEEN (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date-1
+                     AND (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date+7
+ORDER BY s.work_date,s.doctor_profile_id,s.start_time;
+
+CREATE TEMP TABLE demo_visit_scenarios ON COMMIT DROP AS
+WITH scenarios(day_offset,shift_start,slot_index,status) AS (VALUES
+ (-1,'08:00'::time,0,'COMPLETED'),(-1,'08:00'::time,1,'NO_SHOW'),(-1,'13:30'::time,0,'COMPLETED'),
+ (0,'08:00'::time,0,'IN_PROGRESS'),(0,'08:00'::time,1,'CHECKED_IN'),(0,'08:00'::time,2,'CONFIRMED'),
+ (0,'13:30'::time,0,'CONFIRMED'),(0,'13:30'::time,1,'CONFIRMED'),(0,'13:30'::time,2,'CONFIRMED'),
+ (1,'08:00'::time,0,'CONFIRMED'),(1,'08:00'::time,1,'CANCELLED'),(1,'08:00'::time,2,'EXPIRED'),
+ (1,'13:30'::time,0,'CONFIRMED'),
+ (2,'08:00'::time,0,'HOLDING'),(2,'08:00'::time,1,'CONFIRMED')
+)
+SELECT s.schedule_id,s.doctor_profile_id,s.room_id,d.consultation_fee,d.user_id AS doctor_user_id,
+       sc.status,sc.day_offset,sc.slot_index,
+       1+((s.doctor_profile_id+sc.slot_index+CASE WHEN s.start_time='13:30' THEN 4 ELSE 0 END-1)%9) AS patient_id,
+       ((s.work_date+s.start_time) AT TIME ZONE 'Asia/Saigon')+make_interval(mins=>sc.slot_index*s.slot_minutes) AS exam_at,
+       s.slot_minutes,
+       CASE WHEN sc.status IN ('IN_PROGRESS','CHECKED_IN') OR (sc.status='COMPLETED' AND s.start_time='13:30')
+            THEN 'WALK_IN' ELSE 'ONLINE' END AS kind
+FROM work_schedule s JOIN doctor_profile d USING(doctor_profile_id)
+JOIN scenarios sc ON s.work_date=(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date+sc.day_offset
+                  AND s.start_time=sc.shift_start;
+
+INSERT INTO encounter(encounter_type,patient_id,doctor_profile_id,schedule_id,room_id,created_by_id,
+ consultation_fee_snapshot,deposit_amount_snapshot,symptoms,registration_details,encounter_status,
+ estimated_exam_at,appointment_end_at,hold_expires_at,checked_in_at,cancelled_by_id,cancel_reason,
+ cancel_origin,cancelled_at,refund_reference_at,created_at)
+SELECT sc.kind,sc.patient_id,sc.doctor_profile_id,sc.schedule_id,sc.room_id,
+       CASE WHEN sc.kind='ONLINE' THEN p.user_id ELSE 2 END,
+       sc.consultation_fee,CASE WHEN sc.kind='ONLINE' THEN sc.consultation_fee ELSE 0 END,
+       CASE (sc.doctor_profile_id%5) WHEN 0 THEN 'Tái khám và kiểm tra sức khỏe định kỳ'
+        WHEN 1 THEN 'Đau đầu, mệt mỏi trong hai ngày' WHEN 2 THEN 'Khó chịu khi vận động, cần kiểm tra'
+        WHEN 3 THEN 'Ngứa, nổi mẩn từng đợt' ELSE 'Ho, đau họng và nghẹt mũi' END,
+       jsonb_build_object('full_name',p.full_name,'dob',p.dob,'gender',p.gender,'phone',p.phone,
+        'id_card',p.id_card,'address',p.address,'health_insurance',p.health_insurance),sc.status,
+       sc.exam_at,sc.exam_at+make_interval(mins=>sc.slot_minutes),
+       CASE WHEN sc.status='HOLDING' THEN CURRENT_TIMESTAMP+interval '10 minutes' END,
+       CASE WHEN sc.status IN ('CHECKED_IN','IN_PROGRESS','COMPLETED') THEN sc.exam_at-interval '10 minutes' END,
+       CASE WHEN sc.status='CANCELLED' THEN 1 END,
+       CASE WHEN sc.status='CANCELLED' THEN 'Dữ liệu mẫu: bệnh viện điều chỉnh lịch khám' END,
+       CASE WHEN sc.status='CANCELLED' THEN 'HOSPITAL' END,
+       CASE WHEN sc.status='CANCELLED' THEN CURRENT_TIMESTAMP-interval '1 hour' END,
+       CASE WHEN sc.status='CANCELLED' THEN sc.exam_at END,
+       CASE WHEN sc.kind='WALK_IN' THEN sc.exam_at-interval '15 minutes'
+            WHEN sc.status='HOLDING' THEN CURRENT_TIMESTAMP
+            ELSE LEAST(sc.exam_at-interval '1 day',CURRENT_TIMESTAMP-interval '2 hours') END
+FROM demo_visit_scenarios sc JOIN patient p USING(patient_id)
+ORDER BY sc.exam_at,sc.doctor_profile_id;
+
+-- Lượt hủy đã từng được xác nhận và phát phiếu trước khi bệnh viện hủy.
+UPDATE encounter SET ticket_code='PK_'||to_char(estimated_exam_at AT TIME ZONE 'Asia/Saigon','YYYYMMDD')
+ ||'_'||lpad(encounter_id::text,greatest(6,length(encounter_id::text)),'0') WHERE encounter_status='CANCELLED';
+
+-- Chỉ tiêu bao gồm giữ chỗ, đã xác nhận/tiếp nhận/đang khám và đã hoàn thành.
+UPDATE work_schedule s SET booked_count=(SELECT count(*) FROM encounter e WHERE e.schedule_id=s.schedule_id
+ AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED'));
+
+-- Nhật ký phản ánh đúng chuỗi trạng thái cho cả trực tuyến và khám trực tiếp.
+INSERT INTO encounter_status_log(encounter_id,old_status,new_status,changed_by_id,note,changed_at)
+SELECT e.encounter_id,NULL,CASE WHEN e.encounter_type='ONLINE' THEN 'HOLDING' ELSE 'CHECKED_IN' END,
+       e.created_by_id,'Dữ liệu mẫu: tạo lượt khám',e.created_at FROM encounter e WHERE e.encounter_id>10;
+INSERT INTO encounter_status_log(encounter_id,old_status,new_status,changed_by_id,note,changed_at)
+SELECT e.encounter_id,'HOLDING','CONFIRMED',e.created_by_id,'Dữ liệu mẫu: đã thanh toán, phát phiếu '||e.ticket_code,
+ e.created_at+interval '1 minute' FROM encounter e
+WHERE e.encounter_id>10 AND e.encounter_type='ONLINE' AND e.encounter_status NOT IN ('HOLDING','EXPIRED');
+INSERT INTO encounter_status_log(encounter_id,old_status,new_status,changed_by_id,note,changed_at)
+SELECT e.encounter_id,'CONFIRMED','CHECKED_IN',2,'Dữ liệu mẫu: người bệnh có mặt',e.checked_in_at FROM encounter e
+WHERE e.encounter_id>10 AND e.encounter_type='ONLINE' AND e.encounter_status='COMPLETED';
+INSERT INTO encounter_status_log(encounter_id,old_status,new_status,changed_by_id,note,changed_at)
+SELECT e.encounter_id,'CHECKED_IN','IN_PROGRESS',d.user_id,'Dữ liệu mẫu: bắt đầu khám',e.estimated_exam_at
+FROM encounter e JOIN doctor_profile d USING(doctor_profile_id)
+WHERE e.encounter_id>10 AND e.encounter_status IN ('IN_PROGRESS','COMPLETED');
+INSERT INTO encounter_status_log(encounter_id,old_status,new_status,changed_by_id,note,changed_at)
+SELECT e.encounter_id,CASE e.encounter_status WHEN 'COMPLETED' THEN 'IN_PROGRESS' WHEN 'EXPIRED' THEN 'HOLDING' ELSE 'CONFIRMED' END,
+ e.encounter_status,CASE WHEN e.encounter_status='COMPLETED' THEN d.user_id ELSE 1 END,
+ 'Dữ liệu mẫu: '||e.encounter_status,
+ CASE WHEN e.encounter_status='CANCELLED' THEN e.cancelled_at WHEN e.encounter_status='EXPIRED' THEN e.created_at+interval '10 minutes'
+      ELSE e.appointment_end_at END
+FROM encounter e JOIN doctor_profile d USING(doctor_profile_id)
+WHERE e.encounter_id>10 AND e.encounter_status IN ('COMPLETED','CANCELLED','EXPIRED','NO_SHOW');
+
+INSERT INTO payment(encounter_id,payment_type,amount,payment_method,transaction_status,paid_at,refunded_at,
+ created_by_id,processed_by_id,failure_reason,result_received_at,created_at)
+SELECT e.encounter_id,CASE WHEN e.encounter_type='ONLINE' THEN 'DEPOSIT' ELSE 'EXAM_FEE' END,
+ e.consultation_fee_snapshot,CASE WHEN e.encounter_type='ONLINE' THEN 'BANK' ELSE 'CASH' END,
+ CASE e.encounter_status WHEN 'HOLDING' THEN 'PENDING' WHEN 'EXPIRED' THEN 'FAILED' WHEN 'CANCELLED' THEN 'REFUNDED' ELSE 'SUCCESS' END,
+ CASE WHEN e.encounter_type='WALK_IN' THEN e.checked_in_at
+      WHEN e.encounter_status NOT IN ('HOLDING','EXPIRED') THEN e.created_at+interval '1 minute' END,
+ CASE WHEN e.encounter_status='CANCELLED' THEN e.cancelled_at END,e.created_by_id,
+ CASE WHEN e.encounter_type='WALK_IN' THEN 2 END,
+ CASE WHEN e.encounter_status='EXPIRED' THEN 'HOLD_EXPIRED' END,
+ CASE WHEN e.encounter_type='WALK_IN' THEN e.checked_in_at
+      WHEN e.encounter_status<>'HOLDING' THEN e.created_at+interval '1 minute' END,e.created_at
+FROM encounter e WHERE e.encounter_id>10;
+INSERT INTO payment(encounter_id,payment_type,amount,payment_method,transaction_status,original_payment_id,
+ paid_at,refunded_at,created_by_id,processed_by_id,reason,result_received_at,created_at)
+SELECT p.encounter_id,'REFUND',p.amount,p.payment_method,'SUCCESS',p.payment_id,e.cancelled_at,e.cancelled_at,
+ 1,1,'Dữ liệu mẫu: hoàn đủ do bệnh viện hủy lịch',e.cancelled_at,e.cancelled_at
+FROM payment p JOIN encounter e USING(encounter_id)
+WHERE e.encounter_id>10 AND e.encounter_status='CANCELLED' AND p.payment_type='DEPOSIT';
+
+INSERT INTO medical_record(encounter_id,diagnosis,treatment,doctor_notes,examined_at,created_at)
+SELECT e.encounter_id,CASE WHEN e.encounter_status='COMPLETED' THEN 'Theo dõi triệu chứng, tình trạng ổn định' END,
+ CASE WHEN e.encounter_status='COMPLETED' THEN 'Nghỉ ngơi, dùng thuốc theo đơn, tái khám khi triệu chứng kéo dài' END,
+ 'Dữ liệu minh họa giao diện bệnh án, không phải chỉ định điều trị thực tế.',
+ CASE WHEN e.encounter_status='COMPLETED' THEN e.appointment_end_at END,e.estimated_exam_at
+FROM encounter e WHERE e.encounter_id>10 AND e.encounter_status IN ('COMPLETED','IN_PROGRESS');
+INSERT INTO prescription_item(record_id,medication_name,dosage,quantity,instructions)
+SELECT m.record_id,'Thuốc mẫu A (minh họa)','Theo chỉ định bác sĩ',10,'Dữ liệu mẫu để kiểm tra bố cục, không sử dụng làm đơn thuốc'
+FROM medical_record m JOIN encounter e USING(encounter_id) WHERE e.encounter_id>10 AND e.encounter_status='COMPLETED';
+INSERT INTO review(record_id,rating,comment,created_at)
+SELECT m.record_id,3+(e.doctor_profile_id%3),
+ CASE e.doctor_profile_id%3 WHEN 0 THEN 'Dữ liệu mẫu: cần cải thiện thời gian chờ'
+ WHEN 1 THEN 'Dữ liệu mẫu: được hướng dẫn đầy đủ' ELSE 'Dữ liệu mẫu: bác sĩ giải thích rõ ràng, tiếp đón chu đáo' END,m.examined_at+interval '1 hour'
+FROM medical_record m JOIN encounter e USING(encounter_id) JOIN work_schedule s USING(schedule_id)
+WHERE e.encounter_id>10 AND e.encounter_status='COMPLETED' AND s.start_time='08:00';
+
+INSERT INTO notification(user_id,event_key,notification_type,title,content,reference_type,reference_id,created_at)
+SELECT p.user_id,'sample-encounter:'||e.encounter_id,'ENCOUNTER','Cập nhật lịch khám '||e.encounter_code,
+ 'Dữ liệu mẫu: '||e.encounter_code||' · '||COALESCE(e.ticket_code,'Chưa phát phiếu')||' · '||e.encounter_status,
+ 'ENCOUNTER',e.encounter_id,e.created_at FROM encounter e JOIN patient p USING(patient_id) WHERE e.encounter_id>10;
+INSERT INTO notification(user_id,event_key,notification_type,title,content,reference_type,reference_id)
+SELECT DISTINCT a.nurse_id,'sample-assignment:'||a.nurse_id,'NURSE_ASSIGNMENT','Đã có ca khám được phân công',
+ 'Dữ liệu mẫu: mở Lịch làm việc và Bệnh nhân sắp khám để xem các ca có người bệnh.',NULL::text,NULL::integer
+FROM nurse_assignment a JOIN work_schedule s USING(schedule_id)
+WHERE s.work_date=(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date;
+
+DROP TABLE pg_temp.demo_visit_scenarios;
 
 -- Đồng bộ sequence sau khi seed ID thủ công để lần INSERT tiếp theo không bị trùng khóa chính.
 SELECT setval(pg_get_serial_sequence('role', 'role_id'), (SELECT MAX(role_id) FROM role), true);

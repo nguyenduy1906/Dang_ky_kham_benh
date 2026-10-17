@@ -9,6 +9,7 @@ class Element {
   dataset = {}; listeners = {}; children = []; disabled = false; files = []; hidden = false; readOnly = false;
   constructor(id = "") { this.id = id; }
   addEventListener(type, handler) { this.listeners[type] = handler; }
+  dispatchEvent(event) { this.listeners[event.type]?.(event); }
   replaceChildren(...children) { this.children = children; this.textContent = ""; }
   setCustomValidity(value) { this.validationMessage = value; }
   querySelector() { return this.feedback; }
@@ -19,13 +20,16 @@ class Element {
   close() { this.open = false; this.listeners.close?.(); }
   focus() { this.focused = true; }
 }
-let nodes, calls, user, doctor, missing, saveError, instance = 0;
+let nodes, calls, user, doctor, missing, saveError, stored, passwordReply, instance = 0;
 const tick = async () => { for (let i = 0; i < 8; i++) await new Promise(resolve => setImmediate(resolve)); };
 beforeEach(() => {
   nodes = new Map(); calls = []; missing = false; saveError = false;
+  stored = new Map([["neu-medical.auth", JSON.stringify({ token: "staff-profile-test", expiresAt: Date.now() + 60000 })]]);
+  globalThis.sessionStorage = { getItem: key => stored.get(key) || null, setItem: (key, value) => stored.set(key, value), removeItem: key => stored.delete(key) };
+  passwordReply = () => Response.json({ access_token: "updated-staff-token", token_type: "Bearer", expires_in: 7200 });
   user = { user_id: 6, role_name: "DOCTOR", full_name: "Bác sĩ kiểm thử", phone: "0902000001", email: "doctor@example.test", account_status: "ACTIVE", approval_status: "APPROVED", email_verified: true, created_at: "2026-09-01T00:00:00Z" };
   doctor = { academic_degree: "Thạc sĩ", experience_years: 0, specialization: "Nội tổng quát", introduction: "Giới thiệu đã lưu", department_name: "Khoa Nội", consultation_fee: 380000, is_active: true, avatar_url: null };
-  for (const id of ["page-refresh", "page-status", "page-body", "staff-profile-description", "staff-profile-avatar", "staff-profile-name", "staff-account-name", "staff-profile-facts", "staff-managed-fields", "staff-profile-edit", "staff-profile-cancel", "staff-profile-actions", "staff-dialog-close", "staff-password-dialog", "staff-password-open", "staff-password-close", "staff-password-feedback"])
+  for (const id of ["page-refresh", "page-status", "page-body", "staff-profile-description", "staff-profile-avatar", "staff-profile-name", "staff-account-name", "staff-profile-facts", "staff-managed-fields", "staff-profile-edit", "staff-profile-cancel", "staff-profile-actions", "staff-dialog-close", "staff-password-dialog", "staff-password-open", "staff-password-close", "staff-password-submit", "staff-password-feedback"])
     nodes.set(`#${id}`, new Element(id));
   nodes.set(".staff-initials", new Element());
   for (const [id, fields] of [["staff-profile-form", ["phone", "email"]], ["staff-password-form", ["current_password", "new_password", "confirm_password"]], ["avatar-form", ["file"]]]) {
@@ -50,7 +54,8 @@ beforeEach(() => {
   setAccessToken("staff-profile-test");
   globalThis.fetch = async (url, options) => {
     const path = new URL(url).pathname, body = typeof options.body === "string" ? JSON.parse(options.body) : options.body;
-    calls.push({ path, method: options.method, body });
+    calls.push({ path, method: options.method, body, authorization: options.headers.get("Authorization") });
+    if (path === "/me/change-password" && options.method === "POST") return passwordReply();
     if (path === "/doctor/profile" && options.method === "GET") return missing
       ? Response.json({ error: { code: "DOCTOR_NOT_FOUND", message: "Chưa có hồ sơ" } }, { status: 404 })
       : Response.json({ doctor });
@@ -205,22 +210,100 @@ test("failed save preserves editing and draft contacts; retry succeeds and reloc
   assert.equal(nodes.get("#staff-profile-actions").hidden, true);
 });
 
-test("password preview validates confirmation, clears secrets and never changes a password", async () => {
-  await load();
-  const form = nodes.get("#staff-password-form"), fields = form.elements;
+function openPassword() {
   nodes.get("#staff-password-open").listeners.click();
-  assert.equal(nodes.get("#staff-password-dialog").open, true);
+  const fields = nodes.get("#staff-password-form").elements;
   fields.current_password.value = "CurrentPassword1";
   fields.new_password.value = "NewPassword123";
-  fields.confirm_password.value = "Mismatch12345";
-  await save("staff-password-form");
-  assert.match(fields.confirm_password.validationMessage, /chưa khớp/);
   fields.confirm_password.value = "NewPassword123";
+  return fields;
+}
+
+for (const role of ["DOCTOR", "NURSE", "RECEPTIONIST"]) {
+  test(`${role} password change sends only the API fields, rotates the session and clears secrets`, async () => {
+    user.role_name = role; await load();
+    const fields = openPassword();
+    fields.confirm_password.value = "Mismatch12345";
+    await save("staff-password-form");
+    assert.match(fields.confirm_password.validationMessage, /chưa khớp/);
+    assert.equal(calls.some(call => call.path === "/me/change-password"), false);
+    fields.confirm_password.value = "NewPassword123";
+    await save("staff-password-form");
+    const request = calls.find(call => call.path === "/me/change-password");
+    assert.equal(request.method, "POST");
+    assert.equal(request.authorization, "Bearer staff-profile-test");
+    assert.deepEqual(request.body, { current_password: "CurrentPassword1", new_password: "NewPassword123" });
+    assert.equal(JSON.parse(stored.get("neu-medical.auth")).token, "updated-staff-token");
+    assert.match(nodes.get("#staff-password-feedback").textContent, /thành công/);
+    for (const field of Object.values(fields)) assert.equal(field.value, "");
+    fields.current_password.value = "MustClearOnClose";
+    nodes.get("#staff-password-close").listeners.click();
+    for (const field of Object.values(fields)) assert.equal(field.value, "");
+  });
+}
+
+test("wrong current password displays the API error, keeps the dialog and permits retry", async () => {
+  await load(); const fields = openPassword();
+  passwordReply = () => Response.json({ error: { code: "WRONG_PASSWORD", message: "Mật khẩu hiện tại không đúng" } }, { status: 400 });
   await save("staff-password-form");
-  assert.match(nodes.get("#staff-password-feedback").textContent, /chưa được thay đổi/);
-  for (const field of Object.values(fields)) assert.equal(field.value, "");
-  fields.current_password.value = "MustClearOnClose";
+  assert.match(nodes.get("#staff-password-feedback").textContent, /hiện tại không đúng/);
+  assert.equal(nodes.get("#staff-password-feedback").dataset.error, "true");
+  assert.equal(nodes.get("#staff-password-dialog").open, true);
+  assert.equal(fields.current_password.value, "CurrentPassword1");
+  assert.equal(nodes.get("#staff-password-submit").disabled, false);
+  assert.equal(JSON.parse(stored.get("neu-medical.auth")).token, "staff-profile-test");
+  passwordReply = () => Response.json({ access_token: "retry-token", token_type: "Bearer", expires_in: 7200 });
+  await save("staff-password-form");
+  assert.equal(JSON.parse(stored.get("neu-medical.auth")).token, "retry-token");
+  assert.match(nodes.get("#staff-password-feedback").textContent, /thành công/);
+});
+
+test("pending password request blocks duplicate submissions, closing and Escape", async () => {
+  await load(); openPassword(); let finish;
+  passwordReply = () => new Promise(resolve => { finish = resolve; });
+  const form = nodes.get("#staff-password-form");
+  form.listeners.submit({ preventDefault() {} });
+  form.listeners.submit({ preventDefault() {} });
+  await tick();
+  assert.equal(calls.filter(call => call.path === "/me/change-password").length, 1);
+  assert.equal(nodes.get("#staff-password-submit").disabled, true);
   nodes.get("#staff-password-close").listeners.click();
+  assert.equal(nodes.get("#staff-password-dialog").open, true);
+  let prevented = false;
+  nodes.get("#staff-password-dialog").listeners.cancel({ preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  finish(Response.json({ access_token: "new-token", token_type: "Bearer", expires_in: 7200 })); await tick();
+  assert.equal(nodes.get("#staff-password-submit").disabled, false);
+});
+
+test("leaving the page clears password fields and ignores a late response", async () => {
+  await load(); const fields = openPassword(); let finish;
+  passwordReply = () => new Promise(resolve => { finish = resolve; });
+  nodes.get("#staff-password-form").listeners.submit({ preventDefault() {} }); await tick();
+  window.listeners.pagehide();
   for (const field of Object.values(fields)) assert.equal(field.value, "");
-  assert.equal(calls.length, 1);
+  finish(Response.json({ access_token: "late-token", token_type: "Bearer", expires_in: 7200 })); await tick();
+  assert.equal(JSON.parse(stored.get("neu-medical.auth")).token, "staff-profile-test");
+  assert.equal(nodes.get("#staff-password-feedback").textContent, "");
+});
+
+test("expired authorization clears the staff session and password fields", async () => {
+  await load(); const fields = openPassword();
+  passwordReply = () => Response.json({ error: { code: "UNAUTHORIZED", message: "Phiên đăng nhập đã hết hạn" } }, { status: 401 });
+  await save("staff-password-form");
+  assert.equal(stored.has("neu-medical.auth"), false);
+  assert.equal(nodes.get("#staff-password-dialog").open, false);
+  for (const field of Object.values(fields)) assert.equal(field.value, "");
+  assert.doesNotMatch(nodes.get("#staff-password-feedback").textContent, /thành công/);
+});
+
+test("network failure preserves the session and warns about an uncertain password change", async () => {
+  await load(); openPassword();
+  passwordReply = () => { throw new TypeError("Failed to fetch"); };
+  await save("staff-password-form");
+  assert.equal(JSON.parse(stored.get("neu-medical.auth")).token, "staff-profile-test");
+  assert.equal(nodes.get("#staff-password-dialog").open, true);
+  assert.equal(nodes.get("#staff-password-submit").disabled, false);
+  assert.match(nodes.get("#staff-password-feedback").textContent, /kiểm tra đăng nhập trước khi thử lại/);
+  assert.doesNotMatch(nodes.get("#staff-password-feedback").textContent, /thành công/);
 });

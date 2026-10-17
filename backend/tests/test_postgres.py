@@ -111,15 +111,15 @@ class PostgresTests(unittest.TestCase):
             db.execute(sample)
             db.execute(sample)
             self.assertEqual(db.execute('SELECT count(*) AS n FROM users').fetchone()['n'], 39)
-            self.assertEqual(db.execute('SELECT count(*) AS n FROM encounter').fetchone()['n'], 10)
+            self.assertEqual(db.execute('SELECT count(*) AS n FROM encounter').fetchone()['n'], 220)
             self.assertEqual(db.execute("SELECT count(*) AS n FROM encounter WHERE schedule_id IS NULL").fetchone()['n'], 0)
             demo = db.execute("""
                 WITH demo_dates AS (
                     SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date AS today
                 )
                 SELECT count(*) AS n, min(work_date) AS first_day, max(work_date) AS last_day,
-                       bool_and(booked_count=0 AND schedule_status='OPEN' AND max_quota=210/slot_minutes) AS available,
-                       (SELECT today+1 FROM demo_dates) AS expected_first,
+                       bool_and(booked_count<max_quota AND schedule_status='OPEN' AND max_quota=210/slot_minutes) AS available,
+                       (SELECT today-1 FROM demo_dates) AS expected_first,
                        (SELECT (today+INTERVAL '1 month')::date FROM demo_dates) AS expected_last
                 FROM work_schedule WHERE schedule_id > 10 AND doctor_profile_id<=10
             """).fetchone()

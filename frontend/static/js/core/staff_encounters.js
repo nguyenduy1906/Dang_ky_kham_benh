@@ -1,3 +1,4 @@
+import { code } from "./business_codes.js";
 import * as api from "../api/encounter.js";
 import * as records from "../api/medical_record.js";
 import { getPatient } from "../api/patient.js";
@@ -43,7 +44,7 @@ export function initEncounterList({ role, completed = false, assignments = [] })
   }
   function render() {
     const query = $("#encounter-search").value.trim().normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-    const matches = rows.filter(e => `${e.patient_name} ${e.encounter_id} ${e.ticket_code || ""}`.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().includes(query));
+    const matches = rows.filter(e => `${e.patient_name} ${code("LK",e.encounter_id)} ${code("BN",e.patient_id)} ${e.ticket_code || ""}`.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().includes(query));
     $("#encounter-list").innerHTML = table(["Người bệnh / phiếu khám", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", "Thao tác"], matches.map(e => `<tr>${encounterColumns(e)}<td><div class="actions"><button class="secondary" data-detail="${e.encounter_id}">Chi tiết</button>${role === "doctor" ? `<a class="button-link secondary" href="clinical.html?encounter_id=${e.encounter_id}">${completed ? "Xem / bổ sung" : "Mở bệnh án"}</a>` : ""}${role === "reception" && e.encounter_status === "CONFIRMED" ? `<button data-checkin="${e.encounter_id}">Check-in</button>` : ""}</div></td></tr>`));
     $("#encounter-list").querySelectorAll("[data-detail]").forEach(button => button.addEventListener("click", () => run(async () => {
       const e = (await api.getEncounter(button.dataset.detail)).encounter;

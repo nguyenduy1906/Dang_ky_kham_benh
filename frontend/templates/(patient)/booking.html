@@ -74,7 +74,7 @@
             <section class="booking-step booking-patient-step" aria-labelledby="booking-patient-title">
               <div class="booking-step-heading"><h2 id="booking-patient-title">Thông tin người khám</h2></div>
               <div class="booking-patient-grid">
-                <div class="appointment-field"><label for="appointment-patient">Người tới khám *</label><select id="appointment-patient" required><option value="">Đang tải hồ sơ…</option></select><button type="button" class="add-relative-button" id="add-relative">＋ Thêm hồ sơ người khám</button><p class="field-note" id="relative-status" role="status"></p></div>
+                <div class="appointment-field"><label for="appointment-patient">Người tới khám *</label><select id="appointment-patient" required><option value="self">Đang tải thông tin của bạn…</option></select><button type="button" class="add-relative-button" id="add-relative">＋ Thêm hồ sơ người thân</button><p class="field-note" id="relative-status" role="status"></p></div>
                 <div class="appointment-field"><label for="appointment-location">Cơ sở khám</label><select id="appointment-location"><option>NEU Medical — 207 Giải Phóng</option></select></div>
                 <div class="appointment-field booking-patient-full"><label for="appointment-symptoms">Vấn đề sức khỏe gặp phải *</label><textarea id="appointment-symptoms" required rows="3" maxlength="2000" placeholder="Mô tả ngắn gọn triệu chứng..."></textarea></div>
               </div>
@@ -140,7 +140,7 @@
     </dialog>
     <dialog id="relative-dialog" aria-labelledby="relative-title">
       <div class="dialog-heading">
-        <h2 id="relative-title">Thêm hồ sơ người khám</h2>
+        <h2 id="relative-title">Thêm hồ sơ người thân</h2>
         <button
           type="button"
           id="relative-close"
@@ -184,7 +184,6 @@
             <label for="relative-relationship">Quan hệ *</label
             ><select id="relative-relationship" name="relationship" required>
               <option value="">Chọn quan hệ</option>
-              <option value="SELF">Bản thân</option>
               <option value="PARENT">Cha / Mẹ</option>
               <option value="CHILD">Con</option>
               <option value="SPOUSE">Vợ / Chồng</option>

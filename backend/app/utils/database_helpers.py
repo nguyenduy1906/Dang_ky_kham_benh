@@ -1,12 +1,13 @@
 """Hàm SQL dùng chung cho các model """
 from datetime import date, datetime, time
 from decimal import Decimal
+from backend.app.utils.business_codes import with_business_codes
 
 
 def jsonable(value):
     """Chuyển date/time/Decimal thành kiểu JSON được."""
     if isinstance(value, dict):
-        return {k: jsonable(v) for k, v in value.items()}
+        return {k: jsonable(v) for k, v in with_business_codes(value).items()}
     if isinstance(value, (list, tuple)):
         return [jsonable(v) for v in value]
     if isinstance(value, (datetime, date, time)):

@@ -1,3 +1,4 @@
+import { code, parseCode } from "../core/business_codes.js";
 import { initOverviewPeriod, overviewRows, overviewDayParams } from "../core/staff_overview.js";
 import { staffReady } from "../core/staff_workspace.js";
 import * as schedules from "../api/schedule.js";
@@ -66,7 +67,7 @@ async function clinical() {
     const e = (await encounters.getEncounter(requested)).encounter;
     if (!available.some(item => item.encounter_id === e.encounter_id)) available.unshift(e);
   }
-  $("#page-body").innerHTML = panel("Chọn lượt khám", `<form id="encounter-picker" class="staff-toolbar"><label>Lượt khám<select id="clinical-encounter"><option value="">Chọn lượt khám được giao</option>${available.map(e => `<option value="${e.encounter_id}">#${e.encounter_id} · ${esc(e.patient_name)} · ${date(e.work_date)} · ${esc(e.room_name)}</option>`).join("")}</select></label><label>Hoặc nhập mã lượt khám<input type="number" id="clinical-id" min="1" step="1" placeholder="Mã lượt khám"></label><button type="submit">Mở lượt khám</button></form><p class="muted">Danh sách hiển thị các lượt gần nhất. Có thể mở theo mã lượt khám hoặc từ trang Lượt khám được giao.</p>`) + '<div id="clinical-body"></div>';
+  $("#page-body").innerHTML = panel("Chọn lượt khám", `<form id="encounter-picker" class="staff-toolbar"><label>Lượt khám<select id="clinical-encounter"><option value="">Chọn lượt khám được giao</option>${available.map(e => `<option value="${e.encounter_id}">${code("LK", e.encounter_id)} · ${esc(e.patient_name)} · ${date(e.work_date)} · ${esc(e.room_name)}</option>`).join("")}</select></label><label>Hoặc nhập mã lượt khám<input type="text" id="clinical-id" placeholder="LK_001"></label><button type="submit">Mở lượt khám</button></form><p class="muted">Danh sách hiển thị các lượt gần nhất. Có thể mở theo mã lượt khám hoặc từ trang Lượt khám được giao.</p>`) + '<div id="clinical-body"></div>';
   function medRow(item = {}) {
     const row = document.createElement("fieldset"); row.className = "medication-row";
     row.innerHTML = `<legend>Thuốc</legend><div class="form-grid"><label>Tên thuốc *<input data-field="medication_name" required maxlength="200" value="${esc(item.medication_name)}"></label><label>Liều dùng<input data-field="dosage" maxlength="200" value="${esc(item.dosage)}"></label><label>Số lượng *<input data-field="quantity" type="number" min="1" step="1" required value="${esc(item.quantity || 1)}"></label><label>Hướng dẫn sử dụng<input data-field="instructions" maxlength="500" value="${esc(item.instructions)}"></label></div><button class="secondary" type="button">Xóa thuốc</button>`;
@@ -116,7 +117,7 @@ async function clinical() {
       $("#complete-form").addEventListener("submit", event => { event.preventDefault(); submit(event.currentTarget, async () => { await save(payload, true); $("#staff-dialog").close(); }, "Đã hoàn tất khám."); });
     });
   }
-  $("#encounter-picker").addEventListener("submit", event => { event.preventDefault(); const id = $("#clinical-id").value || $("#clinical-encounter").value; run(() => select(id)); });
+  $("#encounter-picker").addEventListener("submit", event => { event.preventDefault(); const id = $("#clinical-id").value || $("#clinical-encounter").value; run(() => select(parseCode(id, "LK"))); });
   if (requested && /^\d+$/.test(requested)) await select(requested);
   window.addEventListener("beforeunload", event => { if (dirty) { event.preventDefault(); event.returnValue = ""; } });
 }

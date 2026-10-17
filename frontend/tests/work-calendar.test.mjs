@@ -101,7 +101,7 @@ for (const role of ["DOCTOR", "NURSE", "RECEPTIONIST"]) test(`${role} loads actu
   assert.ok(calls.every(c => !c.url.searchParams.has("user_id")));
   assert.match(get("#calendar-announcement").textContent, /10 ca làm việc, 0 ca đã duyệt nghỉ/);
   assert.match(get("#calendar-grid").innerHTML, /08:00 – 11:30/);
-  assert.match(get("#calendar-grid").innerHTML, /Phòng #9/);
+  assert.match(get("#calendar-grid").innerHTML, /Phòng PH_009/);
   assert.doesNotMatch(get("#calendar-grid").innerHTML, /Phòng khám 201|07:00|minh họa/);
   assert.match(get("#leave-requests").innerHTML, /&lt;script&gt;/);
 });
@@ -143,7 +143,7 @@ test("submission maps payload and handover, locks duplicates, and only reports s
   assert.equal(get("#leave-submit").disabled, true);
   finish(); await pending;
   assert.deepEqual(calls.find(c => c.method === "POST").data, { from_date: addDays(monday(), 14), to_date: addDays(monday(), 14), period: "MORNING", reason: "Việc gia đình\n\nGhi chú bàn giao: Đã bàn giao ca" });
-  assert.match(get("#leave-feedback").textContent, /Đã gửi đơn #99, đang chờ admin duyệt/);
+  assert.match(get("#leave-feedback").textContent, /Đã gửi đơn NP_099, đang chờ admin duyệt/);
   assert.equal(get("#leave-submit").disabled, false); assert.equal(form().elements.reason.value, "");
 });
 
@@ -180,7 +180,7 @@ test("withdrawing requires confirmation and backend success, then refreshes cale
   await click("#dialog-cancel-request");
   assert.equal(calls.filter(c => c.path === "/staff/leave-requests/7/cancel").length, 1);
   assert.equal(rows[0].status, "CANCELLED");
-  assert.match(get("#leave-list-status").textContent, /Đã rút đơn #7/);
+  assert.match(get("#leave-list-status").textContent, /Đã rút đơn NP_007/);
   assert.equal(get("#calendar-dialog").open, false);
 });
 

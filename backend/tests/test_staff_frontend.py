@@ -74,7 +74,7 @@ class StaffFrontendTests(unittest.TestCase):
         self.assertEqual(visit.status_code, 201, visit.json)
         encounter = visit.json['encounter']
         self.assertEqual(encounter['encounter_status'], 'CHECKED_IN')
-        self.assertTrue(encounter['ticket_code'].startswith('NEU-'))
+        self.assertTrue(encounter['ticket_code'].startswith('PK_'))
         eid = encounter['encounter_id']
         self.client.post('/admin/nurse-assignments', headers=admin,
                          json={'nurse_id': self.actors['NURSE']['user_id'], 'schedule_id': encounter['schedule_id']})

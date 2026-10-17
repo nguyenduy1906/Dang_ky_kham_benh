@@ -155,7 +155,7 @@ class EncounterWorkflowTests(unittest.TestCase):
                 response = self.client.post(url, headers=headers, json={'result': 'SUCCESS'})
                 self.assertEqual(response.status_code, 200, response.json)
                 self.assertEqual(response.json['encounter']['encounter_status'], 'CONFIRMED')
-                self.assertTrue(response.json['encounter']['ticket_code'].startswith('NEU-'))
+                self.assertTrue(response.json['encounter']['ticket_code'].startswith('PK_'))
         with get_db_connection() as db:
             self.assertEqual(db.execute('SELECT booked_count FROM work_schedule WHERE schedule_id=1').fetchone()['booked_count'], 1)
             self.assertEqual(db.execute("SELECT COUNT(*) n FROM payment WHERE encounter_id=%s AND transaction_status='SUCCESS'", (eid,)).fetchone()['n'], 1)
@@ -235,11 +235,11 @@ class EncounterWorkflowTests(unittest.TestCase):
         self.assertIsNone(hold['ticket_code'])
         walk = self.client.post('/staff/encounters/walk-in', headers=self.headers('ADMIN'), json={'patient_id': 2, 'doctor_profile_id': 1})
         self.assertEqual(walk.status_code, 201, walk.json)
-        self.assertTrue(walk.json['encounter']['ticket_code'].startswith('NEU-'))
+        self.assertTrue(walk.json['encounter']['ticket_code'].startswith('PK_'))
         self.assertNotEqual(walk.json['encounter']['estimated_exam_at'], hold['estimated_exam_at'])
         self.assertTrue(self.pay(eid))
         online = self.client.get(f'/encounters/{eid}', headers=self.headers('USER')).json['encounter']
-        self.assertTrue(online['ticket_code'].startswith('NEU-'))
+        self.assertTrue(online['ticket_code'].startswith('PK_'))
         with get_db_connection() as db:
             self.assertTrue(service.confirm_paid_online(db, eid, self.actors['ADMIN']['user_id']))
         wid = walk.json['encounter']['encounter_id']
@@ -300,7 +300,7 @@ class EncounterWorkflowTests(unittest.TestCase):
         self.assertEqual(moved.json['encounter']['deposit_amount_snapshot'], 100000)
         self.assertEqual(self.client.get(f'/encounters/{eid}/transfer-history', headers=self.headers('USER')).json['total'], 1)
         second = self.book(2); self.pay(second)
-        self.assertTrue(self.client.get(f'/encounters/{second}', headers=self.headers('USER')).json['encounter']['ticket_code'].startswith('NEU-'))
+        self.assertTrue(self.client.get(f'/encounters/{second}', headers=self.headers('USER')).json['encounter']['ticket_code'].startswith('PK_'))
         self.assertEqual(moved.json['encounter']['ticket_code'], self.client.get(f'/encounters/{eid}', headers=self.headers('USER')).json['encounter']['ticket_code'])
         with get_db_connection() as db:
             db.execute("UPDATE work_schedule SET schedule_status='UNAVAILABLE' WHERE schedule_id=1")

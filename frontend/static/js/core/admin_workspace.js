@@ -1,3 +1,4 @@
+import { code, codeParams } from "./business_codes.js";
 import * as auth from "../api/auth.js";
 import * as patients from "../api/patient.js";
 import * as doctors from "../api/doctor.js";
@@ -20,7 +21,7 @@ const dataForm = form => {
   for(const collection of form.querySelectorAll("[data-collection]")) {
     data[collection.dataset.collection]=JSON.stringify([...collection.querySelectorAll("[data-item]")].map(item=>Object.fromEntries([...item.querySelectorAll("[data-field]")].map(input=>[input.dataset.field,input.value.trim()]))));
   }
-  return data;
+  return codeParams(data);
 };
 const notice = text => `<p class="admin-note">${esc(text)}</p>`;
 const feedback = '<p class="form-feedback" role="status" aria-live="polite"></p>';
@@ -36,8 +37,8 @@ async function references(names,signal) {
     if(name==="rooms")result[name]=(await catalog.listRooms({include_inactive:true},{signal})).items.map(r=>[r.room_id,`${r.room_name} · ${r.department_name}`]);
     if(name==="doctors")result[name]=(await allPages(doctors.listDoctors,{include_inactive:true},signal)).map(r=>[r.doctor_profile_id,r.full_name]);
     if(name==="roles")result[name]=(await auth.listRoles({signal})).items.map(r=>[r.role_name,label(r.role_name)]);
-    if(name==="doctorUsers"||name==="nurses")result[name]=(await allPages(auth.listUsers,{role:name==="nurses"?"NURSE":"DOCTOR",account_status:"ACTIVE",approval_status:"APPROVED"},signal)).map(r=>[r.user_id,`${r.full_name} (#${r.user_id})`]);
-    if(name==="schedules")result[name]=(await allPages(schedules.listAdminSchedules,{from_date:today()},signal)).filter(r=>["OPEN","FULL"].includes(r.schedule_status)).map(r=>[r.schedule_id,`#${r.schedule_id} · ${date(r.work_date)} · ${r.start_time.slice(0,5)} · ${r.room_name} · ${r.doctor_name}`]);
+    if(name==="doctorUsers"||name==="nurses")result[name]=(await allPages(auth.listUsers,{role:name==="nurses"?"NURSE":"DOCTOR",account_status:"ACTIVE",approval_status:"APPROVED"},signal)).map(r=>[r.user_id,`${r.full_name} (${code("TK", r.user_id)})`]);
+    if(name==="schedules")result[name]=(await allPages(schedules.listAdminSchedules,{from_date:today()},signal)).filter(r=>["OPEN","FULL"].includes(r.schedule_status)).map(r=>[r.schedule_id,`${code("CA", r.schedule_id)} · ${date(r.work_date)} · ${r.start_time.slice(0,5)} · ${r.room_name} · ${r.doctor_name}`]);
   }));
   return result;
 }
@@ -51,7 +52,7 @@ function fieldsForm(key,row,refs) {
 }
 function detailMarkup(key,row) {
   const config=resources[key];
-  const extra={users:[["Email đã xác minh",row.email_verified?"Có":"Chưa"],["Đã xóa",row.is_deleted?"Có":"Không"],["Ngày tạo",stamp(row.created_at)]],patients:[["CCCD",row.id_card],["Giới tính",row.gender],["Địa chỉ",row.address],["BHYT",row.health_insurance],["Tài khoản liên kết",row.user_id]],doctors:[["Mã tài khoản",row.user_id],["Chuyên môn",row.specialization],["Giới thiệu",row.introduction]],departments:[["Mô tả",row.description],["Giới thiệu",row.overview],["Chức năng, nhiệm vụ",row.mission]],assignments:[["Ghi chú",row.note],["Ngày phân công",stamp(row.assigned_at)],["Người phân công",row.assigned_by_id],["Ngày thu hồi",stamp(row.revoked_at)],["Người thu hồi",row.revoked_by_id]],encounters:[["Phòng",row.room_name],["Triệu chứng",row.symptoms],["Phí khám đã chốt",money(row.consultation_fee_snapshot)],["Cọc đã chốt",money(row.deposit_amount_snapshot)],["Lý do hủy",row.cancel_reason]]}[key] || [];
+  const extra={users:[["Email đã xác minh",row.email_verified?"Có":"Chưa"],["Đã xóa",row.is_deleted?"Có":"Không"],["Ngày tạo",stamp(row.created_at)]],patients:[["CCCD",row.id_card],["Giới tính",row.gender],["Địa chỉ",row.address],["BHYT",row.health_insurance],["Tài khoản liên kết",code("TK", row.user_id)]],doctors:[["Mã tài khoản",code("TK", row.user_id)],["Chuyên môn",row.specialization],["Giới thiệu",row.introduction]],departments:[["Mô tả",row.description],["Giới thiệu",row.overview],["Chức năng, nhiệm vụ",row.mission]],assignments:[["Ghi chú",row.note],["Ngày phân công",stamp(row.assigned_at)],["Người phân công",code("TK", row.assigned_by_id)],["Ngày thu hồi",stamp(row.revoked_at)],["Người thu hồi",code("TK", row.revoked_by_id)]],encounters:[["Phòng",row.room_name],["Triệu chứng",row.symptoms],["Phí khám đã chốt",money(row.consultation_fee_snapshot)],["Cọc đã chốt",money(row.deposit_amount_snapshot)],["Lý do hủy",row.cancel_reason]]}[key] || [];
   return facts(config.columns.map((name,index)=>[name,config.cells(row)[index].replace(/<[^>]*>/g,"").replace(/&(amp|lt|gt|quot|#39);/g,(_,name)=>({amp:"&",lt:"<",gt:">",quot:'"',"#39":"'"}[name]))]).concat(extra))
     +(key==="articles"?`<h3>Nội dung bài viết</h3><pre class="admin-text-content">${esc(row.content)}</pre>`:"")
     +'<div class="actions">'
@@ -79,7 +80,8 @@ export async function initAdminWorkspace(key) {
       if(!ctx.active)return;
       $(resultId).innerHTML='<p role="status">Đang tìm kiếm…</p>';$(pagerId).innerHTML="";
     };
-    inputs.forEach(input=>refreshers.push(bindLiveSearch(input,apply,{invalidate})));
+    const safelyApply=async()=>{try { await apply(); } catch(error) { ctx.handle(error); $(resultId).innerHTML=""; $(pagerId).innerHTML=""; }};
+    inputs.forEach(input=>refreshers.push(bindLiveSearch(input,safelyApply,{invalidate})));
     const refresh=refreshers[0];
     form.addEventListener("submit",event=>{event.preventDefault();refresh();});
     form.addEventListener("change",event=>{if(!inputs.includes(event.target))refresh();});
@@ -101,9 +103,9 @@ export async function initAdminWorkspace(key) {
     const config=resources[key];
     if(config.add)$("#page-header").insertAdjacentHTML("beforeend",`<button id="add-record" type="button">＋ ${esc(config.add)}</button>`);
     $("#add-record")?.addEventListener("click",()=>editResource());
-    body.innerHTML=panel("Danh sách",'<div id="admin-filters"></div><div id="admin-results"></div><div id="admin-pager"></div>')+(key==="schedule"?panel("Đơn xin nghỉ",'<form id="leave-filter" class="admin-toolbar"><label>Trạng thái<select name="status">'+options(["PENDING","APPROVED","REJECTED","CANCELLED"],"PENDING")+'</select></label><label>Mã nhân viên<input type="number" name="user_id" min="1" step="1"></label><button type="submit">Xem đơn</button></form><div id="leave-results"></div><div id="leave-pager"></div>'):"");
+    body.innerHTML=panel("Danh sách",'<div id="admin-filters"></div><div id="admin-results"></div><div id="admin-pager"></div>')+(key==="schedule"?panel("Đơn xin nghỉ",'<form id="leave-filter" class="admin-toolbar"><label>Trạng thái<select name="status">'+options(["PENDING","APPROVED","REJECTED","CANCELLED"],"PENDING")+'</select></label><label>Mã nhân viên<input type="text" name="user_id"></label><button type="submit">Xem đơn</button></form><div id="leave-results"></div><div id="leave-pager"></div>'):"");
     reload=async()=>ctx.load(async signal=>{
-      const params=Object.fromEntries(new FormData($("#resource-filter")));
+      const params=codeParams(Object.fromEntries(new FormData($("#resource-filter"))));
       if(params.from_date&&params.to_date&&params.to_date<params.from_date)throw new Error("Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.");
       const result=await config.list({...config.params,...params,page,page_size:12},{signal});
       if(config.local){
@@ -141,7 +143,7 @@ export async function initAdminWorkspace(key) {
     const row=records.get(String(id));if(!row)return;
     const config=resources[key];
     const titles={"account-status":row.account_status==="ACTIVE"?"Khóa tài khoản":"Mở khóa tài khoản","delete-user":"Xóa tài khoản","archive":"Lưu trữ hồ sơ bệnh nhân","revoke":"Thu hồi phân công"};
-    await ctx.show(titles[action],async()=>facts([["Mã",id],["Tên",row.full_name || row.nurse_name]])+notice(action==="delete-user"?"Tài khoản sẽ ngừng sử dụng. Lịch sử liên quan vẫn được giữ.":action==="archive"?"Hồ sơ sẽ ngừng sử dụng; lịch sử khám vẫn được giữ.":"Xác nhận thao tác cho đúng bản ghi trước khi tiếp tục.")+`<form data-form="confirm" data-action="${action}" data-id="${esc(id)}">${formActions(titles[action])}</form>`);
+    await ctx.show(titles[action],async()=>facts([["Mã",code({users:"TK",patients:"BN",doctors:"BS",departments:"CK",rooms:"PH",schedule:"CA",assignments:"PC",articles:"BV",encounters:"LK"}[key], id)],["Tên",row.full_name || row.nurse_name]])+notice(action==="delete-user"?"Tài khoản sẽ ngừng sử dụng. Lịch sử liên quan vẫn được giữ.":action==="archive"?"Hồ sơ sẽ ngừng sử dụng; lịch sử khám vẫn được giữ.":"Xác nhận thao tác cho đúng bản ghi trước khi tiếp tục.")+`<form data-form="confirm" data-action="${action}" data-id="${esc(id)}">${formActions(titles[action])}</form>`);
   }
   async function showDetail(id) {
     const config=resources[key];
@@ -206,12 +208,12 @@ export async function initAdminWorkspace(key) {
   }
   let paymentSearch={};
   function paymentRows(rows) {
-    return table(["Mã giao dịch","Lượt khám","Loại","Số tiền","Phương thức","Thời điểm","Trạng thái","Thao tác"],rows.map(r=>[esc(r.payment_id),esc(r.encounter_id),badge(r.payment_type),money(r.amount),esc(r.payment_method),stamp(r.paid_at || r.created_at),badge(r.transaction_status),button("payment-detail",r.payment_id,"Chi tiết")+(r.transaction_status==="SUCCESS"&&r.payment_type!=="REFUND"?button("refund",r.payment_id,"Hoàn tiền"):"")]));
+    return table(["Mã giao dịch","Lượt khám","Loại","Số tiền","Phương thức","Thời điểm","Trạng thái","Thao tác"],rows.map(r=>[esc(code("TT", r.payment_id)),esc(code("LK", r.encounter_id)),badge(r.payment_type),money(r.amount),esc(r.payment_method),stamp(r.paid_at || r.created_at),badge(r.transaction_status),button("payment-detail",r.payment_id,"Chi tiết")+(r.transaction_status==="SUCCESS"&&r.payment_type!=="REFUND"?button("refund",r.payment_id,"Hoàn tiền"):"")]));
   }
   async function paymentsPage() {
     const query=new URLSearchParams(location.search),linked=query.get("encounter_id");
     body.innerHTML=notice("Tra cứu giao dịch bằng mã lượt khám hoặc mã giao dịch. Danh sách giao dịch toàn viện hiện chưa được hỗ trợ.")
-      +panel("Tra cứu giao dịch",`<form id="payment-search" class="admin-toolbar"><label>Mã lượt khám<input type="number" min="1" step="1" name="encounter_id" value="${linked&&/^\d+$/.test(linked)?esc(linked):""}"></label><label>Mã giao dịch<input type="number" min="1" step="1" name="payment_id"></label><button type="submit">Tra cứu</button></form><div id="payment-results"></div><div id="payment-pager"></div>`);
+      +panel("Tra cứu giao dịch",`<form id="payment-search" class="admin-toolbar"><label>Mã lượt khám<input type="text" name="encounter_id" placeholder="LK_001" value="${linked&&/^\d+$/.test(linked)?esc(linked):""}"></label><label>Mã giao dịch<input type="text" name="payment_id" placeholder="TT_001"></label><button type="submit">Tra cứu</button></form><div id="payment-results"></div><div id="payment-pager"></div>`);
     reload=async()=>ctx.load(async signal=>{
       if(paymentSearch.payment_id){const result=await payments.getPayment(paymentSearch.payment_id,{signal});return {items:[result.payment],total:1,page:1,page_size:12};}
       if(paymentSearch.encounter_id)return payments.listEncounterPayments(paymentSearch.encounter_id,{page,page_size:12},{signal});
@@ -231,7 +233,7 @@ export async function initAdminWorkspace(key) {
     await ctx.show(refund?"Xác nhận hoàn tiền":"Chi tiết giao dịch",async signal=>{
       const row=(await payments.getPayment(id,{signal})).payment;
       records.set(`payment:${id}`,row);
-      return facts([["Mã giao dịch",row.payment_id],["Mã lượt khám",row.encounter_id],["Loại",label(row.payment_type)],["Số tiền",money(row.amount)],["Trạng thái",label(row.transaction_status)],["Phương thức",row.payment_method],["Ngày thanh toán",stamp(row.paid_at)],["Giao dịch gốc",row.original_payment_id],["Lý do",row.reason],["Lý do thất bại",row.failure_reason]])
+      return facts([["Mã thanh toán",code("TT", row.payment_id)],["Mã giao dịch",row.transaction_code],["Mã lượt khám",code("LK", row.encounter_id)],["Loại",label(row.payment_type)],["Số tiền",money(row.amount)],["Trạng thái",label(row.transaction_status)],["Phương thức",row.payment_method],["Ngày thanh toán",stamp(row.paid_at)],["Giao dịch gốc",code("TT", row.original_payment_id)],["Lý do",row.reason],["Lý do thất bại",row.failure_reason]])
         +(refund?row.transaction_status!=="SUCCESS"||row.payment_type==="REFUND"?notice("Giao dịch này không còn phù hợp để hoàn tiền."):`${notice("Số tiền được hoàn theo chính sách hủy và số đã hoàn. Hệ thống sẽ kiểm tra điều kiện khi xác nhận.")}<form data-form="refund" data-id="${esc(id)}"><label>Lý do hoàn tiền *<textarea name="reason" required maxlength="1000" rows="3"></textarea></label>${formActions("Xác nhận hoàn tiền")}</form>`:"");
     });
   }
@@ -252,12 +254,12 @@ export async function initAdminWorkspace(key) {
   async function auditPage() {
     const linked=new URLSearchParams(location.search).get("encounter_id");
     body.innerHTML=notice("Nhật ký hiện hỗ trợ lượt khám. Lịch sử thay đổi tài khoản, danh mục, bài viết và cấu hình chưa được hỗ trợ.")
-      +panel("Đối soát lượt khám",`<form id="audit-filter" class="admin-toolbar"><label>Mã lượt khám<input name="encounter_id" type="number" min="1" step="1" value="${linked&&/^\d+$/.test(linked)?esc(linked):""}"></label><label>Từ ngày<input name="from_date" type="date"></label><label>Đến ngày<input name="to_date" type="date"></label><button type="submit">Tra cứu</button></form><div id="audit-results"></div><div id="audit-pager"></div>`);
+      +panel("Đối soát lượt khám",`<form id="audit-filter" class="admin-toolbar"><label>Mã lượt khám<input name="encounter_id" type="text" placeholder="LK_001" value="${linked&&/^\d+$/.test(linked)?esc(linked):""}"></label><label>Từ ngày<input name="from_date" type="date"></label><label>Đến ngày<input name="to_date" type="date"></label><button type="submit">Tra cứu</button></form><div id="audit-results"></div><div id="audit-pager"></div>`);
     reload=async()=>ctx.load(async signal=>{
       const params=dataForm($("#audit-filter"));
       if(params.from_date&&params.to_date&&params.to_date<params.from_date)throw new Error("Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.");
       return reports.getEncounterAudit({...params,page,page_size:12},{signal});
-    },result=>{listResult=result;$("#audit-results").innerHTML=table(["Mã lượt","Trạng thái","Giá chốt","Đã thu","Đã hoàn","Thu ròng","Đối soát","Lịch sử"],result.items.map(r=>[esc(r.encounter_id),badge(r.encounter_status),money(r.consultation_fee_snapshot),money(r.gross_received),money(r.refunded_amount),money(r.net_received),r.issues.map(i=>esc(issues[i] || i)).join("<br>") || "Không phát hiện lệch",button("audit-detail",r.encounter_id,"Xem lịch sử")]));$("#audit-pager").innerHTML=paginationMarkup(result);});
+    },result=>{listResult=result;$("#audit-results").innerHTML=table(["Mã lượt","Trạng thái","Giá chốt","Đã thu","Đã hoàn","Thu ròng","Đối soát","Lịch sử"],result.items.map(r=>[esc(code("LK", r.encounter_id)),badge(r.encounter_status),money(r.consultation_fee_snapshot),money(r.gross_received),money(r.refunded_amount),money(r.net_received),r.issues.map(i=>esc(issues[i] || i)).join("<br>") || "Không phát hiện lệch",button("audit-detail",r.encounter_id,"Xem lịch sử")]));$("#audit-pager").innerHTML=paginationMarkup(result);});
     bindTextFilters($("#audit-filter"),()=>{page=1;return reload();},"#audit-results","#audit-pager");await reload();
   }
   async function auditDetail(id) {
@@ -265,11 +267,11 @@ export async function initAdminWorkspace(key) {
       const result=await reports.getEncounterAudit({encounter_id:id,page_size:1},{signal}),row=result.items[0];
       if(!row)throw new Error("Không tìm thấy lượt khám.");
       const section=(title,rows,columns,mapper)=>panel(title,table(columns,(rows || []).map(mapper)));
-      return facts([["Mã lượt khám",id],["Bệnh án",row.record_id],["Phiên bản bệnh án",row.record_version]])+notice(`Hiển thị tối đa ${row.history_limit || 100} bản ghi gần nhất của mỗi loại.`)
-        +section("Thay đổi trạng thái",row.status_history,["Thời điểm","Từ","Đến","Người thay đổi","Ghi chú"],r=>[stamp(r.changed_at),esc(label(r.old_status)),esc(label(r.new_status)),esc(r.changed_by_id),esc(r.note || "—")])
-        +section("Điều phối bác sĩ",row.transfer_history,["Thời điểm","Bác sĩ cũ","Bác sĩ mới","Người thực hiện","Lý do"],r=>[stamp(r.transferred_at || r.created_at),esc(r.old_doctor_id),esc(r.new_doctor_id),esc(r.transferred_by_id || r.changed_by_id),esc(r.reason || "—")])
-        +section("Thanh toán",row.payment_history,["Mã","Loại","Số tiền","Trạng thái"],r=>[esc(r.payment_id),esc(label(r.payment_type)),money(r.amount),badge(r.transaction_status)])
-        +section("Bổ sung bệnh án",row.medical_revision_history,["Thời điểm","Người sửa","Lý do","Chi tiết"],r=>[stamp(r.changed_at || r.at),esc(r.changed_by_id || r.actor_id),esc(r.reason),`<details><summary>Nội dung trước / sau</summary><pre class="admin-text-content">${esc(JSON.stringify(r,null,2))}</pre></details>`]);
+      return facts([["Mã lượt khám",code("LK", id)],["Bệnh án",code("BA", row.record_id)],["Phiên bản bệnh án",row.record_version]])+notice(`Hiển thị tối đa ${row.history_limit || 100} bản ghi gần nhất của mỗi loại.`)
+        +section("Thay đổi trạng thái",row.status_history,["Thời điểm","Từ","Đến","Người thay đổi","Ghi chú"],r=>[stamp(r.changed_at),esc(label(r.old_status)),esc(label(r.new_status)),esc(code("TK", r.changed_by_id)),esc(r.note || "—")])
+        +section("Điều phối bác sĩ",row.transfer_history,["Thời điểm","Bác sĩ cũ","Bác sĩ mới","Người thực hiện","Lý do"],r=>[stamp(r.transferred_at || r.created_at),esc(code("BS", r.old_doctor_id)),esc(code("BS", r.new_doctor_id)),esc(code("TK", r.transferred_by_id || r.changed_by_id)),esc(r.reason || "—")])
+        +section("Thanh toán",row.payment_history,["Mã","Loại","Số tiền","Trạng thái"],r=>[esc(code("TT", r.payment_id)),esc(label(r.payment_type)),money(r.amount),badge(r.transaction_status)])
+        +section("Bổ sung bệnh án",row.medical_revision_history,["Thời điểm","Người sửa","Lý do","Chi tiết"],r=>[stamp(r.changed_at || r.at),esc(code("TK", r.changed_by_id || r.actor_id)),esc(r.reason),`<details><summary>Nội dung trước / sau</summary><pre class="admin-text-content">${esc(JSON.stringify(r,null,2))}</pre></details>`]);
     });
   }
 
@@ -277,7 +279,7 @@ export async function initAdminWorkspace(key) {
   async function leaveList() {
     if(!ctx.active||!$("#leave-filter"))return;
     await ctx.load(signal=>leave.listAdminLeaveRequests({...dataForm($("#leave-filter")),page:leavePage,page_size:10},{signal}),result=>{
-      $("#leave-results").innerHTML=table(["Mã đơn","Nhân viên","Vai trò","Từ ngày","Đến ngày","Buổi nghỉ","Trạng thái","Thao tác"],result.items.map(r=>[esc(r.request_id),esc(r.staff_name),badge(r.role_name),date(r.from_date),date(r.to_date),esc(label(r.period)),badge(r.status),button("leave-detail",r.request_id,r.status==="PENDING"?"Xem / xét duyệt":"Chi tiết")]));
+      $("#leave-results").innerHTML=table(["Mã đơn","Nhân viên","Vai trò","Từ ngày","Đến ngày","Buổi nghỉ","Trạng thái","Thao tác"],result.items.map(r=>[esc(code("NP", r.request_id)),esc(r.staff_name),badge(r.role_name),date(r.from_date),date(r.to_date),esc(label(r.period)),badge(r.status),button("leave-detail",r.request_id,r.status==="PENDING"?"Xem / xét duyệt":"Chi tiết")]));
       const pages=Math.max(1,Math.ceil(result.total/result.page_size));
       $("#leave-pager").innerHTML=`<div class="admin-pagination"><span>${result.total} đơn · Trang ${result.page} / ${pages}</span><div><button type="button" class="secondary" data-action="leave-prev" ${leavePage<=1?"disabled":""}>Trước</button><button type="button" class="secondary" data-action="leave-next" ${leavePage>=pages?"disabled":""}>Sau</button></div></div>`;
     });
@@ -285,7 +287,7 @@ export async function initAdminWorkspace(key) {
   async function leaveDetail(id) {
     await ctx.show("Đơn xin nghỉ",async signal=>{
       const result=await leave.getAdminLeaveRequest(id,{signal}),row=result.leave_request;
-      return facts([["Nhân viên",row.staff_name],["Vai trò",label(row.role_name)],["Từ ngày",date(row.from_date)],["Đến ngày",date(row.to_date)],["Buổi nghỉ",label(row.period)],["Lý do",row.reason],["Trạng thái",label(row.status)],["Ý kiến duyệt",row.review_note],["Các ca ảnh hưởng",result.affected_schedule_ids.join(", ") || "Không có"],["Lượt khám ảnh hưởng",result.affected_encounters]])
+      return facts([["Nhân viên",row.staff_name],["Vai trò",label(row.role_name)],["Từ ngày",date(row.from_date)],["Đến ngày",date(row.to_date)],["Buổi nghỉ",label(row.period)],["Lý do",row.reason],["Trạng thái",label(row.status)],["Ý kiến duyệt",row.review_note],["Các ca ảnh hưởng",result.affected_schedule_ids.map(id=>code("CA", id)).join(", ") || "Không có"],["Lượt khám ảnh hưởng",result.affected_encounters]])
         +(row.status==="PENDING"?notice("Duyệt nghỉ bác sĩ sẽ ngừng nhận lịch mới ở ca ảnh hưởng; duyệt nghỉ y tá sẽ thu hồi phân công trùng ca. Các lượt khám cần được điều phối riêng.")+`<form data-form="review" data-id="${esc(id)}"><label>Quyết định<select name="decision" required>${options(["APPROVED","REJECTED"],"","Chọn quyết định")}</select></label><label>Ý kiến xét duyệt *<textarea name="note" required maxlength="1000" rows="3"></textarea></label>${formActions("Xác nhận xét duyệt")}</form>`:"");
     });
   }
@@ -299,7 +301,7 @@ export async function initAdminWorkspace(key) {
   async function patientHistory(id) {
     await ctx.show("Lịch sử khám",async signal=>{
       const rows=await allPages((params,opt)=>patients.listEncounters(id,params,opt),{},signal);
-      return table(["Mã lượt","Ngày","Bác sĩ","Phòng","Trạng thái"],rows.map(r=>[esc(r.encounter_id),date(r.work_date),esc(r.doctor_name),esc(r.room_name),badge(r.encounter_status)]));
+      return table(["Mã lượt","Ngày","Bác sĩ","Phòng","Trạng thái"],rows.map(r=>[esc(code("LK", r.encounter_id)),date(r.work_date),esc(r.doctor_name),esc(r.room_name),badge(r.encounter_status)]));
     });
   }
   async function leadership(id) {

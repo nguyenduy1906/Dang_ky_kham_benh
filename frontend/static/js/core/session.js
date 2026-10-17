@@ -7,6 +7,7 @@ export const homeUrl = new URL("public/home.html", templates);
 export const portalUrl = new URL("(patient)/portal.html", templates);
 export const bookingUrl = new URL("(patient)/booking.html", templates);
 export const bookingReviewUrl = new URL("(patient)/booking_review.html", templates);
+export const paymentUrl = new URL("(patient)/payment.html", templates);
 export const appointmentsUrl = new URL("(patient)/appointments.html", templates);
 export const profileUrl = new URL("(patient)/profile.html", templates);
 export const recordsUrl = new URL("(patient)/records.html", templates);
@@ -133,7 +134,7 @@ export function returnUrl(value, role = "USER") {
     if (url.origin === homeUrl.origin && url.protocol === homeUrl.protocol &&
         url.pathname.startsWith(templates.pathname) &&
         !url.username && !url.password &&
-        (staffAllowed || (role === "USER" && [homeUrl.pathname, portalUrl.pathname, bookingUrl.pathname, bookingReviewUrl.pathname, appointmentsUrl.pathname,
+        (staffAllowed || (role === "USER" && [homeUrl.pathname, portalUrl.pathname, bookingUrl.pathname, bookingReviewUrl.pathname, paymentUrl.pathname, appointmentsUrl.pathname,
           profileUrl.pathname, recordsUrl.pathname].includes(url.pathname)))) return url;
   } catch { /* Never redirect to an untrusted next URL. */ }
   return new URL(fallback);

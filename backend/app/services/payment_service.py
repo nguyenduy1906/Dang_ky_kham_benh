@@ -1,7 +1,7 @@
 """Thanh toán mô phỏng; khóa ca → lượt khám → payment trong cùng transaction."""
+from backend.app.utils.business_codes import business_code
 import os
 from datetime import timedelta
-from uuid import uuid4
 
 from backend.app.core.errors import conflict, not_found
 from backend.app.db.database import get_db_connection
@@ -80,7 +80,7 @@ def create_intent(actor, encounter_id, fields):
             else:
                 row = model.create(db, {'encounter_id': encounter_id, 'payment_type': 'DEPOSIT',
                     'amount': encounter['deposit_amount_snapshot'], **fields, 'transaction_status': 'PENDING',
-                    'transaction_code': 'DEMO-' + uuid4().hex, 'created_by_id': actor['user_id']})
+                    'created_by_id': actor['user_id']})
                 created = True
             result = _response(db, row, actor)
     # Raise sau khi commit để giữ trạng thái EXPIRED/quota/log.
@@ -111,10 +111,10 @@ def collect_exam_fee(actor, encounter_id, fields):
             raise conflict('Có phiên phí khám chưa xử lý; không thu lần hai', 'PAYMENT_INTENT_EXISTS')
         now = encounters.utc_now()
         row = model.create(db, {'encounter_id': encounter_id, 'payment_type': 'EXAM_FEE', 'amount': remaining,
-            **fields, 'transaction_status': 'SUCCESS', 'transaction_code': 'DEMO-' + uuid4().hex,
+            **fields, 'transaction_status': 'SUCCESS',
             'paid_at': now, 'result_received_at': now, 'created_by_id': actor['user_id'], 'processed_by_id': actor['user_id']})
         notifications.notify_encounter(db, encounter_id, f'exam-fee:{row["payment_id"]}', 'PAYMENT',
-                                       'Đã thu phí khám', f'Đã thu {remaining:,} đồng cho lượt khám #{encounter_id} (giả lập).')
+                                       'Đã thu phí khám', f'Đã thu {remaining:,} đồng cho lượt khám {business_code("LK", encounter_id)} (giả lập).')
         result = _response(db, row, actor)
         result['amount_due'] = 0
     return result, True
@@ -133,7 +133,7 @@ def _refund_amount(db, payment, actor_id, reason, amount):
     now = encounters.utc_now()
     refund = model.create(db, {'encounter_id': payment['encounter_id'], 'payment_type': 'REFUND',
         'amount': amount, 'payment_method': payment['payment_method'], 'transaction_status': 'SUCCESS',
-        'original_payment_id': payment['payment_id'], 'transaction_code': 'DEMO-REFUND-' + uuid4().hex,
+        'original_payment_id': payment['payment_id'],
         'paid_at': now, 'refunded_at': now, 'result_received_at': now, 'reason': reason,
         'created_by_id': actor_id, 'processed_by_id': actor_id})
     db.execute("UPDATE payment SET transaction_status='REFUNDED',refunded_at=%s WHERE payment_id=%s",

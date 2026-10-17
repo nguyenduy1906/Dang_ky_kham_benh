@@ -1,4 +1,5 @@
 """Truy vấn SQL cho bảng users và role (db là kết nối psycopg trả về dict)."""
+from backend.app.utils.business_codes import business_code
 
 _USER_SELECT = 'SELECT u.*, r.role_name FROM users u JOIN role r ON r.role_id = u.role_id'
 
@@ -14,7 +15,9 @@ def to_public(user):
     """Chuyển một dòng users thành dict an toàn để trả về API (không có password_hash)."""
     return {
         'user_id': user['user_id'],
+        'user_code': business_code('TK', user['user_id']),
         'role_id': user['role_id'],
+        'role_code': business_code('VT', user['role_id']),
         'role_name': user['role_name'],
         'full_name': user['full_name'],
         'phone': user['phone'],

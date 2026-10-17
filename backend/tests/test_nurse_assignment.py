@@ -21,13 +21,23 @@ class NurseAssignmentTests(unittest.TestCase):
         sample = (Path(__file__).resolve().parents[2] / 'database/sample_data.sql').read_text(encoding='utf-8')
         with get_db_connection() as db:
             db.execute(sample.replace('BEGIN;', '', 1).replace('COMMIT;', '', 1))
+            # These permission/workflow fixtures intentionally exercise the original ten visits.
+            # Rolling presentation scenarios are covered separately by test_business_codes.
+            db.execute('DELETE FROM review WHERE record_id IN (SELECT record_id FROM medical_record WHERE encounter_id>10)')
+            db.execute('DELETE FROM prescription_item WHERE record_id IN (SELECT record_id FROM medical_record WHERE encounter_id>10)')
+            db.execute('DELETE FROM medical_record WHERE encounter_id>10')
+            db.execute('DELETE FROM payment WHERE encounter_id>10')
+            db.execute('DELETE FROM encounter_status_log WHERE encounter_id>10')
+            db.execute('DELETE FROM encounter_transfer_log WHERE encounter_id>10')
+            db.execute('DELETE FROM encounter WHERE encounter_id>10')
+            db.execute('UPDATE work_schedule SET booked_count=0 WHERE schedule_id>10')
             db.execute('DELETE FROM nurse_assignment')
             self.actors = {}
             for role in ('ADMIN', 'NURSE', 'USER'):
                 row = db.execute('SELECT user_id FROM users u JOIN role r ON r.role_id=u.role_id '
                                  'WHERE r.role_name=%s ORDER BY user_id LIMIT 1', (role,)).fetchone()
                 self.actors[role] = auth_model.get_user_by_id(db, row['user_id'])
-            self.schedule_id = db.execute('SELECT schedule_id FROM work_schedule LIMIT 1').fetchone()['schedule_id']
+            self.schedule_id = db.execute('SELECT schedule_id FROM work_schedule ORDER BY schedule_id LIMIT 1').fetchone()['schedule_id']
         self.secret = patch.dict(os.environ, {'SECRET_KEY': 'nurse-assignment-test-only'})
         self.secret.start()
         self.addCleanup(self.secret.stop)

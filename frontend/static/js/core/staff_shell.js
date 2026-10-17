@@ -79,9 +79,9 @@ export function mountStaffWorkspace() {
       ${profileLink}
     </nav>
     <div class="staff-sidebar-bottom"><p>${configuration?.description || "Thông tin cá nhân dành cho nhân viên bệnh viện"}</p>${signout}</div>`;
-  const activeTitle = current === "profile" ? "Hồ sơ cá nhân" : configuration?.pages.find(([key]) => key === current)?.[1] || "Không gian nhân viên";
-  const account = `<a class="staff-account" href="${profileUrl.href}" aria-label="Hồ sơ cá nhân"><span class="staff-initials" aria-hidden="true">${role === "nurse" ? `<img src="${nursePortraitUrl}" width="33" height="33" alt="">` : configuration?.initials || "NV"}</span><span id="staff-account-name">${configuration?.label || "Nhân viên"}</span>${icon("profile")}</a>`;
-  topbar.innerHTML = `<div class="staff-topbar-left"><button class="staff-menu-toggle" type="button" id="staff-menu-toggle" aria-label="Mở điều hướng" aria-controls="staff-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><span class="staff-breadcrumb">${configuration?.label || "Nhân viên"}<span aria-hidden="true">/</span><strong>${activeTitle}</strong></span></div><div class="staff-topbar-right">${account}</div>`;
+  const activeTitle = document.body.dataset.pageTitle || (current === "profile" ? "Hồ sơ cá nhân" : configuration?.pages.find(([key]) => key === current)?.[1] || "Không gian nhân viên");
+  const account = `<a class="staff-account" href="${profileUrl.href}" aria-label="Hồ sơ cá nhân"><span id="staff-account-name">${configuration?.label || "Nhân viên"}</span><span class="staff-initials" aria-hidden="true">${role === "nurse" ? `<img src="${nursePortraitUrl}" width="40" height="40" alt="">` : configuration?.initials || "NV"}</span></a>`;
+  topbar.innerHTML = `<div class="staff-topbar-left"><button class="staff-menu-toggle" type="button" id="staff-menu-toggle" aria-label="Mở điều hướng" aria-controls="staff-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><h1 class="staff-page-title">${activeTitle.replace(/[&<>"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[character])}</h1></div><div class="staff-topbar-right">${account}</div>`;
   const toggle = document.querySelector("#staff-menu-toggle");
   initializeSidebarCollapse(role || "staff");
   const backdrop = document.createElement("button");

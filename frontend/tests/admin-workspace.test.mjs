@@ -53,6 +53,33 @@ test('configuration obeys read_only and displays effective policy values',async(
 test('payment lookup does not invent a global payments list and keeps refund policy on the backend',async()=>{const f=fixture('payments');try{location.search='?encounter_id=10';await initAdminWorkspace('payments');assert.match(f.$('#payment-results').innerHTML,/200\.000/);assert.ok(f.calls.every(c=>c.path==='/encounters/10/payments'));await trigger(f.$('[data-action="refund"]'),'click');assert.match(f.$('#admin-dialog-body').innerHTML,/Số tiền được hoàn theo chính sách/);const form=f.$('[data-form="refund"]');form.elements.reason.value='Hoàn theo chính sách';globalThis.fetch=async(url,opt)=>{f.calls.push({path:new URL(url).pathname,method:opt.method,body:typeof opt.body==='string'?JSON.parse(opt.body):null});if(opt.method==='POST')return Response.json({amount_refunded:100000});return Response.json({items:[payment],total:1,page:1,page_size:12});};await trigger(form,'submit');const write=f.calls.find(c=>c.method==='POST');assert.equal(write.path,'/admin/payments/12/refund');assert.deepEqual(write.body,{reason:'Hoàn theo chính sách'});}finally{f.restore();}});
 test('audit renders backend issues and never replaces missing price snapshots with zero',async()=>{const f=fixture('audit');try{await initAdminWorkspace('audit');assert.match(f.$('#audit-results').innerHTML,/Thiếu giá khám đã chốt/);assert.match(f.$('#audit-results').innerHTML,/Chưa có giá chốt/);assert.ok(f.calls.every(c=>c.method==='GET'));}finally{f.restore();}});
 
+test('business codes render in lists and encounter filters send numeric resource ids',async()=>{
+  const f=fixture('encounters');
+  try {
+    await initAdminWorkspace('encounters');
+    assert.match(f.$('#admin-results').innerHTML,/LK_010/);
+    const form=f.$('#resource-filter');
+    form.elements.patient_id.value='BN_005'; form.elements.schedule_id.value='CA_003';
+    await trigger(form,'submit');
+    const call=f.calls.filter(c=>c.path==='/encounters').at(-1);
+    assert.equal(call.params.get('patient_id'),'5'); assert.equal(call.params.get('schedule_id'),'3');
+    const count=f.calls.length;form.elements.patient_id.value='BS_005';
+    await trigger(form,'submit');
+    assert.equal(f.calls.length,count);
+    assert.match(f.$('#admin-status').textContent,/Mã không hợp lệ/);
+  } finally { f.restore(); }
+});
+
+test('payment lookup accepts the displayed TT code and reads the original numeric endpoint',async()=>{
+  const f=fixture('payments');
+  try {
+    await initAdminWorkspace('payments'); const form=f.$('#payment-search');
+    form.elements.payment_id.value='TT_012'; await trigger(form,'submit');
+    assert.equal(f.calls.at(-1).path,'/payments/12');
+    assert.match(f.$('#payment-results').innerHTML,/TT_012/);
+  } finally { f.restore(); }
+});
+
 const creates={
   users:{full_name:'Nhân viên mới',email:'new@example.test',phone:'0902000003',password:'Pass-with-space-123 ',role:'NURSE',approval_status:'APPROVED'},
   patients:{full_name:'Người bệnh mới',phone:'0902000003',dob:'2001-02-03',gender:'Nữ',confirm_shared_phone:true},

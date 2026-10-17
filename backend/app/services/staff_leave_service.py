@@ -1,3 +1,4 @@
+from backend.app.utils.business_codes import business_code
 from datetime import datetime, timedelta, time
 from psycopg.types.json import Jsonb
 
@@ -46,7 +47,7 @@ def _notify_admins(db, row, event):
             WHERE r.role_name='ADMIN' AND u.deleted_at IS NULL AND u.account_status='ACTIVE'
             AND u.approval_status='APPROVED'"""):
         model.notify(db, admin['user_id'], row['request_id'], event, 'Đơn xin nghỉ của nhân viên',
-                     f"Đơn #{row['request_id']} của {row['staff_name']}: {row['status']}.")
+                     f"Đơn {business_code('NP', row['request_id'])} của {row['staff_name']}: {row['status']}.")
 
 
 def create(actor, fields):
@@ -120,7 +121,7 @@ def review(actor, request_id, fields):
                 # Stop new bookings, preserve encounters/quota/payment for manual coordination.
                 changed = db.execute("""UPDATE work_schedule SET schedule_status='UNAVAILABLE',unavailable_reason=%s
                     WHERE schedule_id=ANY(%s) AND schedule_status IN ('OPEN','FULL') RETURNING schedule_id""",
-                    (f'Nghỉ theo đơn #{request_id}', ids)).fetchall()
+                    (f'Nghỉ theo đơn {business_code("NP", request_id)}', ids)).fetchall()
                 effects['unavailable_schedule_ids'] = [s['schedule_id'] for s in changed]
             elif staff['role_name'] == 'NURSE':
                 changed = db.execute('''UPDATE nurse_assignment SET revoked_at=CURRENT_TIMESTAMP,revoked_by_id=%s
@@ -132,7 +133,7 @@ def review(actor, request_id, fields):
             (fields['decision'], fields['note'], actor['user_id'], Jsonb(effects), request_id))
         row = model.get_request(db, request_id)
         model.notify(db, row['user_id'], request_id, 'reviewed', 'Kết quả đơn xin nghỉ',
-                     f"Đơn #{request_id}: {row['status']}. {fields['note']}")
+                     f"Đơn {business_code('NP', request_id)}: {row['status']}. {fields['note']}")
     return {'leave_request': jsonable(row)}
 
 

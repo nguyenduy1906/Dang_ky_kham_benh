@@ -49,6 +49,7 @@
   .nurse-page .support-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 700px) {
+  .nurse-page :is(#nurse-visit-filters, #nurse-record-search) > label { flex-basis: 100%; }
   .nurse-page .nurse-shift-summary { flex-wrap: wrap; gap: 12px; }
   .nurse-page .nurse-shift-summary > span:nth-child(2) { flex: 1; min-width: 170px; }
   .nurse-page .nurse-shift-count { margin-left: 78px; }

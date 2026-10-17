@@ -1,3 +1,4 @@
+import { code } from "../core/business_codes.js";
 import { staffReady, sessionError } from "../core/staff_workspace.js";
 import { hasSession } from "../core/session.js";
 import * as api from "../api/staff_leave.js";
@@ -67,7 +68,7 @@ async function initialize() {
         ${["MORNING", "AFTERNOON"].map(period => {
           const shift = visible.find(s => s.date === date && s.period === period);
           const state = shift?.status === "ON_LEAVE" ? "Đã duyệt nghỉ" : shift?.pending_leave ? "Chờ duyệt nghỉ · Vẫn làm việc" : "Làm việc";
-          const rooms = shift ? [...new Set(shift.clinical.map(s => `Phòng #${s.room_id}`))].join(", ") : "";
+          const rooms = shift ? [...new Set(shift.clinical.map(s => `Phòng ${code("PH", s.room_id)}`))].join(", ") : "";
           return `<div class="calendar-slot"><span class="calendar-slot-label">${periods[period]}</span>${shift
             ? `<button type="button" class="calendar-shift${period === "AFTERNOON" ? " is-afternoon" : ""}${shift.status === "ON_LEAVE" ? " is-leave" : shift.pending_leave ? " is-pending" : ""}" data-shift="${escape(shift.id)}"><strong>${escape(shortTime(shift.start_time))} – ${escape(shortTime(shift.end_time))}</strong><span>${state}</span><span class="calendar-shift-place">${escape(rooms || (shift.status === "ON_LEAVE" ? "Nghỉ theo đơn đã duyệt" : user.role_name === "RECEPTIONIST" ? "Theo lịch làm việc" : "Chưa có phân công phòng"))}</span></button>`
             : `<p class="calendar-free">${filter !== "all" && periodValues[filter] !== period ? "Đã ẩn theo bộ lọc" : "Không có ca"}</p>`}</div>`;
@@ -103,12 +104,12 @@ async function initialize() {
     selectedShift = shifts.find(s => s.id === button.dataset.shift);
     if (!selectedShift) return;
     const s = selectedShift;
-    const assigned = s.clinical.map(c => `Phòng #${c.room_id} · ${shortTime(c.start_time)}–${shortTime(c.end_time)} · ${clinicalStatuses[c.schedule_status] || c.schedule_status}`).join("\n");
+    const assigned = s.clinical.map(c => `Phòng ${code("PH", c.room_id)} · ${shortTime(c.start_time)}–${shortTime(c.end_time)} · ${clinicalStatuses[c.schedule_status] || c.schedule_status}`).join("\n");
     showDialog("Chi tiết ca làm việc", [["Ngày làm việc", formatDate(s.date)], ["Ca", periods[s.period]],
       ["Thời gian", `${shortTime(s.start_time)} – ${shortTime(s.end_time)}`],
       ["Trạng thái", s.status === "ON_LEAVE" ? "Đã duyệt nghỉ" : s.pending_leave ? "Chờ duyệt nghỉ; lịch làm việc giữ nguyên" : "Làm việc"],
       ["Phân công phòng khám", assigned || "Chưa có phân công phòng khám"],
-      ["Mã đơn nghỉ liên quan", (s.leave_request_ids || []).join(", ") || "Không có"]],
+      ["Mã đơn nghỉ liên quan", (s.leave_request_ids || []).map(id=>code("NP", id)).join(", ") || "Không có"]],
       "Lịch đi làm mặc định từ thứ Hai đến thứ Sáu. Phân công phòng khám được quản lý riêng.",
       s.date >= currentDate && s.status !== "ON_LEAVE" && !s.pending_leave);
   });
@@ -151,7 +152,7 @@ async function initialize() {
       if (!r || r.user_id !== user.user_id) throw new Error("Không nhận được đơn nghỉ hợp lệ của tài khoản hiện tại.");
       selectedRequest = r;
       showDialog(withdrawing && r.status === "PENDING" ? "Xác nhận rút đơn xin nghỉ" : "Chi tiết đơn xin nghỉ", [
-        ["Mã đơn", r.request_id], ["Từ ngày", formatDate(r.from_date)], ["Đến ngày", formatDate(r.to_date)],
+        ["Mã đơn", code("NP", r.request_id)], ["Từ ngày", formatDate(r.from_date)], ["Đến ngày", formatDate(r.to_date)],
         ["Buổi nghỉ", periods[r.period]], ["Lý do và bàn giao", r.reason], ["Trạng thái", statuses[r.status]],
         ["Ngày gửi", formatDate(r.created_at)], ["Ý kiến admin", r.review_note || "Chưa có"],
         ["Ngày xử lý", formatDate(r.reviewed_at || r.cancelled_at)], ["Lượt khám bị ảnh hưởng", result.affected_encounters ?? 0]],
@@ -172,7 +173,7 @@ async function initialize() {
       if (!active) return;
       if (result?.leave_request?.status !== "CANCELLED" || result.leave_request.request_id !== id || result.leave_request.user_id !== user.user_id) throw new Error("Chưa xác nhận được kết quả rút đơn.");
       dialog.close(); await Promise.all([loadWeek(), loadRequests(requestPage)]);
-      message($("#leave-list-status"), `Đã rút đơn #${id}.`);
+      message($("#leave-list-status"), `Đã rút đơn ${code("NP", id)}.`);
     } catch (error) { reportError($("#dialog-feedback"), error); }
     finally { cancelling = false; cancelButton.disabled = false; }
   });
@@ -218,7 +219,7 @@ async function initialize() {
       const r = result.leave_request;
       if (!r?.request_id || r.user_id !== user.user_id || r.status !== "PENDING") throw new Error("Chưa nhận được xác nhận đơn nghỉ từ hệ thống.");
       resetFields(); await Promise.all([loadWeek(), loadRequests()]);
-      message(feedback, `Đã gửi đơn #${r.request_id}, đang chờ admin duyệt. Lịch làm việc chưa thay đổi.`);
+      message(feedback, `Đã gửi đơn ${code("NP", r.request_id)}, đang chờ admin duyệt. Lịch làm việc chưa thay đổi.`);
     } catch (error) { reportError(feedback, error); }
     finally {
       controls.forEach((el, i) => el.disabled = states[i]); form.dataset.busy = "false";

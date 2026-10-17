@@ -99,6 +99,9 @@ test("next preserves a chosen doctor and rejects external/unsupported destinatio
   const booking = new URL(session.bookingUrl); booking.searchParams.set("encounter", "42");
   assert.equal(session.loginUrl(booking).searchParams.get("next"), booking.href);
   const review = new URL(session.bookingReviewUrl); review.searchParams.set("draft", "test-draft");
+  const payment = new URL(session.paymentUrl); payment.searchParams.set("draft", "test-draft"); payment.searchParams.set("encounter", "42");
+  assert.equal(session.returnUrl(payment.href).href, payment.href);
+  assert.equal(session.loginUrl(payment).searchParams.get("next"), payment.href);
   assert.equal(session.loginUrl(review).searchParams.get("next"), review.href);
   const appointments = new URL(session.appointmentsUrl); appointments.searchParams.set("view", "history");
   assert.equal(session.loginUrl(appointments).searchParams.get("next"), appointments.href);
