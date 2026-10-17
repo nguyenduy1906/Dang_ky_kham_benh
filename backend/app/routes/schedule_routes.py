@@ -150,7 +150,7 @@ def update_schedule(schedule_id):
 @schedule_bp.post('/doctor/schedules/<int:schedule_id>/unavailability')
 @roles_required(constants.ROLE_DOCTOR)
 def report_unavailable(schedule_id):
-    """Bác sĩ báo nghỉ ca (xử lý lượt khám bị ảnh hưởng do Gói 3 đảm nhận)
+    """Bác sĩ gửi đơn nghỉ chờ admin duyệt; chưa đóng ca khi gửi
     ---
     tags:
       - Schedules
@@ -168,7 +168,7 @@ def report_unavailable(schedule_id):
             reason: {type: string, example: Bận việc đột xuất}
     responses:
       200:
-        description: Đã báo nghỉ, trả về số lượt khám bị ảnh hưởng
+        description: Đã gửi đơn PENDING; trả leave_request, ca hiện tại và số lượt bị ảnh hưởng
       404:
         description: Không phải ca của bạn
     """

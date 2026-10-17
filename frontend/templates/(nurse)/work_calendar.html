@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lịch làm việc | NEU Medical</title>
+  <link rel="stylesheet" href="../../static/css/staff_workspace.css">
+  <link rel="stylesheet" href="../../static/css/work_calendar.css?v=20261017-api">
+  <script type="module" src="../../static/js/pages/work_calendar.js?v=20261017-api" blocking="render"></script>
+</head>
+<body class="staff-page work-calendar-page nurse-page staff-auth-pending" data-role="nurse" data-page="work_calendar">
+  <a class="skip-link" href="#main-content">Đến nội dung chính</a>
+  <noscript>Bật JavaScript và đăng nhập để xem lịch làm việc.</noscript>
+  <div class="staff-shell">
+    <aside id="staff-sidebar" class="staff-sidebar"></aside>
+    <div class="staff-main">
+      <header id="staff-topbar" class="staff-topbar"></header>
+      <div id="staff-access" class="staff-access" role="status">Đang kiểm tra quyền truy cập…</div>
+      <main id="main-content" class="staff-content" tabindex="-1" inert>
+        <header class="page-header calendar-intro">
+          <div><p class="eyebrow">NEU MEDICAL · KHÔNG GIAN NHÂN VIÊN</p><h1>Lịch làm việc</h1><p>Theo dõi ca trong tuần, gửi đơn xin nghỉ và xem kết quả duyệt.</p></div>
+          <a class="button-link" href="#leave-section">＋ Tạo đơn xin nghỉ</a>
+        </header>
+        <section class="panel calendar-panel" aria-labelledby="week-title">
+          <div class="calendar-toolbar">
+            <div class="calendar-week-control"><h2 id="week-title">Lịch trong tuần</h2><button id="week-previous" class="secondary calendar-arrow" type="button" aria-label="Tuần trước">‹</button><button id="week-next" class="secondary calendar-arrow" type="button" aria-label="Tuần sau">›</button><button id="week-current" class="secondary calendar-today" type="button">Tuần này</button></div>
+            <div class="calendar-controls"><label><span class="visually-hidden">Chọn ngày để xem tuần</span><input id="week-picker" type="date"></label><label><span class="visually-hidden">Lọc ca làm việc</span><select id="shift-filter"><option value="all">Tất cả ca</option><option value="morning">Ca sáng</option><option value="afternoon">Ca chiều</option></select></label><button id="calendar-refresh" class="secondary calendar-today" type="button">Cập nhật</button></div>
+          </div>
+          <p id="calendar-status" class="calendar-status" role="status"></p>
+          <p id="calendar-announcement" class="visually-hidden" role="status"></p>
+          <div class="calendar-scroll" role="region" aria-label="Lịch từ thứ Hai đến Chủ nhật" tabindex="0"><div id="calendar-grid" class="calendar-grid"></div></div>
+          <div class="calendar-legend" aria-label="Chú thích"><span><i aria-hidden="true"></i>Ca sáng</span><span><i class="legend-afternoon" aria-hidden="true"></i>Ca chiều</span><span><i class="legend-leave" aria-hidden="true"></i>Đã duyệt nghỉ</span><span><i class="legend-free" aria-hidden="true"></i>Không có ca</span></div>
+          <p class="calendar-hint">Chọn một ca để xem chi tiết hoặc điền ngày, buổi nghỉ vào biểu mẫu bên dưới.</p>
+        </section>
+        <section id="leave-section" class="panel" aria-labelledby="leave-title" style="scroll-margin-top: 100px">
+          <div class="section-heading"><h2 id="leave-title">Đơn xin nghỉ phép</h2></div>
+          <div class="leave-layout">
+            <div><p class="leave-description">Chọn khoảng ngày, buổi muốn nghỉ và ghi rõ lý do.</p>
+              <form id="leave-form" class="leave-form" method="post">
+                <div class="form-grid">
+                  <label>Từ ngày <span aria-hidden="true">*</span><input type="date" name="start_date" required></label>
+                  <label>Đến ngày <span aria-hidden="true">*</span><input type="date" name="end_date" required></label>
+                  <label class="full-width">Buổi xin nghỉ <span aria-hidden="true">*</span><select name="period" required><option value="full">Cả ngày</option><option value="morning">Ca sáng</option><option value="afternoon">Ca chiều</option></select><small>Buổi được chọn áp dụng cho mỗi ngày trong khoảng nghỉ.</small></label>
+                  <label class="full-width">Lý do xin nghỉ <span aria-hidden="true">*</span><textarea name="reason" rows="3" maxlength="1000" placeholder="Nhập lý do xin nghỉ…" required></textarea></label>
+                  <label class="full-width">Ghi chú bàn giao <small>Không bắt buộc; được gửi kèm lý do. Tổng nội dung tối đa 1.000 ký tự.</small><textarea name="handover" rows="2" maxlength="1000" placeholder="Các công việc cần lưu ý hoặc bàn giao…"></textarea></label>
+                </div>
+                <div class="actions"><button id="leave-submit" type="submit" disabled>Gửi đơn xin nghỉ</button><button type="reset" class="secondary">Nhập lại</button></div>
+                <p id="leave-feedback" class="leave-feedback" role="status"></p>
+              </form>
+            </div>
+            <aside class="leave-aside"><h3>Trước khi xin nghỉ</h3><p>Lịch mặc định từ thứ Hai đến thứ Sáu. Đơn đang chờ duyệt chưa làm thay đổi lịch.</p><p>Chọn nghỉ cả ngày hoặc một buổi, tối đa 31 ngày mỗi đơn. Các ngày cuối tuần không được tính là ngày nghỉ làm.</p><p>Chỉ admin được duyệt đơn. Bạn có thể rút đơn khi còn chờ duyệt.</p></aside>
+          </div>
+        </section>
+        <section class="panel" aria-labelledby="leave-history-title">
+          <div class="section-heading"><h2 id="leave-history-title">Đơn xin nghỉ đã gửi</h2><label>Lọc trạng thái<select id="leave-status-filter"><option value="">Tất cả</option><option value="PENDING">Chờ duyệt</option><option value="APPROVED">Đã duyệt</option><option value="REJECTED">Từ chối</option><option value="CANCELLED">Đã rút</option></select></label></div>
+          <p id="leave-list-status" class="calendar-status" role="status"></p>
+          <div id="leave-requests"></div>
+          <div class="list-pagination"><span id="requests-page"></span><div class="leave-row-actions"><button id="requests-previous" type="button" class="secondary" disabled>Trang trước</button><button id="requests-next" type="button" class="secondary" disabled>Trang sau</button></div></div>
+        </section>
+      </main>
+      <footer class="staff-footer">NEU Medical · Hệ thống quản lý khám bệnh</footer>
+    </div>
+  </div>
+  <dialog id="calendar-dialog" aria-labelledby="calendar-dialog-title">
+    <div class="section-heading"><h2 id="calendar-dialog-title">Chi tiết</h2><button id="calendar-dialog-close" class="secondary" type="button" aria-label="Đóng hộp thoại">Đóng ×</button></div>
+    <div id="calendar-dialog-body"></div>
+    <div class="actions"><button id="dialog-use-date" type="button" hidden>Xin nghỉ ca này</button><button id="dialog-cancel-request" type="button" class="secondary" hidden>Xác nhận rút đơn</button></div>
+    <p id="dialog-feedback" class="leave-feedback" role="status"></p>
+  </dialog>
+</body>
+</html>

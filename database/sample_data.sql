@@ -12,6 +12,7 @@ $encoding$;
 
 -- Xóa dữ liệu cũ để có thể chạy lại file seed nhiều lần.
 TRUNCATE TABLE
+    staff_leave_request,
     department_leadership,
     patient_delegate,
     nurse_assignment,
@@ -1864,6 +1865,37 @@ WHERE d.is_active=1 AND u.deleted_at IS NULL AND u.approval_status='APPROVED' AN
 AND NOT EXISTS(SELECT 1 FROM department_leadership l WHERE l.department_id=a.department_id)
 ON CONFLICT DO NOTHING;
 
+-- Lịch đi làm mặc định của DOCTOR/NURSE/RECEPTIONIST được API sinh T2–T6,
+-- sáng 08:00–11:30, chiều 13:30–17:00; không cần đăng ký lại mỗi tuần.
+-- Mẫu đơn nghỉ ở các ngày làm việc tương lai để có thể thử duyệt/rút/từ chối.
+WITH next_week AS (
+ SELECT date_trunc('week',CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date+7 AS monday
+)
+INSERT INTO staff_leave_request(user_id,from_date,to_date,period,reason)
+SELECT u.user_id,n.monday,n.monday,'MORNING','Dữ liệu mẫu: xin nghỉ giải quyết việc gia đình'
+FROM users u CROSS JOIN next_week n WHERE u.user_id IN (2,3,6);
+
+WITH next_week AS (
+ SELECT date_trunc('week',CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date+7 AS monday
+)
+INSERT INTO staff_leave_request(user_id,from_date,to_date,period,reason,status,reviewed_by_id,reviewed_at,review_note)
+SELECT 2,monday+1,monday+1,'FULL_DAY','Dữ liệu mẫu: nghỉ có kế hoạch','APPROVED',1,CURRENT_TIMESTAMP,
+       'Dữ liệu mẫu: đã bố trí lễ tân thay thế' FROM next_week
+UNION ALL
+SELECT 3,monday+2,monday+2,'AFTERNOON','Dữ liệu mẫu: đề nghị nghỉ chiều','REJECTED',1,CURRENT_TIMESTAMP,
+       'Dữ liệu mẫu: chưa bố trí được người thay thế' FROM next_week;
+
+-- Các thông báo cũ dùng ID thủ công; đồng bộ trước khi thêm thông báo tự tăng.
+SELECT setval(pg_get_serial_sequence('notification', 'notification_id'), (SELECT MAX(notification_id) FROM notification), true);
+INSERT INTO notification(user_id,event_key,notification_type,title,content,reference_type,reference_id)
+SELECT 1,'staff-leave:'||request_id||':created','STAFF_LEAVE','Đơn xin nghỉ chờ duyệt',
+       'Dữ liệu mẫu: đơn #'||request_id||' đang chờ admin duyệt.','STAFF_LEAVE_REQUEST',request_id
+FROM staff_leave_request WHERE status='PENDING';
+INSERT INTO notification(user_id,event_key,notification_type,title,content,reference_type,reference_id)
+SELECT user_id,'staff-leave:'||request_id||':reviewed','STAFF_LEAVE','Kết quả đơn xin nghỉ',
+       review_note,'STAFF_LEAVE_REQUEST',request_id
+FROM staff_leave_request WHERE status IN ('APPROVED','REJECTED');
+
 -- Đồng bộ sequence sau khi seed ID thủ công để lần INSERT tiếp theo không bị trùng khóa chính.
 SELECT setval(pg_get_serial_sequence('role', 'role_id'), (SELECT MAX(role_id) FROM role), true);
 SELECT setval(pg_get_serial_sequence('users', 'user_id'), (SELECT MAX(user_id) FROM users), true);
@@ -1911,5 +1943,6 @@ UNION ALL SELECT 'article', COUNT(*) FROM article
 UNION ALL SELECT 'system_configuration', COUNT(*) FROM system_configuration
 UNION ALL SELECT 'role_request', COUNT(*) FROM role_request
 UNION ALL SELECT 'nurse_assignment', COUNT(*) FROM nurse_assignment
+UNION ALL SELECT 'staff_leave_request', COUNT(*) FROM staff_leave_request
 ORDER BY table_name;
 

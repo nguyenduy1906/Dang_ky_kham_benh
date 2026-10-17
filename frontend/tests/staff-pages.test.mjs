@@ -21,11 +21,22 @@ test("staff permissions require the exact backend role; a query parameter grants
   for (const role of ["doctor", "nurse", "reception", "admin"]) assert.equal(resolveStaffRole(role), role);
   assert.equal(resolveStaffRole("patient"), null);
 });
-test("all sidebar pages exist, load an authenticated module and contain no hardcoded patients", async () => {
+test("sidebar pages exist and calendars protect employee data with the shared session gate", async () => {
   for (const [role, config] of Object.entries(staffRoles)) {
     for (const [page, , filename] of config.pages) {
       const html = await readFile(new URL(`(${role})/${filename}`, templates), "utf8");
       assert.ok(html.includes(`data-role="${role}"`)); assert.ok(html.includes(`data-page="${page}"`));
+      if (role !== "admin") assert.doesNotMatch(html, /id="page-refresh"|Tải lại dữ liệu/);
+      if (page === "work_calendar") {
+        assert.notEqual(role, "admin");
+        assert.match(html, /pages\/work_calendar\.js/);
+        assert.match(html, /pages\/work_calendar\.js\?[^" ]+" blocking="render"/);
+        assert.match(html, /Gửi đơn xin nghỉ/);
+        assert.doesNotMatch(html, /class="preview-note"|calendar-context|calendar-stats|stat-days|stat-shifts|stat-hours/);
+        assert.match(html, /staff-auth-pending/); assert.match(html, /<main[^>]* inert>/);
+        assert.doesNotMatch(html, /Chỉ xem trước|lịch minh họa/);
+        continue;
+      }
       assert.match(html, /staff-auth-pending/); assert.match(html, /<main[^>]* inert>/);
       assert.match(html, new RegExp(`type="module" src="../../static/js/pages/${role}\.js(?:\\?[^" ]*)?"`));
       if (role !== "admin") assert.doesNotMatch(html, /minh họa|MINHHOA|Bệnh nhân mẫu|chưa kết nối/i);
@@ -36,6 +47,14 @@ test("all sidebar pages exist, load an authenticated module and contain no hardc
       assert.doesNotMatch(script, /MINHHOA|HS-MAU|Bệnh nhân mẫu/);
     }
   }
+});
+
+test("employee calendars await authentication and use the leave API without sample assignments", async () => {
+  assert.equal(staffRoles.admin.pages.some(([key]) => key === "work_calendar"), false);
+  const source = await readFile(new URL("../static/js/pages/work_calendar.js", import.meta.url), "utf8");
+  assert.match(source, /await staffReady/);
+  assert.match(source, /api\/staff_leave\.js/);
+  assert.doesNotMatch(source, /Phòng khám 201|Quầy tiếp đón 01|const pattern|Xem trước đơn/);
 });
 test("staff profile stays available to hospital staff while admin keeps its own workspace", async () => {
   const html = await readFile(new URL("components/profile.html", templates), "utf8");
@@ -74,7 +93,7 @@ test("walk-in direct entry loads the selected API patient and never creates an e
     innerHTML = ""; textContent = ""; hidden = false; dataset = {}; listeners = {};
     addEventListener(name, handler) { this.listeners[name] = handler; }
   }
-  const selectors = ["#page-refresh", "#page-status", "#page-body", "#staff-dialog-close", "#walkin-selected", "#walkin-search", "#walkin-form", "#walkin-created"];
+  const selectors = ["#page-status", "#page-body", "#staff-dialog-close", "#walkin-selected", "#walkin-search", "#walkin-form", "#walkin-created"];
   const nodes = new Map(selectors.map(selector => [selector, new Node()]));
   const keys = ["document", "location", "fetch"], previous = keys.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]);
   const requests = [];

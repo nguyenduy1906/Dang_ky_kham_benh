@@ -8,7 +8,7 @@ import { $, esc, today, date, time, badge, panel, stats, facts, dialog, bindDial
 
 const user = await staffReady;
 if (user) {
-  bindDialog(); $("#page-refresh").addEventListener("click", () => location.reload());
+  bindDialog();
   const page = document.body.dataset.page;
   if (page === "overview") await run(overview);
   if (page === "encounters") await initEncounterList({ role: "reception" });
