@@ -111,3 +111,34 @@
 
 .admin-page .admin-logout > button { width: 100%; text-align: left; }
 .admin-account { text-decoration: none; }
+
+/* API-backed management uses the existing cards, tables and dialogs. */
+.admin-page .admin-toolbar { flex-wrap: wrap; }
+.admin-page .admin-toolbar label, .admin-page .admin-toolbar label:nth-child(2) { flex: 1 1 170px; min-width: 0; }
+.admin-page .admin-toolbar > button { flex-shrink: 0; }
+.admin-page .admin-checkbox { display: flex; align-items: center; gap: 9px; min-height: 43px; }
+.admin-page .admin-checkbox input { width: 17px; min-height: 17px; margin: 0; }
+.admin-row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.admin-page #page-body > .admin-card + .admin-card { margin-top: 24px; }
+.admin-page .admin-contact-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px; }
+.admin-page .admin-contact-fields label:has(textarea) { grid-column: 1 / -1; }
+.admin-page .admin-advanced { margin-top: 24px; }
+.admin-page .admin-advanced summary { cursor: pointer; margin-bottom: 18px; font-weight: 600; }
+.admin-page .admin-text-content { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 12px; padding: 16px; background: #f6f9f7; }
+.admin-page .admin-config-list { padding: 0 24px 24px; }
+.admin-page .admin-config-list form { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 12px; padding: 18px 0; border-bottom: 1px solid #e7eee9; }
+.admin-page .admin-config-list [role="status"] { grid-column: 1 / -1; margin: 0; }
+.admin-page .admin-card > .admin-dialog-facts { padding: 0 24px 24px; }
+.admin-page #admin-status { min-height: 1.5em; }
+.admin-page dialog .admin-toolbar { padding-inline: 0; }
+.admin-page dialog select[multiple] { min-height: 100px; }
+@media (max-width: 680px) {
+  .admin-page .admin-contact-fields { grid-template-columns: minmax(0,1fr); }
+  .admin-page .admin-toolbar label, .admin-page .admin-toolbar label:nth-child(2) { flex-basis: 100%; }
+  .admin-page .admin-pagination { flex-wrap: wrap; }
+}
+
+.admin-page .admin-collection { grid-column: 1 / -1; min-width: 0; border: 1px solid #dce7e0; padding: 16px; }
+.admin-page .admin-collection legend { padding: 0 6px; font-size: 13px; }
+.admin-page .admin-collection-item { display: grid; gap: 12px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid #e7eee9; }
+.admin-page .admin-collection-item > button { justify-self: start; }

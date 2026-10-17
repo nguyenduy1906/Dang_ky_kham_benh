@@ -35,7 +35,7 @@ beforeEach(() => {
   respond = url => {
     if (url.pathname === "/me") return Response.json({ user: { user_id: 3, role_name: "USER" } });
     if (url.pathname === "/patients") {
-      const found = url.searchParams.has("phone") ? profiles.filter(p => p.phone === url.searchParams.get("phone")) : profiles;
+      const found = url.searchParams.has("q") ? profiles.filter(p => p.phone.includes(url.searchParams.get("q"))) : profiles;
       return Response.json({ items: found, total: found.length });
     }
     if (url.pathname === "/patients/1") return Response.json({ patient: profiles[0] });
@@ -78,10 +78,13 @@ test("lookup uses only a normalized phone and requires prior bookings on the ser
   nodes.get("lookup-phone").value = "+84 912.345.678";
   await trigger(nodes.get("record-lookup-form"), "submit"); await tick();
   const requested = calls.slice(count);
-  assert.deepEqual(requested.map(c => c.path), ["/patients", "/patients/1/encounters"]);
-  assert.equal(requested[0].query.get("phone"), "0912345678");
+  assert.deepEqual(requested.map(c => c.path), ["/patients"]);
+  assert.equal(requested[0].query.get("q"), "0912345678");
   assert.equal(requested[0].query.get("booked_by_me"), "true");
   assert.ok(requested[0].options.headers.has("Authorization"));
+  assert.equal(nodes.get("record-lookup-matches").children.length, 1);
+  trigger(nodes.get("record-lookup-matches").children[0]); await tick();
+  assert.equal(calls.at(-1).path, "/patients/1/encounters");
 });
 
 test("phone outside previous bookings returns no match and makes no history request", async () => {
@@ -93,15 +96,15 @@ test("phone outside previous bookings returns no match and makes no history requ
 });
 
 test("invalid phone is rejected before any lookup request", async () => {
-  await controller(); const count = calls.length; nodes.get("lookup-phone").value = "123";
+  await controller(); const count = calls.length; nodes.get("lookup-phone").value = "abc";
   await trigger(nodes.get("record-lookup-form"), "submit");
   assert.equal(calls.length, count);
-  assert.match(nodes.get("lookup-phone").validationMessage, /hợp lệ/);
+  assert.match(nodes.get("record-lookup-status").textContent, /hợp lệ/);
 });
 
 test("a shared phone asks which previously booked person to view", async () => {
   const original = respond;
-  respond = url => url.pathname === "/patients" && url.searchParams.has("phone")
+  respond = url => url.pathname === "/patients" && url.searchParams.has("q")
     ? Response.json({ items: [profiles[0], { ...profiles[1], phone: profiles[0].phone }], total: 2 }) : original(url);
   await controller(); const count = calls.length; nodes.get("lookup-phone").value = profiles[0].phone;
   await trigger(nodes.get("record-lookup-form"), "submit"); await tick();
@@ -111,9 +114,10 @@ test("a shared phone asks which previously booked person to view", async () => {
   assert.equal(calls.at(-1).path, "/patients/2/encounters");
 });
 
-test("editing or closing the phone lookup discards a late response", async () => {
+test("editing or closing the phone lookup discards a late response", async t => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
   const original = respond; let finish;
-  respond = url => url.pathname === "/patients" && url.searchParams.has("phone")
+  respond = url => url.pathname === "/patients" && url.searchParams.has("q")
     ? new Promise(resolve => { finish = resolve; }) : original(url);
   await controller(); nodes.get("lookup-phone").value = profiles[0].phone;
   const pending = trigger(nodes.get("record-lookup-form"), "submit"); await tick();
@@ -123,6 +127,20 @@ test("editing or closing the phone lookup discards a late response", async () =>
   finish(Response.json({ items: [profiles[0]], total: 1 })); await pending; await tick();
   assert.equal(calls.length, count);
   assert.equal(nodes.get("record-lookup-matches").children.length, 0);
+});
+test("partial phone input updates the list without opening a record and clearing restores an empty lookup", async t => {
+  t.mock.timers.enable({ apis: ["setTimeout"] });
+  await controller(); const count = calls.length, input = nodes.get("lookup-phone");
+  input.value = "09"; trigger(input, "input"); t.mock.timers.tick(251); await tick();
+  assert.deepEqual(calls.slice(count).map(c => c.path), ["/patients"]);
+  assert.equal(calls.at(-1).query.get("q"), "09");
+  assert.equal(calls.at(-1).query.get("booked_by_me"), "true");
+  assert.equal(nodes.get("record-lookup-matches").children.length, 2);
+  input.value = "091"; trigger(input, "input"); t.mock.timers.tick(251); await tick();
+  assert.equal(nodes.get("record-lookup-matches").children.length, 1);
+  const before = calls.length;
+  input.value = ""; trigger(input, "input"); t.mock.timers.tick(251); await tick();
+  assert.equal(calls.length, before); assert.equal(nodes.get("record-lookup-matches").children.length, 0);
 });
 
 test("late responses cannot restore private records after leaving", async () => {

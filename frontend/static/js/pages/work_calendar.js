@@ -233,7 +233,6 @@ async function initialize() {
     weekStart = mondayOf(event.target.value); loadWeek();
   });
   $("#shift-filter").addEventListener("change", renderWeek);
-  $("#calendar-refresh").addEventListener("click", () => Promise.all([loadWeek(), loadRequests(requestPage)]));
   submitButton.disabled = false;
   await Promise.all([loadWeek(), loadRequests()]);
 }
