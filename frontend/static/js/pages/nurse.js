@@ -7,11 +7,10 @@ import { $, esc, today, date, badge, facts, stats, panel, empty, pagination, bin
 const user = await staffReady;
 if (user) {
   bindDialog();
-  $("#page-refresh").addEventListener("click", () => location.reload());
   await run(async () => {
     const page = document.body.dataset.page;
     if (page === "overview") await overview();
-    if (page === "assignments" || page === "support") await assignmentsPage(page === "support");
+    if (page === "assignments") await assignmentsPage();
     if (page === "patients") {
       const assignments = await allAssignments();
       await initEncounterList({ role: "nurse", assignments });
@@ -31,10 +30,10 @@ async function overview() {
   const work_date = today();
   const [assignments, total, waiting] = await Promise.all([allAssignments(), encounters.listEncounters({ work_date, page_size: 1 }), encounters.listEncounters({ work_date, encounter_status: "CHECKED_IN", page_size: 1 })]);
   const shifts = assignments.filter(a => a.work_date === work_date);
-  $("#page-body").innerHTML = stats([["Ca được giao hôm nay", shifts.length, date(work_date)], ["Lượt khám trong ca hôm nay", total.total, "Theo phân công còn hiệu lực"], ["Đã check-in", waiting.total, "Cần hướng dẫn vào phòng"]]) + panel("Ca làm việc hôm nay", cards(shifts), '<a href="assignments.html">Tất cả phân công →</a>') + panel("Hỗ trợ người bệnh", '<div class="doctor-shortcuts"><a href="patients.html"><h3>Bệnh nhân trong ca</h3><p>Tra cứu phiếu khám, xem bệnh án và đơn thuốc theo phân công.</p></a><a href="support.html"><h3>Phạm vi hỗ trợ</h3><p>Xem công việc được phân công và phối hợp với bác sĩ.</p></a></div>');
+  $("#page-body").innerHTML = stats([["Ca được giao hôm nay", shifts.length, date(work_date)], ["Lượt khám trong ca hôm nay", total.total, "Theo phân công còn hiệu lực"], ["Đã check-in", waiting.total, "Cần hướng dẫn vào phòng"]]) + panel("Ca làm việc hôm nay", cards(shifts), '<a href="assignments.html">Tất cả phân công →</a>') + panel("Hỗ trợ người bệnh", '<div class="doctor-shortcuts"><a href="patients.html"><h3>Bệnh nhân trong ca</h3><p>Tra cứu phiếu khám, xem bệnh án và đơn thuốc theo phân công.</p></a></div>');
 }
-async function assignmentsPage(support) {
-  $("#page-body").innerHTML = (support ? panel("Phối hợp trong ca", '<p>Hướng dẫn người bệnh đến đúng phòng và khung giờ; phối hợp với bác sĩ dựa trên ghi chú phân công, bệnh án và đơn thuốc được phép xem.</p><p class="scope-note">Y tá có quyền xem theo ca được phân công. Việc chẩn đoán, kê đơn và hoàn tất khám do bác sĩ phụ trách thực hiện.</p>') : "") + panel("Phân công còn hiệu lực", '<div id="assignment-list"></div><div id="list-pagination" class="list-pagination"></div>');
+async function assignmentsPage() {
+  $("#page-body").innerHTML = panel("Phân công còn hiệu lực", '<div id="assignment-list"></div><div id="list-pagination" class="list-pagination"></div>');
   async function load(page = 1) { await run(async () => { const result = await schedules.listOwnNurseAssignments({ page, page_size: 12 }); $("#assignment-list").innerHTML = cards(result.items); pagination(result, load); }); }
   await load();
 }

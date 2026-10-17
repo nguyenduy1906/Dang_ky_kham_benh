@@ -37,7 +37,7 @@ class PostgresTests(unittest.TestCase):
     def test_erd_repeat_and_health(self):
         html = (Path(__file__).resolve().parents[2] / 'database/erd.html').read_text(encoding='utf-8')
         entities = re.findall(r'^    ([A-Z_]+) \{\n(.*?)^    \}', html, re.M | re.S)
-        self.assertEqual(len(entities), 22)
+        self.assertEqual(len(entities), 23)
         with get_db_connection() as db:
             for name, body in entities:
                 expected = set(re.findall(r'^\s+\w+ (\w+)', body, re.M))

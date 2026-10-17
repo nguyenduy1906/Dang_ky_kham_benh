@@ -329,6 +329,25 @@ erDiagram
     USERS ||--o{ ROLE_REQUEST : "gui_yeu_cau"
     ROLE ||--o{ ROLE_REQUEST : "vai_tro_duoc_yeu_cau"
     USERS |o--o{ ROLE_REQUEST : "duyet_yeu_cau"
+    STAFF_LEAVE_REQUEST {
+        integer request_id PK
+        integer user_id FK
+        date from_date
+        date to_date
+        text period
+        text reason
+        text status
+        integer reviewed_by_id FK
+        timestamptz reviewed_at
+        text review_note
+        timestamptz cancelled_at
+        jsonb effects
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    USERS ||--o{ STAFF_LEAVE_REQUEST : "xin_nghi"
+    USERS |o--o{ STAFF_LEAVE_REQUEST : "duyet_don"
     USERS ||--o{ NURSE_ASSIGNMENT : "dieu_duong"
     USERS ||--o{ NURSE_ASSIGNMENT : "phan_cong"
     USERS |o--o{ NURSE_ASSIGNMENT : "thu_hoi"

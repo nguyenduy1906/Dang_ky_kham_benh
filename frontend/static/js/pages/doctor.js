@@ -8,7 +8,6 @@ import { $, esc, today, date, time, money, badge, facts, panel, stats, empty, di
 const user = await staffReady;
 if (user) {
   bindDialog();
-  $("#page-refresh").addEventListener("click", () => location.reload());
   const page = document.body.dataset.page;
   if (page === "overview") await run(overview);
   if (page === "schedule") await schedulePage();

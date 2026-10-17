@@ -6,6 +6,8 @@ from backend.app.utils.date import today_vn
 from backend.app.db.database import get_db_connection
 from backend.app.models import doctor_model, catalog_model, schedule_model
 from backend.app.utils.database_helpers import jsonable
+from backend.app.models import staff_leave_model
+from backend.app.services import staff_leave_service
 
 _CHANGES_TIME_OR_ROOM = ('room_id', 'work_date', 'start_time', 'end_time', 'slot_minutes')
 
@@ -88,9 +90,11 @@ def create_schedule(fields):
     if fields['work_date'] < today_vn():
         raise bad_request('Không thể tạo ca trong quá khứ', 'DATE_IN_PAST')
     with get_db_connection() as db:
+        staff_leave_model.lock_changes(db)
         doctor = doctor_model.get_by_id(db, fields['doctor_profile_id'])
         if doctor is None or not doctor['is_active'] or not doctor['account_ok']:
             raise bad_request('Bác sĩ không tồn tại hoặc đã ngưng hoạt động', 'DOCTOR_INVALID')
+        staff_leave_service.ensure_available(db, doctor['user_id'], fields['work_date'], fields['start_time'], fields['end_time'])
         fields = dict(fields)
         if fields.get('slot_minutes') is None:
             department = db.execute('SELECT dep.name FROM department dep JOIN doctor_profile d '
@@ -111,6 +115,7 @@ def create_schedule(fields):
 
 def update_schedule(schedule_id, fields):
     with get_db_connection() as db:
+        staff_leave_model.lock_changes(db)
         current = schedule_model.get_for_update(db, schedule_id)
         if current is None:
             raise not_found('Không tìm thấy ca làm việc', 'SCHEDULE_NOT_FOUND')
@@ -133,6 +138,10 @@ def update_schedule(schedule_id, fields):
             raise bad_request('end_time phải sau start_time')
         if merged['work_date'] < today_vn():
             raise bad_request('Không thể dời ca về quá khứ', 'DATE_IN_PAST')
+        doctor = doctor_model.get_by_id(db, current['doctor_profile_id'])
+        staff_leave_service.ensure_available(db, doctor['user_id'], merged['work_date'], merged['start_time'], merged['end_time'])
+        for assignment in db.execute('SELECT nurse_id FROM nurse_assignment WHERE schedule_id=%s AND revoked_at IS NULL', (schedule_id,)):
+            staff_leave_service.ensure_available(db, assignment['nurse_id'], merged['work_date'], merged['start_time'], merged['end_time'])
         if changed:
             if 'room_id' in changed:
                 _active_room(db, merged['room_id'])
@@ -156,7 +165,7 @@ def update_schedule(schedule_id, fields):
 def report_unavailable(user, schedule_id, reason):
     with get_db_connection() as db:
         doctor = doctor_model.get_by_user_id(db, user['user_id'])
-        schedule = schedule_model.get_for_update(db, schedule_id)
+        schedule = schedule_model.get_schedule(db, schedule_id)
         if doctor is None or schedule is None or schedule['doctor_profile_id'] != doctor['doctor_profile_id']:
             raise not_found('Không tìm thấy ca làm việc của bạn', 'SCHEDULE_NOT_FOUND')
         if schedule['schedule_status'] == 'UNAVAILABLE':
@@ -166,10 +175,14 @@ def report_unavailable(user, schedule_id, reason):
         if schedule['work_date'] < today_vn():
             raise conflict('Ca đã qua', 'SCHEDULE_IN_PAST')
         affected = schedule_model.count_active_encounters(db, schedule_id)
-        schedule_model.mark_unavailable(db, schedule_id, reason)
-        row = schedule_model.get_schedule(db, schedule_id)
-    # Việc huỷ/chuyển các lượt khám bị ảnh hưởng, hoàn cọc và thông báo do Gói 3 xử lý.
-    return {'schedule': _present(row), 'affected_encounters': affected}
+    from datetime import time
+    from backend.app.schemas.staff_leave_schema import validate_create
+    period = 'FULL_DAY' if schedule['start_time'] < time(12) < schedule['end_time'] else (
+        'MORNING' if schedule['end_time'] <= time(12) else 'AFTERNOON')
+    result = staff_leave_service.create(user, validate_create({'from_date': schedule['work_date'].isoformat(),
+        'period': period, 'reason': reason}))
+    return {**result, 'schedule': _present(schedule), 'affected_encounters': affected,
+            'message': 'Đã gửi đơn nghỉ, ca khám giữ nguyên cho đến khi admin duyệt'}
 
 
 def list_assignments(query, nurse_id=None):
@@ -184,6 +197,7 @@ def list_assignments(query, nurse_id=None):
 
 def create_assignment(actor, fields):
     with get_db_connection() as db:
+        staff_leave_model.lock_changes(db)
         # Khóa tài khoản để vai trò/trạng thái không đổi trong lúc phân công.
         nurse = db.execute('SELECT u.*, r.role_name FROM users u JOIN role r ON r.role_id = u.role_id '
                            'WHERE u.user_id = %s FOR UPDATE OF u', (fields['nurse_id'],)).fetchone()
@@ -194,8 +208,10 @@ def create_assignment(actor, fields):
         if (nurse['account_status'] != constants.ACCOUNT_ACTIVE
                 or nurse['approval_status'] != constants.APPROVAL_APPROVED):
             raise bad_request('Tài khoản y tá chưa được duyệt hoặc bị khóa', 'NURSE_INACTIVE')
-        if schedule_model.get_for_update(db, fields['schedule_id']) is None:
+        schedule = schedule_model.get_for_update(db, fields['schedule_id'])
+        if schedule is None:
             raise not_found('Không tìm thấy ca làm việc', 'SCHEDULE_NOT_FOUND')
+        staff_leave_service.ensure_available(db, nurse['user_id'], schedule['work_date'], schedule['start_time'], schedule['end_time'])
         try:
             assignment_id = schedule_model.create_assignment(db, actor['user_id'], fields)
         except pg_errors.UniqueViolation:

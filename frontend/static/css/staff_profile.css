@@ -1,0 +1,15 @@
+.staff-profile-page .staff-profile-monogram { width: 112px; height: 112px; border-radius: 50%; overflow: hidden; }
+.staff-profile-page .staff-profile-monogram .staff-avatar-image { object-fit: cover; object-position: center 25%; }
+.staff-profile-page .staff-profile-photo-note { margin: -5px 0 18px; font-size: 11px; color: var(--staff-muted); }
+.staff-profile-page .profile-readonly-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 22px; }
+.staff-profile-page .profile-readonly-grid .full-width { grid-column: 1 / -1; }
+.staff-profile-page .profile-readonly-grid :is(input, textarea)[readonly] { background: #f4f7f5; border-color: #dfe7e2; color: #4b6155; cursor: default; }
+.staff-profile-page #staff-profile-form[data-editing="true"] :is(input[name="phone"], input[name="email"]) { background: white; border-color: var(--staff-green); }
+.staff-profile-page .profile-managed-note { margin: 18px 0 0; padding: 12px 14px; background: #f5f8f6; border-left: 3px solid #a8bdb0; font-size: 12px; color: var(--staff-muted); }
+.staff-profile-page .profile-header-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.staff-profile-page #staff-password-dialog { max-width: 530px; border-radius: 5px; }
+.staff-profile-page .staff-password-fields { display: grid; gap: 16px; }
+.staff-profile-page .staff-password-fields small { margin-top: -10px; }
+@media (max-width: 680px) {
+  .staff-profile-page .profile-readonly-grid { grid-template-columns: minmax(0, 1fr); }
+}

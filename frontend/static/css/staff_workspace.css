@@ -45,14 +45,14 @@
 .staff-sidebar-bottom a { display: inline-block; color: #e1efe7; text-decoration: none; margin-bottom: 16px; }
 .staff-sidebar-bottom > span { display: block; color: #91ae9f; font-size: 10px; }
 .staff-main { min-width: 0; display: flex; flex-direction: column; }
-.staff-topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 76px; padding: 14px 32px; background: white; border-bottom: 1px solid var(--staff-line); }
+.staff-topbar { position: sticky; top: 0; z-index: 20; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 76px; padding: 14px 32px; background: white; border-bottom: 1px solid var(--staff-line); }
 .staff-topbar-left, .staff-topbar-right { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .staff-breadcrumb { display: flex; gap: 13px; align-items: center; color: var(--staff-muted); font-size: 12px; }
 .staff-breadcrumb strong { color: var(--staff-text); font-weight: 600; }
 .staff-preview-pill { border: 1px solid #e3e9d6; background: #f5f8ed; color: #657747; padding: 5px 10px; border-radius: 20px; font-size: 10px; white-space: nowrap; }
 .staff-topbar .staff-account { display: flex; align-items: center; gap: 9px; color: var(--staff-text); font-weight: 600; font-size: 12px; text-decoration: none; }
 .staff-account svg { width: 18px; height: 18px; color: var(--staff-muted); }
-.staff-initials { display: grid; place-items: center; background: #e8f1ec; color: #26704f; width: 33px; height: 33px; border-radius: 50%; font-size: 11px; }
+.staff-initials { display: grid; place-items: center; flex-shrink: 0; overflow: hidden; background: #e8f1ec; color: #26704f; width: 33px; height: 33px; border-radius: 50%; font-size: 11px; }
 .staff-page .staff-menu-toggle { display: none; background: #f0f6f2; color: var(--staff-deep); padding: 8px; border: 1px solid var(--staff-line); }
 .staff-menu-toggle svg { width: 22px; height: 22px; display: block; }
 .staff-content { width: 100%; max-width: 1480px; margin: 0 auto; padding: 32px; min-width: 0; flex: 1; }
@@ -204,7 +204,7 @@
 .staff-page [data-error="true"] { color: #b42318; background: #fff2f0; padding: 12px; border-radius: 8px; }
 .staff-page .form-feedback { min-height: 24px; margin-top: 12px; }
 .staff-page .staff-avatar-image { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }
-.staff-page .staff-initials img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.staff-page .staff-initials img { display: block; width: 33px; height: 33px; object-fit: cover; object-position: center 25%; border-radius: inherit; }
 .staff-page .staff-toolbar { display: flex; align-items: end; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
 .staff-page .staff-toolbar label { flex: 1 1 150px; }
 .staff-page .staff-record-text { white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -304,7 +304,7 @@
 .staff-page .staff-shell .staff-sidebar .staff-sidebar-header .staff-brand img { width: 46px; height: 46px; padding: 3px; background: white; border-radius: 50% !important; object-fit: contain; }
 .staff-page .staff-sidebar-header .staff-brand strong { font-size: 18px; letter-spacing: -.3px; white-space: nowrap; }
 .staff-page .staff-sidebar-header .staff-brand small { font-size: 8px; letter-spacing: .5px; margin-top: 3px; }
-.staff-page .staff-shell .staff-sidebar .staff-sidebar-header .staff-collapse-toggle { position: absolute; top: 8px; left: 50%; right: auto; transform: translateX(-50%); width: 36px; height: 36px; min-height: 36px; padding: 8px; margin: 0; border-radius: 50% !important; background: transparent; border: 1px solid #ffffff30; color: #fff; }
+.staff-page .staff-shell .staff-sidebar .staff-sidebar-header .staff-collapse-toggle { position: absolute; top: 8px; left: auto; right: 12px; transform: none; width: 36px; height: 36px; min-height: 36px; padding: 8px; margin: 0; border-radius: 0 !important; background: transparent; border: 1px solid #ffffff30; color: #fff; }
 .staff-page .staff-shell .staff-sidebar .staff-sidebar-header .staff-collapse-toggle:hover { background: #ffffff12; border-color: #ffffff65; }
 .staff-page .staff-shell .staff-sidebar .staff-sidebar-header .staff-brand { color: #fff; }
 .staff-page .staff-shell .staff-sidebar .staff-sidebar-header .staff-brand small { color: #e4f3ea; }

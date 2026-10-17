@@ -12,6 +12,7 @@ export * as authApi from "./auth.js";
 export * as catalogApi from "./catalog.js";
 export * as doctorApi from "./doctor.js";
 export * as scheduleApi from "./schedule.js";
+export * as staffLeaveApi from "./staff_leave.js";
 export * as patientApi from "./patient.js";
 export * as encounterApi from "./encounter.js";
 export * as paymentApi from "./payment.js";

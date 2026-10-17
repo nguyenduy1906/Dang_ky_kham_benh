@@ -1,4 +1,5 @@
 .auth-page { background: #f4f7f5; height: 100dvh; display: grid; grid-template-rows: 76px minmax(0, 1fr) 76px; }
+.auth-page :is(.auth-card, .auth-home, .auth-field input, button, .recovery-dialog) { border-radius: 5px; }
 .auth-header { width: 100%; max-width: 1180px; margin: 0 auto; padding: 12px 32px; display: flex; align-items: center; justify-content: space-between; gap: 24px; align-self: start; }
 .auth-header .brand { min-width: 0; }
 .auth-header .brand-logo { width: 52px; height: 52px; }
@@ -19,7 +20,7 @@
 .auth-form-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
 .auth-contact-hint { margin: -5px 0 14px; }
 .auth-field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; line-height: 1.5; }
-.auth-field input { width: 100%; min-width: 0; font: inherit; font-size: 16px; color: var(--ink); border: 1px solid #cbd7cf; background: white; border-radius: 0; padding: 12px 14px; min-height: 48px; }
+.auth-field input { width: 100%; min-width: 0; font: inherit; font-size: 16px; color: var(--ink); border: 1px solid #cbd7cf; background: white; padding: 12px 14px; min-height: 48px; }
 .auth-field input:focus { outline: 2px solid var(--green); outline-offset: 2px; }
 .auth-field input::placeholder { color: #84938a; font-size: 14px; }
 .password-field { position: relative; }
