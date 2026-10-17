@@ -95,11 +95,13 @@ test("walk-in direct entry loads the selected API patient and never creates an e
   }
   const selectors = ["#page-status", "#page-body", "#staff-dialog-close", "#walkin-selected", "#walkin-search", "#walkin-form", "#walkin-created"];
   const nodes = new Map(selectors.map(selector => [selector, new Node()]));
-  const keys = ["document", "location", "fetch"], previous = keys.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]);
+  const keys = ["document", "location", "fetch", "window"], previous = keys.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]);
+  nodes.get("#walkin-search").elements = { q: Object.assign(new Node(), { value: "" }) };
   const requests = [];
   Object.assign(globalThis, {
     document: { body: { dataset: { role: "reception", page: "walk_in" } }, querySelector: selector => nodes.get(selector) || null },
     location: { search: "?patient_id=42" },
+    window: new EventTarget(),
     fetch: async (url, options) => {
       requests.push({ path: new URL(url).pathname, method: options.method });
       if (new URL(url).pathname === "/patients/42") return Response.json({ patient: { patient_id: 42, full_name: "Người khám từ API", dob: "1990-05-20", phone: "0931234567", is_archived: false } });

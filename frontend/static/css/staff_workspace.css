@@ -324,7 +324,7 @@
   .staff-page.staff-sidebar-collapsed .staff-shell:has(> .staff-sidebar) { grid-template-columns: 80px minmax(0, 1fr); }
   .staff-page.staff-sidebar-collapsed .staff-sidebar-header { padding: 56px 10px 14px; min-height: 100px; }
   .staff-page.staff-sidebar-collapsed .staff-shell .staff-sidebar .staff-sidebar-header .staff-brand img { width: 38px; height: 38px; padding: 2px; }
-  .staff-page.staff-sidebar-collapsed .staff-shell .staff-sidebar .staff-sidebar-header .staff-collapse-toggle { grid-column: 1; grid-row: 1; }
+  .staff-page.staff-sidebar-collapsed .staff-shell .staff-sidebar .staff-sidebar-header .staff-collapse-toggle { left: 50%; right: auto; transform: translateX(-50%); }
   .staff-page.staff-sidebar-collapsed .staff-shell .staff-sidebar .staff-sidebar-header .staff-brand { grid-column: 1; grid-row: 2; justify-content: center; gap: 0; }
   .staff-page.staff-sidebar-collapsed .staff-sidebar-header .staff-brand { margin-bottom: 0; }
   .staff-page.staff-sidebar-collapsed .staff-shell .staff-sidebar > nav { margin: 12px 10px; gap: 8px; }
@@ -355,3 +355,19 @@ input[list] { border-radius: 5px !important; }
 .staff-page .support-grid > article,
 .staff-page :is(.doctor-shortcuts, .admin-shortcuts) > a,
 .staff-page .schedule-details > div { border-radius: 5px !important; }
+
+/* Reserve the custom-date row so changing periods never moves the dashboard. */
+.staff-page .overview-period-header { align-items: flex-start; }
+.staff-page .overview-period-header > div { flex: 1 1 280px; min-width: 0; }
+.staff-page .overview-period-header > .overview-period-control { flex: 0 1 300px; width: 300px; max-width: 100%; margin-left: auto; }
+.staff-page .overview-period-filter { width: 100%; margin: 0; }
+.staff-page .overview-period-filter label { font-size: 11px; }
+.staff-page .overview-period-filter select { min-height: 38px; padding: 7px 10px; font-size: 13px; }
+.staff-page .overview-period-custom { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+.staff-page .overview-period-custom[hidden] { display: grid !important; visibility: hidden; pointer-events: none; }
+.staff-page .overview-period-custom input { min-width: 0; min-height: 38px; padding: 7px; font-size: 12px; }
+.staff-page .overview-period-filter .overview-period-feedback { min-height: 1.5em; margin: 6px 0 0; font-size: 11px; color: var(--staff-muted); }
+.staff-page #page-body[aria-busy="true"] { opacity: .65; }
+@media (max-width: 700px) {
+  .staff-page .overview-period-header > .overview-period-control { flex-basis: 100%; width: 100%; }
+}

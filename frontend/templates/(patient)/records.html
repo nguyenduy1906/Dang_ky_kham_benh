@@ -63,13 +63,12 @@
         <h2 id="record-lookup-title">Tra cứu kết quả khám bệnh</h2>
         <button type="button" class="dialog-close" id="record-lookup-close" aria-label="Đóng tra cứu kết quả">×</button>
       </div>
-      <p class="lookup-instructions">Nhập số điện thoại người bạn đã từng đặt khám hộ.</p>
-      <form id="record-lookup-form">
+      <p class="lookup-instructions">Nhập số điện thoại để tìm ngay người bạn đã từng đặt khám hộ, rồi chọn hồ sơ cần xem.</p>
+      <form id="record-lookup-form" role="search" aria-label="Tìm người bệnh đã đặt khám hộ">
         <label for="lookup-phone">Số điện thoại *</label>
-        <input id="lookup-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" required aria-describedby="record-lookup-status" />
+        <input id="lookup-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" aria-describedby="record-lookup-status" aria-controls="record-lookup-matches" />
         <div id="record-lookup-matches" class="record-lookup-matches"></div>
         <p id="record-lookup-status" class="lookup-status" role="status"></p>
-        <button id="record-lookup-submit" type="submit" class="solid-button lookup-submit">Tra cứu</button>
       </form>
     </dialog>
     <dialog id="record-result-dialog" class="record-result-dialog" aria-labelledby="record-result-title">

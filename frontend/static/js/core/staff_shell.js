@@ -15,9 +15,10 @@ export const staffRoles = Object.freeze({
   ] },
   nurse: { label: "Y tá", initials: "YT", description: "Đồng hành cùng bác sĩ, chăm sóc người bệnh", pages: [
     ["overview", "Tổng quan", "home.html", "overview"],
-    ["work_calendar", "Lịch làm việc", "work_calendar.html", "calendar"],
+    ["patients", "Danh sách khám", "patients.html", "people"],
     ["assignments", "Phòng được phân công", "assignments.html", "calendar"],
-    ["patients", "Bệnh nhân trong ca", "patients.html", "people"],
+    ["records", "Hồ sơ bệnh nhân", "records.html", "record"],
+    ["work_calendar", "Lịch làm việc", "work_calendar.html", "calendar"],
   ] },
   reception: { label: "Lễ tân", initials: "LT", description: "Tiếp đón chu đáo, điều phối thuận tiện", pages: [
     ["overview", "Tổng quan", "home.html", "overview"],
@@ -65,6 +66,8 @@ export function mountStaffWorkspace() {
   const profileUrl = new URL("components/profile.html", templates);
   if (role) profileUrl.searchParams.set("role", role);
   const current = document.body.dataset.page;
+  const profileLink = `<a href="${profileUrl.href}"${current === "profile" ? ' aria-current="page"' : ""}>${icon("profile")}<span>Hồ sơ cá nhân</span></a>`;
+  const signout = `<button id="staff-signout" type="button" class="secondary">${icon("logout")}<span>Đăng xuất</span></button>`;
   const navigation = (configuration?.pages || []).map(([key, label, file, symbol]) => {
     const url = new URL(`(${role})/${file}`, templates).href;
     return `<a href="${url}"${key === current ? ' aria-current="page"' : ""}>${icon(symbol)}<span>${label}</span></a>`;
@@ -73,11 +76,12 @@ export function mountStaffWorkspace() {
     <a class="staff-brand" href="${workspaceHome}"><img src="${new URL("../../assets/bieu_trung_neu.png", import.meta.url).href}" width="44" height="44" alt="Logo NEU Medical"><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></a>
     <p class="staff-nav-label">KHÔNG GIAN LÀM VIỆC</p>
     <nav aria-label="Điều hướng ${configuration?.label.toLocaleLowerCase("vi") || "nhân viên"}">${navigation}
-      <a href="${profileUrl.href}"${current === "profile" ? ' aria-current="page"' : ""}>${icon("profile")}<span>Hồ sơ cá nhân</span></a>
+      ${profileLink}
     </nav>
-    <div class="staff-sidebar-bottom"><p>${configuration?.description || "Thông tin cá nhân dành cho nhân viên bệnh viện"}</p><button id="staff-signout" type="button" class="secondary">${icon("logout")}<span>Đăng xuất</span></button><span>NEU Medical</span></div>`;
+    <div class="staff-sidebar-bottom"><p>${configuration?.description || "Thông tin cá nhân dành cho nhân viên bệnh viện"}</p>${signout}</div>`;
   const activeTitle = current === "profile" ? "Hồ sơ cá nhân" : configuration?.pages.find(([key]) => key === current)?.[1] || "Không gian nhân viên";
-  topbar.innerHTML = `<div class="staff-topbar-left"><button class="staff-menu-toggle" type="button" id="staff-menu-toggle" aria-label="Mở điều hướng" aria-controls="staff-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><span class="staff-breadcrumb">${configuration?.label || "Nhân viên"}<span aria-hidden="true">/</span><strong>${activeTitle}</strong></span></div><div class="staff-topbar-right"><a class="staff-account" href="${profileUrl.href}" aria-label="Hồ sơ cá nhân"><span class="staff-initials" aria-hidden="true">${role === "nurse" ? `<img src="${nursePortraitUrl}" width="33" height="33" alt="">` : configuration?.initials || "NV"}</span><span id="staff-account-name">${configuration?.label || "Nhân viên"}</span>${icon("profile")}</a></div>`;
+  const account = `<a class="staff-account" href="${profileUrl.href}" aria-label="Hồ sơ cá nhân"><span class="staff-initials" aria-hidden="true">${role === "nurse" ? `<img src="${nursePortraitUrl}" width="33" height="33" alt="">` : configuration?.initials || "NV"}</span><span id="staff-account-name">${configuration?.label || "Nhân viên"}</span>${icon("profile")}</a>`;
+  topbar.innerHTML = `<div class="staff-topbar-left"><button class="staff-menu-toggle" type="button" id="staff-menu-toggle" aria-label="Mở điều hướng" aria-controls="staff-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><span class="staff-breadcrumb">${configuration?.label || "Nhân viên"}<span aria-hidden="true">/</span><strong>${activeTitle}</strong></span></div><div class="staff-topbar-right">${account}</div>`;
   const toggle = document.querySelector("#staff-menu-toggle");
   initializeSidebarCollapse(role || "staff");
   const backdrop = document.createElement("button");

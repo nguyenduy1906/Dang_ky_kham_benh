@@ -1,3 +1,4 @@
+import { initOverviewPeriod, overviewRows, overviewDayParams } from "../core/staff_overview.js";
 import { staffReady } from "../core/staff_workspace.js";
 import * as schedules from "../api/schedule.js";
 import * as encounters from "../api/encounter.js";
@@ -16,18 +17,19 @@ if (user) {
 }
 
 async function overview() {
-  const work_date = today();
-  const [all, waiting, active, shifts, upcoming] = await Promise.all([
-    encounters.listEncounters({ work_date, page_size: 1 }),
-    encounters.listEncounters({ work_date, encounter_status: "CHECKED_IN", page_size: 1 }),
-    encounters.listEncounters({ work_date, encounter_status: "IN_PROGRESS", page_size: 1 }),
-    schedules.listOwnSchedules({ from_date: work_date, to_date: work_date, page_size: 100 }),
-    encounters.listStaffTickets({ work_date, page_size: 8 }),
-  ]);
-  $("#page-body").innerHTML = stats([["Lượt khám hôm nay", all.total, date(work_date)], ["Đã check-in", waiting.total, "Sẵn sàng chờ khám"], ["Đang khám", active.total, "Trong phạm vi được giao"]]) +
-    panel("Ca làm việc hôm nay", shiftCards(shifts.items), '<a href="schedule.html">Xem lịch làm việc →</a>') +
-    panel("Lượt khám trong ngày", table(["Người bệnh", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", "Thao tác"], upcoming.items.map(e => `<tr>${encounterColumns(e)}<td><a class="button-link secondary" href="clinical.html?encounter_id=${e.encounter_id}">Mở lượt khám</a></td></tr>`)), '<a href="encounters.html">Tất cả lượt được giao →</a>') +
+  await initOverviewPeriod(async (range, options) => {
+    const params = overviewDayParams(range);
+    const rangeLabel = `${date(range.from)}${range.to !== range.from ? ` – ${date(range.to)}` : ""}`;
+    const [all, shifts, upcoming] = await Promise.all([
+      overviewRows(encounters.listEncounters, params, range, options),
+      overviewRows(schedules.listOwnSchedules, { from_date: range.from, to_date: range.to }, range, options),
+      overviewRows(encounters.listStaffTickets, params, range, options),
+    ]);
+    return stats([["Lượt khám", all.length, rangeLabel], ["Đã check-in", all.filter(e => e.encounter_status === "CHECKED_IN").length, "Sẵn sàng chờ khám"], ["Đang khám", all.filter(e => e.encounter_status === "IN_PROGRESS").length, "Trong phạm vi được giao"]]) +
+    panel("Ca làm việc trong thời gian đã chọn", shiftCards(shifts), '<a href="schedule.html">Xem lịch làm việc →</a>') +
+    panel("Lượt khám trong thời gian đã chọn", table(["Người bệnh", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", "Thao tác"], upcoming.slice(0, 8).map(e => `<tr>${encounterColumns(e)}<td><a class="button-link secondary" href="clinical.html?encounter_id=${e.encounter_id}">Mở lượt khám</a></td></tr>`)), '<a href="encounters.html">Tất cả lượt được giao →</a>') +
     panel("Khu vực làm việc", '<div class="doctor-shortcuts"><a href="clinical.html"><h3>Bệnh án & đơn thuốc</h3><p>Ghi chẩn đoán và điều trị cho lượt khám được giao.</p></a><a href="history.html"><h3>Lịch sử khám</h3><p>Xem và bổ sung bệnh án sau hoàn tất, có lưu lý do.</p></a><a href="../components/profile.html?role=doctor"><h3>Hồ sơ cá nhân</h3><p>Cập nhật thông tin cá nhân, chuyên môn và ảnh đại diện.</p></a></div>');
+  });
 }
 function shiftCards(items, allowLeave = false) {
   return items.length ? `<div class="shift-grid">${items.map(s => `<article class="shift-card"><div class="section-heading"><h3>${esc(s.room_name)}</h3>${badge(s.schedule_status)}</div><p class="doctor-shift-time">${esc(s.start_time.slice(0, 5))} — ${esc(s.end_time.slice(0, 5))}</p>${facts([["Ngày làm việc", date(s.work_date)], ["Chuyên khoa", s.department_name], ["Đã đặt / sức chứa", `${s.booked_count} / ${s.max_quota}`], ["Thời lượng lượt khám", `${s.slot_minutes} phút`], ...(s.unavailable_reason ? [["Lý do nghỉ", s.unavailable_reason]] : [])])}<div class="actions"><a class="button-link" href="encounters.html?schedule_id=${s.schedule_id}">Xem lượt trong ca →</a>${allowLeave && s.work_date >= today() && ["OPEN", "FULL"].includes(s.schedule_status) ? `<button class="secondary" data-leave="${s.schedule_id}">Báo nghỉ ca này</button>` : ""}</div></article>`).join("")}</div>` : empty("Chưa có ca làm việc trong khoảng đã chọn.");

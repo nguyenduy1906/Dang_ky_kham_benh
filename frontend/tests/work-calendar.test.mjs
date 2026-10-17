@@ -214,7 +214,7 @@ test("offline calendar shows the backend error without inventing shifts", async 
 test("session expiration clears private data and late responses cannot repopulate it", async () => {
   await load(); fill();
   intercept = c => c.path === "/staff/work-schedules" ? Response.json({ error: { code: "TOKEN_EXPIRED", message: "Phiên hết hạn" } }, { status: 401 }) : undefined;
-  await click("#calendar-refresh");
+  await click("#week-next");
   assert.equal(get("#main-content").inert, true); assert.equal(get("#calendar-grid").innerHTML, "");
   assert.equal(get("#leave-requests").innerHTML, ""); assert.equal(form().elements.reason.value, "");
   assert.equal(session.has("neu-medical.auth"), false);

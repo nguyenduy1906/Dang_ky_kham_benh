@@ -42,6 +42,8 @@
 .nurse-page .nurse-scope-card h3 { margin-top: 0; }
 .nurse-page .nurse-scope-card ul { display: grid; gap: 10px; padding-left: 20px; margin-bottom: 0; color: #536c62; }
 .nurse-page .nurse-scope-limited { background: #f7f6f2; }
+.nurse-page .nurse-record-history { border-top: 1px solid var(--staff-line); margin-top: 24px; padding-top: 24px; }
+.nurse-page #nurse-record-detail { scroll-margin-top: 100px; }
 @media (max-width: 1200px) {
   .nurse-page .nurse-overview-grid { grid-template-columns: 1fr; }
   .nurse-page .support-grid { grid-template-columns: 1fr; }
