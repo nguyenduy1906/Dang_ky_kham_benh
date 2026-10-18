@@ -5,6 +5,7 @@ import { changeOwnPassword, clearSession } from "../core/session.js";
 import { updateMe } from "../api/auth.js";
 import { getOwnProfile, uploadAvatar } from "../api/doctor.js";
 import { $, esc, date, money, badge, facts, bindDialog, run, submit } from "../core/staff_ui.js";
+import { enhanceDialogDismiss } from "../core/dialog_dismiss.js";
 
 const readonlyField = (label, value, multiline = false) => {
   const text = value === null || value === undefined || value === "" ? "Chưa cập nhật" : value;
@@ -15,7 +16,7 @@ const readonlyField = (label, value, multiline = false) => {
 
 let user = await staffReady;
 if (user) {
-  bindDialog();
+  bindDialog({ dismissible: user.role_name === "NURSE" });
   await run(async () => {
     const role = backendRoles[user.role_name];
     let doctor = null;
@@ -24,7 +25,7 @@ if (user) {
       catch (error) { if (error.status !== 404) throw error; }
     }
     const url = new URL(location.href); url.searchParams.set("role", role); history.replaceState(null, "", url);
-    $("#staff-profile-description").textContent = "Xem hồ sơ nhân viên và thay đổi thông tin liên hệ khi cần.";
+    $("#staff-profile-description").textContent = role === "nurse" ? "Xem hồ sơ cá nhân." : "Xem hồ sơ nhân viên và thay đổi thông tin liên hệ khi cần.";
     const professionalFields = role !== "doctor" ? "" : doctor
       ? `${[
         ["Khoa", doctor.department_name], ["Học vị / chức danh", doctor.academic_degree],
@@ -34,7 +35,7 @@ if (user) {
       ].map(([label, value]) => readonlyField(label, value)).join("")}${readonlyField("Giới thiệu chuyên môn", doctor.introduction, true)}`
       : '<p class="scope-note full-width">Chưa có hồ sơ chuyên môn. Vui lòng liên hệ quản trị để được bổ sung.</p>';
     const avatarForm = doctor ? '<form id="avatar-form" class="staff-profile-avatar-form"><label>Ảnh đại diện<input name="file" id="professional-photo" type="file" accept="image/jpeg,image/png,image/webp" required></label><p class="muted">JPEG, PNG hoặc WebP, tối đa 2 MB.</p><button type="submit">Cập nhật ảnh đại diện</button><p role="status" class="form-feedback"></p></form>' : "";
-    $("#page-body").innerHTML = `<div class="staff-profile-grid"><aside class="panel staff-profile-identity"><div class="staff-profile-monogram" id="staff-profile-avatar">${esc(staffRoles[role].initials)}</div>${role === "nurse" ? '<p class="staff-profile-photo-note">Ảnh minh họa điều dưỡng</p>' : ""}<h2 id="staff-profile-name"></h2><span class="badge green">${esc(staffRoles[role].label)}</span><div id="staff-profile-facts"></div>${avatarForm}</aside><div class="staff-profile-sections">
+    $("#page-body").innerHTML = `<div class="staff-profile-grid"><aside class="panel staff-profile-identity"><div class="staff-profile-monogram" id="staff-profile-avatar">${esc(staffRoles[role].initials)}</div><h2 id="staff-profile-name"></h2><span class="badge green">${esc(staffRoles[role].label)}</span><div id="staff-profile-facts"></div>${avatarForm}</aside><div class="staff-profile-sections">
       <section class="panel"><div class="section-heading"><h2>Thông tin nhân viên</h2><div class="profile-header-actions"><button id="staff-profile-edit" type="button" class="secondary">Thay đổi thông tin</button><button id="staff-password-open" type="button" class="secondary">Đổi mật khẩu</button></div></div><form id="staff-profile-form"><div id="staff-managed-fields" class="profile-readonly-grid"></div><div id="staff-profile-actions" class="actions" hidden><button type="submit">Lưu</button><button id="staff-profile-cancel" type="button" class="secondary">Hủy</button></div><p role="status" class="form-feedback"></p></form></section>
     </div></div>`;
     const form = $("#staff-profile-form");
@@ -60,15 +61,13 @@ if (user) {
     function render() {
       $("#staff-profile-name").textContent = user.full_name;
       $("#staff-account-name").textContent = user.full_name;
-      $("#staff-profile-facts").innerHTML = facts([["Đơn vị", "NEU Medical"], ["Mã tài khoản", code("TK", user.user_id)]]) + `<p>${badge(user.account_status)} ${badge(user.approval_status)}</p>`;
+      $("#staff-profile-facts").innerHTML = facts([["Đơn vị", "NEU Medical"], ["Mã tài khoản", code("TK", user.user_id)]]);
       $("#staff-managed-fields").innerHTML = [
         ["Họ và tên", user.full_name], ["Mã tài khoản", code("TK", user.user_id)], ["Vai trò trên hệ thống", staffRoles[role].label],
       ].map(([label, value]) => readonlyField(label, value)).join("") +
         '<label>Số điện thoại<input name="phone" type="tel" maxlength="20" autocomplete="tel" placeholder="Chưa cập nhật" readonly></label><label>Email<input name="email" type="email" maxlength="254" autocomplete="email" placeholder="Chưa cập nhật" readonly></label>' + [
         ["Trạng thái tài khoản", user.account_status === "ACTIVE" ? "Đang hoạt động" : "Đã khóa"],
-        ["Trạng thái phê duyệt", ({ APPROVED: "Đã duyệt", PENDING: "Chờ duyệt", REJECTED: "Từ chối" })[user.approval_status] || user.approval_status],
         ["Ngày tạo tài khoản", user.created_at ? date(user.created_at) : null],
-        ["Cập nhật gần nhất", user.updated_at ? date(user.updated_at) : null],
       ].map(([label, value]) => readonlyField(label, value)).join("") + professionalFields;
       for (const key of ["phone", "email"]) { form.elements[key].value = user[key] || ""; form.elements[key].defaultValue = user[key] || ""; }
       setEditing(false);
@@ -140,6 +139,7 @@ function bindPasswordChange() {
   const open = $("#staff-password-open"), close = $("#staff-password-close"), save = $("#staff-password-submit");
   const current = form.elements.current_password, fresh = form.elements.new_password, confirm = form.elements.confirm_password;
   let busy = false, version = 0, controller;
+  if (user.role_name === "NURSE") enhanceDialogDismiss(modal, { closeButtons: [close], canClose: () => !busy });
   function setBusy(active) {
     busy = active;
     for (const field of [current, fresh, confirm, close, save]) field.disabled = active;

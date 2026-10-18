@@ -1,5 +1,6 @@
 import { code } from "./business_codes.js";
 import { sessionError } from "./staff_workspace.js";
+import { enhanceDialogDismiss } from "./dialog_dismiss.js";
 
 export const $ = selector => document.querySelector(selector);
 export const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
@@ -27,7 +28,11 @@ export function dialog(title, html) {
   $("#staff-dialog-title").textContent = title; $("#staff-dialog-content").innerHTML = html;
   if (!modal.open) modal.showModal();
 }
-export function bindDialog() { $("#staff-dialog-close")?.addEventListener("click", () => $("#staff-dialog").close()); }
+export function bindDialog({ dismissible = document.body?.dataset?.role === "nurse" } = {}) {
+  const button = $("#staff-dialog-close");
+  button?.addEventListener("click", () => $("#staff-dialog").close());
+  if (dismissible) enhanceDialogDismiss($("#staff-dialog"), { closeButtons: [button] });
+}
 export async function submit(form, action, message = "Đã lưu thay đổi.") {
   if (form.dataset.busy === "true") return;
   form.dataset.busy = "true";
@@ -42,7 +47,8 @@ export async function submit(form, action, message = "Đã lưu thay đổi.") {
 export function pagination(result, onPage, node = $("#list-pagination")) {
   if (!node) return;
   const pages = Math.max(1, Math.ceil(result.total / result.page_size));
-  node.innerHTML = `<span>${result.total} kết quả · Trang ${result.page}/${pages}</span><div class="actions"><button class="secondary" type="button" ${result.page <= 1 ? "disabled" : ""} data-step="-1">Trang trước</button><button class="secondary" type="button" ${result.page >= pages ? "disabled" : ""} data-step="1">Trang sau</button></div>`;
+  const total = document.body?.dataset?.role === "nurse" ? "" : `${result.total} kết quả · `;
+  node.innerHTML = `<span>${total}Trang ${result.page}/${pages}</span><div class="actions"><button class="secondary" type="button" ${result.page <= 1 ? "disabled" : ""} data-step="-1">Trang trước</button><button class="secondary" type="button" ${result.page >= pages ? "disabled" : ""} data-step="1">Trang sau</button></div>`;
   node.querySelectorAll("button").forEach(button => button.addEventListener("click", () => onPage(result.page + Number(button.dataset.step))));
 }
 export const encounterSummary = e => facts([["Bệnh nhân", e.patient_name], ["Mã lượt khám", code("LK", e.encounter_id)], ["Mã phiếu", e.ticket_code], ["Bác sĩ", e.doctor_name], ["Phòng", e.room_name], ["Ngày khám", date(e.work_date)], ["Khung giờ", `${time(e.estimated_exam_at)} – ${time(e.appointment_end_at)}`], ["Hình thức", e.encounter_type === "ONLINE" ? "Đặt trực tuyến" : "Khám trực tiếp"], ["Trạng thái", labels[e.encounter_status]], ["Triệu chứng", e.symptoms], ["Phí khám", money(e.consultation_fee_snapshot)]]);

@@ -382,6 +382,7 @@ input[list] { border-radius: 5px !important; }
 }
 
 /* Compact introduction below the single page heading in the topbar. */
+.staff-page button[data-dialog-dismiss]:is(:hover, :focus-visible):not(:disabled) { color: #fff; background: #c73535; border-color: #c73535; }
 .staff-page:not(.admin-page) .overview-period-header { align-items: flex-start; }
 .staff-page:not(.admin-page) .overview-period-header > div:first-child { padding-top: 32px; }
 .staff-page:not(.admin-page) .overview-period-custom[hidden] { display: none !important; }

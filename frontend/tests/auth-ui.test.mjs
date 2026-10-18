@@ -99,8 +99,8 @@ test("staff login opens the server-assigned workspace even when next targets a p
     assert.equal(nodes.get("login-form").submit.disabled, false);
   }
 });
-test("admin login replaces a stale profile destination with dashboard and preserves admin deep links", async () => {
-  for (const [next, expected] of [["components/profile.html?role=admin", "(admin)/home.html"], ["(admin)/users.html", "(admin)/users.html"]]) {
+test("admin login preserves its personal profile destination and admin deep links", async () => {
+  for (const [next, expected] of [["components/profile.html?role=admin", "components/profile.html?role=admin"], ["(admin)/users.html", "(admin)/users.html"]]) {
     location.searchParams.set("next", new URL(`../${next}`, portalUrl).href);
     nodes.get("login-form").listeners.submit = [];
     await import(`data:text/javascript;base64,${Buffer.from(source + `\n// admin destination ${importCount++}`).toString("base64")}`);

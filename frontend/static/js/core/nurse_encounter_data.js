@@ -36,3 +36,24 @@ export function attendance(row) {
   return '<span class="badge blue">Chưa đến</span>';
 }
 export const normalizeSearch = text => String(text || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
+
+export const visitOrder = (a, b) => `${a.work_date}${a.estimated_exam_at || a.start_time || ""}`.localeCompare(`${b.work_date}${b.estimated_exam_at || b.start_time || ""}`) || a.encounter_id - b.encounter_id;
+export const inNurseRange = (row, range) => !range || ((!range.from || row.work_date >= range.from) && (!range.to || row.work_date <= range.to));
+export function nurseRange(search = globalThis.location?.search || "") {
+  const params = new URLSearchParams(search);
+  const from = params.get("from_date") || "", to = params.get("to_date") || "";
+  const valid = value => !value || (/^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value);
+  if (!valid(from) || !valid(to) || (from && to && from > to)) throw new Error("Vui lòng chọn khoảng ngày hợp lệ.");
+  return from || to ? { from, to } : null;
+}
+export function nurseFormRange(form) {
+  return nurseRange(new URLSearchParams({ from_date: form.elements.from_date?.value || "", to_date: form.elements.to_date?.value || "" }).toString());
+}
+export function recentNursePatients(patients, visits, range = null) {
+  const latest = new Map();
+  for (const visit of visits.filter(e => historyStatuses.includes(e.encounter_status) && inNurseRange(e, range)).sort((a, b) => visitOrder(b, a))) {
+    if (!latest.has(String(visit.patient_id))) latest.set(String(visit.patient_id), visit);
+  }
+  const items = patients.filter(p => latest.has(String(p.patient_id))).sort((a, b) => visitOrder(latest.get(String(b.patient_id)), latest.get(String(a.patient_id))) || b.patient_id - a.patient_id);
+  return { items, latest };
+}

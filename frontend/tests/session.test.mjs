@@ -1,6 +1,7 @@
 import test, { beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import * as session from "../static/js/core/session.js";
+import { NURSE_OVERVIEW_STORAGE_KEY } from "../static/js/core/overview_preferences.js";
 
 const values = new Map();
 globalThis.window = new EventTarget();
@@ -25,12 +26,21 @@ const login = () => session.signIn({ identifier: "frontend@example.test", passwo
 
 test("changing password replaces the revoked token without storing passwords", async () => {
   await login();
+  values.set(NURSE_OVERVIEW_STORAGE_KEY, JSON.stringify({ period: "week" }));
   response = () => Response.json({ access_token: "rotated-token", token_type: "Bearer", expires_in: 7200, message: "Đã đổi mật khẩu" });
   await session.changeOwnPassword({ current_password: "Old-password-123", new_password: "New-password-123" });
   assert.equal(new URL(requests.at(-1).url).pathname, "/me/change-password");
   assert.equal(requests.at(-1).headers.get("Authorization"), "Bearer test-token");
   const saved = JSON.parse(values.get("neu-medical.auth")); assert.equal(saved.token, "rotated-token");
   assert.deepEqual(Object.keys(saved).sort(), ["expiresAt", "token"]);
+  assert.equal(JSON.parse(values.get(NURSE_OVERVIEW_STORAGE_KEY)).period, "week");
+});
+
+test("successful login and logout reset the nurse overview preference without storing authentication data in it", async () => {
+  values.set(NURSE_OVERVIEW_STORAGE_KEY, JSON.stringify({ period: "month" }));
+  await login(); assert.equal(values.has(NURSE_OVERVIEW_STORAGE_KEY), false);
+  values.set(NURSE_OVERVIEW_STORAGE_KEY, JSON.stringify({ period: "week" }));
+  session.clearSession(); assert.equal(values.has(NURSE_OVERVIEW_STORAGE_KEY), false);
 });
 test("late password change cannot overwrite a new session", async () => {
   await login(); let finish;
@@ -137,7 +147,7 @@ test("role-specific return URLs reject cross-role and crafted destinations", () 
       assert.equal(session.returnUrl(input, role).href, home.href);
     assert.equal(session.returnUrl(null, role).href, home.href);
     const profile = new URL("../components/profile.html?role=admin", session.profileUrl);
-    assert.equal(session.returnUrl(profile.href, role).pathname, role === "ADMIN" ? home.pathname : profile.pathname, "admin stays in its workspace; other staff keep their shared profile");
+    assert.equal(session.returnUrl(profile.href, role).pathname, profile.pathname, "all employees can return to their shared profile");
   }
 });
 test("a backend role change is rechecked and invalid backend roles clear the session", async () => {

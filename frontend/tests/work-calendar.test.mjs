@@ -104,6 +104,8 @@ for (const role of ["DOCTOR", "NURSE", "RECEPTIONIST"]) test(`${role} loads actu
   assert.match(get("#calendar-grid").innerHTML, /Phòng PH_009/);
   assert.doesNotMatch(get("#calendar-grid").innerHTML, /Phòng khám 201|07:00|minh họa/);
   assert.match(get("#leave-requests").innerHTML, /&lt;script&gt;/);
+  assert.match(get("#leave-requests").innerHTML, role === "NURSE" ? /leave-detail-title">Chi tiết/ : /<th>Thao tác<\/th>/);
+  assert.equal(get("#requests-page").textContent, role === "NURSE" ? "Trang 1/1" : "2 đơn · Trang 1/1");
 });
 
 test("guest never requests private calendar or leave data", async () => {
@@ -134,6 +136,25 @@ test("a future shift prefills the leave form and cannot offer a second pending l
   assert.equal(get("#dialog-use-date").hidden, true);
 });
 
+for (const role of ["DOCTOR", "NURSE", "RECEPTIONIST"]) test(`${role} only offers leave before the shift starts, including when its dialog stays open`, async () => {
+  user.role_name = role; await load(); await click("#week-next");
+  const date = get("#week-picker").value;
+  const start = Date.parse(`${date}T13:30:00+07:00`), originalNow = Date.now;
+  const open = () => get("#calendar-grid").emit("click", { target: { closest: () => ({ dataset: { shift: `${date}-AFTERNOON` } }) } });
+  try {
+    Date.now = () => start - 1;
+    await open(); assert.equal(get("#dialog-use-date").hidden, false);
+    const previousDate = form().elements.start_date.value;
+    Date.now = () => start;
+    await click("#dialog-use-date");
+    assert.equal(form().elements.start_date.value, previousDate);
+    assert.equal(get("#dialog-use-date").hidden, true);
+    await open(); assert.equal(get("#dialog-use-date").hidden, true);
+    Date.now = () => start + 4 * 3600000;
+    await open(); assert.equal(get("#dialog-use-date").hidden, true);
+  } finally { Date.now = originalNow; }
+});
+
 test("submission maps payload and handover, locks duplicates, and only reports success from backend", async () => {
   await load(); fill(); let finish;
   intercept = c => c.method === "POST" ? new Promise(resolve => { finish = () => resolve(route(c)); }) : undefined;
@@ -145,6 +166,25 @@ test("submission maps payload and handover, locks duplicates, and only reports s
   assert.deepEqual(calls.find(c => c.method === "POST").data, { from_date: addDays(monday(), 14), to_date: addDays(monday(), 14), period: "MORNING", reason: "Việc gia đình\n\nGhi chú bàn giao: Đã bàn giao ca" });
   assert.match(get("#leave-feedback").textContent, /Đã gửi đơn NP_099, đang chờ admin duyệt/);
   assert.equal(get("#leave-submit").disabled, false); assert.equal(form().elements.reason.value, "");
+});
+
+for (const role of ["DOCTOR", "NURSE", "RECEPTIONIST"]) test(`${role} reset clears the entire leave draft and validation without a request`, async () => {
+  user.role_name = role; await load(); fill();
+  await form().elements.start_date.emit("change");
+  form().elements.reason.value = "";
+  await form().emit("submit");
+  assert.ok(form().elements.reason.validity);
+  const count = calls.length;
+  await form().emit("reset");
+  for (const key of ["start_date", "end_date", "reason", "handover"]) {
+    assert.equal(form().elements[key].value, "");
+    assert.equal(form().elements[key].validity, "");
+  }
+  assert.equal(form().elements.period.value, "full");
+  assert.equal(form().elements.end_date.min, form().elements.start_date.min);
+  assert.equal(get("#leave-feedback").textContent, "");
+  assert.equal(get("#leave-feedback").dataset.error, "false");
+  assert.equal(calls.length, count);
 });
 
 test("server conflict preserves draft and reports error without changing calendar", async () => {

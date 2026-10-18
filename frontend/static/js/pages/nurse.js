@@ -1,10 +1,15 @@
-import { code } from "../core/business_codes.js";
-import { initOverviewPeriod, getOverviewCounts } from "../core/staff_overview.js";
+import { initOverviewPeriod } from "../core/staff_overview.js";
 import { staffReady } from "../core/staff_workspace.js";
 import * as schedules from "../api/schedule.js";
 import { initNursePatients } from "../core/nurse_patients.js";
 import { initNurseRecords } from "../core/nurse_records.js";
-import { $, esc, today, date, badge, facts, stats, panel, empty, pagination, bindDialog, run } from "../core/staff_ui.js";
+import { allPages, nurseRange, nurseFormRange, inNurseRange, localPage, normalizeSearch } from "../core/nurse_encounter_data.js";
+import { code } from "../core/business_codes.js";
+import { renderNurseOverview } from "../core/nurse_overview.js";
+import { nurseAssignmentTable } from "../core/nurse_tables.js";
+import { initDragScroll } from "../core/drag_scroll.js";
+import { NURSE_OVERVIEW_STORAGE_KEY } from "../core/overview_preferences.js";
+import { $, panel, pagination, bindDialog, run } from "../core/staff_ui.js";
 
 const user = await staffReady;
 if (user) {
@@ -20,28 +25,53 @@ if (user) {
     }
   });
 }
-async function allAssignments() {
-  const first = await schedules.listOwnNurseAssignments({ page_size: 100 });
-  const items = [...first.items];
-  for (let page = 2; (page - 1) * first.page_size < first.total; page++) items.push(...(await schedules.listOwnNurseAssignments({ page, page_size: first.page_size })).items);
-  return items;
-}
-function cards(items) {
-  return items.length ? `<div class="shift-grid">${items.map(a => `<article class="shift-card"><div class="section-heading"><h3>${esc(a.room_name)}</h3>${badge(a.schedule_status)}</div><p class="doctor-shift-time">${esc(a.start_time.slice(0,5))} — ${esc(a.end_time.slice(0,5))}</p>${facts([["Ngày làm việc", date(a.work_date)], ["Mã ca", code("CA", a.schedule_id)], ["Ghi chú phân công", a.note]])}<a class="button-link" href="patients.html?schedule_id=${a.schedule_id}">Mở danh sách khám →</a></article>`).join("")}</div>` : empty("Chưa có phân công phù hợp.");
+async function allAssignments(options = {}) {
+  return allPages((paging, request) => schedules.listOwnNurseAssignments(paging, request), options);
 }
 async function overview() {
-  const assignments = await allAssignments();
-  await initOverviewPeriod(async (range, options) => {
-    const counts = await getOverviewCounts(range, options);
-    const shifts = assignments.filter(a => a.work_date >= range.from && a.work_date <= range.to);
-    const title = ({ today: "Ca làm việc hôm nay", week: "Ca làm việc tuần này", month: "Ca làm việc tháng này", custom: "Ca làm việc trong khoảng đã chọn" })[options.period];
-    return stats([["Chờ khám", counts.CHECKED_IN, "Đã check-in, chờ bác sĩ khám"], ["Đang khám", counts.IN_PROGRESS, "Bác sĩ đã bắt đầu khám"], ["Đã khám", counts.COMPLETED, "Lượt khám đã hoàn tất"]])
-      + panel(title, `<p class="muted">${date(range.from)}${range.to !== range.from ? ` – ${date(range.to)}` : ""}</p>${cards(shifts)}`, '<a href="assignments.html">Tất cả phân công →</a>')
-      + panel("Truy cập nhanh", '<div class="doctor-shortcuts"><a href="patients.html"><h3>Danh sách khám</h3><p>Theo dõi lượt khám và trạng thái người bệnh trong ca.</p></a><a href="records.html"><h3>Hồ sơ bệnh nhân</h3><p>Tra cứu thông tin, bệnh án và đơn thuốc trong phạm vi được phép xem.</p></a><a href="work_calendar.html"><h3>Lịch làm việc</h3><p>Xem lịch cá nhân và đơn xin nghỉ.</p></a></div>');
-  });
+  initDragScroll($("#page-body"), ".nurse-compact-shifts");
+  await initOverviewPeriod(renderNurseOverview, { storageKey: NURSE_OVERVIEW_STORAGE_KEY });
 }
 async function assignmentsPage() {
-  $("#page-body").innerHTML = panel("Phân công còn hiệu lực", '<div id="assignment-list"></div><div id="list-pagination" class="list-pagination"></div>');
-  async function load(page = 1) { await run(async () => { const result = await schedules.listOwnNurseAssignments({ page, page_size: 12 }); $("#assignment-list").innerHTML = cards(result.items); pagination(result, load); }); }
-  await load();
+  let range = nurseRange();
+  $("#page-body").innerHTML = panel("Phân công còn hiệu lực", `
+    <form id="nurse-assignment-search" class="staff-toolbar" role="search" aria-label="Tìm phân công">
+      <label>Mã phòng<input type="search" name="room_code" maxlength="100" placeholder="Nhập mã phòng, ví dụ PH_001" autocomplete="off" aria-controls="assignment-list"></label>
+      <label>Tên phòng<input type="search" name="room_name" maxlength="100" placeholder="Nhập tên phòng" autocomplete="off" aria-controls="assignment-list"></label>
+      <label>Từ ngày<input type="date" name="from_date" aria-controls="assignment-list"></label>
+      <label>Đến ngày<input type="date" name="to_date" aria-controls="assignment-list"></label>
+    </form><div id="assignment-list"></div><div id="list-pagination" class="list-pagination" role="status"></div>`);
+  const form = $("#nurse-assignment-search"), request = new AbortController();
+  form.elements.from_date.value = range?.from || "";
+  form.elements.to_date.value = range?.to || "";
+  let items = [], active = true;
+  function stop() { active = false; request.abort(); items = []; $("#page-body").replaceChildren(); }
+  window.addEventListener("pagehide", stop, { once: true });
+  window.addEventListener("neu:auth-change", stop, { once: true });
+  function render(page = 1) {
+    if (!active) return;
+    try { range = nurseFormRange(form); }
+    catch {
+      $("#assignment-list").innerHTML = '<p class="scope-note" role="status">Vui lòng chọn khoảng ngày hợp lệ: đến ngày phải bằng hoặc sau từ ngày.</p>';
+      $("#list-pagination").replaceChildren();
+      return;
+    }
+    const queryCode = normalizeSearch(form.elements.room_code.value.trim()).replace(/[\s_-]/g, "");
+    const queryRoom = normalizeSearch(form.elements.room_name.value.trim());
+    const matches = items.filter(a => inNurseRange(a, range) && normalizeSearch(code("PH", a.room_id)).replace(/[\s_-]/g, "").includes(queryCode)
+      && normalizeSearch(a.room_name).includes(queryRoom));
+    const result = localPage(matches, page, 8);
+    $("#assignment-list").innerHTML = nurseAssignmentTable(result.items, range);
+    pagination(result, render);
+  }
+  form.addEventListener("submit", event => event.preventDefault());
+  for (const input of [form.elements.room_code, form.elements.room_name]) input.addEventListener("input", () => render());
+  for (const input of [form.elements.from_date, form.elements.to_date]) {
+    input.addEventListener("input", () => render());
+    input.addEventListener("change", () => render());
+  }
+  const assignments = await allAssignments({ signal: request.signal });
+  if (!active) return;
+  items = assignments.sort((a, b) => `${a.work_date}${a.start_time}`.localeCompare(`${b.work_date}${b.start_time}`));
+  render();
 }

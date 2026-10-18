@@ -1,5 +1,6 @@
 import os
 import unittest
+from datetime import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from unittest.mock import patch
@@ -112,3 +113,51 @@ class NurseAssignmentTests(unittest.TestCase):
                        (self.actors['NURSE']['user_id'],))
         response = self.client.post('/admin/nurse-assignments', json=self.payload(), headers=self.headers('ADMIN'))
         self.assertEqual(response.status_code, 400)
+
+    def test_different_schedules_overlap_and_adjacent_boundary(self):
+        with get_db_connection() as db:
+            first = db.execute('SELECT * FROM work_schedule WHERE schedule_id=%s', (self.schedule_id,)).fetchone()
+            ids = []
+            for start, end in [('09:00','12:00'), ('11:30','13:00')]:
+                ids.append(db.execute('''INSERT INTO work_schedule(doctor_profile_id,room_id,work_date,start_time,end_time,max_quota,slot_minutes)
+                    VALUES (2,2,%s,%s,%s,7,30) RETURNING schedule_id''', (first['work_date'], start, end)).fetchone()['schedule_id'])
+        nurse_assignment_service.create_assignment(self.actors['ADMIN'], self.payload())
+        with self.assertRaises(Exception) as blocked:
+            nurse_assignment_service.create_assignment(self.actors['ADMIN'], {**self.payload(), 'schedule_id': ids[0]})
+        self.assertEqual(blocked.exception.code, 'NURSE_SCHEDULE_OVERLAP')
+        nurse_assignment_service.create_assignment(self.actors['ADMIN'], {**self.payload(), 'schedule_id': ids[1]})
+
+    def test_concurrent_different_overlapping_schedules(self):
+        with get_db_connection() as db:
+            row = db.execute('SELECT * FROM work_schedule WHERE schedule_id=%s', (self.schedule_id,)).fetchone()
+            other = db.execute('''INSERT INTO work_schedule(doctor_profile_id,room_id,work_date,start_time,end_time,max_quota,slot_minutes)
+                VALUES(2,2,%s,'08:00','11:30',7,30) RETURNING schedule_id''', (row['work_date'],)).fetchone()['schedule_id']
+        def assign(schedule_id):
+            try:
+                nurse_assignment_service.create_assignment(self.actors['ADMIN'], {**self.payload(), 'schedule_id': schedule_id})
+                return 201
+            except Exception as error:
+                return getattr(error, 'status_code', 500)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            self.assertEqual(sorted(pool.map(assign, [self.schedule_id, other])), [201,409])
+
+    def test_editing_schedule_cannot_overlap_assigned_nurse(self):
+        with get_db_connection() as db:
+            ids = [db.execute('''INSERT INTO work_schedule(doctor_profile_id,room_id,work_date,start_time,end_time,max_quota,slot_minutes)
+                VALUES(%s,%s,'2030-01-07',%s,%s,7,30) RETURNING schedule_id''', args).fetchone()['schedule_id']
+                for args in [(1,1,'08:00','11:30'),(2,2,'13:30','17:00')]]
+        for sid in ids:
+            nurse_assignment_service.create_assignment(self.actors['ADMIN'], {**self.payload(), 'schedule_id': sid})
+        with self.assertRaises(Exception) as blocked:
+            nurse_assignment_service.update_schedule(ids[1], {'start_time': time(9), 'end_time': time(12)})
+        self.assertEqual(blocked.exception.code, 'NURSE_SCHEDULE_OVERLAP')
+
+    def test_nurse_weekend_calendar_uses_actual_assignment(self):
+        with get_db_connection() as db:
+            sid = db.execute('''INSERT INTO work_schedule(doctor_profile_id,room_id,work_date,start_time,end_time,max_quota,slot_minutes)
+                VALUES(2,2,'2030-01-12','08:00','11:30',7,30) RETURNING schedule_id''').fetchone()['schedule_id']
+        nurse_assignment_service.create_assignment(self.actors['ADMIN'], {**self.payload(), 'schedule_id': sid})
+        result = self.client.get('/staff/work-schedules?from_date=2030-01-12&to_date=2030-01-13', headers=self.headers('NURSE'))
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual([s['period'] for s in result.json['items'][0]['shifts']], ['MORNING'])
+        self.assertEqual(result.json['items'][1]['shifts'], [])

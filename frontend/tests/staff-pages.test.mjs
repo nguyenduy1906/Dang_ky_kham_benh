@@ -13,7 +13,7 @@ test("staff permissions require the exact backend role; a query parameter grants
     for (const other of ["doctor", "nurse", "reception", "admin"].filter(r => r !== local))
       assert.equal(canOpenStaffPage(server, other, "overview"), false);
   }
-  assert.equal(canOpenStaffPage("ADMIN", "admin", "profile"), false);
+  assert.equal(canOpenStaffPage("ADMIN", "admin", "profile"), true);
   assert.equal(canOpenStaffPage("ADMIN", "admin", "home"), true);
   assert.equal(canOpenStaffPage("ADMIN", "doctor", "overview"), false);
   for (const role of ["USER", "constructor", "__proto__", "doctor", undefined])
@@ -56,7 +56,7 @@ test("employee calendars await authentication and use the leave API without samp
   assert.match(source, /api\/staff_leave\.js/);
   assert.doesNotMatch(source, /Phòng khám 201|Quầy tiếp đón 01|const pattern|Xem trước đơn/);
 });
-test("staff profile stays available to hospital staff while admin keeps its own workspace", async () => {
+test("staff profile stays available to all employees including admin", async () => {
   const html = await readFile(new URL("components/profile.html", templates), "utf8");
   assert.match(html, /pages\/staff_profile.js/); assert.doesNotMatch(html, /role-picker|minh họa/i);
   assert.notEqual(profileUrl.pathname, new URL("components/profile.html", templates).pathname);
@@ -66,7 +66,7 @@ test("staff profile stays available to hospital staff while admin keeps its own 
   for (const role of ["DOCTOR", "NURSE", "RECEPTIONIST", "ADMIN"]) {
     const shared = new URL("components/profile.html", templates);
     globalThis.location = workspaceUrl(role);
-    assert.equal(returnUrl(shared.href, role).href, role === "ADMIN" ? workspaceUrl(role).href : shared.href);
+    assert.equal(returnUrl(shared.href, role).href, shared.href);
     assert.equal(returnUrl(profileUrl.href, role).href, workspaceUrl(role).href);
   }
 });

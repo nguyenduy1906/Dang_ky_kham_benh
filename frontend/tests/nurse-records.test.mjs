@@ -20,9 +20,9 @@ const page = items => ({ items, total: items.length, page: 1, page_size: 12 });
 const tick = async () => { for (let i = 0; i < 12; i++) await new Promise(resolve => setImmediate(resolve)); };
 const click = (selector, attribute, value = "") => nodes.get(selector).listeners.click({ target: { closest: candidate => candidate === `[${attribute}]` ? { dataset: { [attribute === "data-patient" ? "patient" : "record"]: value } } : null } });
 beforeEach(() => {
-  originals = ["document", "window", "matchMedia", "fetch"].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]);
+  originals = ["document", "window", "matchMedia", "fetch", "location"].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]);
   nodes = new Map(["page-body", "nurse-record-search", "nurse-record-detail", "nurse-record-status", "nurse-record-list", "nurse-record-pages", "nurse-history-pages", "nurse-history-status", "staff-dialog", "staff-dialog-title", "staff-dialog-content"].map(id => [`#${id}`, new Node()]));
-  nodes.get("#nurse-record-search").elements = { q: Object.assign(new Node(), { value: "" }), encounter_status: Object.assign(new Node(), { value: "" }) };
+  nodes.get("#nurse-record-search").elements = Object.fromEntries(["q", "encounter_status", "from_date", "to_date"].map(key => [key, Object.assign(new Node(), { value: "" })]));
   windowEvents = {}; requests = [];
   respond = async (path, params) => {
     if (path === "/patients") return page([patient]);
@@ -36,6 +36,7 @@ beforeEach(() => {
   };
   Object.assign(globalThis, {
     document: { querySelector: selector => nodes.get(selector) || null },
+    location: new URL("http://localhost/frontend/templates/(nurse)/records.html"),
     window: { addEventListener: (type, callback) => { const previous = windowEvents[type]; windowEvents[type] = () => { previous?.(); callback(); }; } },
     matchMedia: () => ({ matches: true }),
     fetch: async (url, options) => {
@@ -56,6 +57,13 @@ afterEach(() => {
 
 test("nurse patient search and clinical details use only existing authorized reads", async () => {
   await initNurseRecords();
+  assert.doesNotMatch(nodes.get("#page-body").innerHTML.split('</form>')[0], /Làm mới|Bỏ bộ lọc|<button/);
+  assert.doesNotMatch(nodes.get("#nurse-record-list").innerHTML, /<th scope="col">Trạng thái<\/th>/);
+  assert.match(nodes.get("#nurse-record-list").innerHTML, /<th scope="col">Kết quả<\/th><th scope="col">Hồ sơ<\/th>/);
+  assert.match(nodes.get("#nurse-record-list").innerHTML, /<th scope="col">Ngày khám<\/th>/);
+  assert.match(nodes.get("#nurse-record-list").innerHTML, /<td>17\/10\/2026<\/td>/);
+  assert.doesNotMatch(nodes.get("#nurse-record-list").innerHTML, /<th scope="col">Ngày sinh<\/th>|1\/1\/2000/);
+  assert.doesNotMatch(nodes.get("#nurse-record-list").innerHTML, /<th scope="col">Có mặt<\/th>/);
   assert.deepEqual(requests.map(r => [r.path, r.params.encounter_status]), [["/patients", undefined], ["/encounters", "COMPLETED"], ["/encounters", "NO_SHOW"]]);
   assert.match(nodes.get("#nurse-record-list").innerHTML, /&lt;script&gt;/);
   assert.doesNotMatch(nodes.get("#nurse-record-list").innerHTML, /<script>/);
@@ -133,7 +141,7 @@ test("no-show history displays attendance and visit details without requesting a
     return previous(path, params);
   };
   await initNurseRecords();
-  assert.match(nodes.get("#nurse-record-list").innerHTML, /Không đến/);
+  assert.match(nodes.get("#nurse-record-list").innerHTML, /Vắng mặt/);
   click("#nurse-record-list", "data-patient", "41"); await tick();
   assert.match(nodes.get("#nurse-record-detail").innerHTML, /Xem lượt khám/);
   assert.doesNotMatch(nodes.get("#nurse-record-detail").innerHTML, /Xem bệnh án/);
@@ -159,4 +167,18 @@ test("archive filtering precedes pagination instead of hiding qualifying patient
   assert.match(nodes.get("#nurse-record-list").innerHTML, /data-patient="13"/);
   assert.doesNotMatch(nodes.get("#nurse-record-list").innerHTML, /data-patient="1"/);
   assert.ok(requests.some(r => r.path === "/patients" && r.params.page === "2"));
+});
+
+test("overview record links retain the date range and open only a patient matching that range", async () => {
+  location.search = "?from_date=2026-10-17&to_date=2026-10-17&patient_id=41";
+  await initNurseRecords();
+  assert.equal(nodes.get("#nurse-record-search").elements.from_date.value, "2026-10-17");
+  assert.match(nodes.get("#nurse-record-list").innerHTML, /data-patient="41"/);
+  assert.equal(nodes.get("#nurse-record-detail").hidden, false);
+  assert.ok(requests.some(r => r.path === "/encounters" && r.params.work_date === "2026-10-17"));
+  const form = nodes.get("#nurse-record-search");
+  form.elements.from_date.value = form.elements.to_date.value = "2026-10-18";
+  form.listeners.submit({ preventDefault() {} }); await tick();
+  assert.doesNotMatch(nodes.get("#nurse-record-list").innerHTML, /data-patient="41"/);
+  assert.equal(nodes.get("#nurse-record-detail").hidden, true);
 });

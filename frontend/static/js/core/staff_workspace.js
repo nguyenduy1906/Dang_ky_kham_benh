@@ -7,7 +7,7 @@ export { staffRoles, resolveStaffRole, getStaffRole } from "./staff_shell.js";
 export const backendRoles = Object.freeze({ DOCTOR: "doctor", NURSE: "nurse", RECEPTIONIST: "reception", ADMIN: "admin" });
 export function canOpenStaffPage(roleName, requestedRole, page) {
   const actual = Object.hasOwn(backendRoles, roleName) ? backendRoles[roleName] : null;
-  return Boolean(actual && (page === "profile" ? actual !== "admin" : actual === requestedRole));
+  return Boolean(actual && (page === "profile" || actual === requestedRole));
 }
 export function avatarUrl(value) {
   if (typeof value !== "string" || !/^\/uploads\/avatars\/[0-9a-f]{32}\.(jpg|png|webp)$/.test(value)) return "";
@@ -20,7 +20,7 @@ export async function requireStaff() {
   suspend();
   // Render public navigation before waiting for /me; private content stays gated.
   const previewRole = getStaffRole();
-  const shellMounted = Boolean(previewRole && previewRole !== "admin");
+  const shellMounted = Boolean(previewRole);
   if (shellMounted) mountStaffWorkspace();
   let active = true;
   window.addEventListener("pagehide", () => { active = false; }, { once: true });
@@ -29,9 +29,6 @@ export async function requireStaff() {
     if (!active) return null;
     if (!user) { location.replace(loginUrl(new URL(location.href)).href); return null; }
     const actualRole = backendRoles[user.role_name];
-    if (actualRole === "admin" && document.body.dataset.page === "profile") {
-      location.replace(workspaceUrl(user.role_name).href); return null;
-    }
     const requestedRole = getStaffRole();
     if (!canOpenStaffPage(user.role_name, requestedRole, document.body.dataset.page)) {
       if (status) {

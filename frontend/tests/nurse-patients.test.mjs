@@ -57,6 +57,10 @@ test("active list includes only current/upcoming assigned active visits and atte
   for (const id of [1, 2, 3]) assert.ok(html.includes(`data-visit="${id}"`));
   for (const id of [4, 5, 6, 7]) assert.ok(!html.includes(`data-visit="${id}"`));
   assert.match(html, /Chưa đến/); assert.match(html, /Đã đến/);
+  assert.match(html, /<th scope="col">Hoạt động<\/th><th scope="col">Chi tiết<\/th>/);
+  const formHtml = nodes.get("#page-body").innerHTML.split('</form>')[0];
+  assert.equal((formHtml.match(/<label>/g) || []).length, 4);
+  assert.doesNotMatch(formHtml, /Làm mới|Bỏ bộ lọc|<button/);
   assert.doesNotMatch(html, /data-absent|data-checkin|Đánh dấu/);
   assert.deepEqual(calls.map(c => c.params.encounter_status).sort(), ["CHECKED_IN", "CONFIRMED", "IN_PROGRESS"]);
   assert.ok(calls.every(c => c.method === "GET"));
@@ -115,4 +119,42 @@ test("all status pages are merged before local pagination and filtering", async 
   for (const state of ["CHECKED_IN", "IN_PROGRESS", "COMPLETED"]) assert.match(attendance({ encounter_status: state }), /Đã đến/);
   assert.match(attendance({ encounter_status: "NO_SHOW" }), /Không đến/);
   assert.equal(normalizeSearch("ĐẶNG"), "dang");
+});
+
+test("overview date links include past assigned visits, preserve all columns and open the selected visit", async () => {
+  location.search = "?from_date=2000-01-01&to_date=2000-01-01&encounter_id=6";
+  await initNursePatients({ assignments: [future, past] });
+  const html = nodes.get("#nurse-visit-list").innerHTML;
+  assert.match(html, /data-visit="6"/);
+  assert.doesNotMatch(html, /data-visit="1"/);
+  assert.equal((html.match(/<th scope=/g) || []).length, 6);
+  assert.equal(nodes.get("#nurse-visit-filters").elements.period.value, "all");
+  assert.equal(nodes.get("#staff-dialog").open, true);
+  assert.ok(calls.some(c => c.path === "/encounters/6"));
+});
+
+test("changing the day overrides an inherited range and changing any filter refreshes without a button", async () => {
+  location.search = "?from_date=2000-01-01&to_date=2000-01-02";
+  await initNursePatients({ assignments: [future, past] });
+  assert.match(nodes.get("#nurse-visit-list").innerHTML, /data-visit="6"/);
+  const form = nodes.get("#nurse-visit-filters");
+  form.elements.work_date.value = future.work_date;
+  await form.listeners.change({ target: { name: "work_date" } });
+  assert.doesNotMatch(nodes.get("#nurse-visit-list").innerHTML, /data-visit="6"/);
+  assert.match(nodes.get("#nurse-visit-list").innerHTML, /data-visit="1"/);
+  for (const key of ["period", "schedule_id", "encounter_status"]) {
+    const previous = calls.length;
+    await form.listeners.change({ target: { name: key } });
+    assert.ok(calls.length > previous);
+  }
+  assert.equal(calls.findLast(c => c.path === "/encounters").params.work_date, future.work_date);
+});
+
+test("opening an assigned room with no registrations shows an empty list instead of another room's visits", async () => {
+  location.search = "?schedule_id=3";
+  await initNursePatients({ assignments: [future, past, { ...future, schedule_id: 3 }] });
+  assert.equal(nodes.get("#nurse-visit-filters").elements.schedule_id.value, "3");
+  assert.match(nodes.get("#nurse-visit-list").innerHTML, /Không có người bệnh phù hợp/);
+  assert.doesNotMatch(nodes.get("#nurse-visit-list").innerHTML, /data-visit=/);
+  assert.ok(calls.every(c => c.params.schedule_id === "3"));
 });

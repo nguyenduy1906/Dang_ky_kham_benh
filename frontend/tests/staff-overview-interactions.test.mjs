@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { initOverviewPeriod, overviewRows } from "../static/js/core/staff_overview.js";
+import { NURSE_OVERVIEW_STORAGE_KEY } from "../static/js/core/overview_preferences.js";
 // Load existing staff helpers before installing the test DOM.
 import "../static/js/core/staff_ui.js";
 
@@ -16,7 +17,7 @@ function fixture(role = "doctor") {
   const nodes = new Map(["#overview-period-control", "#overview-filter", "#overview-custom", "#overview-feedback", "#page-body", "#page-status", "#staff-dialog-close"].map(id => [id, new Node()]));
   const fields = Object.fromEntries(["period", "from_date", "to_date"].map(key => [key, new Node()]));
   nodes.get("#overview-filter").elements = fields;
-  const saved = ["document", "window", "fetch"].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]);
+  const saved = ["document", "window", "fetch", "sessionStorage"].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]);
   Object.assign(globalThis, { document: { body: { dataset: { role, page: "overview" } }, querySelector: id => nodes.get(id) }, window: { addEventListener() {} } });
   return { nodes, fields, restore() { for (const [key, value] of saved) { if (value) Object.defineProperty(globalThis, key, value); else delete globalThis[key]; } } };
 }
@@ -74,6 +75,47 @@ test("range readers include all pages, preserve scoped filters and exclude other
   assert.equal(rows.length, 1);
   assert.deepEqual(calls.map(c => c.params.page), [1, 2]);
   assert.ok(calls.every(c => c.params.room_id === 7 && c.options.signal === signal));
+});
+
+test("nurse overview restores week, month and custom dates after reload, retaining only valid selections", async () => {
+  const { fields, nodes, restore } = fixture("nurse");
+  const values = new Map(), rendered = [];
+  try {
+    globalThis.sessionStorage = { getItem: key => values.get(key) || null, setItem: (key, value) => values.set(key, value) };
+    const render = (range, options) => { rendered.push({ range, period: options.period }); return options.period; };
+    const init = () => initOverviewPeriod(render, { storageKey: NURSE_OVERVIEW_STORAGE_KEY });
+    await init(); assert.equal(fields.period.value, "today");
+    for (const period of ["week", "month"]) {
+      fields.period.value = period; await fields.period.listeners.change();
+      await init();
+      assert.equal(fields.period.value, period);
+      assert.equal(nodes.get("#page-body").innerHTML, period);
+    }
+    fields.period.value = "custom"; fields.from_date.value = "2026-10-01"; fields.to_date.value = "2026-10-16";
+    await fields.period.listeners.change(); await init();
+    assert.deepEqual(rendered.at(-1), { period: "custom", range: { from: "2026-10-01", to: "2026-10-16" } });
+    assert.equal(fields.from_date.value, "2026-10-01");
+    assert.equal(fields.to_date.value, "2026-10-16");
+    const valid = values.get(NURSE_OVERVIEW_STORAGE_KEY);
+    fields.to_date.value = "2000-01-01"; await fields.to_date.listeners.change();
+    assert.equal(values.get(NURSE_OVERVIEW_STORAGE_KEY), valid);
+    await init(); assert.equal(fields.to_date.value, "2026-10-16");
+    values.delete(NURSE_OVERVIEW_STORAGE_KEY);
+    await init(); assert.equal(fields.period.value, "today");
+  } finally { restore(); }
+});
+
+test("invalid saved dates or unavailable preference storage do not break overview filtering", async () => {
+  const { fields, restore } = fixture("nurse");
+  try {
+    globalThis.sessionStorage = { getItem: () => JSON.stringify({ period: "custom", from: "2026-02-30", to: "2026-03-10" }), setItem() {} };
+    await initOverviewPeriod(() => "ok", { storageKey: NURSE_OVERVIEW_STORAGE_KEY });
+    assert.equal(fields.period.value, "today");
+    globalThis.sessionStorage = { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("blocked"); } };
+    await initOverviewPeriod(() => "ok", { storageKey: NURSE_OVERVIEW_STORAGE_KEY });
+    fields.period.value = "week"; await fields.period.listeners.change();
+    assert.equal(fields.period.value, "week");
+  } finally { restore(); }
 });
 
 for (const role of ["doctor", "reception"]) test(`${role} overview applies period changes to counts, shifts and tickets through existing read endpoints`, async () => {

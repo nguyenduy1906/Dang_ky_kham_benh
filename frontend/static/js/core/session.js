@@ -1,5 +1,6 @@
 import * as authApi from "../api/auth.js";
 import { ApiError, setAccessToken } from "./api.js";
+import { resetOverviewPreferences } from "./overview_preferences.js";
 
 const STORAGE_KEY = "neu-medical.auth";
 const templates = new URL("../../../templates/", import.meta.url);
@@ -20,6 +21,7 @@ function announce() { window.dispatchEvent(new Event("neu:auth-change")); }
 
 export function clearSession() {
   try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* Storage may be disabled. */ }
+  resetOverviewPreferences();
   setAccessToken(null);
   announce();
 }
@@ -76,6 +78,7 @@ export async function signIn(credentials) {
     throw new ApiError("Trình duyệt không cho phép lưu phiên đăng nhập. Vui lòng bật lưu trữ cho trang này.", { cause });
   }
   setAccessToken(result.access_token);
+  resetOverviewPreferences();
   announce();
   return result.user;
 }
@@ -130,7 +133,7 @@ export function returnUrl(value, role = "USER") {
     const relative = decodeURIComponent(url.pathname.slice(templates.pathname.length));
     const staffFiles = { ADMIN: ["home", "encounters", "patients", "schedule", "assignments", "doctors", "departments", "rooms", "users", "articles", "payments", "statistics", "audit", "configuration"], DOCTOR: ["home", "schedule", "encounters", "clinical", "history"], NURSE: ["home", "patients", "assignments", "records", "work_calendar"], RECEPTIONIST: ["home", "encounters", "walk_in", "patients", "coordination"] };
     const folder = { ADMIN: "admin", DOCTOR: "doctor", NURSE: "nurse", RECEPTIONIST: "reception" }[role];
-    const staffAllowed = role !== "USER" && ((role !== "ADMIN" && relative === "components/profile.html") || (staffFiles[role] || []).some(file => relative === `(${folder})/${file}.html`));
+    const staffAllowed = Object.hasOwn(staffFiles, role) && (relative === "components/profile.html" || staffFiles[role].some(file => relative === `(${folder})/${file}.html`));
     if (url.origin === homeUrl.origin && url.protocol === homeUrl.protocol &&
         url.pathname.startsWith(templates.pathname) &&
         !url.username && !url.password &&

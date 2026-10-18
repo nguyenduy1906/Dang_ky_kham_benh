@@ -309,6 +309,8 @@ dialog::backdrop {
   padding: 11px 24px;
   margin-top: 15px;
 }
+.dialog-close[data-dialog-dismiss] { border: 1px solid #cbdcd2; background: white; color: #33644e; font-size: 13px; font-weight: 600; line-height: 1.5; padding: 10px 16px; border-radius: 5px; cursor: pointer; }
+button[data-dialog-dismiss]:is(:hover, :focus-visible):not(:disabled) { color: #fff; background: #c73535; border-color: #c73535; }
 #dialog-content {
   line-height: 1.75;
   color: #536158;

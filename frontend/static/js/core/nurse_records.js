@@ -1,6 +1,7 @@
 import { code } from "./business_codes.js";
 import { listPatients, getPatient } from "../api/patient.js";
-import { allPages, nurseEncounters, historyStatuses, localPage, attendance } from "./nurse_encounter_data.js";
+import { allPages, nurseEncounters, historyStatuses, localPage, nurseRange, nurseFormRange, recentNursePatients } from "./nurse_encounter_data.js";
+import { nurseRecordTable } from "./nurse_tables.js";
 import { getEncounter } from "../api/encounter.js";
 import { readMedicalRecord } from "./staff_encounters.js";
 import { sessionError } from "./staff_workspace.js";
@@ -9,11 +10,17 @@ import { $, esc, date, facts, panel, empty, table, pagination, badge, dialog, en
 
 // All reads use the existing server-side nurse scope. There are no patient or clinical writes here.
 export async function initNurseRecords() {
+  const initialRange = nurseRange();
   $("#page-body").innerHTML = panel("Tra cứu hồ sơ", `
-    <form id="nurse-record-search" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tên, số điện thoại hoặc CCCD<input type="search" name="q" maxlength="100" placeholder="Nhập thông tin người bệnh…" autocomplete="off" aria-controls="nurse-record-list"></label><label>Trạng thái<select name="encounter_status"><option value="">Tất cả</option><option value="COMPLETED">Đã khám xong</option><option value="NO_SHOW">Không đến khám</option></select></label><button type="submit">Làm mới</button><button type="reset" class="secondary">Bỏ bộ lọc</button></form>
+    <form id="nurse-record-search" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tên, số điện thoại hoặc CCCD<input type="search" name="q" maxlength="100" placeholder="Nhập thông tin người bệnh…" autocomplete="off" aria-controls="nurse-record-list"></label><label>Trạng thái<select name="encounter_status"><option value="">Tất cả</option><option value="COMPLETED">Đã khám xong</option><option value="NO_SHOW">Không đến khám</option></select></label><label>Từ ngày<input type="date" name="from_date" value="${esc(initialRange?.from || "")}"></label><label>Đến ngày<input type="date" name="to_date" value="${esc(initialRange?.to || "")}"></label></form>
     <p id="nurse-record-status" class="scope-note" role="status" hidden></p><div id="nurse-record-list"></div><div id="nurse-record-pages" class="list-pagination"></div>`)
     + '<section id="nurse-record-detail" class="panel" tabindex="-1" aria-label="Hồ sơ đang xem" hidden></section>';
   const search = $("#nurse-record-search"), detail = $("#nurse-record-detail");
+  if (initialRange) {
+    search.elements.from_date.value = initialRange.from;
+    search.elements.to_date.value = initialRange.to;
+  }
+  let matchingPatients = [];
   let active = true, listVersion = 0, detailVersion = 0, recordVersion = 0;
   let listRequest, detailRequest, recordRequest, selectedPatient = null, historyRows = [];
 
@@ -30,30 +37,25 @@ export async function initNurseRecords() {
 
   async function load(page = 1) {
     const version = ++listVersion;
+    matchingPatients = [];
     listRequest?.abort(); listRequest = new AbortController(); clearDetail();
     const status = $("#nurse-record-status");
     status.hidden = false; status.textContent = "Đang tải hồ sơ…";
     $("#nurse-record-list").innerHTML = ""; $("#nurse-record-pages").innerHTML = "";
     try {
+      const range = nurseFormRange(search);
       const options = { signal: listRequest.signal };
       const state = search.elements.encounter_status.value;
       if (state && !historyStatuses.includes(state)) throw new Error("Trạng thái lọc không hợp lệ.");
       const [patients, visits] = await Promise.all([
         allPages((paging, request) => listPatients({ q: search.elements.q.value.trim(), include_archived: true, ...paging }, request), options),
-        nurseEncounters(state ? [state] : historyStatuses, {}, options),
+        nurseEncounters(state ? [state] : historyStatuses, range?.from && range.from === range.to ? { work_date: range.from } : {}, options),
       ]);
       if (!active || version !== listVersion) return;
-      const latest = new Map();
-      for (const visit of visits.sort((a, b) => `${b.work_date}${b.estimated_exam_at || ""}`.localeCompare(`${a.work_date}${a.estimated_exam_at || ""}`) || b.encounter_id - a.encounter_id)) {
-        if (!latest.has(String(visit.patient_id))) latest.set(String(visit.patient_id), visit);
-      }
-      const matching = patients.filter(p => latest.has(String(p.patient_id))).sort((a, b) =>
-        `${latest.get(String(b.patient_id)).work_date}`.localeCompare(`${latest.get(String(a.patient_id)).work_date}`) || b.patient_id - a.patient_id);
+      const { items: matching, latest } = recentNursePatients(patients, visits, range);
+      matchingPatients = matching;
       const result = localPage(matching, page);
-      $("#nurse-record-list").innerHTML = result.items.length ? table(["Người bệnh", "Ngày sinh", "Điện thoại", "Lượt gần nhất", "Có mặt", "Hồ sơ"], result.items.map(p => {
-        const last = latest.get(String(p.patient_id));
-        return `<tr><td><strong>${esc(p.full_name)}</strong><small class="cell-subtitle">Mã hồ sơ ${esc(code("BN", p.patient_id))}</small></td><td>${date(p.dob)}</td><td>${esc(p.phone || "—")}</td><td>${date(last.work_date)}<small class="cell-subtitle">${badge(last.encounter_status)}</small></td><td>${attendance(last)}</td><td><button type="button" class="secondary" data-patient="${esc(p.patient_id)}">Xem hồ sơ</button></td></tr>`;
-      })) : empty("Chưa có người bệnh đã khám xong hoặc không đến khám phù hợp.");
+      $("#nurse-record-list").innerHTML = nurseRecordTable(result.items, latest);
       pagination(result, load, $("#nurse-record-pages")); status.hidden = true;
     } catch (error) {
       if (!active || version !== listVersion) return;
@@ -79,7 +81,7 @@ export async function initNurseRecords() {
       detail.innerHTML = `<div class="section-heading"><div><p class="eyebrow">HỒ SƠ ${esc(code("BN", patient.patient_id))} · CHỈ XEM</p><h2>${esc(patient.full_name)}</h2></div><button type="button" class="secondary" data-profile-close>Đóng hồ sơ</button></div>
         ${facts([["Ngày sinh", date(patient.dob)], ["Giới tính", patient.gender], ["Điện thoại", patient.phone], ["CCCD / mã định danh", patient.id_card], ["Địa chỉ", patient.address], ["BHYT", patient.health_insurance]])}
         <div class="nurse-record-history"><h3>Các lượt đã khám xong hoặc không đến</h3>
-        ${historyPage.items.length ? table(["Ngày khám", "Bác sĩ / phòng", "Trạng thái", "Có mặt", "Kết quả"], historyPage.items.map(e => `<tr><td>${date(e.work_date)}<small class="cell-subtitle">Lượt ${esc(code("LK", e.encounter_id))}</small></td><td>${esc(e.doctor_name || "—")}<small class="cell-subtitle">${esc(e.room_name || "—")}</small></td><td>${badge(e.encounter_status)}</td><td>${attendance(e)}</td><td><button type="button" class="secondary" data-record="${esc(e.encounter_id)}">${e.encounter_status === "COMPLETED" ? "Xem bệnh án / đơn thuốc" : "Xem lượt khám"}</button></td></tr>`)) : empty("Chưa có lượt đã khám xong hoặc không đến được phép xem.")}
+        ${historyPage.items.length ? table(["Ngày khám", "Bác sĩ / phòng", "Trạng thái", "Kết quả"], historyPage.items.map(e => `<tr><td>${date(e.work_date)}<small class="cell-subtitle">Lượt ${esc(code("LK", e.encounter_id))}</small></td><td>${esc(e.doctor_name || "—")}<small class="cell-subtitle">${esc(e.room_name || "—")}</small></td><td>${badge(e.encounter_status)}</td><td><button type="button" class="secondary" data-record="${esc(e.encounter_id)}">${e.encounter_status === "COMPLETED" ? "Xem bệnh án / đơn thuốc" : "Xem lượt khám"}</button></td></tr>`)) : empty("Chưa có lượt đã khám xong hoặc không đến được phép xem.")}
         <div id="nurse-history-pages" class="list-pagination"></div><p id="nurse-history-status" class="scope-note" role="status" hidden></p></div>`;
       pagination(historyPage, next => showPatient(patientId, next), $("#nurse-history-pages"));
       detail.focus({ preventScroll: true });
@@ -124,6 +126,9 @@ export async function initNurseRecords() {
   } });
   search.addEventListener("submit", event => { event.preventDefault(); refreshSearch(); });
   search.elements.encounter_status.addEventListener("change", () => refreshSearch());
-  search.addEventListener("reset", event => { event.preventDefault(); search.elements.q.value = ""; search.elements.encounter_status.value = ""; refreshSearch(); });
+  for (const key of ["from_date", "to_date"]) search.elements[key]?.addEventListener("change", () => refreshSearch());
+  search.addEventListener("reset", event => { event.preventDefault(); for (const key of ["q", "encounter_status", "from_date", "to_date"]) if (search.elements[key]) search.elements[key].value = ""; refreshSearch(); });
   await load();
+  const patientId = new URLSearchParams(globalThis.location?.search || "").get("patient_id");
+  if (patientId && matchingPatients.some(p => String(p.patient_id) === patientId)) await showPatient(patientId);
 }

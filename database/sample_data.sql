@@ -1954,7 +1954,7 @@ ORDER BY day.work_date,d.doctor_profile_id,s.start_time;
 -- nurse@medicare.vn phụ trách BS_001; 12 điều dưỡng còn lại phụ trách BS_002..BS_013.
 INSERT INTO nurse_assignment(nurse_id,schedule_id,assigned_by_id,assigned_at,note)
 SELECT CASE WHEN s.doctor_profile_id=1 THEN 3 ELSE 26+s.doctor_profile_id END,
-       s.schedule_id,1,CURRENT_TIMESTAMP-interval '3 days','Dữ liệu mẫu: hỗ trợ tiếp nhận, hàng chờ và đọc hồ sơ trong ca'
+       s.schedule_id,1,CURRENT_TIMESTAMP-interval '3 days','Hỗ trợ bác sĩ khám bệnh, hướng dẫn người bệnh và theo dõi người bệnh trong ca'
 FROM work_schedule s
 WHERE s.doctor_profile_id BETWEEN 1 AND 13
  AND s.work_date BETWEEN (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date-1
@@ -2108,6 +2108,41 @@ SELECT setval(pg_get_serial_sequence('article', 'article_id'), (SELECT MAX(artic
 
 SELECT setval(pg_get_serial_sequence('role_request', 'request_id'), (SELECT MAX(request_id) FROM role_request), true);
 SELECT setval(pg_get_serial_sequence('nurse_assignment', 'assignment_id'), (SELECT MAX(assignment_id) FROM nurse_assignment), true);
+
+-- BEGIN NGOC_ANH_MORNING_20261018
+DO $morning_schedule$
+DECLARE nurse_uid integer; admin_uid integer; day_date date;
+BEGIN
+  PERFORM pg_advisory_xact_lock(78124004);
+  SELECT user_id INTO STRICT nurse_uid FROM users WHERE email='nurse@medicare.vn' AND full_name='Lê Ngọc Anh';
+  SELECT u.user_id INTO STRICT admin_uid FROM users u JOIN role r USING(role_id)
+    WHERE r.role_name='ADMIN' AND u.deleted_at IS NULL ORDER BY u.user_id LIMIT 1;
+  UPDATE nurse_assignment SET note='Hỗ trợ bác sĩ khám bệnh, hướng dẫn người bệnh và theo dõi người bệnh trong ca'
+    WHERE note LIKE 'Dữ liệu mẫu:%';
+  -- Revoke incompatible assignments; retain the assignment audit trail and all encounters.
+  UPDATE nurse_assignment a SET revoked_at=GREATEST(CURRENT_TIMESTAMP,a.assigned_at),revoked_by_id=admin_uid
+    FROM work_schedule s WHERE s.schedule_id=a.schedule_id AND a.nurse_id=nurse_uid AND a.revoked_at IS NULL
+    AND s.work_date BETWEEN DATE '2026-10-18' AND DATE '2026-11-30'
+    AND (s.start_time<>TIME '08:00' OR s.end_time<>TIME '11:30' OR s.doctor_profile_id<>1);
+  FOR day_date IN SELECT day::date FROM generate_series(DATE '2026-10-18',DATE '2026-11-30',INTERVAL '1 day') day
+    WHERE EXTRACT(ISODOW FROM day) BETWEEN 1 AND 5
+  LOOP
+    IF EXISTS (SELECT 1 FROM work_schedule WHERE work_date=day_date
+      AND (doctor_profile_id=1 OR room_id=1) AND start_time<TIME '11:30' AND end_time>TIME '08:00'
+      AND NOT (doctor_profile_id=1 AND room_id=1 AND start_time=TIME '08:00' AND end_time=TIME '11:30' AND schedule_status IN ('OPEN','FULL'))) THEN
+      RAISE EXCEPTION 'Conflicting clinical schedule on %',day_date;
+    END IF;
+    INSERT INTO work_schedule(doctor_profile_id,room_id,work_date,start_time,end_time,slot_minutes,max_quota)
+      SELECT 1,1,day_date,TIME '08:00',TIME '11:30',30,7
+      WHERE NOT EXISTS (SELECT 1 FROM work_schedule WHERE doctor_profile_id=1 AND work_date=day_date AND start_time=TIME '08:00');
+    INSERT INTO nurse_assignment(nurse_id,schedule_id,assigned_by_id,note)
+      SELECT nurse_uid,s.schedule_id,admin_uid,'Hỗ trợ bác sĩ khám Nội, hướng dẫn và theo dõi người bệnh trong ca sáng'
+      FROM work_schedule s WHERE s.doctor_profile_id=1 AND s.work_date=day_date AND s.start_time=TIME '08:00'
+      AND NOT EXISTS (SELECT 1 FROM nurse_assignment a WHERE a.nurse_id=nurse_uid AND a.schedule_id=s.schedule_id AND a.revoked_at IS NULL);
+  END LOOP;
+END
+$morning_schedule$;
+-- END NGOC_ANH_MORNING_20261018
 
 COMMIT;
 

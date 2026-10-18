@@ -115,6 +115,15 @@ def get_assignment(db, assignment_id):
     return db.execute(f'{_ASSIGNMENT_SELECT} WHERE a.assignment_id = %s', (assignment_id,)).fetchone()
 
 
+def nurse_overlap(db, nurse_id, work_date, start, end, exclude_schedule_id=None):
+    return db.execute('''SELECT a.assignment_id FROM nurse_assignment a
+        JOIN work_schedule s USING(schedule_id)
+        WHERE a.nurse_id=%s AND a.revoked_at IS NULL AND s.work_date=%s
+        AND s.start_time<%s AND s.end_time>%s
+        AND (%s::integer IS NULL OR s.schedule_id<>%s) LIMIT 1''',
+        (nurse_id, work_date, end, start, exclude_schedule_id, exclude_schedule_id)).fetchone()
+
+
 def create_assignment(db, actor_id, fields):
     return db.execute('INSERT INTO nurse_assignment (nurse_id, schedule_id, assigned_by_id, note) '
                       'VALUES (%s, %s, %s, %s) RETURNING assignment_id',

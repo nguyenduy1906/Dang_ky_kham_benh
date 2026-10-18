@@ -154,6 +154,16 @@ test("nurse profile keeps its personal form without loading or showing doctor-on
   assert.match(nodes.get("#staff-managed-fields").innerHTML, /Vai trò trên hệ thống<input type="text" value="Y tá" readonly/);
 });
 
+test("admin can view its own profile without loading doctor data", async () => {
+  user.role_name = "ADMIN";
+  await load();
+  assert.equal(calls.length, 0);
+  assert.equal(nodes.get("#staff-profile-form").elements.phone.value, user.phone);
+  assert.equal(nodes.get("#staff-profile-avatar").textContent, "QT");
+  assert.match(nodes.get("#staff-managed-fields").innerHTML, /Quản trị viên/);
+  assert.doesNotMatch(nodes.get("#page-body").innerHTML, /avatar-form|professional-form/);
+});
+
 test("reception keeps initials and has no invented doctor, identity or HR data", async () => {
   user.role_name = "RECEPTIONIST";
   await load();
@@ -219,7 +229,7 @@ function openPassword() {
   return fields;
 }
 
-for (const role of ["DOCTOR", "NURSE", "RECEPTIONIST"]) {
+for (const role of ["DOCTOR", "NURSE", "RECEPTIONIST", "ADMIN"]) {
   test(`${role} password change sends only the API fields, rotates the session and clears secrets`, async () => {
     user.role_name = role; await load();
     const fields = openPassword();
@@ -259,6 +269,7 @@ test("wrong current password displays the API error, keeps the dialog and permit
 });
 
 test("pending password request blocks duplicate submissions, closing and Escape", async () => {
+  user.role_name = "NURSE";
   await load(); openPassword(); let finish;
   passwordReply = () => new Promise(resolve => { finish = resolve; });
   const form = nodes.get("#staff-password-form");
@@ -269,6 +280,11 @@ test("pending password request blocks duplicate submissions, closing and Escape"
   assert.equal(nodes.get("#staff-password-submit").disabled, true);
   nodes.get("#staff-password-close").listeners.click();
   assert.equal(nodes.get("#staff-password-dialog").open, true);
+  const modal = nodes.get("#staff-password-dialog");
+  modal.getBoundingClientRect = () => ({ left: 100, right: 500, top: 100, bottom: 400 });
+  const outside = { target: modal, clientX: 50, clientY: 150 };
+  modal.listeners.pointerdown(outside); modal.listeners.click(outside);
+  assert.equal(modal.open, true);
   let prevented = false;
   nodes.get("#staff-password-dialog").listeners.cancel({ preventDefault() { prevented = true; } });
   assert.equal(prevented, true);

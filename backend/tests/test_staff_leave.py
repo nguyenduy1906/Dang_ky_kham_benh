@@ -83,7 +83,8 @@ class StaffLeaveTests(unittest.TestCase):
             result = self.client.get('/staff/work-schedules' + query, headers=self.headers(role))
             self.assertEqual(result.status_code, 200, result.json)
             self.assertEqual(result.json['default_weekdays'], [1, 2, 3, 4, 5])
-            self.assertEqual([len(d['shifts']) for d in result.json['items']], [2, 2, 2, 2, 2, 0, 0])
+            expected = [1, 1, 1, 1, 1, 0, 0] if role == 'NURSE' else [2, 2, 2, 2, 2, 0, 0]
+            self.assertEqual([len(d['shifts']) for d in result.json['items']], expected)
         self.assertEqual(self.client.get('/staff/work-schedules').status_code, 401)
         self.assertEqual(self.client.get('/staff/work-schedules', headers=self.headers('USER')).status_code, 403)
         self.assertEqual(self.client.get('/admin/staff/3/work-schedules', headers=self.headers('NURSE')).status_code, 403)
@@ -161,12 +162,17 @@ class StaffLeaveTests(unittest.TestCase):
 
     def test_nurse_approval_revokes_only_matching_assignment_and_blocks_reassignment(self):
         morning, afternoon = self.schedule(), self.schedule(True)
+        with get_db_connection() as db:
+            db.execute('DELETE FROM nurse_assignment WHERE nurse_id=%s AND schedule_id IN (%s,%s)',
+                       (self.actors['NURSE']['user_id'], morning['schedule_id'], afternoon['schedule_id']))
         for s in (morning, afternoon):
             schedule_service.create_assignment(self.actors['ADMIN'], {'nurse_id': self.actors['NURSE']['user_id'], 'schedule_id': s['schedule_id'], 'note': 'Hỗ trợ'})
         request_id = self.create()
         result = self.review(request_id)
         self.assertEqual(result.status_code, 200, result.json)
         self.assertEqual(len(result.json['leave_request']['effects']['revoked_assignment_ids']), 1)
+        calendar = self.client.get(f'/staff/work-schedules?from_date={self.day}&to_date={self.day}', headers=self.headers('NURSE')).json
+        self.assertEqual([s['status'] for s in calendar['items'][0]['shifts']], ['ON_LEAVE', 'WORKING'])
         with get_db_connection() as db:
             self.assertIsNotNone(db.execute('SELECT revoked_at FROM nurse_assignment WHERE nurse_id=%s AND schedule_id=%s', (self.actors['NURSE']['user_id'], morning['schedule_id'])).fetchone()['revoked_at'])
             self.assertIsNone(db.execute('SELECT revoked_at FROM nurse_assignment WHERE nurse_id=%s AND schedule_id=%s', (self.actors['NURSE']['user_id'], afternoon['schedule_id'])).fetchone()['revoked_at'])
@@ -191,8 +197,7 @@ class StaffLeaveTests(unittest.TestCase):
             other = db.execute('''SELECT s.* FROM work_schedule s JOIN doctor_profile d USING(doctor_profile_id)
                 WHERE d.user_id=%s AND work_date=%s AND start_time='08:00' ''',
                 (self.actors['DOCTOR']['user_id'], self.day + timedelta(days=1))).fetchone()
-        schedule_service.create_assignment(self.actors['ADMIN'], {'nurse_id': self.actors['NURSE']['user_id'],
-            'schedule_id': other['schedule_id'], 'note': ''})
+        # The morning-only seed already assigns this nurse to the following day.
         with self.assertRaises(AppError) as raised:
             schedule_service.update_schedule(other['schedule_id'], {'work_date': self.day})
         self.assertEqual(raised.exception.code, 'STAFF_ON_LEAVE')

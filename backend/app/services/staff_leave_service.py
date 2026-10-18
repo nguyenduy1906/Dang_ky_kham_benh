@@ -159,17 +159,31 @@ def calendar(actor, query, user_id=None):
             clinical = []
         else:
             scope = 'd.user_id=%s' if user['role_name'] == 'DOCTOR' else '''EXISTS(SELECT 1 FROM nurse_assignment a
-                WHERE a.schedule_id=s.schedule_id AND a.nurse_id=%s AND a.revoked_at IS NULL)'''
-            clinical = db.execute('''SELECT s.schedule_id,s.work_date,s.start_time,s.end_time,s.schedule_status,s.room_id
-                FROM work_schedule s JOIN doctor_profile d USING(doctor_profile_id) WHERE ''' + scope +
+                WHERE a.schedule_id=s.schedule_id AND a.nurse_id=%s AND (a.revoked_at IS NULL OR a.assignment_id=ANY(%s)))'''
+            scope_args = [target_id]
+            if user['role_name'] == 'NURSE':
+                # Keep approved absences visible after approval revokes clinical access.
+                scope_args.append([aid for leave in leaves if leave['status'] == 'APPROVED'
+                                   for aid in (leave.get('effects') or {}).get('revoked_assignment_ids', [])])
+            clinical = db.execute('''SELECT s.schedule_id,s.work_date,s.start_time,s.end_time,s.schedule_status,s.room_id,r.room_name
+                FROM work_schedule s JOIN doctor_profile d USING(doctor_profile_id) JOIN room r ON r.room_id=s.room_id WHERE ''' + scope +
                 ' AND s.work_date BETWEEN %s AND %s ORDER BY s.work_date,s.start_time',
-                (target_id, query['from_date'], query['to_date'])).fetchall()
+                (*scope_args, query['from_date'], query['to_date'])).fetchall()
     days = []
     day = query['from_date']
     while day <= query['to_date']:
         shifts = []
-        if day.weekday() < 5:
-            for period, (start, end) in SHIFTS.items():
+        daily_clinical = [s for s in clinical if s['work_date'] == day and s['schedule_status'] in ('OPEN', 'FULL')]
+        if user['role_name'] == 'NURSE':
+            # A nurse works the assigned periods, including explicitly assigned weekends.
+            periods = {period: (min(s['start_time'] for s in matching), max(s['end_time'] for s in matching))
+                       for period in SHIFTS
+                       if (matching := [s for s in daily_clinical if
+                           (s['start_time'] < time(12) if period == 'MORNING' else s['end_time'] > time(12))])}
+        else:
+            periods = SHIFTS if day.weekday() < 5 else {}
+        if periods:
+            for period, (start, end) in periods.items():
                 matching = [l for l in leaves if l['from_date'] <= day <= l['to_date'] and l['period'] in ('FULL_DAY', period)]
                 shifts.append({'period': period, 'start_time': start, 'end_time': end,
                                'status': 'ON_LEAVE' if any(l['status'] == 'APPROVED' for l in matching) else 'WORKING',

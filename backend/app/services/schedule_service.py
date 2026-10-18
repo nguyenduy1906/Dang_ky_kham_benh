@@ -142,6 +142,8 @@ def update_schedule(schedule_id, fields):
         staff_leave_service.ensure_available(db, doctor['user_id'], merged['work_date'], merged['start_time'], merged['end_time'])
         for assignment in db.execute('SELECT nurse_id FROM nurse_assignment WHERE schedule_id=%s AND revoked_at IS NULL', (schedule_id,)):
             staff_leave_service.ensure_available(db, assignment['nurse_id'], merged['work_date'], merged['start_time'], merged['end_time'])
+            if schedule_model.nurse_overlap(db, assignment['nurse_id'], merged['work_date'], merged['start_time'], merged['end_time'], schedule_id):
+                raise conflict('Y tá đã được phân công ca khác trùng giờ', 'NURSE_SCHEDULE_OVERLAP')
         if changed:
             if 'room_id' in changed:
                 _active_room(db, merged['room_id'])
@@ -212,6 +214,8 @@ def create_assignment(actor, fields):
         if schedule is None:
             raise not_found('Không tìm thấy ca làm việc', 'SCHEDULE_NOT_FOUND')
         staff_leave_service.ensure_available(db, nurse['user_id'], schedule['work_date'], schedule['start_time'], schedule['end_time'])
+        if schedule_model.nurse_overlap(db, nurse['user_id'], schedule['work_date'], schedule['start_time'], schedule['end_time'], schedule['schedule_id']):
+            raise conflict('Y tá đã được phân công ca khác trùng giờ', 'NURSE_SCHEDULE_OVERLAP')
         try:
             assignment_id = schedule_model.create_assignment(db, actor['user_id'], fields)
         except pg_errors.UniqueViolation:
