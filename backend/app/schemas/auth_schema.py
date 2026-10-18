@@ -3,46 +3,11 @@ import re
 
 from backend.app.core import constants
 from backend.app.core.errors import bad_request
-
-EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
-PHONE_RE = re.compile(r'^\+?\d{9,15}$')
+from backend.app.schemas.profile_schema import PROFILE_FIELDS, personal_fields
+# Re-export the existing helper names for callers outside the schema package.
+from backend.app.utils.validation import (EMAIL_RE, PHONE_RE, ensure_object, text_field,
+                                          normalize_email, normalize_phone, int_arg)
 OTP_RE = re.compile(r'^\d{6}$')
-
-
-def ensure_object(data):
-    if not isinstance(data, dict):
-        raise bad_request('Body phải là JSON object hợp lệ')
-    return data
-
-
-def text_field(data, key, *, required=False, max_len=255):
-    value = data.get(key)
-    if value is None or (isinstance(value, str) and not value.strip()):
-        if required:
-            raise bad_request(f'Thiếu trường {key}')
-        return None
-    if not isinstance(value, str):
-        raise bad_request(f'Trường {key} phải là chuỗi')
-    value = value.strip()
-    if len(value) > max_len:
-        raise bad_request(f'Trường {key} tối đa {max_len} ký tự')
-    return value
-
-
-def normalize_email(value, key='email'):
-    value = value.strip().lower()
-    if len(value) > 254 or not EMAIL_RE.match(value):
-        raise bad_request(f'{key} không hợp lệ')
-    return value
-
-
-def normalize_phone(value, key='phone'):
-    value = re.sub(r'[\s.\-]', '', value)
-    if re.fullmatch(r'\+?84[35789]\d{8}', value):
-        value = '0' + value.lstrip('+')[2:]
-    if not PHONE_RE.match(value):
-        raise bad_request(f'{key} không hợp lệ (9-15 chữ số)')
-    return value
 
 
 def check_password(password, key='password'):
@@ -74,6 +39,7 @@ def validate_register(data):
         'email': email,
         'phone': phone,
         'password': check_password(data.get('password')),
+        **personal_fields(data),
     }
 
 
@@ -139,7 +105,9 @@ def validate_change_password(data):
 
 def validate_update_me(data):
     data = ensure_object(data)
-    fields = {}
+    if set(data) - {'full_name', 'email', 'phone', *PROFILE_FIELDS}:
+        raise bad_request('Hồ sơ chứa trường không được phép cập nhật')
+    fields = personal_fields(data)
     if 'full_name' in data:
         fields['full_name'] = text_field(data, 'full_name', required=True, max_len=150)
     if 'email' in data:
@@ -147,7 +115,7 @@ def validate_update_me(data):
     if 'phone' in data:
         fields['phone'] = normalize_phone(text_field(data, 'phone', required=True))
     if not fields:
-        raise bad_request('Không có trường nào để cập nhật (full_name, email, phone)')
+        raise bad_request('Không có trường nào để cập nhật')
     return fields
 
 
@@ -174,12 +142,15 @@ def validate_admin_create(data):
         'approval_status': _choice(data.get('approval_status', constants.APPROVAL_APPROVED),
                                    constants.APPROVAL_STATUSES, 'approval_status'),
         'email_verified': verified,
+        **personal_fields(data),
     }
 
 
 def validate_admin_update(data):
     data = ensure_object(data)
-    fields = {}
+    if set(data) - {'full_name', 'email', 'phone', 'role', 'approval_status', *PROFILE_FIELDS}:
+        raise bad_request('Hồ sơ chứa trường không được phép cập nhật')
+    fields = personal_fields(data)
     if 'full_name' in data:
         fields['full_name'] = text_field(data, 'full_name', required=True, max_len=150)
     email, phone = identity_fields({k: data[k] for k in ('email', 'phone') if k in data})
@@ -207,14 +178,8 @@ def validate_account_status(data):
 
 
 def _int_arg(args, key, default, minimum, maximum):
-    raw = args.get(key)
-    if raw is None or raw == '':
-        return default
-    try:
-        value = int(raw)
-    except ValueError:
-        raise bad_request(f'{key} phải là số nguyên') from None
-    return max(minimum, min(maximum, value))
+    """Preserve the previous keyword arguments for existing Python callers."""
+    return int_arg(args, key, default, minimum, maximum)
 
 
 def parse_list_query(args):
@@ -233,7 +198,7 @@ def parse_list_query(args):
         'approval_status': approval_status or None,
         'q': (args.get('q') or '').strip()[:100] or None,
         'include_deleted': args.get('include_deleted', '').lower() in ('1', 'true'),
-        'page': _int_arg(args, 'page', 1, 1, 100000),
-        'page_size': _int_arg(args, 'page_size', constants.DEFAULT_PAGE_SIZE,
+        'page': int_arg(args, 'page', 1, 1, 100000),
+        'page_size': int_arg(args, 'page_size', constants.DEFAULT_PAGE_SIZE,
                               1, constants.MAX_PAGE_SIZE),
     }

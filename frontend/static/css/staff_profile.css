@@ -4,19 +4,33 @@
 .staff-profile-page #staff-profile-form > .form-feedback:empty { display: none; }
 .staff-profile-page .staff-profile-monogram { width: 112px; height: 112px; border-radius: 50%; overflow: hidden; }
 .staff-profile-page .staff-profile-monogram .staff-avatar-image { object-fit: cover; object-position: center 25%; }
-.staff-profile-page .staff-profile-identity { padding-block: 24px !important; }
-.staff-profile-page .staff-profile-identity dl { margin-top: 18px; padding-top: 16px; }
+.staff-profile-page .staff-profile-identity { display: flex; flex-direction: column; padding-block: 24px !important; }
+.staff-profile-page .staff-profile-identity > .badge { align-self: center; border-radius: 5px; }
+.staff-profile-page .staff-profile-identity dl { margin-top: 18px; margin-bottom: 0; padding-top: 16px; }
 .staff-profile-page .staff-profile-identity dl > div { margin-bottom: 12px; }
 .staff-profile-page .staff-profile-identity dl > div:last-child { margin-bottom: 0; }
 .staff-profile-page .profile-readonly-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 22px; }
 .staff-profile-page #staff-profile-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 22px; }
 .staff-profile-page #staff-managed-fields { display: contents; }
-.staff-profile-page #staff-profile-actions { justify-content: flex-end; align-self: end; margin: 0; }
+.staff-profile-page #staff-profile-actions { grid-column: 1 / -1; justify-content: flex-start; align-self: end; margin: 0; }
 .staff-profile-page #staff-profile-actions[hidden] { display: flex !important; visibility: hidden; pointer-events: none; }
 .staff-profile-page #staff-profile-form > .form-feedback { grid-column: 1 / -1; margin: 0; }
 .staff-profile-page .profile-readonly-grid .full-width { grid-column: 1 / -1; }
 .staff-profile-page .profile-readonly-grid :is(input, textarea)[readonly] { background: #f4f7f5; border-color: #dfe7e2; color: #4b6155; cursor: default; }
-.staff-profile-page #staff-profile-form[data-editing="true"] :is(input[name="phone"], input[name="email"]) { background: white; border-color: var(--staff-green); }
+.staff-profile-page #staff-profile-form[data-editing="true"] :is(input:not([readonly]), select:not(:disabled)) { background: white; border-color: var(--staff-green); }
+.staff-profile-page .staff-profile-avatar-form { margin: 14px 0 24px; }
+.staff-profile-page .staff-profile-avatar-form input.avatar-file-input { position: absolute; width: 1px; height: 1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.staff-profile-page .staff-profile-avatar-form > button { min-height: 42px; }
+.staff-profile-page .profile-account-status { display: table; align-self: flex-start; margin: 12px 0 0; padding: 5px 10px; border-radius: 5px; background: #edf7f1; color: #26704f; font-size: 12px; }
+.staff-profile-page .profile-account-status::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 7px; border-radius: 50%; background: currentColor; vertical-align: 1px; }
+.staff-profile-page .profile-account-status[data-active="false"] { color: #a63434; background: #fff1ee; }
+.staff-profile-page .profile-emergency { min-width: 0; margin: 2px 0 0; padding: 18px; border: 1px solid var(--staff-line); border-radius: 5px; }
+.staff-profile-page .profile-emergency legend { padding: 0 8px; color: var(--staff-ink); font-size: 13px; font-weight: 600; }
+.staff-profile-page .profile-emergency-fields { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 16px; }
+.staff-profile-page #avatar-file[hidden] { display: none !important; }
+.staff-profile-page #staff-managed-fields > .full-width { grid-column: 1 / -1; }
+.staff-profile-page #avatar-feedback:empty { display: none; }
+.staff-profile-page #avatar-feedback[data-error="true"] { color: #a63434; }
 .staff-profile-page .profile-header-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .staff-profile-page #staff-password-dialog { max-width: 530px; border-radius: 5px; }
 .staff-profile-page #staff-password-dialog :is(input, button) { border-radius: 5px; }
@@ -24,8 +38,10 @@
 .staff-profile-page .staff-password-fields { display: grid; gap: 16px; }
 .staff-profile-page .staff-password-fields small { margin-top: -10px; }
 @media (max-width: 680px) {
+  .staff-profile-page .staff-profile-identity > .badge { align-self: flex-start; }
   .staff-profile-page .profile-readonly-grid,
   .staff-profile-page #staff-profile-form { grid-template-columns: minmax(0, 1fr); }
+  .staff-profile-page .profile-emergency-fields { grid-template-columns: minmax(0, 1fr); }
 }
 @media (min-width: 681px) {
   .staff-profile-page .staff-profile-grid:has(#staff-profile-form[data-editing="true"]) > .staff-profile-identity {

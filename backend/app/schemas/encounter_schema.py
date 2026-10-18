@@ -1,8 +1,9 @@
 import re
 
 from backend.app.core.errors import bad_request
-from backend.app.schemas.auth_schema import ensure_object, text_field
-from backend.app.utils.validation import int_field, optional_int_arg, page_params, parse_date, parse_time
+from backend.app.utils.validation import (
+    ensure_object, text_field, int_field, optional_int_arg, page_params, parse_date, parse_time
+)
 
 STATUSES = ('HOLDING', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED',
             'CANCELLED', 'NO_SHOW', 'EXPIRED')

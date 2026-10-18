@@ -4,6 +4,8 @@ import os
 from datetime import timedelta
 
 from backend.app.core.errors import conflict, not_found
+from backend.app.core.security import require_role
+from backend.app.utils import date as date_utils
 from backend.app.db.database import get_db_connection
 from backend.app.models import payment_model as model, encounter_model
 from backend.app.utils.database_helpers import jsonable
@@ -11,7 +13,7 @@ from backend.app.services import encounter_service as encounters, notification_s
 
 
 def _financial_access(db, actor, encounter_id):
-    encounters.require_role(actor, 'USER', 'ADMIN', 'RECEPTIONIST')
+    require_role(actor, 'USER', 'ADMIN', 'RECEPTIONIST')
     return encounters._visible(db, actor, encounter_id)
 
 
@@ -45,6 +47,14 @@ def list_payments(actor, encounter_id, page, size):
     return {'items': jsonable(rows), 'total': total, 'page': page, 'page_size': size}
 
 
+def list_admin_payments(actor, page, size):
+    require_role(actor, 'ADMIN')
+    size = min(size, 20)
+    with get_db_connection() as db:
+        rows, total = model.list_history(db, page, size)
+    return {'items': jsonable(rows), 'total': total, 'page': page, 'page_size': size}
+
+
 def get_payment(actor, payment_id):
     with get_db_connection() as db:
         row = model.get(db, payment_id)
@@ -55,7 +65,7 @@ def get_payment(actor, payment_id):
 
 
 def create_intent(actor, encounter_id, fields):
-    encounters.require_role(actor, 'USER')
+    require_role(actor, 'USER')
     expired = False
     with get_db_connection() as db:
         _financial_access(db, actor, encounter_id)
@@ -90,7 +100,7 @@ def create_intent(actor, encounter_id, fields):
 
 
 def collect_exam_fee(actor, encounter_id, fields):
-    encounters.require_role(actor, 'ADMIN', 'RECEPTIONIST')
+    require_role(actor, 'ADMIN', 'RECEPTIONIST')
     with get_db_connection() as db:
         encounter, _ = encounters.locked_context(db, encounter_id)
         _financial_access(db, actor, encounter_id)
@@ -109,7 +119,7 @@ def collect_exam_fee(actor, encounter_id, fields):
                              "AND transaction_status='PENDING'", (encounter_id,)).fetchone()
         if pending:
             raise conflict('Có phiên phí khám chưa xử lý; không thu lần hai', 'PAYMENT_INTENT_EXISTS')
-        now = encounters.utc_now()
+        now = date_utils.utc_now()
         row = model.create(db, {'encounter_id': encounter_id, 'payment_type': 'EXAM_FEE', 'amount': remaining,
             **fields, 'transaction_status': 'SUCCESS',
             'paid_at': now, 'result_received_at': now, 'created_by_id': actor['user_id'], 'processed_by_id': actor['user_id']})
@@ -130,7 +140,7 @@ def _refund_amount(db, payment, actor_id, reason, amount):
         raise conflict('Chỉ hoàn giao dịch thu thành công chưa hoàn', 'PAYMENT_NOT_REFUNDABLE')
     if amount <= 0 or amount > payment['amount']:
         raise conflict('Số tiền hoàn không hợp lệ', 'INVALID_REFUND_AMOUNT')
-    now = encounters.utc_now()
+    now = date_utils.utc_now()
     refund = model.create(db, {'encounter_id': payment['encounter_id'], 'payment_type': 'REFUND',
         'amount': amount, 'payment_method': payment['payment_method'], 'transaction_status': 'SUCCESS',
         'original_payment_id': payment['payment_id'],
@@ -144,7 +154,7 @@ def _refund_amount(db, payment, actor_id, reason, amount):
 
 
 def refund(actor, payment_id, reason):
-    encounters.require_role(actor, 'ADMIN')
+    require_role(actor, 'ADMIN')
     with get_db_connection() as db:
         payment, encounter, _ = _locked_payment(db, actor, payment_id)
         existing = db.execute("SELECT * FROM payment WHERE original_payment_id=%s AND payment_type='REFUND'", (payment_id,)).fetchone()
@@ -177,7 +187,7 @@ def demo_result(actor, payment_id, outcome):
     # Kiểm tra cả ở service để không gọi mô phỏng khi môi trường thật tắt demo.
     if os.environ.get('SEND_EMAIL', '0') != '1':
         raise not_found('Không tìm thấy API', 'NOT_FOUND')
-    encounters.require_role(actor, 'USER', 'ADMIN')
+    require_role(actor, 'USER', 'ADMIN')
     with get_db_connection() as db:
         payment, encounter, schedule = _locked_payment(db, actor, payment_id)
         if payment['payment_type'] != 'DEPOSIT' or encounter['encounter_type'] != 'ONLINE':
@@ -194,7 +204,7 @@ def demo_result(actor, payment_id, outcome):
             if outcome != 'FAILED':
                 raise conflict('Không đổi kết quả giao dịch đã xử lý', 'PAYMENT_RESULT_CONFLICT')
             return _response(db, payment, actor)
-        now = encounters.utc_now()
+        now = date_utils.utc_now()
         if encounter['encounter_status'] == 'HOLDING':
             expired = encounters.expire_locked(db, encounter, schedule, actor['user_id'])
             if expired:

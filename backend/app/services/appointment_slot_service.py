@@ -1,13 +1,19 @@
 """Khung giờ trong ca; bên ghi dữ liệu phải khóa work_schedule trước khi gọi."""
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from backend.app.core.errors import conflict, bad_request
+from backend.app.models import encounter_model
+from backend.app.utils.date import VN_TZ
 
 OCCUPIED = ('HOLDING', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED')
 
 
+def schedule_bounds(schedule):
+    return (datetime.combine(schedule['work_date'], schedule['start_time'], VN_TZ),
+            datetime.combine(schedule['work_date'], schedule['end_time'], VN_TZ))
+
+
 def intervals(schedule):
-    from backend.app.services.encounter_service import schedule_bounds
     start, end = schedule_bounds(schedule)
     duration = timedelta(minutes=schedule['slot_minutes'])
     while start + duration <= end:
@@ -16,9 +22,7 @@ def intervals(schedule):
 
 
 def available_slots(db, schedule):
-    rows = db.execute('SELECT estimated_exam_at FROM encounter WHERE schedule_id=%s '
-                      'AND encounter_status=ANY(%s)',
-                      (schedule['schedule_id'], list(OCCUPIED))).fetchall()
+    rows = encounter_model.occupied_slot_starts(db, schedule['schedule_id'], list(OCCUPIED))
     occupied = {row['estimated_exam_at'] for row in rows}
     return [(start, end) for start, end in intervals(schedule) if start not in occupied]
 

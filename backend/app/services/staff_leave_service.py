@@ -4,7 +4,8 @@ from psycopg.types.json import Jsonb
 
 from backend.app.core.errors import conflict, forbidden, not_found
 from backend.app.db.database import get_db_connection
-from backend.app.models import auth_model, staff_leave_model as model
+from backend.app.models import (auth_model, staff_leave_model as model,
+                                encounter_model, schedule_model)
 from backend.app.utils.database_helpers import jsonable
 from backend.app.utils.date import VN_TZ
 
@@ -58,9 +59,7 @@ def create(actor, fields):
         _staff(db, actor['user_id'])
         if model.overlapping(db, actor['user_id'], fields['from_date'], fields['to_date'], fields['period']):
             raise conflict('Đã có đơn nghỉ chờ duyệt hoặc được duyệt trùng ca', 'LEAVE_OVERLAP')
-        request_id = db.execute('''INSERT INTO staff_leave_request(user_id,from_date,to_date,period,reason)
-            VALUES (%s,%s,%s,%s,%s) RETURNING request_id''',
-            (actor['user_id'], fields['from_date'], fields['to_date'], fields['period'], fields['reason'])).fetchone()['request_id']
+        request_id = model.create_request(db, actor['user_id'], fields)
         row = model.get_request(db, request_id)
         _notify_admins(db, row, 'created')
     return {'leave_request': jsonable(row)}
@@ -79,8 +78,7 @@ def detail(actor, request_id, *, admin=False):
         row = _get(db, actor, request_id, admin=admin)
         schedules = model.affected_schedules(db, row, row['role_name'])
         ids = [s['schedule_id'] for s in schedules]
-        affected = db.execute('''SELECT COUNT(*) AS n FROM encounter WHERE schedule_id=ANY(%s)
-            AND encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS')''', (ids,)).fetchone()['n']
+        affected = encounter_model.count_active_for_schedules(db, ids)
     return {'leave_request': jsonable(row), 'affected_schedule_ids': ids, 'affected_encounters': affected}
 
 
@@ -92,7 +90,7 @@ def cancel(actor, request_id):
             return {'leave_request': jsonable(row)}
         if row['status'] != 'PENDING':
             raise conflict('Chỉ được rút đơn đang chờ duyệt', 'LEAVE_NOT_PENDING')
-        db.execute("UPDATE staff_leave_request SET status='CANCELLED',cancelled_at=CURRENT_TIMESTAMP WHERE request_id=%s", (request_id,))
+        model.cancel_request(db, request_id)
         row = model.get_request(db, request_id)
         _notify_admins(db, row, 'cancelled')
     return {'leave_request': jsonable(row)}
@@ -115,22 +113,15 @@ def review(actor, request_id, fields):
             staff = _staff(db, row['user_id'])
             schedules = model.affected_schedules(db, row, staff['role_name'], lock=True)
             ids = [s['schedule_id'] for s in schedules]
-            effects['affected_encounters'] = db.execute('''SELECT COUNT(*) AS n FROM encounter
-                WHERE schedule_id=ANY(%s) AND encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS')''', (ids,)).fetchone()['n']
+            effects['affected_encounters'] = encounter_model.count_active_for_schedules(db, ids)
             if staff['role_name'] == 'DOCTOR':
                 # Stop new bookings, preserve encounters/quota/payment for manual coordination.
-                changed = db.execute("""UPDATE work_schedule SET schedule_status='UNAVAILABLE',unavailable_reason=%s
-                    WHERE schedule_id=ANY(%s) AND schedule_status IN ('OPEN','FULL') RETURNING schedule_id""",
-                    (f'Nghỉ theo đơn {business_code("NP", request_id)}', ids)).fetchall()
+                changed = schedule_model.mark_unavailable_schedules(db, ids, f'Nghỉ theo đơn {business_code("NP", request_id)}')
                 effects['unavailable_schedule_ids'] = [s['schedule_id'] for s in changed]
             elif staff['role_name'] == 'NURSE':
-                changed = db.execute('''UPDATE nurse_assignment SET revoked_at=CURRENT_TIMESTAMP,revoked_by_id=%s
-                    WHERE nurse_id=%s AND schedule_id=ANY(%s) AND revoked_at IS NULL RETURNING assignment_id''',
-                    (actor['user_id'], row['user_id'], ids)).fetchall()
+                changed = schedule_model.revoke_leave_assignments(db, actor['user_id'], row['user_id'], ids)
                 effects['revoked_assignment_ids'] = [a['assignment_id'] for a in changed]
-        db.execute('''UPDATE staff_leave_request SET status=%s,review_note=%s,reviewed_by_id=%s,
-            reviewed_at=CURRENT_TIMESTAMP,effects=%s WHERE request_id=%s''',
-            (fields['decision'], fields['note'], actor['user_id'], Jsonb(effects), request_id))
+        model.review_request(db, request_id, fields, actor['user_id'], Jsonb(effects))
         row = model.get_request(db, request_id)
         model.notify(db, row['user_id'], request_id, 'reviewed', 'Kết quả đơn xin nghỉ',
                      f"Đơn {business_code('NP', request_id)}: {row['status']}. {fields['note']}")
@@ -152,23 +143,11 @@ def calendar(actor, query, user_id=None):
     target_id = user_id if user_id is not None else actor['user_id']
     with get_db_connection() as db:
         user = _staff(db, target_id)
-        leaves = db.execute('''SELECT * FROM staff_leave_request WHERE user_id=%s AND status IN ('PENDING','APPROVED')
-            AND from_date<=%s AND to_date>=%s ORDER BY request_id''',
-            (target_id, query['to_date'], query['from_date'])).fetchall()
+        leaves = model.calendar_leaves(db, target_id, query)
         if user['role_name'] == 'RECEPTIONIST':
             clinical = []
         else:
-            scope = 'd.user_id=%s' if user['role_name'] == 'DOCTOR' else '''EXISTS(SELECT 1 FROM nurse_assignment a
-                WHERE a.schedule_id=s.schedule_id AND a.nurse_id=%s AND (a.revoked_at IS NULL OR a.assignment_id=ANY(%s)))'''
-            scope_args = [target_id]
-            if user['role_name'] == 'NURSE':
-                # Keep approved absences visible after approval revokes clinical access.
-                scope_args.append([aid for leave in leaves if leave['status'] == 'APPROVED'
-                                   for aid in (leave.get('effects') or {}).get('revoked_assignment_ids', [])])
-            clinical = db.execute('''SELECT s.schedule_id,s.work_date,s.start_time,s.end_time,s.schedule_status,s.room_id,r.room_name
-                FROM work_schedule s JOIN doctor_profile d USING(doctor_profile_id) JOIN room r ON r.room_id=s.room_id WHERE ''' + scope +
-                ' AND s.work_date BETWEEN %s AND %s ORDER BY s.work_date,s.start_time',
-                (*scope_args, query['from_date'], query['to_date'])).fetchall()
+            clinical = schedule_model.staff_calendar(db, target_id, user['role_name'], leaves, query)
     days = []
     day = query['from_date']
     while day <= query['to_date']:

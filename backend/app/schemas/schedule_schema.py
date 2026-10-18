@@ -1,7 +1,9 @@
 from backend.app.core.errors import bad_request
-from backend.app.schemas.auth_schema import ensure_object, text_field
-from backend.app.utils.validation import (bool_arg, date_range, int_field, optional_int_arg,
-                                               page_params, parse_date, parse_time)
+from backend.app.utils.validation import (
+    ensure_object, text_field, bool_arg, date_range,
+    int_field, optional_int_arg, page_params, parse_date,
+    parse_time,
+)
 
 SCHEDULE_STATUSES = ('OPEN', 'FULL', 'CLOSED', 'UNAVAILABLE')
 MANUAL_STATUSES = ('OPEN', 'CLOSED')

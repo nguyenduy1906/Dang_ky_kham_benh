@@ -21,6 +21,13 @@ def list_for_encounter(db, encounter_id, page, size):
     return rows, total
 
 
+def list_history(db, page, size):
+    total = db.execute('SELECT COUNT(*) AS n FROM payment').fetchone()['n']
+    rows = db.execute('SELECT * FROM payment ORDER BY created_at DESC, payment_id DESC LIMIT %s OFFSET %s',
+                      (size, (page - 1) * size)).fetchall()
+    return rows, total
+
+
 def paid_total(db, encounter_id, kind=None):
     clause = ' AND payment_type=%s' if kind else " AND payment_type IN ('DEPOSIT','EXAM_FEE')"
     params = [encounter_id] + ([kind] if kind else [])

@@ -30,3 +30,11 @@ def create(db, fields):
 
 def update(db, article_id, fields):
     return update_row(db, 'article', 'article_id', article_id, fields, set(COLUMNS) - {'author_id'})
+
+
+def public_by_slug(db, slug):
+    return db.execute(SELECT + ' WHERE a.slug=%s AND a.is_active=1 AND a.published_at<=CURRENT_TIMESTAMP', (slug,)).fetchone()
+
+
+def get_for_update(db, article_id):
+    return db.execute('SELECT * FROM article WHERE article_id=%s FOR UPDATE', (article_id,)).fetchone()

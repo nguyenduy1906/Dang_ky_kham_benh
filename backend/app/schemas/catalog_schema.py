@@ -1,6 +1,5 @@
 from backend.app.core.errors import bad_request
-from backend.app.schemas.auth_schema import ensure_object, text_field
-from backend.app.utils.validation import flag_field, int_field
+from backend.app.utils.validation import ensure_object, text_field, flag_field, int_field
 from urllib.parse import urlparse
 import re
 

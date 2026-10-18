@@ -42,6 +42,14 @@ erDiagram
         text full_name "NOT NULL"
         text phone UK
         text email UK
+        date dob
+        text gender
+        text id_card UK
+        text address
+        text emergency_contact_name
+        text emergency_contact_phone
+        text emergency_contact_relationship
+        text avatar_url
         text password_hash "NOT NULL; hash mật khẩu, không rỗng"
         text approval_status "NOT NULL; PENDING, APPROVED, REJECTED"
         text account_status "NOT NULL; ACTIVE, LOCKED"
@@ -70,9 +78,13 @@ erDiagram
         text full_name "NOT NULL"
         date dob
         text gender
-        text id_card
+        text id_card UK
         text address
         text phone
+        text email
+        text emergency_contact_name
+        text emergency_contact_phone
+        text emergency_contact_relationship
         timestamptz archived_at "NULL khi còn sử dụng"
         text health_insurance
         text relationship "SELF, PARENT, CHILD, SPOUSE, OTHER"
@@ -134,7 +146,6 @@ erDiagram
         integer experience_years "NOT NULL"
         text introduction
         bigint consultation_fee "NOT NULL"
-        text avatar_url
         integer is_active "NOT NULL; 0 hoặc 1"
         timestamptz created_at "NOT NULL"
         timestamptz updated_at "NOT NULL"

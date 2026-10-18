@@ -19,7 +19,7 @@ export const adminPages = {
   rooms:{title:"Quản lý phòng khám",description:"Quản lý phòng khám theo chuyên khoa."},
   users:{title:"Quản lý tài khoản",description:"Quản lý tài khoản, vai trò và trạng thái nhân viên."},
   articles:{title:"Quản lý tin tức",description:"Soạn thảo và quản lý các bài viết trên website."},
-  payments:{title:"Giao dịch thanh toán",description:"Tra cứu giao dịch theo lượt khám hoặc mã giao dịch; xem thu và hoàn tiền."},
+  payments:{title:"Lịch sử thanh toán",description:"Lịch sử giao dịch toàn hệ thống, tối đa 20 bản ghi mỗi trang."},
   statistics:{title:"Báo cáo & thống kê",description:"Thống kê lượt khám, dòng tiền và đánh giá trong khoảng thời gian đã chọn."},
   audit:{title:"Nhật ký hoạt động",description:"Đối soát lượt khám và tra cứu lịch sử trạng thái, điều phối, thanh toán, bệnh án."},
   configuration:{title:"Cấu hình hệ thống",description:"Quản lý thông tin cơ sở và các cài đặt được phép thay đổi."},

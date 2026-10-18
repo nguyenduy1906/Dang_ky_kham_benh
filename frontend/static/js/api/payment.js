@@ -7,6 +7,11 @@ export function listEncounterPayments(encounterId, params = {}, options = {}) {
   return apiRequest(`/encounters/${pathSegment(encounterId)}/payments`, { ...options, method: "GET", params });
 }
 
+/** GET /admin/payments; system history is ADMIN-only and capped at 20 rows per page. */
+export function listAdminPayments(params = {}, options = {}) {
+  return apiRequest("/admin/payments", { ...options, method: "GET", params });
+}
+
 /** GET /payments/<int:payment_id> */
 export function getPayment(paymentId, options = {}) {
   return apiRequest(`/payments/${pathSegment(paymentId)}`, { ...options, method: "GET" });

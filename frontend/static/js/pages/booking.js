@@ -136,7 +136,7 @@ function renderDoctors() {
     photoLink.setAttribute("aria-label", `Xem hồ sơ ${doctor.full_name}`);
     photoLink.append(portrait(doctor));
     const price = el("div", "", "booking-price");
-    price.append(el("span", "Giá khám"), el("strong", money(doctor.consultation_fee)));
+    price.append(el("strong", money(doctor.consultation_fee)));
     const button = el("button", chosen ? "Bỏ chọn" : "Chọn", "solid-button");
     button.type = "button";
     button.setAttribute("aria-pressed", String(chosen));

@@ -8,6 +8,8 @@ from datetime import timedelta
 
 from werkzeug.security import generate_password_hash
 from backend.app.core.constants import SYSTEM_WORKER_EMAIL
+from backend.app.utils import date as date_utils
+from backend.app.utils.date import VN_TZ
 
 from backend.app.db.database import get_db_connection
 from backend.app.models.configuration_model import reminder_hours
@@ -39,11 +41,11 @@ def expire_holds():
                                 "(SELECT 1 FROM encounter e WHERE e.schedule_id=s.schedule_id "
                                 "AND e.encounter_status='HOLDING' AND e.hold_expires_at<=%s) "
                                 'ORDER BY s.schedule_id LIMIT 100 FOR UPDATE OF s SKIP LOCKED',
-                                (service.utc_now(),)).fetchall()
+                                (date_utils.utc_now(),)).fetchall()
         for schedule in schedules:
             holds = db.execute("SELECT * FROM encounter WHERE schedule_id=%s AND encounter_status='HOLDING' "
                                 'AND hold_expires_at<=%s ORDER BY encounter_id FOR UPDATE',
-                                (schedule['schedule_id'], service.utc_now())).fetchall()
+                                (schedule['schedule_id'], date_utils.utc_now())).fetchall()
             for encounter in holds:
                 count += service.expire_locked(db, encounter, schedule, actor_id)
     return count
@@ -52,7 +54,7 @@ def expire_holds():
 def enqueue_reminders():
     count = 0
     with get_db_connection() as db:
-        now = service.utc_now()
+        now = date_utils.utc_now()
         cutoff = now + timedelta(hours=reminder_hours(db))
         rows = db.execute("SELECT e.encounter_id,e.estimated_exam_at FROM encounter e "
                           "JOIN work_schedule s ON s.schedule_id=e.schedule_id JOIN patient p ON p.patient_id=e.patient_id "
@@ -66,7 +68,7 @@ def enqueue_reminders():
                           (now + timedelta(minutes=30), cutoff)).fetchall()
         for row in rows:
             key = f'reminder:{row["encounter_id"]}:{row["estimated_exam_at"].strftime("%Y%m%d%H%M%S")}'
-            local = row['estimated_exam_at'].astimezone(service.VN_TZ)
+            local = row['estimated_exam_at'].astimezone(VN_TZ)
             created = notifications.notify_encounter(db, row['encounter_id'], key, 'REMINDER', 'Nhắc lịch khám',
                 f'Giờ hẹn {local:%d/%m/%Y %H:%M} (Asia/Saigon). Cần check-in ít nhất 30 phút trước giờ hẹn.')
             count += created is not None

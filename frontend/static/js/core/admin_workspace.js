@@ -212,22 +212,21 @@ export async function initAdminWorkspace(key) {
   }
   async function paymentsPage() {
     const query=new URLSearchParams(location.search),linked=query.get("encounter_id");
-    body.innerHTML=notice("Tra cứu giao dịch bằng mã lượt khám hoặc mã giao dịch. Danh sách giao dịch toàn viện hiện chưa được hỗ trợ.")
-      +panel("Tra cứu giao dịch",`<form id="payment-search" class="admin-toolbar"><label>Mã lượt khám<input type="text" name="encounter_id" placeholder="LK_001" value="${linked&&/^\d+$/.test(linked)?esc(linked):""}"></label><label>Mã giao dịch<input type="text" name="payment_id" placeholder="TT_001"></label><button type="submit">Tra cứu</button></form><div id="payment-results"></div><div id="payment-pager"></div>`);
+    body.innerHTML=panel("Lịch sử thanh toán",`<form id="payment-search" class="admin-toolbar"><label>Mã lượt khám<input type="text" name="encounter_id" placeholder="LK_001" value="${linked&&/^\d+$/.test(linked)?esc(linked):""}"></label><label>Mã giao dịch<input type="text" name="payment_id" placeholder="TT_001"></label><button type="submit">Tra cứu</button></form><div id="payment-results"></div><div id="payment-pager"></div>`);
     reload=async()=>ctx.load(async signal=>{
-      if(paymentSearch.payment_id){const result=await payments.getPayment(paymentSearch.payment_id,{signal});return {items:[result.payment],total:1,page:1,page_size:12};}
-      if(paymentSearch.encounter_id)return payments.listEncounterPayments(paymentSearch.encounter_id,{page,page_size:12},{signal});
-      return {items:[],total:0,page:1,page_size:12};
+      if(paymentSearch.payment_id){const result=await payments.getPayment(paymentSearch.payment_id,{signal});return {items:[result.payment],total:1,page:1,page_size:20};}
+      if(paymentSearch.encounter_id)return payments.listEncounterPayments(paymentSearch.encounter_id,{page,page_size:20},{signal});
+      return payments.listAdminPayments({page,page_size:20},{signal});
     },result=>{listResult=result;result.items.forEach(r=>records.set(`payment:${r.payment_id}`,r));$("#payment-results").innerHTML=paymentRows(result.items);$("#payment-pager").innerHTML=paginationMarkup(result);});
     bindTextFilters($("#payment-search"),()=>{
       const value=dataForm($("#payment-search"));page=1;paymentSearch=value;
-      if(!value.encounter_id&&!value.payment_id){$("#payment-results").innerHTML=notice("Nhập mã để xem giao dịch.");return;}
+      if(!value.encounter_id&&!value.payment_id)return reload();
       if(value.encounter_id&&value.payment_id){$("#payment-results").innerHTML=notice("Nhập một mã lượt khám hoặc một mã giao dịch.");return;}
       if(!/^[1-9]\d*$/.test(value.encounter_id || value.payment_id)){$("#payment-results").innerHTML=notice("Vui lòng nhập mã là số nguyên dương.");return;}
       return reload();
     },"#payment-results","#payment-pager");
-    if(linked&&/^\d+$/.test(linked)){paymentSearch={encounter_id:linked};await reload();}
-    else $("#payment-results").innerHTML=notice("Nhập mã để xem giao dịch.");
+    if(linked&&/^\d+$/.test(linked))paymentSearch={encounter_id:linked};
+    await reload();
   }
   async function paymentDetail(id,refund=false) {
     await ctx.show(refund?"Xác nhận hoàn tiền":"Chi tiết giao dịch",async signal=>{

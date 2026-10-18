@@ -30,6 +30,12 @@ BEGIN
       SELECT 1 FROM information_schema.columns c WHERE c.table_schema=current_schema()
       AND c.table_name=e.table_name AND c.column_name=e.column_name AND c.is_generated='ALWAYS'
     );
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+      WHERE table_schema=current_schema() AND table_name='users' AND column_name='avatar_url')
+      OR NOT EXISTS (SELECT 1 FROM information_schema.columns
+      WHERE table_schema=current_schema() AND table_name='patient' AND column_name='emergency_contact_phone') THEN
+      RAISE EXCEPTION 'Schema cu: tao lai database tu init_db.sql truoc khi nap mau ho so ca nhan';
+    END IF;
     IF missing_columns IS NOT NULL THEN
       RAISE EXCEPTION 'Schema cu, chua nap du lieu: %. Tao lai cau truc tu database/init_db.sql truoc.',missing_columns;
     END IF;
@@ -114,11 +120,11 @@ INSERT INTO patient
 (patient_id, user_id, full_name, dob, gender, id_card, address, phone, health_insurance, relationship, created_at, updated_at, archived_at)
 VALUES
 (1, 4, 'Phạm Văn Nam', '1998-05-12', 'Nam', '001098000001', 'Cầu Giấy, Hà Nội', '0911000001', 'HN401000001', 'SELF', '2026-09-10 08:00:00+07', '2026-09-10 08:00:00+07', NULL),
-(2, 5, 'Nguyễn Thị Lan', '2001-11-20', 'Nữ', '001201000002', 'Đống Đa, Hà Nội', '0911000002', 'HN401000002', 'SELF', '2026-09-10 08:10:00+07', '2026-09-10 08:10:00+07', NULL),
+(2, 5, 'Nguyễn Thị Lan', '2001-11-20', 'Nữ', '001301000002', 'Đống Đa, Hà Nội', '0911000002', 'HN401000002', 'SELF', '2026-09-10 08:10:00+07', '2026-09-10 08:10:00+07', NULL),
 (3, NULL, 'Trần Văn Hùng', '1985-03-08', 'Nam', '001085000003', 'Thanh Xuân, Hà Nội', '0911000003', 'HN401000003', 'OTHER', '2026-09-10 08:20:00+07', '2026-09-10 08:20:00+07', NULL),
 (4, NULL, 'Lê Thị Hương', '1992-07-17', 'Nữ', '001192000004', 'Hoàng Mai, Hà Nội', '0911000004', 'HN401000004', 'OTHER', '2026-09-10 08:30:00+07', '2026-09-10 08:30:00+07', NULL),
 (5, NULL, 'Vũ Đức Anh', '1976-01-25', 'Nam', '001076000005', 'Long Biên, Hà Nội', '0911000005', 'HN401000005', 'OTHER', '2026-09-10 08:40:00+07', '2026-09-10 08:40:00+07', NULL),
-(6, NULL, 'Đỗ Minh Châu', '2015-09-03', 'Nữ', NULL, 'Nam Từ Liêm, Hà Nội', '0911000006', 'TE401000006', 'CHILD', '2026-09-10 08:50:00+07', '2026-09-10 08:50:00+07', NULL),
+(6, NULL, 'Đỗ Minh Châu', '2015-09-03', 'Nữ', '001315000006', 'Nam Từ Liêm, Hà Nội', '0911000006', 'TE401000006', 'CHILD', '2026-09-10 08:50:00+07', '2026-09-10 08:50:00+07', NULL),
 (7, NULL, 'Bùi Thị Mai', '1968-12-02', 'Nữ', '001168000007', 'Ba Đình, Hà Nội', '0911000007', 'HN401000007', 'PARENT', '2026-09-10 09:00:00+07', '2026-09-10 09:00:00+07', NULL),
 (8, NULL, 'Hoàng Quốc Việt', '1989-06-14', 'Nam', '001089000008', 'Hai Bà Trưng, Hà Nội', '0911000008', 'HN401000008', 'SPOUSE', '2026-09-10 09:10:00+07', '2026-09-10 09:10:00+07', NULL),
 (9, NULL, 'Đặng Thu Phương', '1996-10-29', 'Nữ', '001196000009', 'Hà Đông, Hà Nội', '0911000009', 'HN401000009', 'OTHER', '2026-09-10 09:20:00+07', '2026-09-10 09:20:00+07', NULL),
@@ -150,18 +156,18 @@ VALUES
 
 -- 6. DOCTOR_PROFILE
 INSERT INTO doctor_profile
-(doctor_profile_id, user_id, department_id, academic_degree, specialization, experience_years, introduction, consultation_fee, avatar_url, is_active, created_at, updated_at)
+(doctor_profile_id, user_id, department_id, academic_degree, specialization, experience_years, introduction, consultation_fee, is_active, created_at, updated_at)
 VALUES
-(1, 6, 1, 'Thạc sĩ', 'Nội khoa', 12, 'Bác sĩ chuyên khám nội tổng quát.', 250000, '/uploads/avatars/c4a8d50caedad0d8fed2dff0cfab0309.jpg', 1, '2026-09-04 08:00:00+07', '2026-09-04 08:00:00+07'),
-(2, 7, 2, 'Tiến sĩ', 'Tim mạch', 15, 'Bác sĩ chuyên khoa tim mạch.', 350000, '/uploads/avatars/4f257e4de22c28a9b8790c500251990c.jpg', 1, '2026-09-04 08:10:00+07', '2026-09-04 08:10:00+07'),
-(3, 8, 3, 'Chuyên khoa I', 'Da liễu', 9, 'Bác sĩ chuyên điều trị bệnh da.', 280000, '/uploads/avatars/7465c5220fd21bd49ef7913ad3f326d8.jpg', 1, '2026-09-04 08:20:00+07', '2026-09-04 08:20:00+07'),
-(4, 9, 4, 'Thạc sĩ', 'Nhi khoa', 11, 'Bác sĩ chuyên khám và điều trị trẻ em.', 300000, '/uploads/avatars/2afd17e4e62cafa329d63b130480a807.jpg', 1, '2026-09-04 08:30:00+07', '2026-09-04 08:30:00+07'),
-(5, 10, 5, 'Chuyên khoa II', 'Sản phụ khoa', 14, 'Bác sĩ chuyên sản phụ khoa.', 380000, '/uploads/avatars/1ba03faa4029ed403c4cb76576d72fb2.jpg', 1, '2026-09-04 08:40:00+07', '2026-09-04 08:40:00+07'),
-(6, 11, 6, 'Thạc sĩ', 'Tai Mũi Họng', 10, 'Bác sĩ chuyên tai mũi họng.', 270000, '/uploads/avatars/107a45e9f9ff0768d4b25ba9ed28a96a.jpg', 1, '2026-09-04 08:50:00+07', '2026-09-04 08:50:00+07'),
-(7, 12, 7, 'Chuyên khoa I', 'Nhãn khoa', 8, 'Bác sĩ chuyên khám và điều trị mắt.', 260000, '/uploads/avatars/2c58ba7f456ec5765c3812fdcd183d7b.jpg', 1, '2026-09-04 09:00:00+07', '2026-09-04 09:00:00+07'),
-(8, 13, 8, 'Thạc sĩ', 'Răng Hàm Mặt', 13, 'Bác sĩ chuyên răng hàm mặt.', 320000, '/uploads/avatars/d2d73ede697069072a82604c8adb21f5.jpg', 1, '2026-09-04 09:10:00+07', '2026-09-04 09:10:00+07'),
-(9, 14, 9, 'Tiến sĩ', 'Cơ Xương Khớp', 16, 'Bác sĩ chuyên cơ xương khớp.', 360000, '/uploads/avatars/a6ac79c44c9e0e56e83c03297452b13e.jpg', 1, '2026-09-04 09:20:00+07', '2026-09-04 09:20:00+07'),
-(10, 15, 10, 'Chuyên khoa II', 'Thần kinh', 17, 'Bác sĩ chuyên thần kinh.', 400000, '/uploads/avatars/2bea9973014ba16451820b91412045c6.jpg', 1, '2026-09-04 09:30:00+07', '2026-09-04 09:30:00+07');
+(1, 6, 1, 'Thạc sĩ', 'Nội khoa', 12, 'Bác sĩ chuyên khám nội tổng quát.', 250000, 1, '2026-09-04 08:00:00+07', '2026-09-04 08:00:00+07'),
+(2, 7, 2, 'Tiến sĩ', 'Tim mạch', 15, 'Bác sĩ chuyên khoa tim mạch.', 350000, 1, '2026-09-04 08:10:00+07', '2026-09-04 08:10:00+07'),
+(3, 8, 3, 'Chuyên khoa I', 'Da liễu', 9, 'Bác sĩ chuyên điều trị bệnh da.', 280000, 1, '2026-09-04 08:20:00+07', '2026-09-04 08:20:00+07'),
+(4, 9, 4, 'Thạc sĩ', 'Nhi khoa', 11, 'Bác sĩ chuyên khám và điều trị trẻ em.', 300000, 1, '2026-09-04 08:30:00+07', '2026-09-04 08:30:00+07'),
+(5, 10, 5, 'Chuyên khoa II', 'Sản phụ khoa', 14, 'Bác sĩ chuyên sản phụ khoa.', 380000, 1, '2026-09-04 08:40:00+07', '2026-09-04 08:40:00+07'),
+(6, 11, 6, 'Thạc sĩ', 'Tai Mũi Họng', 10, 'Bác sĩ chuyên tai mũi họng.', 270000, 1, '2026-09-04 08:50:00+07', '2026-09-04 08:50:00+07'),
+(7, 12, 7, 'Chuyên khoa I', 'Nhãn khoa', 8, 'Bác sĩ chuyên khám và điều trị mắt.', 260000, 1, '2026-09-04 09:00:00+07', '2026-09-04 09:00:00+07'),
+(8, 13, 8, 'Thạc sĩ', 'Răng Hàm Mặt', 13, 'Bác sĩ chuyên răng hàm mặt.', 320000, 1, '2026-09-04 09:10:00+07', '2026-09-04 09:10:00+07'),
+(9, 14, 9, 'Tiến sĩ', 'Cơ Xương Khớp', 16, 'Bác sĩ chuyên cơ xương khớp.', 360000, 1, '2026-09-04 09:20:00+07', '2026-09-04 09:20:00+07'),
+(10, 15, 10, 'Chuyên khoa II', 'Thần kinh', 17, 'Bác sĩ chuyên thần kinh.', 400000, 1, '2026-09-04 09:30:00+07', '2026-09-04 09:30:00+07');
 
 -- Hồ sơ đào tạo/công tác minh họa cho 10 bác sĩ mẫu, không thay phí khám hoặc ảnh.
 UPDATE doctor_profile SET introduction='Bác sĩ chuyên khám nội tổng quát.
@@ -985,7 +991,7 @@ SELECT 38,4,'Phan Ngọc Lan','demo.nurse.12@example.invalid',password_hash,'APP
 UNION ALL
 SELECT 39,4,'Đặng Thu Thảo','demo.nurse.13@example.invalid',password_hash,'APPROVED','ACTIVE',0 FROM users WHERE user_id=3;
 
-INSERT INTO doctor_profile(doctor_profile_id,user_id,department_id,academic_degree,specialization,experience_years,introduction,consultation_fee,avatar_url) VALUES
+INSERT INTO doctor_profile(doctor_profile_id,user_id,department_id,academic_degree,specialization,experience_years,introduction,consultation_fee) VALUES
 (11,24,1,'Thạc sĩ','Nội khoa',12,'Bác sĩ chuyên ngành Nội khoa.
 
 Quá trình đào tạo:
@@ -996,7 +1002,7 @@ Quá trình công tác:
 - 2020–nay: Bác sĩ chuyên ngành Nội khoa tại Bệnh viện NEU Medical.
 - 2014–2020: Khám và theo dõi người bệnh trong lĩnh vực Nội khoa.
 
-Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',290000,'/uploads/avatars/54f8618f24bc9d43fd5da9e54f0fab6c.jpg'),
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',290000),
 (12,25,2,'Tiến sĩ','Tim mạch',18,'Bác sĩ chuyên ngành Tim mạch.
 
 Quá trình đào tạo:
@@ -1008,7 +1014,7 @@ Quá trình công tác:
 - 2020–nay: Bác sĩ chuyên ngành Tim mạch tại Bệnh viện NEU Medical.
 - 2008–2020: Khám và theo dõi người bệnh trong lĩnh vực Tim mạch.
 
-Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',390000,'/uploads/avatars/99c539578baed65fc917a2377998af6f.jpg'),
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',390000),
 (13,26,6,'Thạc sĩ','Tai Mũi Họng',10,'Bác sĩ chuyên ngành Tai Mũi Họng.
 
 Quá trình đào tạo:
@@ -1019,7 +1025,7 @@ Quá trình công tác:
 - 2020–nay: Bác sĩ chuyên ngành Tai Mũi Họng tại Bệnh viện NEU Medical.
 - 2016–2020: Khám và theo dõi người bệnh trong lĩnh vực Tai Mũi Họng.
 
-Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',300000,'/uploads/avatars/cc4daae70cd39341824a6a948c0bb8a5.jpg'),
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',300000),
 (14,27,9,'Chuyên khoa II','Cơ Xương Khớp',15,'Bác sĩ chuyên ngành Cơ Xương Khớp.
 
 Quá trình đào tạo:
@@ -1031,7 +1037,7 @@ Quá trình công tác:
 - 2020–nay: Bác sĩ chuyên ngành Cơ Xương Khớp tại Bệnh viện NEU Medical.
 - 2011–2020: Khám và theo dõi người bệnh trong lĩnh vực Cơ Xương Khớp.
 
-Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',380000,'/uploads/avatars/fa20ce283eb787dc827de89ad681deac.jpg');
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',380000);
 
 INSERT INTO room(room_id,department_id,room_name,description) VALUES
 (11,1,'Phòng Nội 103','Phòng mẫu bổ sung cho đồ án'),
@@ -2143,6 +2149,66 @@ BEGIN
 END
 $morning_schedule$;
 -- END NGOC_ANH_MORNING_20261018
+
+-- Ho so ca nhan mau: du lieu gia lap, khong xac nhan danh tinh nguoi trong anh.
+-- USERS la chu tai khoan; PATIENT la nguoi duoc kham, khong dong bo theo user_id.
+UPDATE users SET
+    dob=make_date(CASE WHEN role_id=2 THEN 1970+(user_id%10) ELSE 1975+(user_id%20) END,
+                  1+(user_id%12), 1+(user_id%27)),
+    gender=CASE WHEN role_id IN (3,4) OR user_id IN (8,10,13) THEN 'Nữ' ELSE 'Nam' END,
+    address='Hà Nội',
+    phone=COALESCE(phone, '0903'||lpad(user_id::text,6,'0')),
+    email=COALESCE(email, 'demo.patient.'||user_id||'@example.invalid'),
+    emergency_contact_name=(ARRAY['Nguyễn Minh An','Trần Thu Mai','Lê Văn Bình','Phạm Ngọc Hà','Đỗ Thanh Sơn'])[1+(user_id%5)],
+    emergency_contact_phone='0988'||lpad(user_id::text,6,'0'),
+    emergency_contact_relationship='Người thân',
+    avatar_url=NULL;
+-- Nam sinh, gioi tinh va ma dinh danh nhat quan, duy nhat trong USERS.
+UPDATE users SET id_card='001'||CASE WHEN gender='Nữ' THEN '1' ELSE '0' END||
+    to_char(dob,'YY')||lpad(user_id::text,6,'0');
+-- Chi sao chep nguoi trung ten va so dien thoai trong seed; khong gan nguoi than
+-- cho chu tai khoan chi vi user_id giong nhau. Khong ap dung dong bo nay o API.
+UPDATE users u SET dob=p.dob,gender=p.gender,id_card=p.id_card,address=p.address
+FROM patient p WHERE p.user_id=u.user_id AND p.full_name=u.full_name AND p.phone=u.phone;
+UPDATE patient SET
+    email='demo.patient.record.'||patient_id||'@example.invalid',
+    emergency_contact_name=(ARRAY['Nguyễn Minh An','Trần Thu Mai','Lê Văn Bình','Phạm Ngọc Hà','Đỗ Thanh Sơn'])[1+(patient_id%5)],
+    emergency_contact_phone='0978'||lpad(patient_id::text,6,'0'),
+    emergency_contact_relationship=CASE WHEN dob>(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date-INTERVAL '18 years'
+        THEN 'Cha/mẹ' ELSE 'Người thân' END;
+UPDATE patient p SET email=u.email FROM users u
+WHERE p.user_id=u.user_id AND p.full_name=u.full_name AND p.phone=u.phone;
+UPDATE users u SET emergency_contact_name=p.emergency_contact_name,
+    emergency_contact_phone=p.emergency_contact_phone,
+    emergency_contact_relationship=p.emergency_contact_relationship
+FROM patient p WHERE p.user_id=u.user_id AND p.full_name=u.full_name AND p.phone=u.phone;
+UPDATE users SET avatar_url='/uploads/avatars/c4a8d50caedad0d8fed2dff0cfab0309.jpg' WHERE user_id=6;
+UPDATE users SET avatar_url='/uploads/avatars/4f257e4de22c28a9b8790c500251990c.jpg' WHERE user_id=7;
+UPDATE users SET avatar_url='/uploads/avatars/7465c5220fd21bd49ef7913ad3f326d8.jpg' WHERE user_id=8;
+UPDATE users SET avatar_url='/uploads/avatars/2afd17e4e62cafa329d63b130480a807.jpg' WHERE user_id=9;
+UPDATE users SET avatar_url='/uploads/avatars/1ba03faa4029ed403c4cb76576d72fb2.jpg' WHERE user_id=10;
+UPDATE users SET avatar_url='/uploads/avatars/107a45e9f9ff0768d4b25ba9ed28a96a.jpg' WHERE user_id=11;
+UPDATE users SET avatar_url='/uploads/avatars/2c58ba7f456ec5765c3812fdcd183d7b.jpg' WHERE user_id=12;
+UPDATE users SET avatar_url='/uploads/avatars/d2d73ede697069072a82604c8adb21f5.jpg' WHERE user_id=13;
+UPDATE users SET avatar_url='/uploads/avatars/a6ac79c44c9e0e56e83c03297452b13e.jpg' WHERE user_id=14;
+UPDATE users SET avatar_url='/uploads/avatars/2bea9973014ba16451820b91412045c6.jpg' WHERE user_id=15;
+UPDATE users SET avatar_url='/uploads/avatars/54f8618f24bc9d43fd5da9e54f0fab6c.jpg' WHERE user_id=24;
+UPDATE users SET avatar_url='/uploads/avatars/99c539578baed65fc917a2377998af6f.jpg' WHERE user_id=25;
+UPDATE users SET avatar_url='/uploads/avatars/cc4daae70cd39341824a6a948c0bb8a5.jpg' WHERE user_id=26;
+UPDATE users SET avatar_url='/uploads/avatars/fa20ce283eb787dc827de89ad681deac.jpg' WHERE user_id=27;
+UPDATE users SET avatar_url='/uploads/avatars/38add5edb7422b6b1a5691cf22fd56cb.jpg' WHERE user_id=3;
+UPDATE users SET avatar_url='/uploads/avatars/e7e23efddb79ca7affea3a55fbb4487c.jpg' WHERE user_id=28;
+UPDATE users SET avatar_url='/uploads/avatars/1ab2db4bf306d5516c6bc312d7487070.jpg' WHERE user_id=29;
+UPDATE users SET avatar_url='/uploads/avatars/e627ead8f76247d4cf7d98d3cbf3b078.jpg' WHERE user_id=30;
+UPDATE users SET avatar_url='/uploads/avatars/c38cd1bd0d4240a7e4d6a71bba2576a7.jpg' WHERE user_id=31;
+UPDATE users SET avatar_url='/uploads/avatars/532f4c6fdbee0f61f9c87154fe64a237.jpg' WHERE user_id=32;
+UPDATE users SET avatar_url='/uploads/avatars/8e3fa7d2a6dac01fb42feccdec80b3f9.jpg' WHERE user_id=33;
+UPDATE users SET avatar_url='/uploads/avatars/44c492e761b1b07fdb81b2ab9679e776.jpg' WHERE user_id=34;
+UPDATE users SET avatar_url='/uploads/avatars/73de37dd74e19091ede18b3ebdeada48.jpg' WHERE user_id=35;
+UPDATE users SET avatar_url='/uploads/avatars/879b090a02088bf607e7422a08f51c17.jpg' WHERE user_id=36;
+UPDATE users SET avatar_url='/uploads/avatars/61fa68e9be0ef2d2a9274a96bbb5e7fe.jpg' WHERE user_id=37;
+UPDATE users SET avatar_url='/uploads/avatars/94e1228f67b0328247c7278b68afeb91.jpg' WHERE user_id=38;
+UPDATE users SET avatar_url='/uploads/avatars/19c8cf83a3b00413bfb8d04dd1399ad1.jpg' WHERE user_id=39;
 
 COMMIT;
 

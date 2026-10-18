@@ -1,5 +1,5 @@
 from backend.app.core.errors import bad_request, conflict
-from backend.app.schemas.auth_schema import ensure_object, text_field, normalize_email
+from backend.app.utils.validation import ensure_object, text_field, normalize_email
 
 # Các quy tắc đã chốt với chủ đồ án không bị đổi qua API cấu hình tổng quát.
 FIXED = {'APPOINTMENT_HOLD_MINUTES': '10', 'DEFAULT_DEPOSIT_PERCENT': '100',

@@ -4,7 +4,7 @@ from backend.app.core import constants
 from backend.app.core.errors import bad_request, conflict, forbidden, not_found
 from backend.app.utils.date import today_vn
 from backend.app.db.database import get_db_connection
-from backend.app.models import doctor_model, catalog_model, schedule_model
+from backend.app.models import doctor_model, catalog_model, schedule_model, auth_model
 from backend.app.utils.database_helpers import jsonable
 from backend.app.models import staff_leave_model
 from backend.app.services import staff_leave_service
@@ -48,12 +48,12 @@ def list_doctor_public(doctor_profile_id, query):
             db, doctor_profile_id=doctor_profile_id, from_date=start, to_date=end,
             status=query['status'], exclude_closed=True, limit=query['page_size'],
             offset=(query['page'] - 1) * query['page_size'])
-        from backend.app.services.appointment_slot_service import available_slots
-        from backend.app.services.encounter_service import utc_now, schedule_bounds
+        from backend.app.services.appointment_slot_service import available_slots, schedule_bounds
+        from backend.app.utils import date as date_utils
         from datetime import timedelta
         for row in rows:
             allowed = (row['schedule_status'] == 'OPEN' and row['remaining'] > 0
-                       and utc_now() <= schedule_bounds(row)[0] - timedelta(hours=5))
+                       and date_utils.utc_now() <= schedule_bounds(row)[0] - timedelta(hours=5))
             row['slots'] = [{'appointment_time': start.strftime('%H:%M'),
                              'starts_at': start.isoformat(), 'ends_at': end.isoformat()}
                             for start, end in available_slots(db, row)] if allowed else []
@@ -97,9 +97,7 @@ def create_schedule(fields):
         staff_leave_service.ensure_available(db, doctor['user_id'], fields['work_date'], fields['start_time'], fields['end_time'])
         fields = dict(fields)
         if fields.get('slot_minutes') is None:
-            department = db.execute('SELECT dep.name FROM department dep JOIN doctor_profile d '
-                                    'ON d.department_id=dep.department_id WHERE d.doctor_profile_id=%s',
-                                    (fields['doctor_profile_id'],)).fetchone()
+            department = catalog_model.doctor_department_name(db, fields['doctor_profile_id'])
             fields['slot_minutes'] = 15 if department['name'] in ('Da liễu', 'Tai Mũi Họng', 'Mắt', 'Răng Hàm Mặt') else 30
         _active_room(db, fields['room_id'])
         schedule_model.lock_doctor_and_room(db, fields['doctor_profile_id'], fields['room_id'])
@@ -140,7 +138,7 @@ def update_schedule(schedule_id, fields):
             raise bad_request('Không thể dời ca về quá khứ', 'DATE_IN_PAST')
         doctor = doctor_model.get_by_id(db, current['doctor_profile_id'])
         staff_leave_service.ensure_available(db, doctor['user_id'], merged['work_date'], merged['start_time'], merged['end_time'])
-        for assignment in db.execute('SELECT nurse_id FROM nurse_assignment WHERE schedule_id=%s AND revoked_at IS NULL', (schedule_id,)):
+        for assignment in schedule_model.active_nurses(db, schedule_id):
             staff_leave_service.ensure_available(db, assignment['nurse_id'], merged['work_date'], merged['start_time'], merged['end_time'])
             if schedule_model.nurse_overlap(db, assignment['nurse_id'], merged['work_date'], merged['start_time'], merged['end_time'], schedule_id):
                 raise conflict('Y tá đã được phân công ca khác trùng giờ', 'NURSE_SCHEDULE_OVERLAP')
@@ -201,8 +199,7 @@ def create_assignment(actor, fields):
     with get_db_connection() as db:
         staff_leave_model.lock_changes(db)
         # Khóa tài khoản để vai trò/trạng thái không đổi trong lúc phân công.
-        nurse = db.execute('SELECT u.*, r.role_name FROM users u JOIN role r ON r.role_id = u.role_id '
-                           'WHERE u.user_id = %s FOR UPDATE OF u', (fields['nurse_id'],)).fetchone()
+        nurse = auth_model.get_for_assignment(db, fields['nurse_id'])
         if nurse is None or nurse['deleted_at'] is not None:
             raise not_found('Không tìm thấy tài khoản y tá', 'NURSE_NOT_FOUND')
         if nurse['role_name'] != constants.ROLE_NURSE:

@@ -6,9 +6,9 @@
     <title>Thông tin cá nhân | NEU Medical</title>
     <link rel="stylesheet" href="../../static/css/home.css?v=20261015-vietnamese-motto" />
     <link rel="stylesheet" href="../../static/css/public_pages.css?v=20261014-interface-update" />
-    <link rel="stylesheet" href="../../static/css/patient_pages.css?v=20261015-profile-edit" />
+    <link rel="stylesheet" href="../../static/css/patient_pages.css?v=20261018-profile-avatar" />
     <script src="../../static/js/core/public.js?v=20261014-interface-update" defer></script>
-    <script type="module" src="../../static/js/pages/profile.js?v=20261015-edit"></script>
+    <script type="module" src="../../static/js/pages/profile.js?v=20261018-profile-avatar"></script>
     <script type="module" src="../../static/js/pages/change_password.js"></script>
   </head>
   <body class="auth-pending">
@@ -35,18 +35,34 @@
         <div class="booking-heading-row"><h1>Thông tin cá nhân</h1><div class="profile-heading-actions"><button id="profile-edit" type="button" class="outline-button" aria-controls="profile-form" disabled>Chỉnh sửa thông tin</button><button type="button" id="profile-change-password" class="outline-button" aria-controls="change-password-dialog" disabled>Đổi mật khẩu</button></div></div>
       </div>
       <section id="profile-details" class="profile-layout" aria-label="Thông tin tài khoản của bạn" hidden>
+        <aside class="patient-panel profile-identity" aria-label="Ảnh đại diện của bạn">
+          <div id="profile-avatar" class="profile-avatar">TK</div>
+          <form id="avatar-form" class="profile-avatar-form">
+            <input id="avatar-file" class="avatar-file-input" name="file" type="file" hidden aria-hidden="true" accept="image/jpeg,image/png,image/webp" tabindex="-1" aria-label="Ảnh đại diện" />
+            <button id="avatar-choose" type="button" class="outline-button">Chọn ảnh đại diện</button>
+            <p id="avatar-feedback" role="status" aria-live="polite"></p>
+          </form>
+          <h2 id="profile-avatar-name"></h2>
+          <p class="profile-role">Người dùng</p>
+          <dl class="profile-account-facts"><div><dt>Mã tài khoản</dt><dd id="profile-id"></dd></div><div><dt>Ngày tạo tài khoản</dt><dd id="profile-created"></dd></div></dl>
+          <p id="profile-status" class="profile-account-status"></p>
+        </aside>
         <section class="patient-panel profile-information" aria-labelledby="profile-information-title">
           <h2 id="profile-information-title">Thông tin tài khoản</h2>
           <p id="profile-message" class="profile-message" role="status" aria-live="polite" hidden></p>
           <form id="profile-form" novalidate>
             <dl class="profile-fields">
-            <div><dt><label for="profile-edit-full-name">Họ và tên</label></dt><dd><span id="profile-full-name"></span><input id="profile-edit-full-name" name="full_name" type="text" autocomplete="name" maxlength="150" required hidden /></dd></div>
-            <div><dt>Mã tài khoản</dt><dd id="profile-id"></dd></div>
-            <div><dt><label for="profile-edit-phone">Số điện thoại</label></dt><dd><span id="profile-phone"></span><input id="profile-edit-phone" name="phone" type="tel" autocomplete="tel" maxlength="255" hidden /></dd></div>
-            <div><dt><label for="profile-edit-email">Email</label></dt><dd><span id="profile-email"></span><input id="profile-edit-email" name="email" type="email" autocomplete="email" maxlength="254" hidden /></dd></div>
-            <div><dt>Trạng thái tài khoản</dt><dd id="profile-status"></dd></div>
-            <div><dt>Ngày tạo tài khoản</dt><dd id="profile-created"></dd></div>
+            <div><dt><label for="profile-edit-full-name">Họ và tên</label></dt><dd><span id="profile-full-name"></span><input id="profile-edit-full-name" name="full_name" type="text" maxlength="150" autocomplete="name" required hidden /></dd></div>
+            <div><dt><label for="profile-edit-dob">Ngày sinh</label></dt><dd><span id="profile-dob"></span><input id="profile-edit-dob" name="dob" type="date" min="1900-01-01" hidden /></dd></div>
+            <div><dt><label for="profile-edit-phone">Số điện thoại</label></dt><dd><span id="profile-phone"></span><input id="profile-edit-phone" name="phone" type="tel" maxlength="20" hidden /></dd></div>
+            <div><dt><label for="profile-edit-email">Email</label></dt><dd><span id="profile-email"></span><input id="profile-edit-email" name="email" type="email" maxlength="254" hidden /></dd></div>
+            <div><dt>Giới tính</dt><dd id="profile-gender"></dd></div>
+            <div><dt>CCCD</dt><dd id="profile-id-card"></dd></div>
+            <div class="full-width"><dt>Địa chỉ</dt><dd id="profile-address"></dd></div>
             </dl>
+            <fieldset class="profile-emergency"><legend>Người liên hệ khẩn cấp</legend><dl class="profile-emergency-fields">
+<div><dt><label for="profile-edit-emergency-contact-name">Họ và tên</label></dt><dd><span id="profile-emergency-contact-name"></span><input id="profile-edit-emergency-contact-name" name="emergency_contact_name" type="text" maxlength="150" hidden /></dd></div><div><dt><label for="profile-edit-emergency-contact-phone">Số điện thoại</label></dt><dd><span id="profile-emergency-contact-phone"></span><input id="profile-edit-emergency-contact-phone" name="emergency_contact_phone" type="tel" maxlength="30" hidden /></dd></div><div><dt><label for="profile-edit-emergency-contact-relationship">Quan hệ</label></dt><dd><span id="profile-emergency-contact-relationship"></span><input id="profile-edit-emergency-contact-relationship" name="emergency_contact_relationship" type="text" maxlength="50" hidden /></dd></div>
+            </dl></fieldset>
             <div id="profile-edit-actions" class="profile-edit-actions" hidden>
               <button id="profile-save" type="submit" class="solid-button">Lưu thông tin</button>
               <button id="profile-cancel" type="button" class="outline-button">Hủy</button>

@@ -13,9 +13,9 @@ import { $, panel, pagination, bindDialog, run } from "../core/staff_ui.js";
 
 const user = await staffReady;
 if (user) {
-  bindDialog();
   await run(async () => {
     const page = document.body.dataset.page;
+    if (page === "patients" || page === "records") bindDialog();
     if (page === "overview") await overview();
     if (page === "assignments") await assignmentsPage();
     if (page === "records") await initNurseRecords();

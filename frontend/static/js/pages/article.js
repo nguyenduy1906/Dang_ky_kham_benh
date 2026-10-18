@@ -2,6 +2,7 @@ import { getBySlug } from "../api/article.js";
 import { articlePage, articleUrl, articleThumbnail, articleContent, publishedDate } from "../core/articles.js";
 import { ApiError } from "../core/api.js";
 import { displayText } from "../core/display_text.js";
+import { refreshDoctorImages } from "../core/doctors.js";
 
 const slug = new URLSearchParams(location.search).get("slug");
 const title = document.querySelector("#article-title");
@@ -105,3 +106,4 @@ relatedRetry.addEventListener("click", () => { if (currentArticle) loadRelated(c
 window.addEventListener("pagehide", () => { detailRequest?.abort(); relatedRequest?.abort(); });
 window.addEventListener("pageshow", event => { if (event.persisted) loadArticle(); });
 loadArticle();
+refreshDoctorImages();

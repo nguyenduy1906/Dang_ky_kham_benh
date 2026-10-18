@@ -1,13 +1,22 @@
 import { updateMe } from "../api/auth.js";
 import { clearSession, getSessionUser, hasSession, loginUrl, workspaceUrl } from "../core/session.js";
+import { personalFields, editableProfileKeys, todayVN, profileChanges } from "../core/profile.js";
+import { bindAvatarForm, renderAccountAvatar } from "../core/avatar.js";
 
 const $ = selector => document.querySelector(selector);
 const main = $("#main"), status = $("#profile-auth-status"), details = $("#profile-details");
 const form = $("#profile-form"), editButton = $("#profile-edit"), saveButton = $("#profile-save");
 const cancelButton = $("#profile-cancel"), message = $("#profile-message");
-const fields = ["id", "full-name", "phone", "email", "created", "status"];
-const editable = { full_name: $("#profile-edit-full-name"), phone: $("#profile-edit-phone"), email: $("#profile-edit-email") };
+const fields = ["id", "full-name", "phone", "email", "created", "status", ...personalFields.map(field => field.key.replaceAll("_", "-"))];
+const editable = Object.fromEntries(editableProfileKeys.map(key => [key, $(`#profile-edit-${key.replaceAll("_", "-")}`)]));
+editable.dob.max = todayVN();
 let version = 0, user = null, editing = false, saving = false, pendingSave;
+let avatarEditor;
+
+function renderAvatar() {
+  renderAccountAvatar($("#profile-avatar"), user, { alt: user ? `Ảnh đại diện ${user.full_name}` : "" });
+  $("#profile-avatar-name").textContent = user?.full_name || "";
+}
 
 function notify(text = "", state = "success") {
   message.textContent = text;
@@ -30,7 +39,7 @@ function setEditing(active) {
     input.hidden = !active;
     input.value = user?.[key] || "";
     input.setCustomValidity("");
-    $(`#profile-${key.replace("_", "-")}`).hidden = active;
+    $(`#profile-${key.replaceAll("_", "-")}`).hidden = active;
   }
 }
 
@@ -39,6 +48,7 @@ function suspend() {
   pendingSave?.abort();
   pendingSave = undefined;
   user = null;
+  avatarEditor?.reset(); renderAvatar();
   setBusy(false);
   setEditing(false);
   notify();
@@ -65,11 +75,14 @@ function render(fresh) {
     created: user.created_at && Number.isFinite(date.getTime())
       ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "long", timeZone: "Asia/Saigon" }).format(date) : null,
     status: ({ ACTIVE: "Đang hoạt động", LOCKED: "Đã khóa" })[user.account_status] || user.account_status,
+    ...Object.fromEntries(personalFields.map(({ key }) => [key.replaceAll("_", "-"), key === "dob" && user.dob ? user.dob.split("-").reverse().join("/") : user[key]])),
   };
   for (const [field, value] of Object.entries(values)) {
     $(`#profile-${field}`).textContent = value == null || value === "" ? "Chưa cập nhật" : String(value);
   }
+  $("#profile-status").dataset.active = String(user.account_status === "ACTIVE");
   setEditing(false);
+  renderAvatar();
   editButton.disabled = false;
   const passwordButton = $("#profile-change-password");
   if (passwordButton) passwordButton.disabled = false;
@@ -96,28 +109,8 @@ async function load() {
     status.querySelector("button").hidden = false;
   }
 }
-function normalized(key, value) {
-  let text = String(value || "").trim();
-  if (key === "email") return text.toLowerCase();
-  if (key === "phone") {
-    text = text.replace(/[\s.\-]/g, "");
-    if (/^\+?84[35789]\d{8}$/.test(text)) text = `0${text.replace(/^\+?84/, "")}`;
-  }
-  return text;
-}
 function changes() {
-  const data = {};
-  for (const [key, input] of Object.entries(editable)) {
-    input.setCustomValidity("");
-    const value = normalized(key, input.value);
-    if (value === normalized(key, user[key])) continue;
-    // Empty fields that were already absent are omitted; PATCH /me cannot clear an identity.
-    if (!value) input.setCustomValidity(`${({ full_name: "Họ và tên", phone: "Số điện thoại", email: "Email" })[key]} không được để trống.`);
-    else if (key === "full_name" && value.length > 150) input.setCustomValidity("Họ và tên tối đa 150 ký tự.");
-    else if (key === "phone" && !/^\+?\d{9,15}$/.test(value)) input.setCustomValidity("Số điện thoại cần có từ 9 đến 15 chữ số.");
-    else if (key === "email" && (value.length > 254 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value))) input.setCustomValidity("Vui lòng nhập email hợp lệ.");
-    data[key] = value;
-  }
+  const data = profileChanges(user, editable);
   return form.reportValidity() ? data : null;
 }
 async function save(event) {
@@ -143,7 +136,7 @@ async function save(event) {
     if (result?.user?.user_id !== expectedId || result.user.role_name !== "USER") {
       throw new Error("Phản hồi cập nhật thông tin không hợp lệ. Vui lòng thử lại.");
     }
-    render(result.user);
+    render({ ...result.user, avatar_url: user.avatar_url });
     notify("Đã lưu thông tin cá nhân.");
     editButton.focus();
   } catch (error) {
@@ -173,6 +166,10 @@ cancelButton.addEventListener("click", () => {
 });
 for (const input of Object.values(editable)) input.addEventListener("input", () => input.setCustomValidity(""));
 form.addEventListener("submit", save);
+avatarEditor = bindAvatarForm({
+  form: $("#avatar-form"), input: $("#avatar-file"), button: $("#avatar-choose"), feedback: $("#avatar-feedback"), getUser: () => user,
+  onSaved: fresh => { user = { ...user, avatar_url: fresh.avatar_url }; renderAvatar(); },
+});
 window.addEventListener("pagehide", suspend);
 window.addEventListener("pageshow", event => { if (event.persisted) load(); });
 window.addEventListener("neu:auth-change", () => { if (hasSession()) load(); else signIn(); });

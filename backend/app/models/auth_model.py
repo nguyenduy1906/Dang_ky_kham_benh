@@ -1,10 +1,11 @@
 """Truy vấn SQL cho bảng users và role (db là kết nối psycopg trả về dict)."""
 from backend.app.utils.business_codes import business_code
+from backend.app.schemas.profile_schema import PROFILE_FIELDS
 
 _USER_SELECT = 'SELECT u.*, r.role_name FROM users u JOIN role r ON r.role_id = u.role_id'
 
 _UPDATABLE = {'role_id', 'full_name', 'phone', 'email', 'password_hash',
-              'approval_status', 'account_status', 'email_verified'}
+              'approval_status', 'account_status', 'email_verified', 'avatar_url', *PROFILE_FIELDS}
 
 
 def _iso(value):
@@ -22,6 +23,8 @@ def to_public(user):
         'full_name': user['full_name'],
         'phone': user['phone'],
         'email': user['email'],
+        **{key: _iso(user.get(key)) if key == 'dob' else user.get(key)
+           for key in (*PROFILE_FIELDS, 'avatar_url')},
         'approval_status': user['approval_status'],
         'account_status': user['account_status'],
         'email_verified': bool(user['email_verified']),
@@ -54,8 +57,18 @@ def get_user_by_phone(db, phone):
     return db.execute(_USER_SELECT + ' WHERE u.phone = %s', (phone,)).fetchone()
 
 
-def find_identity_conflict(db, email, phone, exclude_user_id=None):
-    """Trả về 'email' hoặc 'phone' nếu đã có người khác dùng, ngược lại None."""
+def get_for_assignment(db, user_id):
+    return db.execute('SELECT u.*, r.role_name FROM users u JOIN role r ON r.role_id = u.role_id '
+                           'WHERE u.user_id = %s FOR UPDATE OF u', (user_id,)).fetchone()
+
+
+def avatar_for_update(db, user_id):
+    return db.execute('SELECT avatar_url, deleted_at FROM users WHERE user_id=%s FOR UPDATE',
+                                 (user_id,)).fetchone()
+
+
+def find_identity_conflict(db, email, phone, exclude_user_id=None, id_card=None):
+    """Trả về email/phone/id_card nếu đã có tài khoản khác dùng, ngược lại None."""
     if email:
         row = db.execute('SELECT user_id FROM users WHERE email = %s', (email,)).fetchone()
         if row and row['user_id'] != exclude_user_id:
@@ -64,17 +77,22 @@ def find_identity_conflict(db, email, phone, exclude_user_id=None):
         row = db.execute('SELECT user_id FROM users WHERE phone = %s', (phone,)).fetchone()
         if row and row['user_id'] != exclude_user_id:
             return 'phone'
+    if id_card:
+        row = db.execute('SELECT user_id FROM users WHERE id_card = %s', (id_card,)).fetchone()
+        if row and row['user_id'] != exclude_user_id:
+            return 'id_card'
     return None
 
 
 def create_user(db, *, role_id, full_name, email, phone, password_hash,
-                approval_status, email_verified=0):
+                approval_status, email_verified=0, **profile):
     row = db.execute(
         'INSERT INTO users (role_id, full_name, email, phone, password_hash, '
         'approval_status, email_verified) VALUES (%s, %s, %s, %s, %s, %s, %s) '
         'RETURNING user_id',
         (role_id, full_name, email, phone, password_hash, approval_status, email_verified),
     ).fetchone()
+    update_user(db, row['user_id'], {key: profile[key] for key in PROFILE_FIELDS if key in profile})
     return row['user_id']
 
 
@@ -118,8 +136,8 @@ def list_users(db, *, role=None, account_status=None, approval_status=None,
         params.append(approval_status)
     if q:
         like = f'%{_escape_like(q)}%'
-        where.append('(u.full_name ILIKE %s OR u.email ILIKE %s OR u.phone ILIKE %s)')
-        params.extend([like, like, like])
+        where.append('(u.full_name ILIKE %s OR u.email ILIKE %s OR u.phone ILIKE %s OR u.id_card ILIKE %s)')
+        params.extend([like, like, like, like])
     clause = ' AND '.join(where)
     base = 'FROM users u JOIN role r ON r.role_id = u.role_id WHERE ' + clause
     total = db.execute('SELECT COUNT(*) AS n ' + base, params).fetchone()['n']

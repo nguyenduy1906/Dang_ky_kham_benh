@@ -8,11 +8,14 @@ from backend.app.core.errors import AppError, bad_request, conflict, forbidden, 
 from backend.app.core.security import (create_access_token, generate_otp, generate_token,
                                        hash_password, hash_token, verify_password)
 from backend.app.db.database import get_db_connection
-from backend.app.models import auth_model, auth_model as auth_token_model
+from backend.app.models import auth_model, auth_model as auth_token_model, patient_model
+from backend.app.schemas.profile_schema import PROFILE_FIELDS
+from backend.app.utils import uploads
 
 _DUMMY_HASH = generate_password_hash('dummy-password-to-equalize-timing')
 _IDENTITY_MESSAGES = {'email': 'Email đã được sử dụng',
-                      'phone': 'Số điện thoại đã được sử dụng'}
+                      'phone': 'Số điện thoại đã được sử dụng',
+                      'id_card': 'CCCD đã được sử dụng'}
 _BAD_CREDENTIALS = 'Thông tin đăng nhập không đúng'
 _BAD_OTP = 'OTP không hợp lệ hoặc đã hết hạn'
 _BAD_RESET = 'Phiên đặt lại mật khẩu không hợp lệ hoặc đã hết hạn'
@@ -23,18 +26,17 @@ def register(data):
         role = auth_model.get_role_by_name(db, constants.ROLE_USER)
         if role is None:
             raise AppError(500, 'ROLE_NOT_SEEDED', 'Chưa có vai trò USER, hãy chạy seed_db')
-        taken = auth_model.find_identity_conflict(db, data['email'], data['phone'])
-        if taken:
-            raise conflict(_IDENTITY_MESSAGES[taken], 'DUPLICATE_IDENTITY')
+        _check_identity(db, data)
         approval = (constants.APPROVAL_PENDING if role['requires_approval']
                     else constants.APPROVAL_APPROVED)
         try:
             user_id = auth_model.create_user(
                 db, role_id=role['role_id'], full_name=data['full_name'],
                 email=data['email'], phone=data['phone'],
-                password_hash=hash_password(data['password']), approval_status=approval)
+                password_hash=hash_password(data['password']), approval_status=approval,
+                **{key: data[key] for key in PROFILE_FIELDS if key in data})
         except pg_errors.UniqueViolation:
-            raise conflict('Email hoặc số điện thoại đã được sử dụng', 'DUPLICATE_IDENTITY') from None
+            raise _duplicate() from None
         user = auth_model.get_user_by_id(db, user_id)
     return {'user': auth_model.to_public(user)}
 
@@ -147,12 +149,12 @@ def confirm_email_verification(data):
 
 
 def _duplicate():
-    return conflict('Email hoặc số điện thoại đã được sử dụng', 'DUPLICATE_IDENTITY')
+    return conflict('Email, số điện thoại hoặc CCCD đã được sử dụng', 'DUPLICATE_IDENTITY')
 
 
 def _check_identity(db, fields, exclude_user_id=None):
     taken = auth_model.find_identity_conflict(db, fields.get('email'), fields.get('phone'),
-                                              exclude_user_id)
+                                              exclude_user_id, id_card=fields.get('id_card'))
     if taken:
         raise conflict(_IDENTITY_MESSAGES[taken], 'DUPLICATE_IDENTITY')
 
@@ -171,12 +173,12 @@ def update_me(user, fields):
         updates['email_verified'] = 0
     with get_db_connection() as db:
         if 'phone' in updates:
-            db.execute('SELECT pg_advisory_xact_lock(78124003)')
+            patient_model.lock_account_links(db)
         _check_identity(db, updates, uid)
         try:
             auth_model.update_user(db, uid, updates)
             if 'phone' in updates:
-                db.execute('UPDATE patient SET phone=%s WHERE user_id=%s', (updates['phone'], uid))
+                patient_model.sync_account_phone(db, updates['phone'], uid)
         except pg_errors.UniqueViolation:
             raise _duplicate() from None
         if email_changed:
@@ -246,7 +248,8 @@ def create_user(data):
                 email=data['email'], phone=data['phone'],
                 password_hash=hash_password(data['password']),
                 approval_status=data['approval_status'],
-                email_verified=1 if data['email_verified'] else 0)
+                email_verified=1 if data['email_verified'] else 0,
+                **{key: data[key] for key in PROFILE_FIELDS if key in data})
         except pg_errors.UniqueViolation:
             raise _duplicate() from None
         user = auth_model.get_user_by_id(db, user_id)
@@ -256,7 +259,7 @@ def create_user(data):
 def update_user(admin, user_id, fields):
     with get_db_connection() as db:
         if 'phone' in fields:
-            db.execute('SELECT pg_advisory_xact_lock(78124003)')
+            patient_model.lock_account_links(db)
         target = _get_or_404(db, user_id)
         if target['deleted_at'] is not None:
             raise conflict('Người dùng đã bị xóa', 'USER_DELETED')
@@ -272,9 +275,11 @@ def update_user(admin, user_id, fields):
         try:
             auth_model.update_user(db, user_id, updates)
             if 'phone' in updates:
-                db.execute('UPDATE patient SET phone=%s WHERE user_id=%s', (updates['phone'], user_id))
+                patient_model.sync_account_phone(db, updates['phone'], user_id)
         except pg_errors.UniqueViolation:
             raise _duplicate() from None
+        if 'email' in updates and updates['email'] != target['email']:
+            auth_token_model.invalidate_unused(db, user_id, constants.TOKEN_VERIFY_EMAIL)
         user = auth_model.get_user_by_id(db, user_id)
     return {'user': auth_model.to_public(user)}
 
@@ -299,3 +304,26 @@ def delete_user(admin, user_id):
         if not auth_model.soft_delete_user(db, user_id):
             raise conflict('Người dùng đã bị xóa trước đó', 'USER_DELETED')
     return {'message': 'Đã xóa người dùng (xóa mềm)'}
+
+
+def replace_avatar(user_id, file_storage=None, *, remove=False):
+    """Shared avatar transaction for /me and existing doctor upload routes.
+
+    Lock the account before writing; remove old files only after commit, and
+    discard the new file on rollback. All files live in UPLOAD_DIR/avatars.
+    """
+    new_url = None
+    try:
+        with get_db_connection() as db:
+            current = auth_model.avatar_for_update(db, user_id)
+            if current is None or current['deleted_at'] is not None:
+                raise not_found('Không tìm thấy người dùng', 'USER_NOT_FOUND')
+            if not remove:
+                new_url = uploads.save_avatar(file_storage)
+            auth_model.update_user(db, user_id, {'avatar_url': new_url})
+            fresh = auth_model.get_user_by_id(db, user_id)
+    except Exception:
+        uploads.delete_avatar(new_url)
+        raise
+    uploads.delete_avatar(current['avatar_url'])
+    return {'user': auth_model.to_public(fresh)}

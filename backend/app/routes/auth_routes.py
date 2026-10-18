@@ -31,8 +31,16 @@ def register():
             email: {type: string, example: a@example.com}
             phone: {type: string, example: "0901234567"}
             password: {type: string, example: Medical12345}
+            dob: {type: string, format: date, x-nullable: true, description: Từ 1900-01-01 đến hôm nay}
+            gender: {type: string, enum: [Nam, Nữ, Khác], x-nullable: true}
+            id_card: {type: string, pattern: '^[0-9]{12}$', x-nullable: true, description: CCCD duy nhất trong tài khoản}
+            address: {type: string, maxLength: 255, x-nullable: true}
+            emergency_contact_name: {type: string, maxLength: 150, x-nullable: true}
+            emergency_contact_phone: {type: string, x-nullable: true}
+            emergency_contact_relationship: {type: string, maxLength: 50, x-nullable: true}
     responses:
       201:
+        schema: {$ref: '#/definitions/AccountProfileResponse'}
         description: Đăng ký thành công
       400:
         description: Dữ liệu không hợp lệ
@@ -224,6 +232,7 @@ def get_me():
       - Bearer: []
     responses:
       200:
+        schema: {$ref: '#/definitions/AccountProfileResponse'}
         description: Thông tin tài khoản hiện tại
       401:
         description: Chưa đăng nhập
@@ -234,7 +243,7 @@ def get_me():
 @user_admin_bp.patch('/me')
 @login_required
 def update_me():
-    """Cập nhật hồ sơ của tôi (full_name, email, phone)
+    """Cập nhật hồ sơ cá nhân của tôi; null xóa trường tùy chọn, avatar dùng /me/avatar
     ---
     tags:
       - Me
@@ -250,8 +259,16 @@ def update_me():
             full_name: {type: string}
             email: {type: string}
             phone: {type: string}
+            dob: {type: string, format: date, x-nullable: true, description: Từ 1900-01-01 đến hôm nay}
+            gender: {type: string, enum: [Nam, Nữ, Khác], x-nullable: true}
+            id_card: {type: string, pattern: '^[0-9]{12}$', x-nullable: true, description: CCCD duy nhất trong tài khoản}
+            address: {type: string, maxLength: 255, x-nullable: true}
+            emergency_contact_name: {type: string, maxLength: 150, x-nullable: true}
+            emergency_contact_phone: {type: string, x-nullable: true}
+            emergency_contact_relationship: {type: string, maxLength: 50, x-nullable: true}
     responses:
       200:
+        schema: {$ref: '#/definitions/AccountProfileResponse'}
         description: Đã cập nhật (đổi email sẽ hủy trạng thái đã xác minh)
       409:
         description: Email hoặc số điện thoại đã tồn tại
@@ -287,6 +304,83 @@ def change_password():
     """
     data = auth_schema.validate_change_password(_body())
     return jsonify(auth_service.change_password(current_user(), data))
+
+
+@user_admin_bp.post('/me/avatar')
+@login_required
+def upload_own_avatar():
+    """Tải hoặc thay avatar của tài khoản đang đăng nhập, mọi vai trò
+    ---
+    tags: [Me]
+    security: [{Bearer: []}]
+    consumes: [multipart/form-data]
+    parameters:
+      - {in: formData, name: file, type: file, required: true, description: JPEG/PNG/WebP tối đa 2 MB}
+    responses:
+      200:
+        description: Hồ sơ sau khi thay ảnh
+        schema: {$ref: '#/definitions/AccountProfileResponse'}
+      400: {description: Thiếu file hoặc ảnh không hợp lệ}
+      401: {description: Chưa đăng nhập}
+    """
+    return jsonify(auth_service.replace_avatar(current_user()['user_id'], request.files.get('file')))
+
+
+@user_admin_bp.delete('/me/avatar')
+@login_required
+def delete_own_avatar():
+    """Xóa avatar của tôi; avatar_url trả về null, gọi lặp vẫn thành công
+    ---
+    tags: [Me]
+    security: [{Bearer: []}]
+    responses:
+      200:
+        description: Hồ sơ với avatar_url null
+        schema: {$ref: '#/definitions/AccountProfileResponse'}
+      401: {description: Chưa đăng nhập}
+    """
+    return jsonify(auth_service.replace_avatar(current_user()['user_id'], remove=True))
+
+
+@user_admin_bp.post('/admin/users/<int:user_id>/avatar')
+@roles_required(constants.ROLE_ADMIN)
+def upload_user_avatar(user_id):
+    """ADMIN tải hoặc thay ảnh của một tài khoản
+    ---
+    tags: [Admin Users]
+    security: [{Bearer: []}]
+    consumes: [multipart/form-data]
+    parameters:
+      - {in: path, name: user_id, type: integer, required: true}
+      - {in: formData, name: file, type: file, required: true, description: JPEG/PNG/WebP tối đa 2 MB}
+    responses:
+      200:
+        description: Hồ sơ sau khi thay ảnh
+        schema: {$ref: '#/definitions/AccountProfileResponse'}
+      400: {description: File không hợp lệ}
+      403: {description: Chỉ ADMIN được phép}
+      404: {description: Không tìm thấy tài khoản}
+    """
+    return jsonify(auth_service.replace_avatar(user_id, request.files.get('file')))
+
+
+@user_admin_bp.delete('/admin/users/<int:user_id>/avatar')
+@roles_required(constants.ROLE_ADMIN)
+def delete_user_avatar(user_id):
+    """ADMIN xóa ảnh của một tài khoản
+    ---
+    tags: [Admin Users]
+    security: [{Bearer: []}]
+    parameters:
+      - {in: path, name: user_id, type: integer, required: true}
+    responses:
+      200:
+        description: Hồ sơ với avatar_url null
+        schema: {$ref: '#/definitions/AccountProfileResponse'}
+      403: {description: Chỉ ADMIN được phép}
+      404: {description: Không tìm thấy tài khoản}
+    """
+    return jsonify(auth_service.replace_avatar(user_id, remove=True))
 
 
 @user_admin_bp.get('/admin/roles')
@@ -356,8 +450,16 @@ def admin_create_user():
             role: {type: string, example: DOCTOR}
             approval_status: {type: string, example: APPROVED}
             email_verified: {type: boolean}
+            dob: {type: string, format: date, x-nullable: true, description: Từ 1900-01-01 đến hôm nay}
+            gender: {type: string, enum: [Nam, Nữ, Khác], x-nullable: true}
+            id_card: {type: string, pattern: '^[0-9]{12}$', x-nullable: true, description: CCCD duy nhất trong tài khoản}
+            address: {type: string, maxLength: 255, x-nullable: true}
+            emergency_contact_name: {type: string, maxLength: 150, x-nullable: true}
+            emergency_contact_phone: {type: string, x-nullable: true}
+            emergency_contact_relationship: {type: string, maxLength: 50, x-nullable: true}
     responses:
       201:
+        schema: {$ref: '#/definitions/AccountProfileResponse'}
         description: Đã tạo
       409:
         description: Trùng email hoặc số điện thoại
@@ -379,6 +481,7 @@ def admin_get_user(user_id):
       - {in: path, name: user_id, type: integer, required: true}
     responses:
       200:
+        schema: {$ref: '#/definitions/AccountProfileResponse'}
         description: Thông tin người dùng
       404:
         description: Không tìm thấy
@@ -389,7 +492,7 @@ def admin_get_user(user_id):
 @user_admin_bp.patch('/admin/users/<int:user_id>')
 @roles_required(constants.ROLE_ADMIN)
 def admin_update_user(user_id):
-    """Sửa người dùng (full_name, email, phone, role, approval_status)
+    """Sửa hồ sơ cá nhân và phân quyền người dùng
     ---
     tags:
       - Admin Users
@@ -408,8 +511,16 @@ def admin_update_user(user_id):
             phone: {type: string}
             role: {type: string}
             approval_status: {type: string}
+            dob: {type: string, format: date, x-nullable: true, description: Từ 1900-01-01 đến hôm nay}
+            gender: {type: string, enum: [Nam, Nữ, Khác], x-nullable: true}
+            id_card: {type: string, pattern: '^[0-9]{12}$', x-nullable: true, description: CCCD duy nhất trong tài khoản}
+            address: {type: string, maxLength: 255, x-nullable: true}
+            emergency_contact_name: {type: string, maxLength: 150, x-nullable: true}
+            emergency_contact_phone: {type: string, x-nullable: true}
+            emergency_contact_relationship: {type: string, maxLength: 50, x-nullable: true}
     responses:
       200:
+        schema: {$ref: '#/definitions/AccountProfileResponse'}
         description: Đã cập nhật
       403:
         description: Không được tự đổi vai trò hoặc trạng thái duyệt của mình

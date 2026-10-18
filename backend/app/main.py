@@ -4,6 +4,7 @@ from flasgger import Swagger
 from backend.app.core.errors import register_error_handlers
 from backend.app.core.cors import register_cors
 from backend.app.core.security import get_secret_key
+from backend.app.utils.swagger_helpers import PROFILE_DEFINITIONS
 from backend.app.db.database import get_db_connection
 from backend.app.routes import health_routes
 from backend.app.routes.auth_routes import auth_bp, user_admin_bp
@@ -39,6 +40,7 @@ def create_app():
     app.config['SWAGGER'] = {'title': 'Medical Booking API', 'uiversion': 3}
     Swagger(app, config={'specs_route': '/docs/'}, merge=True, template={
         'swagger': '2.0',
+        'definitions': PROFILE_DEFINITIONS,
         'info': {'title': 'Medical Booking API', 'version': '1.0.0',
                  'description': 'Tài liệu API của dự án đăng ký và đặt lịch khám bệnh.'},
         'securityDefinitions': {'Bearer': {
