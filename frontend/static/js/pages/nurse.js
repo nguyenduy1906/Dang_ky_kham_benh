@@ -1,4 +1,4 @@
-import { initOverviewPeriod } from "../core/staff_overview.js";
+import { initTodayOverview } from "../core/staff_overview.js";
 import { staffReady } from "../core/staff_workspace.js";
 import * as schedules from "../api/schedule.js";
 import { initNursePatients } from "../core/nurse_patients.js";
@@ -8,7 +8,6 @@ import { code } from "../core/business_codes.js";
 import { renderNurseOverview } from "../core/nurse_overview.js";
 import { nurseAssignmentTable } from "../core/nurse_tables.js";
 import { initDragScroll } from "../core/drag_scroll.js";
-import { NURSE_OVERVIEW_STORAGE_KEY } from "../core/overview_preferences.js";
 import { $, panel, pagination, bindDialog, run } from "../core/staff_ui.js";
 
 const user = await staffReady;
@@ -30,7 +29,7 @@ async function allAssignments(options = {}) {
 }
 async function overview() {
   initDragScroll($("#page-body"), ".nurse-compact-shifts");
-  await initOverviewPeriod(renderNurseOverview, { storageKey: NURSE_OVERVIEW_STORAGE_KEY });
+  await initTodayOverview(renderNurseOverview);
 }
 async function assignmentsPage() {
   let range = nurseRange();

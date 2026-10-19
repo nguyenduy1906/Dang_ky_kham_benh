@@ -435,6 +435,41 @@ erDiagram
 
     USERS ||--o{ NOTIFICATION : "nhan_thong_bao"
     USERS ||--o{ ARTICLE : "dang_bai"
+
+    SCHEDULE_MOVE {
+        int source_schedule_id PK,FK
+        int target_schedule_id FK
+        text reason
+        int moved_by_id FK
+        timestamptz moved_at
+    }
+    NURSE_ASSIGNMENT_CHANGE {
+        int change_id PK
+        int assignment_id FK
+        int resulting_assignment_id FK
+        int changed_by_id FK
+        timestamptz changed_at
+        jsonb before_data
+        jsonb after_data
+    }
+    DEPARTMENT_MEMBERSHIP_LOG {
+        int membership_log_id PK
+        int doctor_profile_id FK
+        int old_department_id FK
+        int new_department_id FK
+        int changed_by_id FK
+        timestamptz changed_at
+    }
+    WORK_SCHEDULE ||--o| SCHEDULE_MOVE : "ca_cu"
+    WORK_SCHEDULE ||--o{ SCHEDULE_MOVE : "ca_moi"
+    USERS ||--o{ SCHEDULE_MOVE : "chuyen_ca"
+    NURSE_ASSIGNMENT ||--o{ NURSE_ASSIGNMENT_CHANGE : "phan_cong_cu"
+    NURSE_ASSIGNMENT ||--o{ NURSE_ASSIGNMENT_CHANGE : "phan_cong_moi"
+    USERS ||--o{ NURSE_ASSIGNMENT_CHANGE : "chinh_sua"
+    DOCTOR_PROFILE ||--o{ DEPARTMENT_MEMBERSHIP_LOG : "lich_su_chuyen_khoa"
+    DEPARTMENT ||--o{ DEPARTMENT_MEMBERSHIP_LOG : "khoa_cu"
+    DEPARTMENT ||--o{ DEPARTMENT_MEMBERSHIP_LOG : "khoa_moi"
+    USERS |o--o{ DEPARTMENT_MEMBERSHIP_LOG : "nguoi_chuyen"
     </pre>
   </div>
 </body>

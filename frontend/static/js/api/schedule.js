@@ -52,3 +52,10 @@ export function listOwnNurseAssignments(params = {}, options = {}) {
   return apiRequest("/nurse/assignments", { ...options, method: "GET", params });
 }
 
+
+export function getNurseAssignment(id,options={}) {
+  return apiRequest(`/admin/nurse-assignments/${pathSegment(id)}`,{...options,method:"GET"});
+}
+export function updateNurseAssignment(id,data,options={}) {
+  return apiRequest(`/admin/nurse-assignments/${pathSegment(id)}`,{...options,method:"PATCH",data});
+}

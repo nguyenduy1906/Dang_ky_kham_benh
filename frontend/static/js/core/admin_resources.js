@@ -1,3 +1,4 @@
+import {thumbnailUrl} from "./articles.js";
 import { code, prefixes } from "./business_codes.js";
 import * as auth from "../api/auth.js";
 import * as patients from "../api/patient.js";
@@ -19,6 +20,8 @@ export const adminPages = {
   rooms:{title:"Quản lý phòng khám",description:"Quản lý phòng khám theo chuyên khoa."},
   users:{title:"Quản lý tài khoản",description:"Quản lý tài khoản, vai trò và trạng thái nhân viên."},
   articles:{title:"Quản lý tin tức",description:"Soạn thảo và quản lý các bài viết trên website."},
+  reviews:{title:"Đánh giá",description:"",placeholder:true},
+  notifications:{title:"Thông báo",description:"",placeholder:true},
   payments:{title:"Lịch sử thanh toán",description:"Lịch sử giao dịch toàn hệ thống, tối đa 20 bản ghi mỗi trang."},
   statistics:{title:"Báo cáo & thống kê",description:"Thống kê lượt khám, dòng tiền và đánh giá trong khoảng thời gian đã chọn."},
   audit:{title:"Nhật ký hoạt động",description:"Đối soát lượt khám và tra cứu lịch sử trạng thái, điều phối, thanh toán, bệnh án."},
@@ -32,8 +35,11 @@ const id=(name,title)=>f(name,title,"text",{businessId:true,required:true});
 export const resources = {
   users:{id:"user_id",list:auth.listUsers,get:async(id,opt)=>(await auth.getUser(id,opt)).user,create:auth.createUser,update:auth.updateUser,add:"Tạo tài khoản",columns:["Mã","Người dùng","Liên hệ","Vai trò","Trạng thái","Phê duyệt"],
     cells:r=>[esc(code("TK", r.user_id)),esc(r.full_name),esc([r.email,r.phone].filter(Boolean).join(" · ")),badge(r.role_name),badge(r.account_status),badge(r.approval_status)],
-    filters:[f("q","Tên / email / điện thoại","search"),f("role","Vai trò","select",{reference:"roles"}),choice("account_status","Trạng thái",["ACTIVE","LOCKED"]),choice("approval_status","Phê duyệt",["PENDING","APPROVED","REJECTED"]),f("include_deleted","Bao gồm tài khoản đã xóa","checkbox")],
-    fields:[f("full_name","Họ và tên","text",{required:true,max:150}),f("email","Email","email",{max:254,omitEmpty:true}),f("phone","Điện thoại","tel",{max:20,omitEmpty:true}),f("password","Mật khẩu ban đầu","password",{required:true,minLength:12,max:128,createOnly:true}),f("role","Vai trò","select",{reference:"roles",required:true}),{...choice("approval_status","Phê duyệt",["APPROVED","PENDING","REJECTED"]),default:"APPROVED"}],
+    filters:[f("q","Tên / email / điện thoại","search"),f("role","Vai trò","select",{reference:"roles"}),choice("account_status","Trạng thái",["ACTIVE","LOCKED"]),choice("approval_status","Phê duyệt",["PENDING","APPROVED","REJECTED"])],
+    fields:[f("full_name","Họ và tên","text",{required:true,max:150}),f("email","Email","email",{max:254,omitEmpty:true}),f("phone","Điện thoại","tel",{max:20,omitEmpty:true}),f("password","Mật khẩu ban đầu","password",{required:true,minLength:12,max:128,createOnly:true}),f("role","Vai trò","select",{reference:"roles",required:true}),{...choice("approval_status","Phê duyệt",["APPROVED","PENDING","REJECTED"]),default:"APPROVED",createOnly:true},{...choice("account_status","Trạng thái tài khoản",[["ACTIVE","Hoạt động"],["LOCKED","Đã khóa"]]),editOnly:true,required:true},
+      f("dob","Ngày sinh","date",{editOnly:true}),{...choice("gender","Giới tính",["Nam","Nữ","Khác"]),editOnly:true},
+      f("id_card","CCCD","text",{editOnly:true,max:12,pattern:"[0-9]{12}"}),f("address","Địa chỉ","text",{editOnly:true,max:255}),
+      f("emergency_contact_name","Người liên hệ khẩn cấp","text",{editOnly:true,max:150}),f("emergency_contact_phone","Số điện thoại khẩn cấp","tel",{editOnly:true,max:30})],
   },
   patients:{id:"patient_id",list:patients.listPatients,get:async(id,opt)=>(await patients.getPatient(id,opt)).patient,create:patients.createPatient,update:patients.updatePatient,add:"Thêm bệnh nhân",columns:["Mã BN","Họ và tên","Ngày sinh","Điện thoại","CCCD","Trạng thái"],
     cells:r=>[esc(code("BN", r.patient_id)),esc(r.full_name),date(r.dob),esc(r.phone),esc(r.id_card || "—"),esc(r.is_archived?"Đã lưu trữ":"Đang sử dụng")],
@@ -42,7 +48,7 @@ export const resources = {
   },
   doctors:{id:"doctor_profile_id",list:doctors.listDoctors,get:async(id,opt)=>(await doctors.getDoctor(id,opt)).doctor,create:doctors.createDoctor,update:doctors.updateDoctor,add:"Thêm hồ sơ bác sĩ",params:{include_inactive:true},columns:["Mã BS","Bác sĩ","Chuyên khoa","Học vị","Kinh nghiệm","Phí khám","Trạng thái"],
     cells:r=>[esc(code("BS", r.doctor_profile_id)),esc(r.full_name),esc(r.department_name),esc(r.academic_degree || "—"),esc(r.experience_years==null?"—":`${r.experience_years} năm`),money(r.consultation_fee),badge(r.is_active?"ACTIVE":"LOCKED")],
-    filters:[f("q","Tên bác sĩ","search"),dept],fields:[f("user_id","Tài khoản bác sĩ","select",{reference:"doctorUsers",required:true,number:true,createOnly:true}),dept,f("academic_degree","Học vị","text",{max:100}),f("specialization","Chuyên môn","text",{max:200}),f("experience_years","Số năm kinh nghiệm","number",{min:0,maxNumber:80,default:0}),f("consultation_fee","Phí khám (đồng)","number",{min:0,default:0,required:true}),f("introduction","Giới thiệu","textarea",{max:5000}),active],
+    filters:[f("q","Tên bác sĩ","search"),dept],fields:[f("user_id","Tài khoản bác sĩ","select",{reference:"doctorUsers",required:true,number:true,createOnly:true}),dept,f("academic_degree","Học vị","text",{max:100}),f("specialization","Chuyên môn","text",{max:200}),f("experience_years","Số năm kinh nghiệm","number",{min:0,maxNumber:80,default:0}),f("consultation_fee","Phí khám (đồng)","number",{min:0,default:0,required:true}),f("introduction","Giới thiệu","textarea",{max:5000}),{...active,createOnly:true}],
   },
   departments:{id:"department_id",list:catalog.listDepartments,get:async(id,opt)=>(await catalog.getDepartment(id,opt)).department,create:catalog.createDepartment,update:catalog.updateDepartment,add:"Thêm chuyên khoa",params:{include_inactive:true},local:true,columns:["Mã","Chuyên khoa","Khối","Số bác sĩ","Trưởng khoa","Trạng thái"],
     cells:r=>[esc(code("CK", r.department_id)),esc(r.name),esc(label(r.group_type)),esc(r.doctor_count ?? "—"),esc(r.leadership?.head?.full_name || "Chưa phân công"),badge(r.is_active?"ACTIVE":"LOCKED")],
@@ -56,9 +62,9 @@ export const resources = {
     filters:[f("doctor_profile_id","Bác sĩ","select",{reference:"doctors"}),dept,f("room_id","Phòng","select",{reference:"rooms"}),f("from_date","Từ ngày","date"),f("to_date","Đến ngày","date"),choice("status","Trạng thái",["OPEN","FULL","CLOSED","UNAVAILABLE"])],
     fields:[f("doctor_profile_id","Bác sĩ","select",{reference:"doctors",number:true,required:true,createOnly:true}),f("room_id","Phòng khám","select",{reference:"rooms",number:true,required:true,lockedWhenBooked:true}),f("work_date","Ngày làm việc","date",{required:true,lockedWhenBooked:true}),f("start_time","Giờ bắt đầu","time",{required:true,lockedWhenBooked:true}),f("end_time","Giờ kết thúc","time",{required:true,lockedWhenBooked:true}),f("slot_minutes","Thời lượng khung giờ","select",{choices:[[15,"15 phút"],[30,"30 phút"]],number:true,required:true,lockedWhenBooked:true}),f("max_quota","Sức chứa","number",{min:1,maxNumber:1000,required:true}),f("schedule_status","Trạng thái ca","select",{choices:["OPEN","CLOSED"],editOnly:true,omitEmpty:true})],
   },
-  assignments:{id:"assignment_id",list:schedules.listNurseAssignments,create:schedules.createNurseAssignment,add:"Phân công y tá",columns:["Mã","Y tá","Mã ca","Phòng","Ngày","Thời gian","Trạng thái"],
-    cells:r=>[esc(code("PC", r.assignment_id)),esc(r.nurse_name),esc(code("CA", r.schedule_id)),esc(r.room_name),date(r.work_date),esc(`${r.start_time?.slice(0,5)} – ${r.end_time?.slice(0,5)}`),esc(r.revoked_at?"Đã thu hồi":"Đang phân công")],
-    filters:[f("nurse_id","Y tá","select",{reference:"nurses"}),f("schedule_id","Mã ca","text",{businessId:true}),f("include_revoked","Bao gồm phân công đã thu hồi","checkbox")],
+  assignments:{id:"assignment_id",params:{include_revoked:true},list:schedules.listNurseAssignments,get:async(id,opt)=>(await schedules.getNurseAssignment(id,opt)).assignment,create:schedules.createNurseAssignment,add:"Phân công y tá",columns:["Mã","Y tá","Mã ca","Phòng","Ngày","Thời gian","Trạng thái"],
+    cells:r=>[esc(code("PC", r.assignment_id)),esc(r.nurse_name),esc(code("CA", r.schedule_id)),esc(r.room_name),date(r.work_date),esc(`${r.start_time?.slice(0,5)} – ${r.end_time?.slice(0,5)}`),`<span class="badge ${r.revoked_at?"assignment-revoked":"green"}">${r.revoked_at?"Thu hồi":"Đang phân công"}</span>`],
+    filters:[f("nurse_id","Y tá","select",{reference:"nurses"}),f("schedule_id","Mã ca","text",{businessId:true})],
     fields:[f("nurse_id","Y tá","select",{reference:"nurses",required:true,number:true}),f("schedule_id","Ca làm việc","select",{reference:"schedules",required:true,number:true}),f("note","Ghi chú","textarea",{max:1000})],
   },
   articles:{id:"article_id",list:articles.listAdminArticles,get:async(id,opt)=>(await articles.listAdminArticles({article_id:id,page_size:1},opt)).items[0],create:articles.createArticle,update:articles.updateArticle,add:"Viết bài mới",columns:["Mã bài","Tiêu đề","Danh mục","Tác giả","Ngày đăng","Trạng thái"],
@@ -71,7 +77,11 @@ export const resources = {
     filters:[id("patient_id","Mã bệnh nhân"),id("schedule_id","Mã ca"),f("doctor_profile_id","Bác sĩ","select",{reference:"doctors"}),f("work_date","Ngày khám","date"),choice("encounter_type","Hình thức",["ONLINE","WALK_IN"]),choice("encounter_status","Trạng thái",["HOLDING","CONFIRMED","CHECKED_IN","IN_PROGRESS","COMPLETED","CANCELLED","NO_SHOW","EXPIRED"])],
   },
 };
-export function collectionItemMarkup(name, row={}) {
+export function collectionItemMarkup(name, row={},imagePicker=true) {
+  if(name==="gallery"&&imagePicker) {
+    const src=thumbnailUrl(row.url);
+    return `<div class="admin-collection-item admin-gallery-item" data-item><label class="admin-gallery-caption">Chú thích<textarea data-field="caption" maxlength="500" rows="4">${esc(row.caption||"")}</textarea></label><div class="admin-gallery-image"><input type="hidden" data-field="url" value="${esc(row.url||"")}"><input type="file" data-gallery-image accept="image/jpeg,image/png,image/webp" hidden><button type="button" data-action="choose-gallery-image">Chọn ảnh</button><img alt="Ảnh thư viện chuyên khoa" ${src?`src="${esc(src)}"`:"hidden"}><p role="status" class="admin-gallery-feedback"></p></div><button type="button" class="secondary" data-action="collection-remove">Bỏ mục</button></div>`;
+  }
   const fields=name==="gallery"?[["url","Đường dẫn ảnh",2000],["caption","Chú thích",500]]:[["title","Tiêu đề mục",200],["content","Nội dung",12000]];
   return `<div class="admin-collection-item" data-item>${fields.map(([key,title,max])=>`<label>${title}${key==="content"?`<textarea data-field="${key}" maxlength="${max}" rows="3" required>${esc(row[key] || "")}</textarea>`:`<input type="text" data-field="${key}" maxlength="${max}" value="${esc(row[key] || "")}" ${key!=="caption"?"required":""}>`}</label>`).join("")}<button type="button" class="secondary" data-action="collection-remove">Bỏ mục</button></div>`;
 }
@@ -79,7 +89,7 @@ export function fieldMarkup(field, row={}, references={}, edit=false, filter=fal
   const value=row[field.name] ?? field.default ?? "";
   if(field.type==="json") {
     const items=Array.isArray(value)?value:[];
-    return `<fieldset class="admin-collection" data-collection="${field.name}"><legend>${esc(field.title)}</legend><div data-collection-items>${items.map(item=>collectionItemMarkup(field.name,item)).join("")}</div><button type="button" class="secondary" data-action="collection-add" data-name="${field.name}">Thêm mục</button></fieldset>`;
+    return `<fieldset class="admin-collection" data-collection="${field.name}"><legend>${esc(field.title)}</legend><div data-collection-items>${items.map(item=>collectionItemMarkup(field.name,item,edit)).join("")}</div><button type="button" class="secondary" data-action="collection-add" data-name="${field.name}">Thêm mục</button></fieldset>`;
   }
   const locked=edit&&(field.readOnEdit || field.lockedWhenBooked&&Number(row.booked_count)>0);
   const attrs=`name="${esc(field.name)}" ${!filter&&field.required?"required":""} ${locked?"disabled":""} ${field.max?`maxlength="${field.max}"`:""} ${field.minLength?`minlength="${field.minLength}"`:""} ${field.pattern?`pattern="${field.pattern}"`:""} ${field.type==="number"?`step="1" ${field.min!=null?`min="${field.name==="max_quota"?Math.max(field.min,Number(row.booked_count)||0):field.min}"`:""} ${field.maxNumber!=null?`max="${field.maxNumber}"`:""}`:""}`;
@@ -94,6 +104,9 @@ export function fieldMarkup(field, row={}, references={}, edit=false, filter=fal
   } else {
     const text=field.type==="datetime-local"&&value?new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}).format(new Date(value)).replace(" ","T"):field.type==="time"?String(value).slice(0,5):value;
     input=`<input type="${field.type}" ${attrs} value="${esc(text)}" ${field.businessId?`placeholder="${prefixes[field.name]}_001"`:""} ${field.name==="dob"?`max="${new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())}"`:""}>`;
+  }
+  if(field.clearable&&!locked&&!["select","checkbox"].includes(field.type)) {
+    input=`<span class="admin-clearable-input">${input}<button type="button" class="admin-input-clear" data-action="clear-input" aria-label="Xóa nội dung ${esc(field.title)}" title="Xóa nội dung">×</button></span>`;
   }
   return `<label class="${field.type==="checkbox"?"admin-checkbox":""}">${field.type==="checkbox"?input:""}<span>${esc(field.title)}${!filter&&field.required?" *":""}</span>${field.type!=="checkbox"?input:""}</label>`;
 }

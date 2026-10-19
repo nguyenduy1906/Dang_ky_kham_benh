@@ -22,9 +22,9 @@ def intervals(schedule):
 
 
 def available_slots(db, schedule):
-    rows = encounter_model.occupied_slot_starts(db, schedule['schedule_id'], list(OCCUPIED))
-    occupied = {row['estimated_exam_at'] for row in rows}
-    return [(start, end) for start, end in intervals(schedule) if start not in occupied]
+    occupied=encounter_model.occupied_intervals(db,schedule['schedule_id'],list(OCCUPIED))
+    return [(start,end) for start,end in intervals(schedule)
+            if not any(start<row['appointment_end_at'] and end>row['estimated_exam_at'] for row in occupied)]
 
 
 def reserve_interval(db, schedule, appointment_time=None, *, now=None):
@@ -39,3 +39,21 @@ def reserve_interval(db, schedule, appointment_time=None, *, now=None):
         if (start, end) in available and (now is None or start >= now):
             return start, end
     raise conflict('Khung giờ đã được giữ hoặc không còn khung giờ phù hợp', 'SLOT_UNAVAILABLE')
+
+
+def reserve_walk_in_interval(db,schedule,now):
+    start,end=schedule_bounds(schedule)
+    if now<start:return reserve_interval(db,schedule,now=now)
+    duration=timedelta(minutes=schedule['slot_minutes'])
+    candidate=max(start,now)
+    occupied=encounter_model.occupied_intervals(db,schedule['schedule_id'],['HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS'])
+    # Historical completed visits keep their appointment timestamps and ticket codes.
+    historical={row['estimated_exam_at'] for row in encounter_model.occupied_slot_starts(db,schedule['schedule_id'],['COMPLETED'])}
+    for row in occupied:
+        if row['appointment_end_at']<=candidate:continue
+        while candidate in historical:candidate+=timedelta(microseconds=1)
+        if candidate+duration<=row['estimated_exam_at']:break
+        candidate=max(candidate,row['appointment_end_at'])
+    while candidate in historical:candidate+=timedelta(microseconds=1)
+    if candidate+duration>end:raise conflict('Không còn đủ thời gian cho một lượt khám trong ca','SLOT_UNAVAILABLE')
+    return candidate,candidate+duration

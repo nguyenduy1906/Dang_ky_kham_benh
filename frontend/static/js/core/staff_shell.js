@@ -1,5 +1,6 @@
 import { initializeSidebarCollapse } from "./sidebar_collapse.js";
-import { adminSections } from "../data/admin_navigation.js";
+import { adminSections, adminPageHref } from "../data/admin_navigation.js";
+import { staffTopbar } from "./staff_topbar.js";
 
 // A local illustration for nurses; it does not represent a stored profile photo.
 export const nursePortraitUrl = new URL("../../assets/nurses/dieu_duong_01.jpg", import.meta.url).href;
@@ -29,7 +30,7 @@ export const staffRoles = Object.freeze({
     ["coordination", "Chọn phòng / ca", "coordination.html", "calendar"],
   ] },
   admin: { label: "Quản trị viên", initials: "QT", description: "Không gian quản trị bệnh viện", pages:
-    adminSections.flatMap(([, items]) => items.map(([key, label]) => [key, label, `${key}.html`,
+    adminSections.flatMap(([, items]) => items.map(([key, label]) => [key, label, adminPageHref(key),
       ({ home: "overview", encounters: "record", patients: "people", schedule: "calendar", assignments: "calendar", doctors: "badge", users: "people", audit: "history" })[key] || "record"])),
   },
 });
@@ -68,20 +69,22 @@ export function mountStaffWorkspace() {
   const current = document.body.dataset.page;
   const profileLink = `<a href="${profileUrl.href}"${current === "profile" ? ' aria-current="page"' : ""}>${icon("profile")}<span>Hồ sơ cá nhân</span></a>`;
   const signout = `<button id="staff-signout" type="button" class="secondary">${icon("logout")}<span>Đăng xuất</span></button>`;
-  const navigation = (configuration?.pages || []).map(([key, label, file, symbol]) => {
+  const navigationLink = ([key, label, file, symbol]) => {
     const url = new URL(`(${role})/${file}`, templates).href;
     return `<a href="${url}"${key === current ? ' aria-current="page"' : ""}>${icon(symbol)}<span>${label}</span></a>`;
-  }).join("");
+  };
+  const navigation = role === "admin"
+    ? adminSections.map(([title, items]) => `<p class="staff-nav-label">${title}</p>${items.map(([key]) => navigationLink(configuration.pages.find(([id]) => id === key))).join("")}`).join("")
+    : (configuration?.pages || []).map(navigationLink).join("");
   sidebar.innerHTML = `
     <a class="staff-brand" href="${workspaceHome}"><img src="${new URL("../../assets/bieu_trung_neu.png", import.meta.url).href}" width="44" height="44" alt="Logo NEU Medical"><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></a>
-    <p class="staff-nav-label">KHÔNG GIAN LÀM VIỆC</p>
+    ${role === "admin" ? "" : '<p class="staff-nav-label">KHÔNG GIAN LÀM VIỆC</p>'}
     <nav aria-label="Điều hướng ${configuration?.label.toLocaleLowerCase("vi") || "nhân viên"}">${navigation}
-      ${profileLink}
+      ${role === "admin" ? "" : profileLink}
     </nav>
     <div class="staff-sidebar-bottom"><p>${configuration?.description || "Thông tin cá nhân dành cho nhân viên bệnh viện"}</p>${signout}</div>`;
   const activeTitle = document.body.dataset.pageTitle || (current === "profile" ? "Hồ sơ cá nhân" : configuration?.pages.find(([key]) => key === current)?.[1] || "Không gian nhân viên");
-  const account = `<a class="staff-account" href="${profileUrl.href}" aria-label="Hồ sơ cá nhân"><span id="staff-account-name">${configuration?.label || "Nhân viên"}</span><span class="staff-initials" aria-hidden="true">${role === "nurse" ? `<img src="${nursePortraitUrl}" width="40" height="40" alt="">` : configuration?.initials || "NV"}</span></a>`;
-  topbar.innerHTML = `<div class="staff-topbar-left"><button class="staff-menu-toggle" type="button" id="staff-menu-toggle" aria-label="Mở điều hướng" aria-controls="staff-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><h1 class="staff-page-title">${activeTitle.replace(/[&<>"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[character])}</h1></div><div class="staff-topbar-right">${account}</div>`;
+  topbar.innerHTML = staffTopbar({ title: activeTitle, profileHref: profileUrl.href, name: configuration?.label || "Nhân viên", initials: configuration?.initials || "NV", portrait: role === "nurse" ? nursePortraitUrl : "" });
   const toggle = document.querySelector("#staff-menu-toggle");
   initializeSidebarCollapse(role || "staff");
   const backdrop = document.createElement("button");

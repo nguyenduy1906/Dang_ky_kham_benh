@@ -108,3 +108,19 @@ def validate_room_update(data):
     if not fields:
         raise bad_request('Không có trường nào để cập nhật')
     return fields
+
+
+def validate_member(data):
+    data=ensure_object(data)
+    if set(data)-{'doctor_profile_id','position','expected_version','expected_source_department_id'}:
+        raise bad_request('Thành viên chứa trường không được phép')
+    if data.get('position') not in ('HEAD','DEPUTY','DOCTOR'):raise bad_request('Chức vụ không hợp lệ')
+    return {'doctor_profile_id':int_field(data,'doctor_profile_id',required=True,minimum=1),
+            'position':data['position'],'expected_version':int_field(data,'expected_version',required=True,minimum=1),
+            'expected_source_department_id':int_field(data,'expected_source_department_id',required=True,minimum=1)}
+
+
+def validate_member_revoke(data):
+    data=ensure_object(data)
+    if set(data)-{'expected_version'}:raise bad_request('Chỉ chấp nhận expected_version')
+    return int_field(data,'expected_version',required=True,minimum=1)

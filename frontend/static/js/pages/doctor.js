@@ -1,5 +1,5 @@
 import { code, parseCode } from "../core/business_codes.js";
-import { initOverviewPeriod, overviewRows, overviewDayParams } from "../core/staff_overview.js";
+import { initTodayOverview, overviewRows, overviewDayParams } from "../core/staff_overview.js";
 import { staffReady } from "../core/staff_workspace.js";
 import * as schedules from "../api/schedule.js";
 import * as encounters from "../api/encounter.js";
@@ -18,7 +18,7 @@ if (user) {
 }
 
 async function overview() {
-  await initOverviewPeriod(async (range, options) => {
+  await initTodayOverview(async (range, options) => {
     const params = overviewDayParams(range);
     const rangeLabel = `${date(range.from)}${range.to !== range.from ? ` – ${date(range.to)}` : ""}`;
     const [all, shifts, upcoming] = await Promise.all([

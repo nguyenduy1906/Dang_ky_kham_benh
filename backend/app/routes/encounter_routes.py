@@ -117,9 +117,9 @@ def update_registration(encounter_id):
 
 @encounter_bp.post('/staff/encounters/walk-in')
 @login_required
-@swag_from({'tags': ['Reception'], 'summary': 'Tiếp nhận walk-in; tự chọn ca còn chỗ, cấp số ngay',
+@swag_from({'tags': ['Reception'], 'summary': 'Tiếp nhận walk-in; chọn ca tự động hoặc chỉ định, mở thêm chỗ khi ca đã khám hết và còn đủ giờ',
             'security': _SECURITY, 'parameters': [_body({'patient_id': {'type': 'integer'},
-                'doctor_profile_id': {'type': 'integer'}, 'symptoms': {'type': 'string'}}, ('patient_id', 'doctor_profile_id'))],
+                'doctor_profile_id': {'type': 'integer'}, 'schedule_id': {'type':'integer','description':'Tùy chọn; bỏ qua để hệ thống tự chọn ca'}, 'symptoms': {'type': 'string'}}, ('patient_id', 'doctor_profile_id'))],
             'responses': {**_ACTION_RESPONSES, 201: {'description': 'CHECKED_IN, phiếu khung giờ đã phát'}}})
 def walk_in():
     return jsonify(encounter_service.create_walk_in(current_user(), encounter_schema.validate_walk_in(request.get_json(silent=True)))), 201
@@ -156,8 +156,8 @@ def transfer_options(encounter_id):
 @login_required
 @swag_from({'tags': ['Reception'], 'summary': 'Chuyển bác sĩ cùng khoa, giữ nguyên giá/cọc đã chốt',
             'security': _SECURITY, 'parameters': [_ID, _body({'schedule_id': {'type': 'integer'},
-                'appointment_time': {'type': 'string', 'example': '08:30'},
-                'reason': {'type': 'string'}}, ('schedule_id', 'appointment_time', 'reason'))], 'responses': _ACTION_RESPONSES})
+                'appointment_time': {'type': 'string', 'example': '08:30','description':'HH:MM hoặc AUTO; bỏ qua để tự chọn thời gian tiếp nhận'},
+                'reason': {'type': 'string'}}, ('schedule_id', 'reason'))], 'responses': _ACTION_RESPONSES})
 def transfer(encounter_id):
     return jsonify(encounter_service.transfer(current_user(), encounter_id, encounter_schema.validate_transfer(request.get_json(silent=True))))
 

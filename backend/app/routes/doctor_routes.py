@@ -118,7 +118,7 @@ def update_doctor(doctor_profile_id):
         description: Đã cập nhật
     """
     fields = doctor_schema.validate_admin_update(request.get_json(silent=True))
-    return jsonify(doctor_service.update_doctor(doctor_profile_id, fields))
+    return jsonify(doctor_service.update_doctor(doctor_profile_id, fields, current_user()))
 
 
 @doctor_bp.get('/doctor/profile')

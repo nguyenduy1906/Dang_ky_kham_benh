@@ -19,6 +19,31 @@ export function overviewRange(period, referenceDate, from = referenceDate, to = 
   return { from: referenceDate, to: referenceDate };
 }
 
+// Staff dashboards show today's existing data without a shared time filter.
+export async function initTodayOverview(render) {
+  const content=document.querySelector("#page-body"), feedback=document.querySelector("#page-status");
+  const request=new AbortController();
+  let active=true;
+  const stop=()=>{active=false;request.abort();};
+  window.addEventListener("pagehide",stop,{once:true});
+  window.addEventListener("neu:auth-change",stop,{once:true});
+  content.setAttribute("aria-busy","true");
+  if(feedback){feedback.hidden=false;feedback.textContent="Đang tải…";}
+  try {
+    const day=today();
+    const html=await render({from:day,to:day},{signal:request.signal,period:"today"});
+    if(!active)return;
+    content.innerHTML=html;
+    if(feedback){feedback.hidden=true;feedback.textContent="";}
+  } catch(error) {
+    if(!active)return;
+    if(error.status===401){content.innerHTML="";clearSession();}
+    if(feedback){feedback.hidden=false;feedback.textContent=error.message||"Không tải được dữ liệu tổng quan. Vui lòng tải lại trang.";}
+  } finally {
+    if(active)content.setAttribute("aria-busy","false");
+  }
+}
+
 // Keep existing content mounted while loading and discard stale responses.
 export async function initOverviewPeriod(render, { storageKey = null } = {}) {
   document.querySelector("#overview-period-control").innerHTML = `<form id="overview-filter" class="overview-period-filter">

@@ -138,3 +138,20 @@ def list_logs(db, encounter_id, kind, page, page_size):
     rows = db.execute(f'SELECT * FROM {table} WHERE encounter_id=%s ORDER BY log_id '
                       'LIMIT %s OFFSET %s', (encounter_id, page_size, (page - 1) * page_size)).fetchall()
     return rows, total
+
+
+def next_checked_in(db,schedule_id):
+    return db.execute("SELECT encounter_id FROM encounter WHERE schedule_id=%s AND encounter_status='CHECKED_IN' ORDER BY estimated_exam_at,checked_in_at,encounter_id LIMIT 1",(schedule_id,)).fetchone()
+
+
+def clinical_in_progress(db,doctor_id,room_id):
+    return db.execute("SELECT encounter_id FROM encounter WHERE (doctor_profile_id=%s OR room_id=%s) AND encounter_status='IN_PROGRESS' LIMIT 1",(doctor_id,room_id)).fetchone()
+
+
+def occupied_intervals(db,schedule_id,statuses):
+    return db.execute('SELECT estimated_exam_at,appointment_end_at FROM encounter WHERE schedule_id=%s AND encounter_status=ANY(%s) ORDER BY estimated_exam_at,encounter_id',(schedule_id,statuses)).fetchall()
+
+
+def finished_schedule(db,schedule_id):
+    row=db.execute("SELECT count(*) FILTER(WHERE encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS')) AS active, count(*) FILTER(WHERE encounter_status='COMPLETED') AS completed FROM encounter WHERE schedule_id=%s",(schedule_id,)).fetchone()
+    return row['active']==0 and row['completed']>0

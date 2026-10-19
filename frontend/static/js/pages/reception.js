@@ -1,5 +1,5 @@
 import { code, parseCode } from "../core/business_codes.js";
-import { initOverviewPeriod, overviewRows, overviewDayParams } from "../core/staff_overview.js";
+import { initTodayOverview, overviewRows, overviewDayParams } from "../core/staff_overview.js";
 import { staffReady } from "../core/staff_workspace.js";
 import * as patients from "../api/patient.js";
 import * as doctors from "../api/doctor.js";
@@ -20,7 +20,7 @@ if (user) {
   if (page === "coordination") await run(coordinationPage);
 }
 async function overview() {
-  await initOverviewPeriod(async (range, options) => {
+  await initTodayOverview(async (range, options) => {
     const params = overviewDayParams(range);
     const rangeLabel = `${date(range.from)}${range.to !== range.from ? ` – ${date(range.to)}` : ""}`;
     const [all, list] = await Promise.all([

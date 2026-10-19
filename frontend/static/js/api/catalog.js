@@ -49,3 +49,13 @@ export function updateRoom(roomId, data, options = {}) {
   return apiRequest(`/admin/rooms/${pathSegment(roomId)}`, { ...options, method: "PATCH", data });
 }
 
+
+export function getDepartmentMembers(id,options={}) {
+  return apiRequest(`/admin/departments/${pathSegment(id)}/members`,{...options,method:"GET"});
+}
+export function addDepartmentMember(id,data,options={}) {
+  return apiRequest(`/admin/departments/${pathSegment(id)}/members`,{...options,method:"POST",data});
+}
+export function revokeDepartmentMemberRole(id,doctorId,data,options={}) {
+  return apiRequest(`/admin/departments/${pathSegment(id)}/members/${pathSegment(doctorId)}/revoke-role`,{...options,method:"POST",data});
+}

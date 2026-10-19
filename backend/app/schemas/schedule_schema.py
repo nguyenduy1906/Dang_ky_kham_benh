@@ -89,3 +89,23 @@ def validate_slot_minutes(value):
     if type(value) is not int or value not in (15, 30):
         raise bad_request('slot_minutes phải là 15 hoặc 30')
     return value
+
+
+def validate_move(data):
+    data = ensure_object(data)
+    if set(data) - {'target_schedule_id','reason'}:
+        raise bad_request('Chỉ chấp nhận target_schedule_id và reason')
+    return {'target_schedule_id':int_field(data,'target_schedule_id',required=True,minimum=1),
+            'reason':text_field(data,'reason',required=True,max_len=500)}
+
+
+def validate_assignment_update(data):
+    data = ensure_object(data)
+    if set(data)-{'nurse_id','schedule_id','note','assignment_status','expected_version'}:
+        raise bad_request('Phân công chứa trường không được phép cập nhật')
+    fields=validate_assignment_create({k:data[k] for k in ('nurse_id','schedule_id','note') if k in data})
+    if data.get('assignment_status') not in ('ACTIVE','REVOKED'):
+        raise bad_request('assignment_status phải là ACTIVE hoặc REVOKED')
+    version=text_field(data,'expected_version',required=True,max_len=64)
+    if len(version)!=64:raise bad_request('expected_version không hợp lệ')
+    return {**fields,'assignment_status':data['assignment_status'],'expected_version':version}

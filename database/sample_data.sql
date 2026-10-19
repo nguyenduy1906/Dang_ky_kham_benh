@@ -1,4 +1,4 @@
--- Dữ liệu giả lập cho schema 23 bảng. File này xóa toàn bộ dữ liệu cũ.
+-- Dữ liệu giả lập cho schema 26 bảng. File này xóa toàn bộ dữ liệu cũ.
 BEGIN;
 -- Chặn dữ liệu bị mất dấu khi truyền qua shell trước khi xóa dữ liệu cũ.
 -- Nạp file UTF-8; có thể sao chép file vào container rồi dùng psql -f.
@@ -36,6 +36,9 @@ BEGIN
       WHERE table_schema=current_schema() AND table_name='patient' AND column_name='emergency_contact_phone') THEN
       RAISE EXCEPTION 'Schema cu: tao lai database tu init_db.sql truoc khi nap mau ho so ca nhan';
     END IF;
+    IF to_regclass('schedule_move') IS NULL OR to_regclass('nurse_assignment_change') IS NULL OR to_regclass('department_membership_log') IS NULL THEN
+      RAISE EXCEPTION 'Schema cu: tao lai tu init_db.sql truoc khi nap du lieu';
+    END IF;
     IF missing_columns IS NOT NULL THEN
       RAISE EXCEPTION 'Schema cu, chua nap du lieu: %. Tao lai cau truc tu database/init_db.sql truoc.',missing_columns;
     END IF;
@@ -44,6 +47,9 @@ $schema_check$;
 
 -- Xóa dữ liệu cũ để có thể chạy lại file seed nhiều lần.
 TRUNCATE TABLE
+    department_membership_log,
+    nurse_assignment_change,
+    schedule_move,
     staff_leave_request,
     department_leadership,
     patient_delegate,

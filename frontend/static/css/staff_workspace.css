@@ -205,6 +205,8 @@
 .staff-page .form-feedback { min-height: 24px; margin-top: 12px; }
 .staff-page .staff-avatar-image { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; }
 .staff-page .staff-initials img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 25%; border-radius: inherit; }
+.staff-page .staff-topbar .staff-initials,
+.staff-page .staff-topbar .staff-initials img { border-radius: 50% !important; }
 .staff-page .staff-toolbar { display: flex; align-items: end; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
 .staff-page .staff-toolbar label { flex: 1 1 150px; }
 .staff-page .staff-record-text { white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -373,8 +375,8 @@ input[list] { border-radius: 5px !important; }
 }
 
 /* Page title and profile shortcut shared by doctor, nurse and reception. */
-.staff-page:not(.admin-page) .staff-topbar-left { flex: 1; }
-.staff-page:not(.admin-page) .staff-topbar-right { flex-shrink: 0; }
+.staff-page .staff-topbar-left { flex: 1; }
+.staff-page .staff-topbar-right { flex-shrink: 0; }
 .staff-page .staff-page-title { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 24px; font-weight: 600; line-height: 1.3; }
 .staff-account #staff-account-name { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 680px) {

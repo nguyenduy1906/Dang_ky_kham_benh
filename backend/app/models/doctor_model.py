@@ -51,7 +51,7 @@ def get_for_reception(db, doctor_profile_id):
 
 
 def lock_leadership_identity(db, doctor_profile_id):
-    return db.execute('SELECT r.role_name FROM doctor_profile d JOIN users u USING(user_id) JOIN role r USING(role_id) WHERE doctor_profile_id=%s FOR UPDATE OF d',(doctor_profile_id,)).fetchone()
+    return db.execute('SELECT r.role_name FROM doctor_profile d JOIN users u USING(user_id) JOIN role r USING(role_id) WHERE doctor_profile_id=%s FOR UPDATE OF d,u',(doctor_profile_id,)).fetchone()
 
 
 def create_profile(db, fields):

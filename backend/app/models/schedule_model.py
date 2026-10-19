@@ -2,6 +2,7 @@ from backend.app.utils.database_helpers import update_row
 
 _SELECT = '''SELECT s.schedule_id, s.doctor_profile_id, s.room_id, s.work_date, s.start_time, s.end_time,
  s.slot_minutes, s.max_quota, s.booked_count, (s.max_quota - s.booked_count) AS remaining, s.schedule_status,
+ (SELECT row_to_json(m) FROM schedule_move m WHERE m.source_schedule_id=s.schedule_id) AS move,
  s.unavailable_reason, s.created_at, s.updated_at, u.full_name AS doctor_name,
  r.room_name, r.department_id, dep.name AS department_name
  FROM work_schedule s JOIN doctor_profile d ON d.doctor_profile_id = s.doctor_profile_id
@@ -100,7 +101,7 @@ def set_booking_count(db, schedule_id, booked, status):
 
 def walk_in_candidates(db, doctor_profile_id, local):
     return db.execute("SELECT schedule_id FROM work_schedule WHERE doctor_profile_id=%s "
-                                "AND schedule_status='OPEN' AND booked_count<max_quota AND "
+                                "AND schedule_status IN ('OPEN','FULL') AND "
                                 "(work_date>%s OR (work_date=%s AND end_time>%s)) "
                                 'ORDER BY work_date,start_time,schedule_id',
                                 (doctor_profile_id, local.date(), local.date(), local.time().replace(tzinfo=None))).fetchall()
@@ -116,8 +117,8 @@ def transfer_options(db, encounter, local, page, page_size):
     base = ('''FROM work_schedule s JOIN doctor_profile d ON d.doctor_profile_id=s.doctor_profile_id
                JOIN users u ON u.user_id=d.user_id JOIN role role ON role.role_id=u.role_id
                JOIN room r ON r.room_id=s.room_id JOIN department dep ON dep.department_id=d.department_id
-               WHERE d.department_id=%s AND d.doctor_profile_id<>%s AND s.schedule_status='OPEN'
-               AND s.booked_count<s.max_quota AND d.is_active=1 AND r.is_active=1 AND dep.is_active=1
+               WHERE d.department_id=%s AND d.doctor_profile_id<>%s AND s.schedule_status IN ('OPEN','FULL')
+               AND (s.booked_count<s.max_quota OR (EXISTS(SELECT 1 FROM encounter done WHERE done.schedule_id=s.schedule_id AND done.encounter_status='COMPLETED') AND NOT EXISTS(SELECT 1 FROM encounter pending WHERE pending.schedule_id=s.schedule_id AND pending.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS')))) AND d.is_active=1 AND r.is_active=1 AND dep.is_active=1
                AND u.deleted_at IS NULL AND u.account_status='ACTIVE' AND u.approval_status='APPROVED'
                AND role.role_name='DOCTOR' AND (s.work_date>%s OR (s.work_date=%s AND s.end_time>%s))''')
     params = [encounter['department_id'], encounter['doctor_profile_id'], local.date(), local.date(), local.time().replace(tzinfo=None)]
@@ -210,3 +211,27 @@ def revoke_leave_assignments(db, actor_id, user_id, ids):
     return db.execute('''UPDATE nurse_assignment SET revoked_at=CURRENT_TIMESTAMP,revoked_by_id=%s
                     WHERE nurse_id=%s AND schedule_id=ANY(%s) AND revoked_at IS NULL RETURNING assignment_id''',
                     (actor_id, user_id, ids)).fetchall()
+
+
+def get_move(db, schedule_id):
+    return db.execute('SELECT * FROM schedule_move WHERE source_schedule_id=%s', (schedule_id,)).fetchone()
+
+
+def record_move(db, source_id, target_id, actor_id, reason):
+    db.execute('INSERT INTO schedule_move(source_schedule_id,target_schedule_id,moved_by_id,reason) '
+               'VALUES (%s,%s,%s,%s)', (source_id,target_id,actor_id,reason))
+    db.execute("UPDATE work_schedule SET schedule_status='CLOSED',updated_at=CURRENT_TIMESTAMP WHERE schedule_id=%s", (source_id,))
+
+
+def lock_assignment(db, assignment_id):
+    return db.execute('SELECT * FROM nurse_assignment WHERE assignment_id=%s FOR UPDATE',(assignment_id,)).fetchone()
+
+
+def update_assignment_note(db, assignment_id, note):
+    db.execute('UPDATE nurse_assignment SET note=%s WHERE assignment_id=%s',(note,assignment_id))
+
+
+def record_assignment_change(db, assignment_id, resulting_id, actor_id, before, after):
+    from psycopg.types.json import Jsonb
+    db.execute('INSERT INTO nurse_assignment_change(assignment_id,resulting_assignment_id,changed_by_id,before_data,after_data) VALUES (%s,%s,%s,%s,%s)',
+               (assignment_id,resulting_id,actor_id,Jsonb(before),Jsonb(after)))

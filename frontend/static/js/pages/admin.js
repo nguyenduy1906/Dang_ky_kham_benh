@@ -1,6 +1,7 @@
-import { adminSections as sections } from "../data/admin_navigation.js";
+import { adminSections as sections, adminPageHref } from "../data/admin_navigation.js";
 import { adminPages as pages, initAdminWorkspace } from "../core/admin_workspace.js";
 import { initializeSidebarCollapse } from "../core/sidebar_collapse.js";
+import { staffTopbar } from "../core/staff_topbar.js";
 
 import { requireAdmin } from "../core/admin_access.js";
 import { signOut, loginUrl, hasSession } from "../core/session.js";
@@ -24,16 +25,17 @@ const shapes = {
   history: '<path d="M3 11a9 9 0 1 1 2 7M3 3v8h8M12 6v6l4 2"/>',
   settings: '<path d="m12 2 3 3 4 1 1 4 2 2-2 3-1 4-4 1-3 2-3-2-4-1-1-4-2-3 2-2 1-4 4-1z"/><circle cx="12" cy="12" r="3"/>',
   menu: '<path d="M3 6h18M3 12h18M3 18h18"/>',
+  star: '<path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9z"/>',
   bell: '<path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5zM10 21h4"/>',
 };
 const icon = key => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${shapes[key] || shapes.record}</svg>`;
 const key = Object.hasOwn(pages, document.body.dataset.page) ? document.body.dataset.page : "home";
 const page = pages[key];
-const profileHref = "../components/profile.html?role=admin";
+const profileHref = adminPageHref("profile");
 const dialog = $("#admin-dialog");
 $("#dialog-close").addEventListener("click", () => dialog.close());
-$("#staff-sidebar").innerHTML = `<a class="staff-brand" href="home.html"><img src="../../static/assets/bieu_trung_neu.png" alt="Biểu trưng NEU"><span><strong>NEU Medical</strong><small>KHÔNG GIAN QUẢN TRỊ</small></span></a><nav aria-label="Điều hướng quản trị">${sections.map(([title, items]) => `<p class="staff-nav-label">${title}</p>${items.map(([id, label, symbol]) => `<a href="${id === "home" ? "home" : id}.html" ${key === id ? 'aria-current="page"' : ""}>${icon(symbol)}<span>${label}</span></a>`).join("")}`).join("")}<a href="${profileHref}">${icon("person")}<span>Hồ sơ cá nhân</span></a></nav><div class="staff-sidebar-bottom admin-logout"><button type="button" id="admin-signout" title="Đăng xuất"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 3H3v18h6M10 12h11M17 8l4 4-4 4"/></svg><span>Đăng xuất</span></button></div>`;
-$("#staff-topbar").innerHTML = `<div class="staff-topbar-left"><button type="button" class="staff-menu-toggle" aria-label="Mở menu quản trị" aria-expanded="false" aria-controls="staff-sidebar">${icon("menu")}</button><div class="staff-breadcrumb"><span>Quản trị hệ thống</span><span aria-hidden="true">›</span><strong>${esc(page.title)}</strong></div></div><div class="staff-topbar-right"><a class="admin-account" href="${profileHref}" aria-label="Hồ sơ cá nhân"><span class="staff-initials" aria-hidden="true">QT</span><div><strong id="admin-account-name">Quản trị viên</strong><small>Quản trị viên</small></div></a></div>`;
+$("#staff-sidebar").innerHTML = `<a class="staff-brand" href="home.html"><img src="../../static/assets/bieu_trung_neu.png" alt="Biểu trưng NEU"><span><strong>NEU Medical</strong><small>KHÔNG GIAN QUẢN TRỊ</small></span></a><nav aria-label="Điều hướng quản trị">${sections.map(([title, items]) => `<p class="staff-nav-label">${title}</p>${items.map(([id, label, symbol]) => `<a href="${adminPageHref(id)}" ${key === id ? 'aria-current="page"' : ""}>${icon(symbol)}<span>${label}</span></a>`).join("")}`).join("")}</nav><div class="staff-sidebar-bottom admin-logout"><button type="button" id="admin-signout" title="Đăng xuất"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 3H3v18h6M10 12h11M17 8l4 4-4 4"/></svg><span>Đăng xuất</span></button></div>`;
+$("#staff-topbar").innerHTML = staffTopbar({ title: page.title, profileHref, name: "Quản trị viên", initials: "QT" });
 $("#admin-signout").addEventListener("click", async event => {
   event.currentTarget.disabled = true;
   try { await signOut(); }
@@ -48,6 +50,8 @@ window.addEventListener("neu:auth-change", () => {
   if (!hasSession()) { suspendAdmin(); location.replace(loginUrl(new URL(location.href)).href); }
 });
 $("#page-title").textContent = page.title;
+$("#page-title").hidden = true;
+$("#page-header .eyebrow").hidden = true;
 $("#page-description").textContent = page.description;
 document.title = `${page.title} | NEU Medical`;
 const menuButton = $(".staff-menu-toggle");
@@ -77,6 +81,6 @@ matchMedia("(max-width: 960px)").addEventListener("change", event => { if (!even
 // Mount the public shell first; only render page data after verifying /me.
 const administrator = await requireAdmin();
 if (administrator) {
-  $("#admin-account-name").textContent = administrator.full_name;
-  await initAdminWorkspace(key);
+  $("#staff-account-name").textContent = administrator.full_name;
+  if (!page.placeholder) await initAdminWorkspace(key);
 }

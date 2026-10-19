@@ -113,3 +113,17 @@ def create_room(db, fields):
 def update_room(db, room_id, fields):
     update_row(db, 'room', 'room_id', room_id, fields,
                {'department_id', 'room_name', 'description', 'is_active'})
+
+
+def lock_memberships(db):
+    db.execute('SELECT pg_advisory_xact_lock(78124007)')
+
+
+def record_membership_transfer(db, doctor_id, old_id, new_id, actor_id):
+    db.execute('INSERT INTO department_membership_log(doctor_profile_id,old_department_id,new_department_id,changed_by_id) VALUES (%s,%s,%s,%s)',(doctor_id,old_id,new_id,actor_id))
+
+
+def check_source_deputies(db, source_id):
+    count=db.execute('SELECT count(*) n FROM doctor_profile WHERE department_id=%s',(source_id,)).fetchone()['n']
+    deputies=db.execute("SELECT count(*) n FROM department_leadership WHERE department_id=%s AND position='DEPUTY' AND ended_at IS NULL",(source_id,)).fetchone()['n']
+    return deputies <= (3 if count-1>20 else 2)
