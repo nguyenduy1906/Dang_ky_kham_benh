@@ -1,5 +1,6 @@
 import { listEncounters } from "../api/encounter.js";
 import { clearSession } from "./session.js";
+import { startAutoRefresh } from "./auto_refresh.js";
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 
 // referenceDate is already a calendar date in Vietnam, supplied by the page.
@@ -27,21 +28,25 @@ export async function initTodayOverview(render) {
   const stop=()=>{active=false;request.abort();};
   window.addEventListener("pagehide",stop,{once:true});
   window.addEventListener("neu:auth-change",stop,{once:true});
-  content.setAttribute("aria-busy","true");
-  if(feedback){feedback.hidden=false;feedback.textContent="Đang tải…";}
-  try {
-    const day=today();
-    const html=await render({from:day,to:day},{signal:request.signal,period:"today"});
-    if(!active)return;
-    content.innerHTML=html;
-    if(feedback){feedback.hidden=true;feedback.textContent="";}
-  } catch(error) {
-    if(!active)return;
-    if(error.status===401){content.innerHTML="";clearSession();}
-    if(feedback){feedback.hidden=false;feedback.textContent=error.message||"Không tải được dữ liệu tổng quan. Vui lòng tải lại trang.";}
-  } finally {
-    if(active)content.setAttribute("aria-busy","false");
+  async function load() {
+    content.setAttribute("aria-busy","true");
+    if(feedback){feedback.hidden=false;feedback.textContent="Đang tải…";}
+    try {
+      const day=today();
+      const html=await render({from:day,to:day},{signal:request.signal,period:"today"});
+      if(!active)return;
+      content.innerHTML=html;
+      if(feedback){feedback.hidden=true;feedback.textContent="";}
+    } catch(error) {
+      if(!active)return;
+      if(error.status===401){content.innerHTML="";clearSession();}
+      if(feedback){feedback.hidden=false;feedback.textContent=error.message||"Không tải được dữ liệu tổng quan. Vui lòng tải lại trang.";}
+    } finally {
+      if(active)content.setAttribute("aria-busy","false");
+    }
   }
+  await load();
+  startAutoRefresh(load,{canRefresh:()=>active});
 }
 
 // Keep existing content mounted while loading and discard stale responses.
@@ -112,6 +117,7 @@ export async function initOverviewPeriod(render, { storageKey = null } = {}) {
   period.addEventListener("change", load);
   for (const field of [from_date, to_date]) field.addEventListener("change", () => { if (period.value === "custom") return load(); });
   await load();
+  startAutoRefresh(load,{canRefresh:()=>active});
 }
 
 // Reuse existing paginated readers, with only the date filters they support.

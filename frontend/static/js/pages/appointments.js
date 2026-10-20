@@ -1,3 +1,5 @@
+import { startAutoRefresh } from "../core/auto_refresh.js";
+import { hasSession } from "../core/session.js";
 import { listEncounters, getEncounter, getTicket, cancel } from "../api/encounter.js";
 import { listPatients } from "../api/patient.js";
 import { listDoctors } from "../api/doctor.js";
@@ -312,3 +314,4 @@ const errorText = protectPatientPage({
     $("#appointment-detail-close").disabled = false;
   },
 });
+startAutoRefresh(load, { canRefresh: () => hasSession() && initialized && !loading });

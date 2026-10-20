@@ -1,4 +1,5 @@
 import { code, parseCode } from "../core/business_codes.js";
+import { startAutoRefresh } from "../core/auto_refresh.js";
 import { initTodayOverview, overviewRows, overviewDayParams } from "../core/staff_overview.js";
 import { staffReady } from "../core/staff_workspace.js";
 import * as patients from "../api/patient.js";
@@ -79,6 +80,7 @@ async function patientPage() {
     }, "Đã xác định hồ sơ người bệnh.");
   });
   await load();
+  startAutoRefresh(() => load(currentPage));
 }
 async function allDoctors() {
   const first = await doctors.listDoctors({ page_size: 100 }); const items = [...first.items];
@@ -125,8 +127,13 @@ async function coordinationPage() {
   $("#page-body").innerHTML = panel("Điều phối lượt khám", `<form id="coordination-search" class="staff-toolbar" role="search" aria-label="Tra cứu ca chuyển"><label>Mã lượt khám<input type="text" name="encounter_id" placeholder="LK_001" value="${id && /^\d+$/.test(id) ? id : ""}" aria-controls="transfer-options"></label></form><div id="transfer-context"></div><div id="transfer-options"></div><div id="list-pagination" class="list-pagination"></div>`) + panel("Lịch phòng / ca", '<form id="room-search" class="staff-toolbar"><label>Bác sĩ<select id="coordination-doctor"><option value="">Chọn bác sĩ để xem ca</option></select></label><button type="submit">Xem ca tiếp nhận</button></form><div id="room-schedules"></div><div id="schedule-pagination" class="list-pagination"></div>');
   const doctorList = await allDoctors();
   $("#coordination-doctor").insertAdjacentHTML("beforeend", doctorList.map(d => `<option value="${d.doctor_profile_id}">${esc(d.full_name)} · ${esc(d.department_name)}</option>`).join(""));
-  let optionsVersion = 0, optionsRequest;
+  let optionsVersion = 0, optionsRequest, optionsPage = 1, schedulePage = 1, active = true;
+  const stop = () => { active = false; optionsVersion++; optionsRequest?.abort(); };
+  window.addEventListener("pagehide", stop, { once: true });
+  window.addEventListener("neu:auth-change", stop, { once: true });
   async function options(page = 1) {
+    if (!active) return;
+    optionsPage = page;
     const rawId = $("#coordination-search").elements.encounter_id.value.trim();
     if (!rawId) return;
     let encounterId;
@@ -139,10 +146,10 @@ async function coordinationPage() {
       let e, result;
       try {
         e = (await encounters.getEncounter(encounterId, { signal })).encounter;
-        if (current !== optionsVersion) return;
+        if (!active || current !== optionsVersion) return;
         result = await encounters.getTransferOptions(encounterId, { page, page_size: 12 }, { signal });
       } catch (error) { if (current !== optionsVersion) return; throw error; }
-      if (current !== optionsVersion) return;
+      if (!active || current !== optionsVersion) return;
       $("#transfer-context").innerHTML = encounterSummary(e);
       $("#transfer-options").innerHTML = result.items.length ? `<div class="shift-grid">${result.items.map(s => `<article class="shift-card"><h3>${esc(s.doctor_name)}</h3>${facts([["Phòng", s.room_name], ["Ngày", date(s.work_date)], ["Ca", `${s.start_time.slice(0,5)} – ${s.end_time.slice(0,5)}`]])}<button data-transfer="${s.schedule_id}" ${s.slots.length ? "" : "disabled"}>Chọn ca chuyển</button></article>`).join("")}</div>` : empty("Không có ca chuyển cùng chuyên khoa còn chỗ.");
       pagination(result, options);
@@ -159,9 +166,12 @@ async function coordinationPage() {
   } });
   $("#coordination-search").addEventListener("submit", event => { event.preventDefault(); refreshOptions(); });
   async function loadSchedules(page = 1) {
+    if (!active) return;
+    schedulePage = page;
     const doctor = $("#coordination-doctor").value; if (!doctor) return;
     await run(async () => {
       const result = await schedules.listDoctorSchedules(doctor, { page, page_size: 12 });
+      if (!active || doctor !== $("#coordination-doctor").value) return;
       $("#room-schedules").innerHTML = table(["Ngày", "Phòng", "Giờ", "Đã đặt / sức chứa", "Trạng thái", "Lượt khám"], result.items.map(s => `<tr><td>${date(s.work_date)}</td><td>${esc(s.room_name)}</td><td>${esc(s.start_time.slice(0,5))} – ${esc(s.end_time.slice(0,5))}</td><td>${s.booked_count} / ${s.max_quota}</td><td>${badge(s.schedule_status)}</td><td><a href="encounters.html?schedule_id=${s.schedule_id}">Xem lượt trong ca →</a>${s.schedule_status === "UNAVAILABLE" ? `<button type="button" class="secondary" data-affected="${s.schedule_id}">Các lượt cần điều phối</button>` : ""}</td></tr>`));
       $("#room-schedules").querySelectorAll("[data-affected]").forEach(button => button.addEventListener("click", () => run(async () => {
         async function affected(page = 1) {
@@ -176,4 +186,5 @@ async function coordinationPage() {
   }
   $("#room-search").addEventListener("submit", event => { event.preventDefault(); loadSchedules(); });
   if (id && /^\d+$/.test(id)) await options();
+  startAutoRefresh(async () => { await options(optionsPage); await loadSchedules(schedulePage); }, { canRefresh: () => active });
 }

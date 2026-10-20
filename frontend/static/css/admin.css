@@ -1,6 +1,12 @@
 /* Admin presentation layer. Content block radii follow staff_workspace.css. */
 .admin-page { --staff-green: #008349; --staff-deep: #124333; --staff-text: #243d32; --staff-muted: #687b70; background: #f4f7f5; }
-.admin-page *, .admin-page *::before, .admin-page *::after { border-radius: 0 !important; }
+.admin-page *, .admin-page *::before, .admin-page *::after { border-radius: 5px !important; }
+.admin-page :is(.staff-initials,.staff-brand img,.staff-avatar-image) { border-radius: 50% !important; }
+/* Shared on-screen dimensions for admin forms and detail dialogs. */
+body.admin-page dialog { box-sizing: border-box; width: min(1180px, calc(100% - 48px)); max-width: calc(100% - 48px); height: auto; min-height: 0; max-height: 90dvh; margin: auto; overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable; }
+@media (max-width: 680px) {
+  body.admin-page dialog { width: calc(100% - 16px); max-width: calc(100% - 16px); height: auto; max-height: calc(100dvh - 16px); }
+}
 .admin-page .staff-shell { grid-template-columns: 270px minmax(0, 1fr); }
 .admin-page .staff-sidebar { padding: 25px 14px 18px; scrollbar-width: thin; scrollbar-color: #598071 transparent; }
 .admin-page .staff-brand { gap: 12px; padding: 0 10px; }
@@ -44,6 +50,7 @@
 .admin-toolbar input, .admin-toolbar select { margin-top: 6px; min-height: 43px; }
 .admin-toolbar > span { margin-left: auto; align-self: center; font-size: 11px; color: var(--staff-muted); white-space: nowrap; }
 .admin-page .admin-table-scroll { margin: 0 24px 20px; overflow-x: auto; }
+.admin-page .admin-search-status { padding-inline: 24px; }
 .admin-page .admin-table { min-width: 800px; }
 .admin-page .admin-table th { background: #edf4f0; color: #65796c; font-size: 11px; padding: 15px 18px; }
 .admin-page .admin-table td { padding: 21px 18px; color: #50695b; font-size: 12px; }
@@ -55,6 +62,7 @@
 .admin-page .admin-overview-encounters .admin-table td { padding-block: 16px; white-space: nowrap; }
 @media (max-width: 680px) {
   .admin-page .admin-table-scroll { margin: 0 16px 16px; }
+  .admin-page .admin-search-status { padding-inline: 16px; }
   .admin-page .admin-overview-encounters { padding: 0 16px 16px; }
 }
 .admin-page .admin-table td:first-child { color: #28664a; font-weight: 700; }
@@ -62,6 +70,7 @@
 .admin-avatar { width: 36px; height: 38px; display: grid; place-items: center; background: #edf5ef; color: #337955; font-size: 11px; flex-shrink: 0; }
 .admin-page .admin-table .row-action { border: 0; background: none; color: #187049; padding: 4px 7px; min-height: 30px; font-size: 11px; white-space: nowrap; }
 .admin-page .admin-table .row-action:hover { background: #edf5ef; }
+.admin-page .row-action:is([data-action="detail"],[data-schedule-encounter]) { text-decoration: underline; text-underline-offset: 3px; }
 .admin-page .admin-table .row-action.danger { color: #ac4444; }
 .admin-page .badge { font-size: 10px; padding: 5px 8px; }
 .admin-page .badge::before { content: none; }
@@ -269,21 +278,21 @@
 .admin-page .admin-users-list .admin-table th:nth-child(6) { width: 11%; }
 .admin-page .admin-users-list .admin-table th:nth-child(7) { width: 14%; }
 .admin-page .admin-users-list .admin-table td { overflow-wrap: anywhere; white-space: normal; }
-.admin-page :is(.admin-users-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list) .admin-table th:last-child,
-.admin-page :is(.admin-users-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list) .admin-table td:last-child { text-align: center; padding-inline: 8px 12px; }
-.admin-page :is(.admin-users-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list) .admin-row-actions { justify-content: center; align-items: center; flex-wrap: nowrap; gap: 12px; }
-.admin-page :is(.admin-users-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list) .admin-row-actions .row-action { padding-inline: 0; text-decoration: underline; text-underline-offset: 3px; }
+.admin-page :is(.admin-users-list,.admin-patients-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list,.admin-rooms-list,.admin-schedule-list) .admin-table th:last-child,
+.admin-page :is(.admin-users-list,.admin-patients-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list,.admin-rooms-list,.admin-schedule-list) .admin-table td:last-child { text-align: center; padding-inline: 8px 12px; }
+.admin-page :is(.admin-users-list,.admin-patients-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list,.admin-rooms-list,.admin-schedule-list) .admin-row-actions { justify-content: center; align-items: center; flex-wrap: nowrap; gap: 12px; }
+.admin-page :is(.admin-users-list,.admin-patients-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list,.admin-rooms-list,.admin-schedule-list) .admin-row-actions .row-action { padding-inline: 0; text-decoration: underline; text-underline-offset: 3px; }
 
 .admin-page .admin-users-list .badge::before { content: none; }
 
-.admin-page :is(.admin-users-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list) .admin-pagination { padding: 24px; border-top: 0; gap: 16px; }
-.admin-page :is(.admin-users-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list) .admin-pagination > div { display: flex; justify-content: flex-end; gap: 12px; margin-left: auto; }
-.admin-page :is(.admin-users-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list) .admin-pagination button { min-height: 50px; padding: 12px 23px; border: 1px solid #c7dcd0; border-radius: 5px !important; background: #fff; color: #326b53; font-size: 14px; font-weight: 600; line-height: 1.4; white-space: nowrap; }
-.admin-page :is(.admin-users-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list) .admin-pagination button:hover:not(:disabled) { background: #f1f7f3; border-color: #8bb8a0; }
-.admin-page :is(.admin-users-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list) .admin-pagination button:disabled { color: #82a394; border-color: #dce8e1; opacity: 1; cursor: default; }
+.admin-page .admin-pagination { padding: 24px; border-top: 0; gap: 16px; }
+.admin-page .admin-pagination > div { display: flex; justify-content: flex-end; gap: 12px; margin-left: auto; }
+.admin-page .admin-pagination button { min-height: 50px; padding: 12px 23px; border: 1px solid #c7dcd0; border-radius: 5px !important; background: #fff; color: #326b53; font-size: 14px; font-weight: 600; line-height: 1.4; white-space: nowrap; }
+.admin-page .admin-pagination button:hover:not(:disabled) { background: #f1f7f3; border-color: #8bb8a0; }
+.admin-page .admin-pagination button:disabled { color: #82a394; border-color: #dce8e1; opacity: 1; cursor: default; }
 @media (max-width: 680px) {
-  .admin-page :is(.admin-users-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list) .admin-pagination { padding: 16px; }
-  .admin-page :is(.admin-users-list,.admin-doctors-list,.admin-assignments-list,.admin-departments-list) .admin-pagination button { min-height: 46px; padding: 10px 17px; }
+  .admin-page .admin-pagination { padding: 16px; }
+  .admin-page .admin-pagination button { min-height: 46px; padding: 10px 17px; }
 }
 
 /* Shared admin dialog presentation and close control. */
@@ -354,6 +363,330 @@
 .admin-page .admin-member-add-form { margin-top: 20px; padding: 16px; background: #f5f9f6; border: 1px solid #e0ebe4; }
 .admin-page .admin-member-add-form .muted { font-size: 12px; line-height: 1.6; }
 .admin-page .admin-departments-list .admin-table th:last-child { width: 160px; }
+.admin-page .admin-rooms-list .admin-table th:last-child { width: 160px; }
+.admin-page .admin-schedule-list #admin-results .admin-table th:last-child { width: 160px; }
+.admin-page .admin-schedule-list #admin-results .admin-table :is(th,td):nth-child(7) { text-align: center; padding-inline: 12px; }
+.admin-page .admin-schedule-list #admin-results .admin-table th:nth-child(7) { width: 180px; }
+.admin-page .admin-schedule-detail { display: grid; gap: 24px; }
+.admin-page .admin-bulk-assignment { display: grid; gap: 24px; }
+.admin-page .admin-bulk-form-dialog { width: min(1180px, calc(100% - 48px)); max-height: 90dvh; padding: 24px; border-radius: 5px !important; background: #f6f9f7; }
+.admin-page .admin-bulk-form-dialog > .section-heading { padding-bottom: 18px; margin-bottom: 20px; border-bottom: 1px solid #dce8e0; }
+.admin-page .admin-bulk-form-dialog > .section-heading h2 { margin: 0; font-size: 23px; }
+.admin-page .admin-bulk-form-dialog > .section-heading button { border-radius: 5px !important; background: #fff; }
+.admin-page .admin-bulk-form-dialog > .section-heading button { transition: background-color .15s, color .15s, border-color .15s; }
+.admin-page .admin-bulk-form-dialog > .section-heading button:is(:hover,:focus-visible,:active):not(:disabled) { background: #c73535; border-color: #c73535; color: #fff; }
+.admin-page .admin-bulk-form-dialog > .section-heading button:focus-visible { outline: 2px solid #c73535; outline-offset: 3px; }
+.admin-page .admin-schedule-builder form { display: grid; gap: 20px; }
+.admin-page .admin-schedule-date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: end; }
+.admin-page .admin-schedule-days { margin-top: 20px !important; }
+.admin-page .admin-schedule-days legend { margin-bottom: 10px; color: #526b5c; font-size: 13px; font-weight: 600; }
+.admin-page .admin-schedule-shift-select { max-width: 380px; margin-top: 20px; }
+.admin-page .admin-schedule-day-grid { display: grid; grid-template-columns: repeat(7,minmax(0,64px)); gap: 8px; }
+.admin-page .admin-schedule-builder .admin-schedule-day { position: relative; display: grid; justify-items: center; align-content: center; min-height: 42px; padding: 8px 4px; border: 1px solid #dce7df; border-radius: 5px !important; background: #fafcfb; color: #65796d; cursor: pointer; transition: background-color .15s, border-color .15s; }
+.admin-page .admin-schedule-day > input { position: absolute; opacity: 0; clip-path: inset(50%); }
+.admin-page .admin-schedule-builder .admin-schedule-day:has(input:checked) { color: #fff; background: #25835d; border-color: #25835d; }
+.admin-page .admin-schedule-day:hover { border-color: #78b895; }
+.admin-page .admin-schedule-day:focus-within { outline: 3px solid #70bba2; outline-offset: 3px; }
+.admin-page .admin-schedule-day-name { font-size: 13px; font-weight: 600; line-height: 1.4; }
+@media (max-width: 680px) {
+  .admin-page .admin-schedule-day-grid { gap: 5px; }
+  .admin-page .admin-schedule-builder .admin-schedule-day { min-height: 42px; padding-inline: 2px; }
+  .admin-page .admin-schedule-day-name { font-size: 12px; }
+}
+.admin-page .admin-schedule-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.admin-page .admin-schedule-section-heading h3 { margin: 0; font-size: 17px; }
+.admin-page .admin-schedule-step { display: inline-grid; place-items: center; width: 25px; height: 25px; margin-right: 6px; background: #e5f2eb; color: #087f5b; border-radius: 50%; font-size: 12px; }
+.admin-page .admin-schedule-pair { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; align-items: end; }
+.admin-page .admin-schedule-builder .admin-card:has(.admin-schedule-pair) { overflow: visible; }
+.admin-page .admin-schedule-autocomplete { position: relative; display: block; }
+.admin-page .admin-schedule-suggestions { position: absolute; top: calc(100% + 6px); inset-inline: 0; z-index: 40; display: block; max-height: 220px; overflow-y: auto; padding: 5px; background: #fff; border: 1px solid #c7ddcf; border-radius: 5px !important; box-shadow: 0 8px 22px #153f341a; }
+.admin-page .admin-schedule-suggestions > span { display: block; padding: 10px 12px; color: #2d4e3b; font-size: 13px; font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
+.admin-page .admin-schedule-suggestions [role="option"] { cursor: pointer; }
+.admin-page .admin-schedule-suggestions [role="option"]:is(:hover,[aria-selected="true"]) { color: #087f5b; background: #e7f3ec; }
+.admin-page .admin-schedule-suggestions .admin-suggestion-empty { color: #718477; }
+.admin-page .admin-schedule-pair + .admin-schedule-pair { margin-top: 16px; }
+.admin-page .admin-schedule-draft-note { margin: 14px 0 0; font-size: 12px; color: var(--staff-muted); }
+.admin-page .admin-schedule-periods { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px; }
+.admin-page .admin-schedule-period { padding: 18px; border: 1px solid #dce8e0; border-radius: 5px !important; }
+.admin-page .admin-schedule-period:has(.admin-schedule-period-toggle > :checked) { border-color: #9ec8b0; background: #f8fcfa; }
+.admin-page .admin-schedule-builder .admin-schedule-period-toggle { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; font-size: 14px; cursor: pointer; }
+.admin-page .admin-schedule-period-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.admin-page .admin-schedule-period-fields > label:last-child { grid-column: 1 / -1; }
+.admin-page .admin-schedule-period fieldset:disabled { opacity: .5; }
+.admin-page .admin-schedule-preview-actions { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-top: 20px; }
+.admin-page .admin-schedule-preview-actions p, .admin-page .admin-schedule-draft-footer p { margin: 0; color: var(--staff-muted); font-size: 12px; line-height: 1.7; }
+.admin-page .admin-schedule-builder [data-draft-feedback]:empty { display: none; }
+.admin-page .admin-schedule-builder [data-draft-feedback] { margin: 16px 0 0; }
+.admin-page .admin-schedule-builder [data-draft-summary] { margin: 6px 0 0; color: var(--staff-muted); font-size: 12px; }
+.admin-page .admin-schedule-draft-footer { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 20px; padding: 20px 24px; }
+.admin-page .admin-schedule-draft-footer p { flex: 1 1 320px; }
+.admin-page .admin-schedule-draft-footer .actions { margin: 0; }
+.admin-page .admin-schedule-builder .admin-table tr:has(input:not(:checked)) { color: var(--staff-muted); background: #f8f9f8; }
+.admin-page .admin-schedule-builder .admin-draft-scroll { max-height: 420px; border: 1px solid #e0e9e3; border-radius: 5px !important; scrollbar-width: thin; }
+.admin-page .admin-schedule-builder .admin-draft-table { min-width: 840px; width: 100%; table-layout: fixed; border-collapse: collapse; }
+.admin-page .admin-schedule-builder .admin-draft-table :is(thead,tbody,tr,th,td) { border-radius: 0 !important; }
+.admin-page .admin-draft-table .draft-check-col { width: 54px; }
+.admin-page .admin-draft-table .draft-date-col { width: 136px; }
+.admin-page .admin-draft-table .draft-period-col { width: 112px; }
+.admin-page .admin-draft-table .draft-time-col { width: 150px; }
+.admin-page .admin-schedule-builder .admin-draft-table thead th { padding: 13px 14px; background: #e9f2ed; color: #486655; font-size: 12px; border-bottom: 1px solid #cfdfd5; }
+.admin-page .admin-schedule-builder .admin-draft-table tbody :is(th,td) { padding: 12px 14px; height: 54px; vertical-align: middle; text-align: left; color: #365443; font-size: 13px; background: transparent; border-bottom: 1px solid #e8eee9; overflow-wrap: anywhere; }
+.admin-page .admin-schedule-builder .admin-draft-table tbody { background: #fff; border-top: 2px solid #d9e5dd; }
+.admin-page .admin-schedule-builder .admin-draft-table tbody:nth-of-type(even) { background: #f5f8f6; }
+.admin-page .admin-schedule-builder .admin-draft-table tbody tr:has(input:checked),
+.admin-page .admin-schedule-builder .admin-draft-table tbody tr:has(input:not(:checked)) { background: transparent; }
+.admin-page .admin-schedule-builder .admin-draft-table tbody td:has(input) { width: 54px; text-align: center; }
+.admin-page .admin-schedule-builder .admin-draft-table .admin-draft-date { position: static; width: auto; border-right: 1px solid #e2eae5; }
+.admin-page .admin-draft-date strong { display: block; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.admin-page .admin-draft-date small { display: block; margin-top: 4px; color: #75877b; font-weight: 400; }
+.admin-page .admin-draft-period { display: inline-block; padding: 4px 8px; border-radius: 5px !important; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.admin-page .admin-draft-period.is-morning { color: #347354; background: #e5f1e8; }
+.admin-page .admin-draft-period.is-afternoon { color: #a45a0c; background: #fff0dc; }
+.admin-page .admin-draft-time { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.admin-page .admin-draft-time span { color: #93a399; }
+@media (max-width: 960px) {
+  .admin-page .admin-schedule-date-row { grid-template-columns: 1fr 1fr; }
+  .admin-page .admin-schedule-date-row .admin-bulk-presets { grid-column: 1 / -1; }
+  .admin-page .admin-schedule-periods { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px) {
+  .admin-page .admin-bulk-form-dialog { width: calc(100% - 16px); max-height: calc(100dvh - 16px); padding: 16px; }
+  .admin-page .admin-bulk-form-dialog > .section-heading h2 { font-size: 19px; }
+  .admin-page .admin-schedule-pair { grid-template-columns: 1fr; padding-bottom: 16px; border-bottom: 1px solid #e0e8e2; }
+  .admin-page .admin-schedule-pair button { justify-self: start; }
+  .admin-page .admin-schedule-date-row { gap: 16px; }
+  .admin-page .admin-schedule-draft-footer { padding: 18px 16px; }
+}
+.admin-page .admin-bulk-heading { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.admin-page .admin-bulk-heading h2 { margin: 0 0 4px; font-size: 23px; }
+.admin-page .admin-bulk-heading p { margin: 0; color: var(--staff-muted); }
+.admin-page .admin-bulk-settings, .admin-page .admin-bulk-footer { padding: 24px; }
+.admin-page .admin-bulk-settings > h3 { margin: 0 0 20px; font-size: 17px; }
+.admin-page .admin-bulk-assignment fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.admin-page .admin-bulk-controls { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 20px; }
+.admin-page .admin-bulk-assignment label { display: grid; gap: 7px; min-width: 0; font-size: 12px; font-weight: 600; color: #42634f; }
+.admin-page .admin-bulk-assignment :is(input:not([type="checkbox"]),select,textarea) { width: 100%; margin: 0; border-radius: 5px !important; }
+.admin-page .admin-bulk-week { display: flex; flex-wrap: wrap; gap: 20px 28px; align-items: center; margin-block: 20px; }
+.admin-page .admin-bulk-presets { display: flex; gap: 8px; }
+.admin-page .admin-bulk-assignment .admin-bulk-weekdays { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-page .admin-bulk-weekdays legend { margin-bottom: 6px; font-size: 12px; color: #64766e; }
+.admin-page .admin-bulk-weekdays label { display: flex; gap: 5px; align-items: center; min-height: 40px; padding: 7px 10px; border: 1px solid #dae6df; border-radius: 5px !important; cursor: pointer; }
+.admin-page .admin-bulk-weekdays label:has(:checked) { background: #edf7f1; border-color: #a8ceba; }
+.admin-page .admin-bulk-assignment input[type="checkbox"] { width: 17px; height: 17px; min-height: 0; margin: 0; accent-color: #087f5b; }
+.admin-page .admin-bulk-filters { display: grid; grid-template-columns: minmax(150px,1fr) minmax(220px,2fr) auto; gap: 16px; align-items: end; }
+.admin-page .admin-bulk-assignment button { border-radius: 5px !important; }
+.admin-page .admin-bulk-assignment :is([data-bulk-feedback],[data-bulk-outcome]):empty { display: none; }
+.admin-page .admin-bulk-assignment :is([data-bulk-feedback],[data-bulk-outcome]) { margin: 16px 0 0; line-height: 1.7; }
+.admin-page .admin-bulk-assignment [data-error="true"] { color: #b02e2e; }
+.admin-page .admin-bulk-select-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-page .admin-bulk-assignment :is([data-bulk-all],[data-draft-select-all])[aria-pressed="true"] { color: #087548; border-color: #9ec8b0; background: #e7f3ec; }
+.admin-page .admin-bulk-assignment .admin-panel-heading { flex-wrap: wrap; }
+.admin-page .admin-bulk-assignment .admin-panel-heading h3 { margin: 0; font-size: 17px; }
+.admin-page .admin-bulk-hint { margin: 0 24px 18px; color: var(--staff-muted); font-size: 12px; }
+.admin-page .admin-bulk-assignment .admin-table { min-width: 1080px; }
+.admin-page .admin-bulk-assignment .admin-table-scroll { max-height: 500px; overflow: auto; scrollbar-gutter: stable; }
+.admin-page .admin-bulk-assignment .admin-table th { position: sticky; top: 0; z-index: 1; }
+.admin-page .admin-bulk-assignment .admin-table :is(th,td):first-child { width: 52px; text-align: center; }
+.admin-page .admin-bulk-assignment .admin-table :is(th,td):last-child { text-align: left; min-width: 190px; }
+.admin-page .admin-bulk-assignment .admin-table tr:has(input:checked) { background: #f0f8f3; }
+/* Fit the draft to the dialog; long values wrap instead of widening the table. */
+.admin-page .admin-schedule-builder .admin-table-scroll.admin-draft-scroll { max-height: 420px; overflow-x: hidden; overflow-y: auto; }
+.admin-page .admin-schedule-builder .admin-table.admin-draft-table { min-width: 0; max-width: 100%; width: 100%; white-space: normal; }
+.admin-page .admin-schedule-builder .admin-draft-table .draft-check-col { width: 6%; }
+.admin-page .admin-schedule-builder .admin-draft-table .draft-date-col { width: 15%; }
+.admin-page .admin-schedule-builder .admin-draft-table .draft-period-col { width: 15%; }
+.admin-page .admin-schedule-builder .admin-draft-table .draft-time-col { width: 19%; }
+.admin-page .admin-schedule-builder .admin-draft-table col:nth-child(5) { width: 25%; }
+.admin-page .admin-schedule-builder .admin-draft-table col:nth-child(6) { width: 20%; }
+.admin-page .admin-schedule-builder .admin-draft-table :is(th,td) { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.admin-page .admin-schedule-builder .admin-draft-table :is(th,td):first-child { width: auto; }
+.admin-page .admin-schedule-builder .admin-draft-table :is(th,td):last-child { min-width: 0; }
+.admin-page .admin-schedule-builder .admin-draft-table .admin-draft-date { padding-left: 20px; }
+.admin-page .admin-schedule-builder .admin-draft-table .admin-draft-period { white-space: normal; }
+.admin-page .admin-schedule-builder .admin-draft-table .admin-draft-time { white-space: normal; }
+.admin-page .admin-schedule-builder .admin-draft-table thead th:is(:nth-child(2),:nth-child(3),:nth-child(5),:nth-child(6)) { padding-left: 24px; }
+.admin-page .admin-schedule-builder .admin-draft-table tr > :last-child { text-align: right; padding-right: 24px; }
+@media (max-width: 680px) {
+  .admin-page .admin-schedule-builder .admin-draft-table :is(th,td),
+  .admin-page .admin-schedule-builder .admin-draft-table .admin-draft-date { padding-inline: 4px; font-size: 11px; }
+  .admin-page .admin-schedule-builder .admin-draft-period { padding: 3px; font-size: 11px; }
+  .admin-page .admin-schedule-builder .admin-draft-date strong { font-size: 11px; }
+  .admin-page .admin-schedule-builder .admin-draft-table thead th:is(:nth-child(2),:nth-child(3),:nth-child(5),:nth-child(6)) { padding-left: 8px; }
+  .admin-page .admin-schedule-builder .admin-draft-table tr > :last-child { padding-right: 8px; }
+}
+.admin-page .admin-schedule-builder .admin-draft-table thead th:is(:nth-child(3),:nth-child(4),:nth-child(5)) { text-align: center; padding-inline: 14px; }
+.admin-page .admin-schedule-builder .admin-draft-table tbody td:has(.admin-draft-period),
+.admin-page .admin-schedule-builder .admin-draft-table tbody :is(.admin-draft-time,.admin-draft-doctor) { text-align: center; }
+@media (max-width: 680px) {
+  .admin-page .admin-schedule-builder .admin-draft-table thead th:is(:nth-child(3),:nth-child(4),:nth-child(5)) { padding-inline: 4px; }
+}
+.admin-page .admin-bulk-state { font-size: 12px; line-height: 1.6; }
+.admin-page .admin-assignment-builder form > fieldset { display: grid; gap: 24px; }
+.admin-page .admin-assignment-builder .admin-bulk-settings:has(.admin-assignment-nurse) { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; align-items: end; }
+.admin-page .admin-assignment-builder .admin-bulk-settings:has(.admin-assignment-nurse) > :is(h3,[data-bulk-feedback]) { grid-column: 1 / -1; }
+.admin-page .admin-assignment-builder .admin-bulk-settings:has(.admin-assignment-nurse) > h3 { margin-bottom: 0; }
+.admin-page .admin-assignment-nurse { width: 100%; margin: 0; min-width: 0; }
+.admin-page .admin-assignment-builder .admin-schedule-pair { display: contents; }
+@media (max-width: 680px) {
+  .admin-page .admin-assignment-builder .admin-bulk-settings:has(.admin-assignment-nurse) { grid-template-columns: 1fr; gap: 16px; }
+}
+.admin-page .admin-assignment-builder [data-bulk-summary] { margin: 6px 0 0; color: var(--staff-muted); font-size: 12px; font-weight: 400; }
+.admin-page .admin-assignment-builder .admin-bulk-confirm { justify-content: flex-end; }
+.admin-page .admin-assignment-builder .admin-assignment-draft-table col:nth-child(1) { width: 7%; }
+.admin-page .admin-assignment-builder .admin-assignment-draft-table col:nth-child(2) { width: 13%; }
+.admin-page .admin-assignment-builder .admin-assignment-draft-table col:nth-child(3) { width: 12%; }
+.admin-page .admin-assignment-builder .admin-assignment-draft-table col:nth-child(4) { width: 15%; }
+.admin-page .admin-assignment-builder .admin-assignment-draft-table col:nth-child(5) { width: 20%; }
+.admin-page .admin-assignment-builder .admin-assignment-draft-table col:nth-child(6) { width: 17%; }
+.admin-page .admin-assignment-builder .admin-assignment-draft-table col:nth-child(7) { width: 16%; }
+.admin-page .admin-assignment-builder .admin-assignment-draft-table thead th:first-child { white-space: nowrap; text-align: center; padding-inline: 8px; }
+.admin-page .admin-assignment-builder .admin-assignment-draft-table .admin-draft-period { white-space: nowrap; }
+.admin-page .admin-assignment-builder .admin-assignment-draft-table .admin-draft-time small { margin-top: 5px; font-size: 11px; font-weight: 400; color: #7c8d82; }
+.admin-page .admin-assignment-builder .admin-assignment-draft-table .admin-bulk-state { line-height: 1.6; }
+.admin-page .admin-assignment-builder .admin-assignment-draft-table :is(.admin-assignment-room,thead th:nth-child(6)) { text-align: right; padding-right: 20px; }
+.admin-page .admin-assignment-builder .admin-assignment-draft-table :is(.admin-assignment-status,thead th:nth-child(7)) { text-align: left; padding-inline: 12px; }
+@media (max-width: 680px) {
+  .admin-page .admin-assignment-builder .admin-assignment-draft-table :is(.admin-assignment-room,thead th:nth-child(6),.admin-assignment-status,thead th:nth-child(7)) { padding-inline: 4px; }
+  .admin-page .admin-assignment-builder .admin-assignment-draft-table .admin-draft-period { white-space: normal; }
+}
+.admin-page .admin-bulk-state.is-ready { color: #087548; }
+.admin-page .admin-bulk-state.is-blocked { color: #856338; }
+.admin-page .admin-bulk-confirm { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-top: 20px; padding-top: 18px; border-top: 1px solid #e0e8e2; }
+.admin-page .admin-bulk-confirm p { margin: 0; font-size: 14px; font-weight: 600; }
+.admin-page .admin-bulk-confirm .actions { margin: 0; }
+@media (max-width: 960px) {
+  .admin-page .admin-bulk-controls { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .admin-page .admin-bulk-controls > label:first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 680px) {
+  .admin-page .admin-bulk-settings, .admin-page .admin-bulk-footer { padding: 18px 16px; }
+  .admin-page .admin-bulk-filters { grid-template-columns: 1fr; }
+  .admin-page .admin-bulk-hint { margin-inline: 16px; }
+  .admin-page .admin-bulk-assignment .admin-panel-heading { padding: 18px 16px; }
+  .admin-page .admin-bulk-confirm { align-items: stretch; flex-direction: column; }
+  .admin-page .admin-bulk-confirm .actions { display: flex; }
+  .admin-page .admin-bulk-confirm button { flex: 1; }
+}
+.admin-page .admin-schedule-detail-heading { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.admin-page .admin-schedule-detail-heading h2 { margin: 0; }
+.admin-page .admin-schedule-detail > .admin-card:has(.admin-schedule-information) > .admin-panel-heading { padding-block: 16px 12px; }
+.admin-page .admin-schedule-information { padding: 0 24px 16px; }
+.admin-page .admin-schedule-information .admin-dialog-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px 32px; margin: 0; }
+.admin-page .admin-schedule-information .admin-dialog-facts > div { min-width: 0; padding: 6px 0; }
+.admin-page .admin-schedule-information .admin-dialog-facts dt { margin-bottom: 3px; font-size: 12px; }
+.admin-page .admin-schedule-information .admin-dialog-facts dd { margin: 0; font-size: 14px; font-weight: 500; line-height: 1.6; }
+.admin-page .admin-schedule-information > .actions:empty { display: none; }
+.admin-page .admin-patient-detail { display: grid; gap: 18px; }
+.admin-page .admin-patient-summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; background: #f4f9f6; border: 1px solid #dfece4; border-radius: 5px; }
+.admin-page .admin-patient-code { display: block; margin-bottom: 5px; color: #527260; font-size: 12px; font-weight: 600; }
+.admin-page #admin-dialog .admin-patient-summary h3 { margin: 0; font-size: 22px; color: #244b38; overflow-wrap: anywhere; }
+.admin-page .admin-patient-summary .badge { flex-shrink: 0; }
+.admin-page .admin-patient-section { min-width: 0; padding: 18px 20px; border: 1px solid #e1eae5; border-radius: 5px; }
+.admin-page #admin-dialog .admin-patient-section h3 { margin: 0 0 16px; font-size: 15px; color: #2e5641; }
+.admin-page .admin-patient-section .admin-dialog-facts { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px 28px; margin: 0; }
+.admin-page .admin-patient-section .admin-dialog-facts > div { min-width: 0; }
+.admin-page .admin-patient-section .admin-dialog-facts dd { margin: 0; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.admin-page .admin-patient-metadata { background: #fafcfb; }
+.admin-page .admin-patient-fields { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px 24px; }
+.admin-page .admin-patient-fields > label { min-width: 0; margin: 0; }
+.admin-page .admin-patient-fields :is(input,select) { margin-bottom: 0; border-radius: 5px; }
+.admin-page .admin-patient-field-note { margin: 12px 0 0; color: #64766e; font-size: 12px; line-height: 1.6; }
+.admin-page .admin-patient-shared-phone { margin-top: 16px; padding-top: 12px; border-top: 1px solid #e4ece7; }
+.admin-page .admin-patient-shared-phone .admin-checkbox { margin: 0; font-weight: 400; line-height: 1.6; }
+.admin-page .admin-patient-form-footer { padding-top: 16px; border-top: 1px solid #e4ece7; }
+.admin-page .admin-patient-form-footer .actions { margin: 0; justify-content: flex-end; gap: 12px; }
+.admin-page .admin-patient-form-footer .form-feedback:empty { display: none; }
+.admin-page[data-page="patients"] #admin-dialog > .section-heading { gap: 12px; flex-wrap: wrap; align-items: center; }
+.admin-page[data-page="patients"] #admin-dialog-title { flex: 1; margin-right: auto; }
+.admin-page #admin-dialog #patient-history-header { min-height: 40px; padding: 8px 20px; background: transparent; color: #008751; border: 1px solid #008751; border-radius: 5px; font-size: 13px; font-weight: 600; transition: background-color .15s, color .15s; }
+.admin-page #admin-dialog #patient-history-header:is(:hover,:focus-visible,:active) { background: #008751; color: #fff; }
+.admin-page #admin-dialog #patient-history-header:focus-visible { outline: 2px solid #008751; outline-offset: 3px; }
+@media (max-width: 800px) {
+  .admin-page .admin-patient-section .admin-dialog-facts { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .admin-page .admin-patient-fields { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 520px) {
+  .admin-page .admin-patient-summary { align-items: flex-start; flex-wrap: wrap; padding: 16px; }
+  .admin-page .admin-patient-section { padding: 16px; }
+  .admin-page .admin-patient-section .admin-dialog-facts { grid-template-columns: 1fr; }
+  .admin-page .admin-patient-fields { grid-template-columns: 1fr; }
+}
+.admin-page .admin-encounter-detail { display: grid; gap: 20px; }
+.admin-page .admin-encounter-summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; border: 1px solid #dfece4; border-radius: 5px !important; background: #f4f9f6; }
+.admin-page .admin-encounter-code { display: block; margin-bottom: 5px; color: #527260; font-size: 12px; font-weight: 600; }
+.admin-page #admin-dialog .admin-encounter-summary h3 { margin: 0; font-size: 20px; color: #244b38; }
+.admin-page .admin-encounter-summary .badge { flex-shrink: 0; border-radius: 5px !important; }
+.admin-page .admin-encounter-section .admin-dialog-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 24px; margin: 0; }
+.admin-page .admin-encounter-section .admin-dialog-facts > div { min-width: 0; }
+.admin-page .admin-encounter-section .admin-dialog-facts dd { margin: 0; line-height: 1.6; }
+.admin-page .admin-encounter-detail :is(.admin-encounter-symptoms,.admin-encounter-cancellation) { padding-top: 16px; border-top: 1px solid #e4ece7; }
+.admin-page #admin-dialog .admin-encounter-detail :is(.admin-encounter-symptoms,.admin-encounter-cancellation) h3 { margin: 0 0 6px; font-size: 12px; font-weight: 500; color: #64766e; }
+.admin-page .admin-encounter-detail :is(.admin-encounter-symptoms,.admin-encounter-cancellation) p { margin: 0; white-space: pre-wrap; line-height: 1.7; }
+.admin-page .admin-encounter-fee { margin: 0; padding: 16px 20px; background: #f4f9f6; border: 1px solid #dfece4; border-radius: 5px !important; }
+.admin-page .admin-encounter-fee > div { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.admin-page .admin-encounter-fee dt { font-size: 13px; font-weight: 600; color: #38634e; }
+.admin-page .admin-encounter-fee dd { margin: 0; color: #087f5b; font-size: 21px; font-weight: 700; }
+.admin-page .admin-encounter-actions { margin: 0; padding-top: 16px; border-top: 1px solid #e4ece7; gap: 12px; }
+.admin-page .admin-encounter-actions .button-link { border-radius: 5px !important; text-align: center; }
+.admin-page .admin-leave-detail { display: grid; gap: 20px; }
+.admin-page .admin-leave-summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 18px 20px; background: #f0f7f3; border: 1px solid #dce9e0; }
+.admin-page .admin-leave-code { display: block; margin-bottom: 5px; color: #668071; font-size: 12px; }
+.admin-page #admin-dialog .admin-leave-summary h3 { margin: 0; font-size: 20px; color: #244b38; }
+.admin-page .admin-leave-summary .badge { flex-shrink: 0; }
+.admin-page .admin-leave-columns { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; }
+.admin-page .admin-leave-card { min-width: 0; padding: 20px; border: 1px solid #e0e9e3; background: #fff; }
+.admin-page #admin-dialog .admin-leave-card h3 { margin: 0 0 18px; font-size: 15px; font-weight: 600; color: #315840; }
+.admin-page .admin-leave-card .admin-dialog-facts { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; margin: 0; }
+.admin-page .admin-leave-card .admin-dialog-facts dd { margin: 0; line-height: 1.6; }
+.admin-page .admin-leave-reason { margin-top: 18px; padding-top: 16px; border-top: 1px solid #e7eee9; }
+.admin-page .admin-leave-reason h4 { margin: 0 0 7px; color: #647b6c; font-size: 12px; font-weight: 500; }
+.admin-page :is(.admin-leave-reason p,.admin-leave-reviewed-note) { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
+.admin-page .admin-leave-impact { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; margin: 0; }
+.admin-page .admin-leave-impact > div { padding: 12px 14px; background: #f6f9f7; }
+.admin-page .admin-leave-impact dt { font-size: 12px; color: #647b6c; }
+.admin-page .admin-leave-impact dd { margin: 3px 0 0; color: #27583e; font-size: 23px; font-weight: 600; }
+.admin-page .admin-leave-shifts { display: flex; flex-wrap: wrap; gap: 7px; max-height: 112px; overflow-y: auto; margin-top: 14px; }
+.admin-page .admin-leave-shifts > span { padding: 4px 9px; border: 1px solid #dce8e0; background: #f5f9f6; font-size: 12px; color: #3e6850; }
+.admin-page .admin-leave-shifts .admin-leave-no-shift { padding: 0; border: 0; background: none; color: #7b8a80; }
+.admin-page .admin-leave-impact-note { margin: 14px 0 0; color: #6a7e70; font-size: 12px; line-height: 1.6; }
+.admin-page .admin-leave-review-fields { display: grid; grid-template-columns: minmax(200px,1fr) minmax(0,2fr); gap: 24px; align-items: start; }
+.admin-page .admin-leave-review-fields label { display: grid; gap: 8px; color: #42634f; font-size: 12px; font-weight: 600; }
+.admin-page .admin-leave-review-fields :is(select,textarea) { margin: 0; width: 100%; }
+.admin-page .admin-leave-review-fields textarea { min-height: 92px; }
+.admin-page .admin-leave-review .actions { justify-content: flex-end; margin-top: 18px; padding-top: 16px; border-top: 1px solid #e7eee9; }
+.admin-page .admin-leave-review .form-feedback:empty { display: none; }
+@media (max-width: 800px) {
+  .admin-page .admin-leave-columns, .admin-page .admin-leave-review-fields { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .admin-page .admin-leave-summary { flex-wrap: wrap; }
+  .admin-page .admin-leave-card { padding: 16px; }
+  .admin-page .admin-leave-card .admin-dialog-facts { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px) {
+  .admin-page .admin-encounter-section .admin-dialog-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .admin-page .admin-encounter-summary { align-items: flex-start; flex-wrap: wrap; padding: 16px; }
+  .admin-page .admin-encounter-actions .button-link { width: 100%; }
+}
+@media (max-width: 420px) {
+  .admin-page .admin-encounter-section .admin-dialog-facts { grid-template-columns: 1fr; }
+}
+@media (max-width: 960px) {
+  .admin-page .admin-schedule-information .admin-dialog-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 24px; }
+}
+@media (max-width: 680px) {
+  .admin-page .admin-schedule-information { padding-inline: 16px; }
+  .admin-page .admin-schedule-information .admin-dialog-facts { grid-template-columns: 1fr; gap: 6px; }
+}
+.admin-page .admin-schedule-list #admin-results .admin-table :is(th,td):nth-child(6) { text-align: center; }
+@media (min-width: 681px) {
+  .admin-page .admin-schedule-list #resource-filter > label:first-child { flex: 2 1 340px; }
+  .admin-page[data-page="encounters"] #resource-filter > label:first-child { flex: 2 1 340px; }
+}
+.admin-page .admin-departments-list .admin-table :is(th,td):nth-child(4) { text-align: center; }
+@media (min-width: 681px) {
+  .admin-page .admin-departments-list #resource-filter > label { flex: 0 1 50%; }
+}
 
 .admin-page .admin-member-groups { display: grid; gap: 20px; margin-top: 16px; }
 .admin-page .admin-member-group { border: 1px solid #dfe9e3; border-radius: 5px !important; overflow: hidden; }

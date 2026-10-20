@@ -483,6 +483,10 @@ body:has(> .patient-header) > .skip-link { position: fixed; z-index: 30; }
   font-size: 14px;
   line-height: 1.5;
 }
+#record-lookup-status { padding-inline: 24px; }
+@media (max-width: 680px) {
+  #record-lookup-status { padding-inline: 16px; }
+}
 .lookup-submit {
   display: block;
   width: min(180px, 100%);

@@ -1,5 +1,6 @@
 import { getMe } from "../api/auth.js";
 import { getEncounter, getTicket, cancel } from "../api/encounter.js";
+import { startAutoRefresh } from "../core/auto_refresh.js";
 import { createIntent, listEncounterPayments, setDemoResult } from "../api/payment.js";
 import { verifySession, hasSession, clearSession, loginUrl } from "../core/session.js";
 import { readDraft } from "../core/booking_draft.js";
@@ -129,6 +130,7 @@ $("#booking-payment-failed").addEventListener("click", () => {
   if (payment?.transaction_status === "PENDING") return paymentAction(() => setDemoResult(payment.payment_id, { result: "FAILED" }));
 });
 ui.refresh.addEventListener("click", refresh);
+startAutoRefresh(refresh, { canRefresh: () => active && hasSession() && !busy && !checking && Boolean(encounter) });
 ui.cancel.addEventListener("click", () => paymentAction(() => cancel(encounter.encounter_id, { reason: "Người đặt khám hủy giữ chỗ trên giao diện" })));
 function suspend() { active = false; version++; ui.page.hidden = true; clearInterval(timer); timer = undefined; }
 async function start() {

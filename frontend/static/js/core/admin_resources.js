@@ -2,12 +2,16 @@ import {thumbnailUrl} from "./articles.js";
 import { code, prefixes } from "./business_codes.js";
 import * as auth from "../api/auth.js";
 import * as patients from "../api/patient.js";
+import { listAdminPatients } from "./admin_patient_search.js";
 import * as doctors from "../api/doctor.js";
 import * as catalog from "../api/catalog.js";
 import * as schedules from "../api/schedule.js";
 import * as articles from "../api/article.js";
 import * as encounters from "../api/encounter.js";
 import {esc, date, stamp, money, badge, label, options} from "./admin_ui.js";
+
+const appointmentTime = value => value && Number.isFinite(new Date(value).getTime())
+  ? new Intl.DateTimeFormat("vi-VN", {timeZone:"Asia/Ho_Chi_Minh",hour:"2-digit",minute:"2-digit"}).format(new Date(value)) : "—";
 
 export const adminPages = {
   home:{title:"Tổng quan quản trị",description:"Theo dõi hoạt động khám bệnh và truy cập nhanh các khu vực quản lý."},
@@ -41,10 +45,10 @@ export const resources = {
       f("id_card","CCCD","text",{editOnly:true,max:12,pattern:"[0-9]{12}"}),f("address","Địa chỉ","text",{editOnly:true,max:255}),
       f("emergency_contact_name","Người liên hệ khẩn cấp","text",{editOnly:true,max:150}),f("emergency_contact_phone","Số điện thoại khẩn cấp","tel",{editOnly:true,max:30})],
   },
-  patients:{id:"patient_id",list:patients.listPatients,get:async(id,opt)=>(await patients.getPatient(id,opt)).patient,create:patients.createPatient,update:patients.updatePatient,add:"Thêm bệnh nhân",columns:["Mã BN","Họ và tên","Ngày sinh","Điện thoại","CCCD","Trạng thái"],
-    cells:r=>[esc(code("BN", r.patient_id)),esc(r.full_name),date(r.dob),esc(r.phone),esc(r.id_card || "—"),esc(r.is_archived?"Đã lưu trữ":"Đang sử dụng")],
-    filters:[f("q","Họ tên / CCCD","search"),f("phone","Số điện thoại","tel"),f("include_archived","Bao gồm hồ sơ lưu trữ","checkbox")],
-    fields:[f("full_name","Họ tên","text",{required:true,max:150}),f("dob","Ngày sinh","date"),f("phone","Điện thoại","tel",{required:true,max:20,readOnEdit:true}),choice("gender","Giới tính",["Nam","Nữ","Khác"]),f("id_card","CCCD / mã định danh","text",{max:12,pattern:"([0-9]{9}|[0-9]{12})"}),f("address","Địa chỉ","text",{max:255}),f("health_insurance","Mã thẻ BHYT","text",{max:15,pattern:"[A-Za-z0-9]{10,15}"}),f("confirm_shared_phone","Tôi đã xác nhận đây là người thân dùng chung số điện thoại","checkbox",{createOnly:true})],
+  patients:{id:"patient_id",list:listAdminPatients,get:async(id,opt)=>(await patients.getPatient(id,opt)).patient,create:patients.createPatient,update:patients.updatePatient,add:"Thêm bệnh nhân",columns:["Mã BN","Họ và tên","Ngày sinh","Điện thoại","CCCD","Trạng thái"],
+    cells:r=>[esc(code("BN", r.patient_id)),esc(r.full_name),date(r.dob),esc(r.phone),esc(r.id_card || "—"),`<span class="badge ${r.is_archived?"red":"green"}">${r.is_archived?"Không hoạt động":"Đang hoạt động"}</span>`],
+    filters:[f("q","Họ tên / CCCD","search"),f("phone","Số điện thoại","tel"),f("patient_status","Trạng thái","select",{choices:[["ACTIVE","Đang hoạt động"],["INACTIVE","Không hoạt động"]],default:"ACTIVE"})],
+    fields:[f("full_name","Họ tên","text",{required:true,max:150}),f("dob","Ngày sinh","date"),f("phone","Điện thoại","tel",{required:true,max:20,readOnEdit:true}),choice("gender","Giới tính",["Nam","Nữ","Khác"]),f("id_card","CCCD / mã định danh","text",{max:12,pattern:"([0-9]{9}|[0-9]{12})"}),f("address","Địa chỉ","text",{max:255}),f("health_insurance","Mã thẻ BHYT","text",{max:15,pattern:"[A-Za-z0-9]{10,15}"}),f("email","Email","email",{max:254}),{...choice("relationship","Quan hệ với chủ tài khoản",[["SELF","Bản thân"],["PARENT","Cha / mẹ"],["CHILD","Con"],["SPOUSE","Vợ / chồng"],["OTHER","Khác"]])},f("emergency_contact_name","Họ và tên","text",{max:150}),f("emergency_contact_phone","Số điện thoại","tel",{max:20,pattern:"[+]?[0-9]{9,15}"}),f("emergency_contact_relationship","Quan hệ với bệnh nhân","text",{max:50}),f("confirm_shared_phone","Tôi đã xác nhận đây là người thân dùng chung số điện thoại","checkbox",{createOnly:true})],
   },
   doctors:{id:"doctor_profile_id",list:doctors.listDoctors,get:async(id,opt)=>(await doctors.getDoctor(id,opt)).doctor,create:doctors.createDoctor,update:doctors.updateDoctor,add:"Thêm hồ sơ bác sĩ",params:{include_inactive:true},columns:["Mã BS","Bác sĩ","Chuyên khoa","Học vị","Kinh nghiệm","Phí khám","Trạng thái"],
     cells:r=>[esc(code("BS", r.doctor_profile_id)),esc(r.full_name),esc(r.department_name),esc(r.academic_degree || "—"),esc(r.experience_years==null?"—":`${r.experience_years} năm`),money(r.consultation_fee),badge(r.is_active?"ACTIVE":"LOCKED")],
@@ -59,7 +63,7 @@ export const resources = {
   },
   schedule:{id:"schedule_id",list:schedules.listAdminSchedules,create:schedules.createSchedule,update:schedules.updateSchedule,add:"Tạo ca làm việc",columns:["Mã ca","Bác sĩ","Phòng","Ngày","Thời gian","Đã đặt / sức chứa","Trạng thái"],
     cells:r=>[esc(code("CA", r.schedule_id)),esc(r.doctor_name),esc(r.room_name),date(r.work_date),esc(`${r.start_time?.slice(0,5)} – ${r.end_time?.slice(0,5)}`),esc(`${r.booked_count} / ${r.max_quota}`),badge(r.schedule_status)],
-    filters:[f("doctor_profile_id","Bác sĩ","select",{reference:"doctors"}),dept,f("room_id","Phòng","select",{reference:"rooms"}),f("from_date","Từ ngày","date"),f("to_date","Đến ngày","date"),choice("status","Trạng thái",["OPEN","FULL","CLOSED","UNAVAILABLE"])],
+    filters:[f("q","Tìm chuyên khoa, bác sĩ hoặc phòng","search"),f("from_date","Từ ngày","date"),f("to_date","Đến ngày","date"),choice("status","Trạng thái",["OPEN","FULL","CLOSED","UNAVAILABLE"])],
     fields:[f("doctor_profile_id","Bác sĩ","select",{reference:"doctors",number:true,required:true,createOnly:true}),f("room_id","Phòng khám","select",{reference:"rooms",number:true,required:true,lockedWhenBooked:true}),f("work_date","Ngày làm việc","date",{required:true,lockedWhenBooked:true}),f("start_time","Giờ bắt đầu","time",{required:true,lockedWhenBooked:true}),f("end_time","Giờ kết thúc","time",{required:true,lockedWhenBooked:true}),f("slot_minutes","Thời lượng khung giờ","select",{choices:[[15,"15 phút"],[30,"30 phút"]],number:true,required:true,lockedWhenBooked:true}),f("max_quota","Sức chứa","number",{min:1,maxNumber:1000,required:true}),f("schedule_status","Trạng thái ca","select",{choices:["OPEN","CLOSED"],editOnly:true,omitEmpty:true})],
   },
   assignments:{id:"assignment_id",params:{include_revoked:true},list:schedules.listNurseAssignments,get:async(id,opt)=>(await schedules.getNurseAssignment(id,opt)).assignment,create:schedules.createNurseAssignment,add:"Phân công y tá",columns:["Mã","Y tá","Mã ca","Phòng","Ngày","Thời gian","Trạng thái"],
@@ -73,8 +77,8 @@ export const resources = {
     fields:[f("title","Tiêu đề","text",{required:true,max:255}),f("slug","Đường dẫn bài viết","text",{required:true,max:200,pattern:"[a-z0-9]+(?:-[a-z0-9]+)*"}),f("category","Danh mục","text",{max:100}),f("thumbnail_url","Đường dẫn ảnh đại diện","text",{max:2000}),f("content","Nội dung bài viết","textarea",{required:true,max:100000}),f("is_active","Hiển thị bài viết","select",{choices:[[false,"Bản nháp / đã ẩn"],[true,"Xuất bản / hẹn giờ"]],boolean:true,default:false}),f("published_at","Thời điểm đăng (giờ Việt Nam)","datetime-local")],
   },
   encounters:{id:"encounter_id",list:encounters.listEncounters,get:async(id,opt)=>(await encounters.getEncounter(id,opt)).encounter,columns:["Mã lượt","Người bệnh","Bác sĩ","Hình thức","Ngày khám","Khung giờ","Mã phiếu","Trạng thái"],
-    cells:r=>[esc(code("LK", r.encounter_id)),esc(r.patient_name),esc(r.doctor_name),badge(r.encounter_type),date(r.work_date),esc(r.estimated_exam_at?new Intl.DateTimeFormat("vi-VN",{timeZone:"Asia/Ho_Chi_Minh",hour:"2-digit",minute:"2-digit"}).format(new Date(r.estimated_exam_at)):"—"),esc(r.ticket_code || "Chưa phát phiếu"),badge(r.encounter_status)],
-    filters:[id("patient_id","Mã bệnh nhân"),id("schedule_id","Mã ca"),f("doctor_profile_id","Bác sĩ","select",{reference:"doctors"}),f("work_date","Ngày khám","date"),choice("encounter_type","Hình thức",["ONLINE","WALK_IN"]),choice("encounter_status","Trạng thái",["HOLDING","CONFIRMED","CHECKED_IN","IN_PROGRESS","COMPLETED","CANCELLED","NO_SHOW","EXPIRED"])],
+    cells:r=>[esc(code("LK", r.encounter_id)),esc(r.patient_name),esc(r.doctor_name),badge(r.encounter_type),date(r.work_date),esc(`${appointmentTime(r.estimated_exam_at)} – ${appointmentTime(r.appointment_end_at)}`),esc(r.ticket_code || "Chưa phát phiếu"),badge(r.encounter_status)],
+    filters:[f("q","Tìm người bệnh, bác sĩ, phòng hoặc mã tra cứu","search"),f("work_date","Ngày khám","date"),choice("encounter_type","Hình thức",["ONLINE","WALK_IN"]),choice("encounter_status","Trạng thái",["HOLDING","CONFIRMED","CHECKED_IN","IN_PROGRESS","COMPLETED","CANCELLED","NO_SHOW","EXPIRED"])],
   },
 };
 export function collectionItemMarkup(name, row={},imagePicker=true) {

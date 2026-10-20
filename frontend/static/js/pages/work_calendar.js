@@ -1,3 +1,4 @@
+import { startAutoRefresh } from "../core/auto_refresh.js";
 import { code } from "../core/business_codes.js";
 import { staffReady, sessionError } from "../core/staff_workspace.js";
 import { hasSession } from "../core/session.js";
@@ -243,4 +244,5 @@ async function initialize() {
   $("#shift-filter").addEventListener("change", renderWeek);
   submitButton.disabled = false;
   await Promise.all([loadWeek(), loadRequests()]);
+  startAutoRefresh(() => Promise.all([loadWeek(), loadRequests(requestPage)]), { canRefresh: () => active });
 }

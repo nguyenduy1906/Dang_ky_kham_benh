@@ -57,6 +57,7 @@ export function createAdminContext() {
   async function show(title, task) {
     if(!active)return;
     const current=++modalVersion, request=new AbortController();requests.add(request);
+    const patientHistory=modal.querySelector("#patient-history-header");if(patientHistory)patientHistory.hidden=true;
     $("#admin-dialog-title").textContent=title;modalBody.innerHTML='<p role="status">Đang tải…</p>';
     if(!modal.open){trigger=document.activeElement;modal.showModal();}
     try {const html=await task(request.signal);if(active&&current===modalVersion)modalBody.innerHTML=html;}

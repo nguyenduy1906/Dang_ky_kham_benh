@@ -18,7 +18,18 @@ import {initOverviewPeriod} from "./staff_overview.js";
 import {$,esc,date,stamp,money,badge,label,table,facts,panel,options,button,metrics,chart,allPages,createAdminContext,today} from "./admin_ui.js";
 import {resources,fieldMarkup,resourcePayload,collectionItemMarkup} from "./admin_resources.js";
 import {bindLiveSearch} from "./live_search.js";
+import {searchAdminSchedules} from "./admin_schedule_search.js";
+import {searchAdminEncounters} from "./admin_encounter_search.js";
+import {encounterDetails} from "./admin_encounter_detail.js";
+import {patientDetails} from "./admin_patient_detail.js";
+import {patientEditForm,patientCreateForm} from "./admin_patient_form.js";
+import {openBulkAssignment} from "./admin_bulk_assignment.js";
+import {openScheduleBuilder} from "./admin_schedule_builder.js";
+import {chronologicalPage} from "./clinical_list_order.js";
+import {leaveRequestDetails} from "./admin_leave_detail.js";
+import {openScheduleDetail} from "./admin_schedule_detail.js";
 import {initAdminOverview} from "./admin_overview.js";
+import {startAutoRefresh} from "./auto_refresh.js";
 export {adminPages} from "./admin_resources.js";
 
 const dataForm = form => {
@@ -50,6 +61,7 @@ async function references(names,signal) {
 function fieldsForm(key,row,refs) {
   const config=resources[key], edit=Boolean(row), values=row?{...row,role:row.role_name}:{};
   const fields=config.fields.filter(f=>!(edit&&f.createOnly || !edit&&f.editOnly || key==="departments"&&edit&&f.name==="cover_image_url"));
+  if(key==="patients")return edit?patientEditForm(row,fields,refs,formActions("Lưu thay đổi")):patientCreateForm(fields,refs,formActions("Thêm bệnh nhân"));
   if(key==="users"&&!edit)refs.roles=refs.roles.filter(([role])=>["DOCTOR","NURSE","RECEPTIONIST"].includes(role));
   const normal=fields.filter(f=>!f.advanced).map(f=>{
     const markup=fieldMarkup({...f,clearable:edit&&["users","doctors","departments"].includes(key)},values,refs,edit);
@@ -60,8 +72,10 @@ function fieldsForm(key,row,refs) {
 }
 function detailMarkup(key,row) {
   if(key==="departments")return departmentDetails(row);
+  if(key==="encounters")return encounterDetails(row);
+  if(key==="patients")return patientDetails(row);
   const config=resources[key];
-  const extra={users:[["Đã xóa",row.is_deleted?"Có":"Không"],["Ngày tạo",stamp(row.created_at)]],patients:[["CCCD",row.id_card],["Giới tính",row.gender],["Địa chỉ",row.address],["BHYT",row.health_insurance],["Tài khoản liên kết",code("TK", row.user_id)]],doctors:[["Mã tài khoản",code("TK", row.user_id)],["Chuyên môn",row.specialization],["Giới thiệu",row.introduction]],departments:[["Mô tả",row.description],["Giới thiệu",row.overview],["Chức năng, nhiệm vụ",row.mission]],assignments:[["Ghi chú",row.note],["Ngày phân công",stamp(row.assigned_at)],["Người phân công",code("TK", row.assigned_by_id)],["Ngày thu hồi",stamp(row.revoked_at)],["Người thu hồi",code("TK", row.revoked_by_id)]],encounters:[["Phòng",row.room_name],["Triệu chứng",row.symptoms],["Phí khám đã chốt",money(row.consultation_fee_snapshot)],["Cọc đã chốt",money(row.deposit_amount_snapshot)],["Lý do hủy",row.cancel_reason]]}[key] || [];
+  const extra={users:[["Đã xóa",row.is_deleted?"Có":"Không"],["Ngày tạo",stamp(row.created_at)]],patients:[["CCCD",row.id_card],["Giới tính",row.gender],["Địa chỉ",row.address],["BHYT",row.health_insurance],["Tài khoản liên kết",code("TK", row.user_id)]],doctors:[["Mã tài khoản",code("TK", row.user_id)],["Chuyên môn",row.specialization],["Giới thiệu",row.introduction]],departments:[["Mô tả",row.description],["Giới thiệu",row.overview],["Chức năng, nhiệm vụ",row.mission]],assignments:[["Ghi chú",row.note],["Ngày phân công",stamp(row.assigned_at)],["Người phân công",code("TK", row.assigned_by_id)],["Ngày thu hồi",stamp(row.revoked_at)],["Người thu hồi",code("TK", row.revoked_by_id)]]}[key] || [];
   return (key==="users"?userAccountDetails(row):facts(config.columns.map((name,index)=>[name,config.cells(row)[index].replace(/<[^>]*>/g,"").replace(/&(amp|lt|gt|quot|#39);/g,(_,name)=>({amp:"&",lt:"<",gt:">",quot:'"',"#39":"'"}[name]))]).concat(extra)))
     +(key==="articles"?`<h3>Nội dung bài viết</h3><pre class="admin-text-content">${esc(row.content)}</pre>`:"")
     +'<div class="actions">'
@@ -69,7 +83,7 @@ function detailMarkup(key,row) {
 
 
     +(key==="articles"?button("article-image",row.article_id,"Tải ảnh bài viết"):"")
-    +(key==="encounters"?`<a class="button-link secondary" href="payments.html?encounter_id=${row.encounter_id}">Giao dịch của lượt khám</a><a class="button-link secondary" href="audit.html?encounter_id=${row.encounter_id}">Lịch sử và đối soát</a>`:"")+'</div>';
+    +'</div>';
 }
 export async function initAdminWorkspace(key) {
   const ctx=createAdminContext();
@@ -87,7 +101,7 @@ export async function initAdminWorkspace(key) {
       refreshers.forEach(refresh=>refresh.cancel());
       ctx.cancelLoad();
       if(!ctx.active)return;
-      $(resultId).innerHTML='<p role="status">Đang tìm kiếm…</p>';$(pagerId).innerHTML="";
+      $(resultId).innerHTML='<p class="admin-search-status" role="status">Đang tìm kiếm…</p>';$(pagerId).innerHTML="";
     };
     const safelyApply=async()=>{try { await apply(); } catch(error) { ctx.handle(error); $(resultId).innerHTML=""; $(pagerId).innerHTML=""; }};
     inputs.forEach(input=>refreshers.push(bindLiveSearch(input,safelyApply,{invalidate})));
@@ -128,26 +142,40 @@ export async function initAdminWorkspace(key) {
   async function resourcePage() {
     const config=resources[key], pageSize=["users","doctors","assignments","departments"].includes(key)?10:12;
     body.classList.toggle("admin-users-list",key==="users");
+    body.classList.toggle("admin-patients-list",key==="patients");
     body.classList.toggle("admin-doctors-list",key==="doctors");
     body.classList.toggle("admin-assignments-list",key==="assignments");
     body.classList.toggle("admin-departments-list",key==="departments");
+    body.classList.toggle("admin-rooms-list",key==="rooms");
+    body.classList.toggle("admin-schedule-list",key==="schedule");
     if(config.add)$("#page-header").insertAdjacentHTML("beforeend",`<button id="add-record" type="button">＋ ${esc(config.add)}</button>`);
-    $("#add-record")?.addEventListener("click",()=>editResource());
+    $("#add-record")?.addEventListener("click",event=>{
+      if(key==="assignments"){ctx.cancelLoad();openBulkAssignment({ctx,body,trigger:event.currentTarget,onBack:()=>reload()});}
+      else if(key==="schedule"){ctx.cancelLoad();openScheduleBuilder({body,trigger:event.currentTarget,suggestions:[...records.values()]});}
+      else editResource();
+    });
     body.innerHTML=panel("Danh sách",'<div id="admin-filters"></div><div id="admin-results"></div><div id="admin-pager"></div>')+(key==="schedule"?panel("Đơn xin nghỉ",'<form id="leave-filter" class="admin-toolbar"><label>Trạng thái<select name="status">'+options(["PENDING","APPROVED","REJECTED","CANCELLED"],"PENDING")+'</select></label><label>Mã nhân viên<input type="text" name="user_id"></label><button type="submit">Xem đơn</button></form><div id="leave-results"></div><div id="leave-pager"></div>'):"");
     reload=async()=>ctx.load(async signal=>{
       const params=codeParams(Object.fromEntries(new FormData($("#resource-filter"))));
       if(params.from_date&&params.to_date&&params.to_date<params.from_date)throw new Error("Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.");
+      if(key==="schedule")return searchAdminSchedules(params,page,pageSize,signal);
+      if(key==="encounters")return searchAdminEncounters(params,page,pageSize,signal);
+      if(key==="assignments")return chronologicalPage(await allPages(config.list,{...config.params,...params},signal),page,pageSize);
       const result=await config.list({...config.params,...params,page,page_size:pageSize},{signal});
       if(config.local){
         let items=result.items;
         const q=String(params.q || "").trim().toLocaleLowerCase("vi");
         if(q)items=items.filter(row=>[row.name,row.room_name,row.description].filter(Boolean).join(" ").toLocaleLowerCase("vi").includes(q));
-        return {items:items.slice((page-1)*pageSize,page*pageSize),total:items.length,page,page_size:pageSize};
+        return {items:items.slice((page-1)*pageSize,page*pageSize),total:items.length,page,page_size:pageSize,
+          departmentNames:key==="departments"?[...new Set(result.items.map(row=>row.name).filter(Boolean))]:undefined};
       }
       return result;
     },result=>{
-      listResult=result;for(const row of result.items)records.set(String(row[config.id]),row);
-      $("#admin-results").innerHTML=table([...config.columns,"Thao tác"],result.items.map(row=>[...config.cells(row),rowActions(key,row)]),config.title || "Danh sách quản trị");
+      listResult=result;page=result.page;for(const row of result.items)records.set(String(row[config.id]),row);
+      if(key==="departments")$("#department-name-suggestions").innerHTML=result.departmentNames.map(name=>`<option value="${esc(name)}"></option>`).join("");
+      const columns=key==="schedule"?[...config.columns.slice(0,-1),"Thao tác","Xem chi tiết"]:[...config.columns,"Thao tác"];
+      const cells=row=>key==="schedule"?[...config.cells(row).slice(0,-1),rowActions(key,row),button("schedule-view",row.schedule_id,"Xem chi tiết")]:[...config.cells(row),rowActions(key,row)];
+      $("#admin-results").innerHTML=table(columns,result.items.map(cells),config.title || "Danh sách quản trị");
       $("#admin-pager").innerHTML=paginationMarkup(result);
     });
     await ctx.load(signal=>references(config.filters.map(f=>f.reference).filter(Boolean),signal),result=>{
@@ -155,9 +183,33 @@ export async function initAdminWorkspace(key) {
       $("#admin-filters").innerHTML=`<form id="resource-filter" class="admin-toolbar">${config.filters.map(f=>fieldMarkup(f,{},refs,false,true)).join("")}<button type="submit">Lọc danh sách</button></form>`;
     });
     if(!ctx.active||!$("#resource-filter"))return;
+    if(key==="departments") {
+      const input=$("#resource-filter").elements.q;
+      input.setAttribute("list","department-name-suggestions");
+      input.setAttribute("autocomplete","off");
+      input.insertAdjacentHTML("afterend",'<datalist id="department-name-suggestions"></datalist>');
+    }
     // Optional deep links carry only backend ids, never grant access.
+    if(key==="encounters") {
+      const query=new URLSearchParams(location.search);
+      $("#resource-filter").elements.q.value=[["schedule_id","CA"],["patient_id","BN"]].flatMap(([field,prefix])=>{
+        const value=query.get(field);return value&&/^[1-9]\d*$/.test(value)?[code(prefix,value)]:[];
+      }).join(" ");
+    }
     for(const field of ["schedule_id","patient_id"]){const value=new URLSearchParams(location.search).get(field);if(value&&/^\d+$/.test(value)&&$("#resource-filter").elements[field])$("#resource-filter").elements[field].value=value;}
-    const apply=()=>{page=1;return reload();};
+    if(key==="patients") {
+      const query=new URLSearchParams(location.search),form=$("#resource-filter");
+      if(query.has("patient_status")&&["","ACTIVE","INACTIVE"].includes(query.get("patient_status")))form.elements.patient_status.value=query.get("patient_status");
+    }
+    const apply=()=>{
+      page=1;
+      if(key==="patients") {
+        const url=new URL(location.href),form=$("#resource-filter");
+        url.searchParams.set("patient_status",form.elements.patient_status.value);
+        history.replaceState(history.state,"",url);
+      }
+      return reload();
+    };
     if(!bindTextFilters($("#resource-filter"),apply,"#admin-results","#admin-pager"))$("#resource-filter").addEventListener("submit",event=>{event.preventDefault();apply();});
     await reload();
     if(key==="schedule") {
@@ -167,7 +219,7 @@ export async function initAdminWorkspace(key) {
   }
   function rowActions(name,row) {
     const config=resources[name],id=row[config.id];
-    return `<div class="admin-row-actions">${button("detail",id,"Chi tiết")}${config.update&&!row.is_deleted&&!row.is_archived?button("edit",id,["users","doctors","departments"].includes(name)?"Chỉnh sửa":"Sửa"):""}${name==="patients"&&!row.is_archived?button("archive",id,"Lưu trữ"):""}${name==="assignments"?button("edit",id,"Chỉnh sửa"):""}</div>`;
+    return `<div class="admin-row-actions">${button("detail",id,"Chi tiết")}${config.update&&!row.is_deleted&&(name==="patients"||!row.is_archived)?button("edit",id,["users","patients","doctors","departments","rooms","schedule"].includes(name)?"Chỉnh sửa":"Sửa"):""}${name==="assignments"?button("edit",id,"Chỉnh sửa"):""}</div>`;
   }
   async function confirmation(action,id) {
     const row=records.get(String(id));if(!row)return;
@@ -182,6 +234,10 @@ export async function initAdminWorkspace(key) {
       if(!row)throw new Error("Không tìm thấy bản ghi.");records.set(String(id),row);
       return detailMarkup(key,row);
     });
+    const historyButton=$("#patient-history-header");
+    if(key==="patients"&&historyButton&&modalBody.querySelector(".admin-patient-detail")?.dataset.patientId===String(id)) {
+      historyButton.dataset.id=String(id);historyButton.hidden=false;
+    }
   }
 
   async function fullReport(reader,params,signal) {
@@ -306,9 +362,8 @@ export async function initAdminWorkspace(key) {
   }
   async function leaveDetail(id) {
     await ctx.show("Đơn xin nghỉ",async signal=>{
-      const result=await leave.getAdminLeaveRequest(id,{signal}),row=result.leave_request;
-      return facts([["Nhân viên",row.staff_name],["Vai trò",label(row.role_name)],["Từ ngày",date(row.from_date)],["Đến ngày",date(row.to_date)],["Buổi nghỉ",label(row.period)],["Lý do",row.reason],["Trạng thái",label(row.status)],["Ý kiến duyệt",row.review_note],["Các ca ảnh hưởng",result.affected_schedule_ids.map(id=>code("CA", id)).join(", ") || "Không có"],["Lượt khám ảnh hưởng",result.affected_encounters]])
-        +(row.status==="PENDING"?notice("Duyệt nghỉ bác sĩ sẽ ngừng nhận lịch mới ở ca ảnh hưởng; duyệt nghỉ y tá sẽ thu hồi phân công trùng ca. Các lượt khám cần được điều phối riêng.")+`<form data-form="review" data-id="${esc(id)}"><label>Quyết định<select name="decision" required>${options(["APPROVED","REJECTED"],"","Chọn quyết định")}</select></label><label>Ý kiến xét duyệt *<textarea name="note" required maxlength="1000" rows="3"></textarea></label>${formActions("Xác nhận xét duyệt")}</form>`:"");
+      const result=await leave.getAdminLeaveRequest(id,{signal});
+      return leaveRequestDetails(result,id);
     });
   }
   async function patientHistory(id) {
@@ -347,6 +402,12 @@ export async function initAdminWorkspace(key) {
   async function action(event) {
     const target=event.target.closest("[data-action]");if(!target||target.disabled||!ctx.active)return;
     const name=target.dataset.action,id=target.dataset.id;
+    if(name==="schedule-view"&&key==="schedule") {
+      const row=records.get(String(id));if(!row)return;
+      openScheduleDetail({ctx,body,row,information:detailMarkup("schedule",row),trigger:target,
+        showEncounter:item=>{if(item)ctx.show("Chi tiết lượt khám",async signal=>detailMarkup("encounters",(await encounters.getEncounter(item.encounter_id,{signal})).encounter));}});
+      return;
+    }
     if(name==="back-department-edit"){await editResource(id);return;}
     if(name==="revoke-member-role") {
       const form=modalBody.querySelector(".admin-member-add-form");
@@ -461,6 +522,7 @@ export async function initAdminWorkspace(key) {
   let departmentPreviewUrl;
   const releasePreview=()=>{for(const url of galleryPreviewUrls)URL.revokeObjectURL(url);galleryPreviewUrls.clear();if(departmentPreviewUrl){URL.revokeObjectURL(departmentPreviewUrl);departmentPreviewUrl=null;}};
   modal.addEventListener("close",releasePreview);
+  $("#patient-history-header")?.addEventListener("click",event=>patientHistory(event.currentTarget.dataset.id));
   modal.addEventListener("close",()=>{$("#department-dialog-back")?.remove();modalBody.classList.remove("admin-department-content-view");departmentEditor=null;});
   window.addEventListener("pagehide",releasePreview,{once:true});
   modalBody.addEventListener("change",event=>{
@@ -489,5 +551,10 @@ export async function initAdminWorkspace(key) {
   else if(key==="payments")await paymentsPage();
   else if(key==="configuration")await configurationPage();
   else if(key==="audit")await auditPage();
+  // Editors and the bulk assignment screen keep their current contents.
+  if(key!=="configuration"&&key!=="statistics")startAutoRefresh(async()=>{await reload();if(key==="schedule")await leaveList();},{
+    canRefresh:()=>ctx.active&&!body.querySelector("[data-form], #bulk-assignment-form")&&
+      Boolean(body.querySelector("#resource-filter, #payment-search, #audit-filter")),
+  });
   return ctx;
 }

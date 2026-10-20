@@ -1,4 +1,5 @@
 import * as reports from "../api/statistics.js";
+import { startAutoRefresh } from "./auto_refresh.js";
 import * as notifications from "../api/notification.js";
 import { $, esc, stamp, money, metrics, panel, today } from "./admin_ui.js";
 import { resources } from "./admin_resources.js";
@@ -120,4 +121,15 @@ export async function initAdminOverview(ctx) {
     });
   });
   await ctx.load(signal=>loadAdminOverview(today(),week,signal),result=>{data=result;body.innerHTML=adminOverviewMarkup(result);});
+  startAutoRefresh(async()=>{
+    const selectedDay=data?.day, selectedWeek=week, version=weekVersion, calendarVersion=scheduleVersion;
+    await ctx.load(async signal=>{
+      const result=await loadAdminOverview(today(),selectedWeek,signal);
+      if(selectedDay&&selectedDay!==result.day){result.calendar=await loadOverviewSchedules(selectedDay,signal);result.day=selectedDay;}
+      return result;
+    },result=>{
+      if(version!==weekVersion||calendarVersion!==scheduleVersion)return;
+      data=result;body.innerHTML=adminOverviewMarkup(result);
+    });
+  },{canRefresh:()=>ctx.active});
 }

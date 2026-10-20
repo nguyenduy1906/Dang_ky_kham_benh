@@ -1,4 +1,5 @@
 import { code, parseCode } from "../core/business_codes.js";
+import { startAutoRefresh } from "../core/auto_refresh.js";
 import { initTodayOverview, overviewRows, overviewDayParams } from "../core/staff_overview.js";
 import { staffReady } from "../core/staff_workspace.js";
 import * as schedules from "../api/schedule.js";
@@ -38,7 +39,9 @@ function shiftCards(items, allowLeave = false) {
 async function schedulePage() {
   $("#page-body").innerHTML = panel("Lịch được phân công", `<form id="schedule-filters" class="staff-toolbar"><label>Từ ngày<input type="date" name="from_date" value="${today()}"></label><label>Đến ngày<input type="date" name="to_date"></label><button type="submit">Xem lịch</button><button type="reset" class="secondary">Xem tất cả</button></form><div id="schedule-list"></div><div id="list-pagination" class="list-pagination"></div>`);
   const form = $("#schedule-filters");
+  let currentPage = 1;
   async function load(page = 1) {
+    currentPage = page;
     await run(async () => {
       const result = await schedules.listOwnSchedules({ ...Object.fromEntries(new FormData(form)), page, page_size: 12 });
       $("#schedule-list").innerHTML = shiftCards(result.items, true); pagination(result, load);
@@ -57,6 +60,7 @@ async function schedulePage() {
   form.addEventListener("submit", event => { event.preventDefault(); load(); });
   form.addEventListener("reset", event => { event.preventDefault(); form.elements.from_date.value = ""; form.elements.to_date.value = ""; load(); });
   await load();
+  startAutoRefresh(() => load(currentPage));
 }
 async function clinical() {
   const requested = new URLSearchParams(location.search).get("encounter_id");
@@ -120,4 +124,13 @@ async function clinical() {
   $("#encounter-picker").addEventListener("submit", event => { event.preventDefault(); const id = $("#clinical-id").value || $("#clinical-encounter").value; run(() => select(parseCode(id, "LK"))); });
   if (requested && /^\d+$/.test(requested)) await select(requested);
   window.addEventListener("beforeunload", event => { if (dirty) { event.preventDefault(); event.returnValue = ""; } });
+  // Only update the picker: never replace a medical record being edited.
+  startAutoRefresh(async () => {
+    const result = await encounters.listEncounters({ page_size: 100 });
+    const picker = $("#clinical-encounter"), selected = picker.value;
+    const rows = result.items.filter(e => ["CHECKED_IN", "IN_PROGRESS", "COMPLETED"].includes(e.encounter_status));
+    if (encounter && !rows.some(e => e.encounter_id === encounter.encounter_id)) rows.unshift(encounter);
+    picker.innerHTML = '<option value="">Chọn lượt khám được giao</option>' + rows.map(e => `<option value="${e.encounter_id}">${code("LK", e.encounter_id)} · ${esc(e.patient_name)} · ${date(e.work_date)} · ${esc(e.room_name)}</option>`).join("");
+    picker.value = selected;
+  });
 }

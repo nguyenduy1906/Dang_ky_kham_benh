@@ -1,3 +1,4 @@
+import { startAutoRefresh } from "../core/auto_refresh.js";
 import { listDepartments } from "../api/catalog.js";
 import { listDoctors } from "../api/doctor.js";
 import { allPages } from "../core/booking.js";
@@ -77,3 +78,4 @@ retry.addEventListener("click", load);
 window.addEventListener("pagehide", () => request?.abort());
 window.addEventListener("pageshow", event => { if (event.persisted) load(); });
 load();
+startAutoRefresh(load);

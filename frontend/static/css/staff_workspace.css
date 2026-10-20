@@ -101,11 +101,22 @@
 .staff-page .table-wrapper { overflow-x: auto; border: 1px solid var(--staff-line); border-radius: 9px; margin: 20px 0 14px; }
 .staff-page table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; font-size: 13px; }
 .staff-page th { background: #edf4ef; padding: 13px 16px; color: #5c7265; font-size: 11px; letter-spacing: .3px; font-weight: 600; }
+/* Keep table headings continuous; only the surrounding table block is rounded. */
+body.staff-page table { border-spacing: 0; }
+body.staff-page table thead,
+body.staff-page table thead :is(tr,th,td) { border-radius: 0 !important; background-color: #edf4f0 !important; }
+body.staff-page table thead :is(th,td) { border-inline: 0 !important; }
 .staff-page td { padding: 18px 16px; border-top: 1px solid #e7eee9; vertical-align: middle; }
 .staff-page tbody tr:hover { background: #fbfdfb; }
 .staff-page td button { min-height: 34px; padding: 6px 11px; font-size: 11px; }
 .staff-page td small { margin-top: 3px; font-size: 10px; }
 .staff-page [role="status"] { font-size: 12px; color: var(--staff-muted); }
+.staff-page :is(#patient-list, #walkin-results) > [role="status"],
+.staff-page #nurse-record-status { padding-inline: 24px; }
+@media (max-width: 680px) {
+  .staff-page :is(#patient-list, #walkin-results) > [role="status"],
+  .staff-page #nurse-record-status { padding-inline: 16px; }
+}
 .staff-page .badge, .staff-page .status { display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; color: #476650; background: #edf4ee; white-space: nowrap; }
 .staff-page .badge.green, .staff-page .status.completed { background: #e7f3eb; color: #287043; }
 .staff-page .badge.amber, .staff-page .status.waiting { background: #faf0da; color: #8a631c; }

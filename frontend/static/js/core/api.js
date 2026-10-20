@@ -2,6 +2,8 @@ import { API_CONFIG } from "../config.js";
 
 // Chỉ giữ token trong bộ nhớ khi bên gọi chủ động cung cấp. Không tạo/lưu phiên.
 let accessToken = null;
+let pendingRequests = 0;
+export const hasPendingApiRequests = () => pendingRequests > 0;
 
 export function setAccessToken(token) {
   if (token !== null && typeof token !== "string") {
@@ -76,6 +78,7 @@ export async function apiRequest(path, {
     timedOut = true;
     controller.abort();
   }, timeoutMs) : null;
+  pendingRequests++;
   try {
     const response = await fetch(url, {
       method, headers: requestHeaders, body, signal: controller.signal,
@@ -103,6 +106,7 @@ export async function apiRequest(path, {
     const message = timedOut ? "Máy chủ phản hồi quá lâu." : controller.signal.aborted ? "Yêu cầu đã được hủy." : "Không thể kết nối tới backend.";
     throw new ApiError(message, { code, cause });
   } finally {
+    pendingRequests--;
     if (timer !== null) clearTimeout(timer);
     signal?.removeEventListener("abort", abort);
   }

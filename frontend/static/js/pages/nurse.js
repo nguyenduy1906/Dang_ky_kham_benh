@@ -1,4 +1,5 @@
 import { initTodayOverview } from "../core/staff_overview.js";
+import { startAutoRefresh } from "../core/auto_refresh.js";
 import { staffReady } from "../core/staff_workspace.js";
 import * as schedules from "../api/schedule.js";
 import { initNursePatients } from "../core/nurse_patients.js";
@@ -43,11 +44,12 @@ async function assignmentsPage() {
   const form = $("#nurse-assignment-search"), request = new AbortController();
   form.elements.from_date.value = range?.from || "";
   form.elements.to_date.value = range?.to || "";
-  let items = [], active = true;
+  let items = [], active = true, currentPage = 1;
   function stop() { active = false; request.abort(); items = []; $("#page-body").replaceChildren(); }
   window.addEventListener("pagehide", stop, { once: true });
   window.addEventListener("neu:auth-change", stop, { once: true });
   function render(page = 1) {
+    currentPage = page;
     if (!active) return;
     try { range = nurseFormRange(form); }
     catch {
@@ -73,4 +75,10 @@ async function assignmentsPage() {
   if (!active) return;
   items = assignments.sort((a, b) => `${a.work_date}${a.start_time}`.localeCompare(`${b.work_date}${b.start_time}`));
   render();
+  startAutoRefresh(async () => {
+    const assignments = await allAssignments({ signal: request.signal });
+    if (!active) return;
+    items = assignments.sort((a, b) => `${a.work_date}${a.start_time}`.localeCompare(`${b.work_date}${b.start_time}`));
+    render(currentPage);
+  }, { canRefresh: () => active });
 }

@@ -1,3 +1,5 @@
+import { startAutoRefresh } from "../core/auto_refresh.js";
+import { hasSession } from "../core/session.js";
 import { code } from "../core/business_codes.js";
 import { listPatients, listEncounters } from "../api/patient.js";
 import { getRecord, listPrescriptionItems } from "../api/medical_record.js";
@@ -182,3 +184,4 @@ const errorText = protectPatientPage({
     ui.lookup.close(); ui.result.close();
   },
 });
+startAutoRefresh(() => selected ? loadHistory(selected, currentPage) : loadProfiles(), { canRefresh: () => hasSession() });

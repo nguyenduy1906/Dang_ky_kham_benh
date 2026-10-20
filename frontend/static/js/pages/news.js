@@ -1,3 +1,4 @@
+import { startAutoRefresh } from "../core/auto_refresh.js";
 import { articlePage, articleCategories, articleCard } from "../core/articles.js";
 
 const root = document.querySelector("[data-article-feed]");
@@ -151,3 +152,4 @@ document.querySelector("#other-news-retry")?.addEventListener("click", loadOther
 window.addEventListener("pagehide", () => { clearTimeout(searchTimer); request?.abort(); categoryRequest?.abort(); otherRequest?.abort(); });
 window.addEventListener("pageshow", event => { if (event.persisted) { load(); loadCategories(); loadOtherNews(); } });
 load(); loadCategories(); loadOtherNews();
+startAutoRefresh(() => Promise.all([load(), loadOtherNews()]));

@@ -1,3 +1,9 @@
+/* A single header band across public and patient tables. */
+body table { border-collapse: collapse; border-spacing: 0; }
+body table thead,
+body table thead :is(tr,th,td) { border-radius: 0 !important; background-color: #edf4f0 !important; }
+body table thead :is(th,td) { border-inline: 0 !important; }
+
 .page-title {
   background: #edf6ef;
   border-bottom: 1px solid #dce8df;
@@ -744,6 +750,10 @@ main [data-contact-field="support_phone"],
   margin: 20px 0 0;
 }
 #directory-result:empty { display: none; }
+#directory-result, #news-status { padding-inline: 24px; }
+@media (max-width: 680px) {
+  #directory-result, #news-status { padding-inline: 16px; }
+}
 .directory-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

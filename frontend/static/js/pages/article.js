@@ -1,3 +1,4 @@
+import { startAutoRefresh } from "../core/auto_refresh.js";
 import { getBySlug } from "../api/article.js";
 import { articlePage, articleUrl, articleThumbnail, articleContent, publishedDate } from "../core/articles.js";
 import { ApiError } from "../core/api.js";
@@ -107,3 +108,4 @@ window.addEventListener("pagehide", () => { detailRequest?.abort(); relatedReque
 window.addEventListener("pageshow", event => { if (event.persisted) loadArticle(); });
 loadArticle();
 refreshDoctorImages();
+startAutoRefresh(loadArticle);

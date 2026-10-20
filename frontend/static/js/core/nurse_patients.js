@@ -1,9 +1,11 @@
 import { code } from "./business_codes.js";
+import { startAutoRefresh } from "./auto_refresh.js";
 import { getEncounter } from "../api/encounter.js";
 import { getPatient } from "../api/patient.js";
+import { listOwnNurseAssignments } from "../api/schedule.js";
 import { readMedicalRecord } from "./staff_encounters.js";
 import { sessionError } from "./staff_workspace.js";
-import { activeStatuses, nurseEncounters, localPage, shiftEnd, normalizeSearch, nurseRange, inNurseRange, visitOrder } from "./nurse_encounter_data.js";
+import { activeStatuses, nurseEncounters, allPages, localPage, shiftEnd, normalizeSearch, nurseRange, inNurseRange, visitOrder } from "./nurse_encounter_data.js";
 import { nurseVisitTable } from "./nurse_tables.js";
 import { $, esc, date, facts, panel, pagination, dialog, encounterSummary } from "./staff_ui.js";
 
@@ -30,7 +32,7 @@ export async function initNursePatients({ assignments }) {
     form.elements.period.value = "all";
     if (initialRange.from === initialRange.to) form.elements.work_date.value = initialRange.from;
   }
-  let active = true, version = 0, detailVersion = 0, request, detailRequest, rows = [];
+  let active = true, version = 0, detailVersion = 0, request, detailRequest, rows = [], currentPage = 1;
   const assigned = new Set(assignments.map(a => String(a.schedule_id)));
   function stop() {
     active = false; version++; detailVersion++; request?.abort(); detailRequest?.abort(); rows = [];
@@ -40,6 +42,7 @@ export async function initNursePatients({ assignments }) {
   window.addEventListener("neu:auth-change", stop, { once: true });
 
   function render(next = 1) {
+    currentPage = next;
     const q = normalizeSearch(search.value.trim()), now = Date.now(), period = form.elements.period.value;
     const matches = rows.filter(e => assigned.has(String(e.schedule_id))
       && (period === "all" || (period === "past" ? shiftEnd(e) < now : shiftEnd(e) >= now || e.encounter_status === "IN_PROGRESS"))
@@ -49,12 +52,22 @@ export async function initNursePatients({ assignments }) {
     $("#nurse-visit-list").innerHTML = nurseVisitTable(result.items);
     pagination(result, render, $("#nurse-visit-pages"));
   }
-  async function load() {
+  async function load(keepPage = false) {
     const current = ++version; request?.abort(); request = new AbortController();
     detailVersion++; detailRequest?.abort(); $("#staff-dialog").close(); rows = [];
     $("#nurse-visit-list").innerHTML = ""; $("#nurse-visit-pages").innerHTML = "";
     status.hidden = false; status.textContent = "Đang tải danh sách khám…"; status.dataset.error = "false";
     try {
+      if (keepPage === true) {
+        const assignments = await allPages(listOwnNurseAssignments, { signal: request.signal });
+        if (!active || current !== version) return;
+        assigned.clear(); assignments.forEach(a => assigned.add(String(a.schedule_id)));
+        const picked = form.elements.schedule_id.value;
+        const shifts = assignments.sort((a, b) => `${a.work_date}${a.start_time}`.localeCompare(`${b.work_date}${b.start_time}`));
+        form.elements.schedule_id.innerHTML = '<option value="">Tất cả ca</option>' + shifts.map(a => `<option value="${esc(a.schedule_id)}">${date(a.work_date)} · ${esc(a.start_time.slice(0, 5))}–${esc(a.end_time.slice(0, 5))} · ${esc(a.room_name)}</option>`).join("")
+          + (picked && !assigned.has(picked) ? `<option value="${esc(picked)}">Ca không còn được phân công</option>` : "");
+        form.elements.schedule_id.value = picked;
+      }
       const filter = { work_date: form.elements.work_date.value, schedule_id: form.elements.schedule_id.value };
       const range = filter.work_date ? null : inheritedRange;
       if (filter.schedule_id && !assigned.has(filter.schedule_id)) throw new Error("Ca khám không thuộc phân công của bạn.");
@@ -65,7 +78,7 @@ export async function initNursePatients({ assignments }) {
       rows = items.filter(e => inNurseRange(e, range)
         && (!filter.work_date || e.work_date === filter.work_date)
         && (!filter.schedule_id || String(e.schedule_id) === filter.schedule_id));
-      render(); status.hidden = true;
+      render(keepPage ? currentPage : 1); status.hidden = true;
     } catch (error) {
       if (active && current === version) { status.textContent = sessionError(error); status.dataset.error = "true"; }
     }
@@ -107,4 +120,5 @@ export async function initNursePatients({ assignments }) {
   await load();
   const encounterId = new URLSearchParams(location.search).get("encounter_id");
   if (encounterId) await showVisit(encounterId);
+  startAutoRefresh(() => load(true), { canRefresh: () => active });
 }

@@ -1,3 +1,4 @@
+import { startAutoRefresh } from "../core/auto_refresh.js";
 import { listDoctors } from "../api/doctor.js";
 import { listDepartments } from "../api/catalog.js";
 import { listDoctorSchedules } from "../api/schedule.js";
@@ -194,8 +195,9 @@ async function selectDoctor(doctor, { scrollToDoctor = false } = {}) {
     }
   }
 }
-async function loadSchedules() {
+async function loadSchedules(preserveSelection = false) {
   if (!selectedDoctor) return;
+  const previousSlot = preserveSelection === true ? selectedSlot?.key : null;
   scheduleAbort?.abort();
   scheduleAbort = new AbortController();
   const version = ++scheduleVersion, doctorId = selectedDoctor.doctor_profile_id;
@@ -212,6 +214,12 @@ async function loadSchedules() {
       { from_date: ui.from.value, to_date: ui.to.value }, { signal: scheduleAbort.signal });
     if (version !== scheduleVersion) return;
     schedules = availableSchedules(rows);
+    if (previousSlot) {
+      for (const schedule of schedules) {
+        const slot = schedule.slots.find(slot => `${schedule.schedule_id}/${slot.appointment_time}` === previousSlot);
+        if (slot) selectedSlot = { schedule, slot, key: previousSlot };
+      }
+    }
     const dates = [...new Set(schedules.map(s => s.work_date))];
     if (!dates.includes(selectedDate)) selectedDate = dates[0] || "";
     const dateSelect = $("#appointment-date");
@@ -222,6 +230,7 @@ async function loadSchedules() {
       : "Chưa có khung giờ có thể đặt online trong khoảng ngày này. Bạn có thể đổi ngày hoặc chọn bác sĩ khác.";
     renderDays();
     renderSlots();
+    updateReviewState();
   } catch (error) {
     if (version !== scheduleVersion) return;
     ui.scheduleStatus.textContent = errorMessage(error);
@@ -463,3 +472,4 @@ window.addEventListener("pageshow", event => { if (event.persisted) checkAccess(
 const resumeId = new URLSearchParams(location.search).get("encounter");
 if (resumeId && /^[1-9]\d*$/.test(resumeId)) location.replace(`booking_review.html?encounter=${resumeId}`);
 else checkAccess();
+startAutoRefresh(() => loadSchedules(true), { canRefresh: () => hasSession() && !ui.main.inert && Boolean(selectedDoctor) });

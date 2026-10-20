@@ -1,3 +1,4 @@
+import { startAutoRefresh } from "../core/auto_refresh.js";
 import { listDoctors } from "../api/doctor.js";
 import { listDepartments } from "../api/catalog.js";
 import { allPages } from "../core/booking.js";
@@ -320,3 +321,4 @@ window.addEventListener("pageshow", (event) => { if (event.persisted) settleHero
 settleHero();
 markHero();
 runHeroTimer();
+startAutoRefresh(() => Promise.all([loadHomeDepartments(), loadHomeDoctors()]));
