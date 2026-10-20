@@ -587,6 +587,10 @@ body.admin-page dialog { box-sizing: border-box; width: min(1180px, calc(100% - 
 .admin-page .admin-patient-section .admin-dialog-facts > div { min-width: 0; }
 .admin-page .admin-patient-section .admin-dialog-facts dd { margin: 0; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
 .admin-page .admin-patient-metadata { background: #fafcfb; }
+.admin-page .admin-patient-relative { min-width: 0; margin: 18px 0 0; padding: 18px; border: 1px solid #dfe9e3; background: #fbfdfc; }
+.admin-page .admin-patient-relative :is(h4,legend) { margin: 0 0 14px; padding: 0 6px; font-size: 14px; font-weight: 600; color: #28533b; overflow-wrap: anywhere; }
+.admin-page .admin-patient-relative > .admin-patient-field-note:first-of-type { margin-top: 0; margin-bottom: 16px; }
+.admin-page .admin-patient-relative[disabled] { background: #f4f6f5; }
 .admin-page .admin-patient-fields { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px 24px; }
 .admin-page .admin-patient-fields > label { min-width: 0; margin: 0; }
 .admin-page .admin-patient-fields :is(input,select) { margin-bottom: 0; border-radius: 5px; }

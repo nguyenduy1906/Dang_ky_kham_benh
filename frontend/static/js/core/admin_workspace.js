@@ -1,4 +1,6 @@
-import {validateDepartmentImage,saveDepartmentImage} from "./admin_department_image.js";
+import {initAdminPayments} from "./admin_payments.js";
+import {loadPatientAccount,savePatientAccount} from "./admin_patient_account.js";
+import {validateDepartmentImage,saveDepartmentImage,createDepartmentWithImages} from "./admin_department_image.js";
 import {thumbnailUrl} from "./articles.js";
 import { departmentDetails, departmentMemberGroups, addDepartmentMember, departmentDeputyLimit } from "./admin_department_view.js";
 import { userAccountDetails, saveUserAccount } from "./admin_user_account.js";
@@ -9,7 +11,6 @@ import * as doctors from "../api/doctor.js";
 import * as catalog from "../api/catalog.js";
 import * as schedules from "../api/schedule.js";
 import * as articles from "../api/article.js";
-import * as payments from "../api/payment.js";
 import * as reports from "../api/statistics.js";
 import * as configurations from "../api/configuration.js";
 import * as leave from "../api/staff_leave.js";
@@ -58,17 +59,17 @@ async function references(names,signal) {
   }));
   return result;
 }
-function fieldsForm(key,row,refs) {
+export function fieldsForm(key,row,refs) {
   const config=resources[key], edit=Boolean(row), values=row?{...row,role:row.role_name}:{};
-  const fields=config.fields.filter(f=>!(edit&&f.createOnly || !edit&&f.editOnly || key==="departments"&&edit&&f.name==="cover_image_url"));
+  const fields=config.fields.filter(f=>!(edit&&f.createOnly || !edit&&f.editOnly || key==="departments"&&f.name==="cover_image_url"));
   if(key==="patients")return edit?patientEditForm(row,fields,refs,formActions("Lưu thay đổi")):patientCreateForm(fields,refs,formActions("Thêm bệnh nhân"));
   if(key==="users"&&!edit)refs.roles=refs.roles.filter(([role])=>["DOCTOR","NURSE","RECEPTIONIST"].includes(role));
   const normal=fields.filter(f=>!f.advanced).map(f=>{
-    const markup=fieldMarkup({...f,clearable:edit&&["users","doctors","departments"].includes(key)},values,refs,edit);
-    return key==="departments"&&edit&&f.name==="name"?`<div class="admin-department-name-row">${markup}<button type="button" data-action="choose-department-image">Tải ảnh chuyên khoa</button></div><div class="admin-department-image-area"><input type="file" data-department-image accept="image/jpeg,image/png,image/webp" hidden><input type="hidden" name="cover_image_url" value="${esc(row.cover_image_url||"")}"><img class="admin-department-image-preview" alt="Ảnh chuyên khoa" ${thumbnailUrl(row.cover_image_url)?`src="${esc(thumbnailUrl(row.cover_image_url))}"`:"hidden"}><p class="admin-department-image-feedback" role="status"></p></div>`:markup;
+    const markup=fieldMarkup({...f,clearable:key==="departments"||edit&&["users","doctors"].includes(key),imagePicker:key==="departments"||edit},values,refs,edit);
+    return key==="departments"&&f.name==="name"?`<div class="admin-department-name-row">${markup}<button type="button" data-action="choose-department-image">Tải ảnh chuyên khoa</button></div><div class="admin-department-image-area"><input type="file" data-department-image accept="image/jpeg,image/png,image/webp" hidden><input type="hidden" name="cover_image_url" value="${esc(row?.cover_image_url||"")}"><img class="admin-department-image-preview" alt="Ảnh chuyên khoa" ${thumbnailUrl(row?.cover_image_url)?`src="${esc(thumbnailUrl(row?.cover_image_url))}"`:"hidden"}><p class="admin-department-image-feedback" role="status"></p></div>`:markup;
   }).join("");
-  const advanced=fields.filter(f=>f.advanced).map(f=>fieldMarkup({...f,clearable:edit&&["users","doctors","departments"].includes(key)},values,refs,edit)).join("");
-  return `${key==="users"&&edit?`<div class="admin-user-edit-meta">${facts([["Mã tài khoản",code("TK",row.user_id)],["Ngày tạo",stamp(row.created_at)],["Cập nhật lần cuối",stamp(row.updated_at)]])}</div>`:""}<form class="${key==='doctors'?'admin-doctor-form':''}" data-form="resource" data-department-version="${key==='departments'&&edit?esc(row.version):''}" data-id="${esc(row?.[config.id] ?? "")}" autocomplete="off"><div class="admin-contact-fields">${normal}</div>${key==="departments"&&edit?`<div class="admin-department-tools"><div class="actions">${button("leadership",row.department_id,"Thành viên khoa")}<button type="button" data-action="toggle-department-content" aria-expanded="false" aria-controls="department-content-fields">Nội dung giới thiệu chuyên khoa</button></div></div>`:""}${advanced?(key==="departments"&&edit?`<div id="department-content-fields" class="admin-advanced" hidden><div class="admin-contact-fields">${advanced}</div></div>`:`<details class="admin-advanced"><summary>Nội dung giới thiệu chuyên khoa</summary><div class="admin-contact-fields">${advanced}</div></details>`):""}${key==="patients"?notice("Cần ngày sinh hoặc CCCD để phân biệt hồ sơ. Số điện thoại liên kết của hồ sơ đã có được quản lý ở tài khoản."):""}${key==="schedule"&&Number(row?.booked_count)>0?notice("Ca đã có lượt khám: giữ nguyên phòng, ngày, giờ và thời lượng khung giờ."):""}${formActions(edit?"Lưu thay đổi":"Tạo mới")}</form>`;
+  const advanced=fields.filter(f=>f.advanced).map(f=>fieldMarkup({...f,clearable:key==="departments"||edit&&["users","doctors"].includes(key),imagePicker:key==="departments"||edit},values,refs,edit)).join("");
+  return `${key==="users"&&edit?`<div class="admin-user-edit-meta">${facts([["Mã tài khoản",code("TK",row.user_id)],["Ngày tạo",stamp(row.created_at)],["Cập nhật lần cuối",stamp(row.updated_at)]])}</div>`:""}<form class="${key==='doctors'?'admin-doctor-form':''}" data-form="resource" data-department-version="${key==='departments'&&edit?esc(row.version):''}" data-id="${esc(row?.[config.id] ?? "")}" autocomplete="off"><div class="admin-contact-fields">${normal}</div>${key==="departments"?`<div class="admin-department-tools"><div class="actions">${edit?button("leadership",row.department_id,"Thành viên khoa"):""}<button type="button" data-action="toggle-department-content" aria-expanded="false" aria-controls="department-content-fields">Nội dung giới thiệu chuyên khoa</button></div></div>`:""}${advanced?(key==="departments"?`<div id="department-content-fields" class="admin-advanced" hidden><div class="admin-contact-fields">${advanced}</div></div>`:`<details class="admin-advanced"><summary>Nội dung giới thiệu chuyên khoa</summary><div class="admin-contact-fields">${advanced}</div></details>`):""}${key==="patients"?notice("Cần ngày sinh hoặc CCCD để phân biệt hồ sơ. Số điện thoại liên kết của hồ sơ đã có được quản lý ở tài khoản."):""}${key==="schedule"&&Number(row?.booked_count)>0?notice("Ca đã có lượt khám: giữ nguyên phòng, ngày, giờ và thời lượng khung giờ."):""}${formActions(edit?"Lưu thay đổi":"Tạo mới")}</form>`;
 }
 function detailMarkup(key,row) {
   if(key==="departments")return departmentDetails(row);
@@ -90,6 +91,7 @@ export async function initAdminWorkspace(key) {
   document.querySelector("#page-header").insertAdjacentHTML("afterend",'<p id="admin-status" class="scope-note" role="status" hidden></p>');
   const body=$("#page-body"), modal=$("#admin-dialog"), modalBody=$("#admin-dialog-body");
   if(key==="home"){await initAdminOverview(ctx);return ctx;}
+  if(key==="payments"){await initAdminPayments(ctx);return ctx;}
   const records=new Map();
   let page=1, reload=async()=>{}, listResult, refs={};
   function bindTextFilters(form,apply,resultId,pagerId) {
@@ -131,7 +133,7 @@ export async function initAdminWorkspace(key) {
     }
     const config=resources[key];
     await ctx.show(id?"Chỉnh sửa thông tin":config.add,async signal=>{
-      const row=id?(config.get?await config.get(id,{signal}):records.get(String(id))):null;
+      const row=id?(key==="patients"?await loadPatientAccount(id,{signal}):config.get?await config.get(id,{signal}):records.get(String(id))):null;
       if(id&&!row)throw new Error("Không tìm thấy bản ghi.");
       if(row)records.set(String(id),row);
       const fields=config.fields.filter(f=>!(row&&f.createOnly || !row&&f.editOnly));
@@ -230,7 +232,7 @@ export async function initAdminWorkspace(key) {
   async function showDetail(id) {
     const config=resources[key];
     await ctx.show("Chi tiết",async signal=>{
-      const row=config.get?await config.get(id,{signal}):records.get(String(id));
+      const row=key==="patients"?await loadPatientAccount(id,{signal}):config.get?await config.get(id,{signal}):records.get(String(id));
       if(!row)throw new Error("Không tìm thấy bản ghi.");records.set(String(id),row);
       return detailMarkup(key,row);
     });
@@ -282,36 +284,6 @@ export async function initAdminWorkspace(key) {
     const csv="\uFEFF"+rows.map(row=>row.map(value=>`"${String(value).replace(/"/g,'""')}"`).join(",")).join("\r\n");
     const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
     const anchor=document.createElement("a");anchor.href=url;anchor.download=`neu-bao-cao-${range.from}-${range.to}.csv`;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),0);
-  }
-  let paymentSearch={};
-  function paymentRows(rows) {
-    return table(["Mã giao dịch","Lượt khám","Loại","Số tiền","Phương thức","Thời điểm","Trạng thái","Thao tác"],rows.map(r=>[esc(code("TT", r.payment_id)),esc(code("LK", r.encounter_id)),badge(r.payment_type),money(r.amount),esc(r.payment_method),stamp(r.paid_at || r.created_at),badge(r.transaction_status),button("payment-detail",r.payment_id,"Chi tiết")+(r.transaction_status==="SUCCESS"&&r.payment_type!=="REFUND"?button("refund",r.payment_id,"Hoàn tiền"):"")]));
-  }
-  async function paymentsPage() {
-    const query=new URLSearchParams(location.search),linked=query.get("encounter_id");
-    body.innerHTML=panel("Lịch sử thanh toán",`<form id="payment-search" class="admin-toolbar"><label>Mã lượt khám<input type="text" name="encounter_id" placeholder="LK_001" value="${linked&&/^\d+$/.test(linked)?esc(linked):""}"></label><label>Mã giao dịch<input type="text" name="payment_id" placeholder="TT_001"></label><button type="submit">Tra cứu</button></form><div id="payment-results"></div><div id="payment-pager"></div>`);
-    reload=async()=>ctx.load(async signal=>{
-      if(paymentSearch.payment_id){const result=await payments.getPayment(paymentSearch.payment_id,{signal});return {items:[result.payment],total:1,page:1,page_size:20};}
-      if(paymentSearch.encounter_id)return payments.listEncounterPayments(paymentSearch.encounter_id,{page,page_size:20},{signal});
-      return payments.listAdminPayments({page,page_size:20},{signal});
-    },result=>{listResult=result;result.items.forEach(r=>records.set(`payment:${r.payment_id}`,r));$("#payment-results").innerHTML=paymentRows(result.items);$("#payment-pager").innerHTML=paginationMarkup(result);});
-    bindTextFilters($("#payment-search"),()=>{
-      const value=dataForm($("#payment-search"));page=1;paymentSearch=value;
-      if(!value.encounter_id&&!value.payment_id)return reload();
-      if(value.encounter_id&&value.payment_id){$("#payment-results").innerHTML=notice("Nhập một mã lượt khám hoặc một mã giao dịch.");return;}
-      if(!/^[1-9]\d*$/.test(value.encounter_id || value.payment_id)){$("#payment-results").innerHTML=notice("Vui lòng nhập mã là số nguyên dương.");return;}
-      return reload();
-    },"#payment-results","#payment-pager");
-    if(linked&&/^\d+$/.test(linked))paymentSearch={encounter_id:linked};
-    await reload();
-  }
-  async function paymentDetail(id,refund=false) {
-    await ctx.show(refund?"Xác nhận hoàn tiền":"Chi tiết giao dịch",async signal=>{
-      const row=(await payments.getPayment(id,{signal})).payment;
-      records.set(`payment:${id}`,row);
-      return facts([["Mã thanh toán",code("TT", row.payment_id)],["Mã giao dịch",row.transaction_code],["Mã lượt khám",code("LK", row.encounter_id)],["Loại",label(row.payment_type)],["Số tiền",money(row.amount)],["Trạng thái",label(row.transaction_status)],["Phương thức",row.payment_method],["Ngày thanh toán",stamp(row.paid_at)],["Giao dịch gốc",code("TT", row.original_payment_id)],["Lý do",row.reason],["Lý do thất bại",row.failure_reason]])
-        +(refund?row.transaction_status!=="SUCCESS"||row.payment_type==="REFUND"?notice("Giao dịch này không còn phù hợp để hoàn tiền."):`${notice("Số tiền được hoàn theo chính sách hủy và số đã hoàn. Hệ thống sẽ kiểm tra điều kiện khi xác nhận.")}<form data-form="refund" data-id="${esc(id)}"><label>Lý do hoàn tiền *<textarea name="reason" required maxlength="1000" rows="3"></textarea></label>${formActions("Xác nhận hoàn tiền")}</form>`:"");
-    });
   }
   const configTitles={HOSPITAL_NAME:"Tên cơ sở",SUPPORT_PHONE:"Điện thoại hỗ trợ",SUPPORT_EMAIL:"Email hỗ trợ",EXAM_HOURS:"Giờ khám",REMINDER_BEFORE_HOURS:"Nhắc lịch trước (giờ)",ALLOW_WALK_IN:"Tiếp nhận trực tiếp",APPOINTMENT_HOLD_MINUTES:"Thời gian giữ chỗ (phút)",DEFAULT_DEPOSIT_PERCENT:"Tỷ lệ đặt cọc (%)",CHECKIN_EARLY_MINUTES:"Check-in sớm (phút)",CHECKIN_LATE_MINUTES:"Check-in muộn (phút)",CANCEL_HOURS_LIMIT:"Mốc hủy lịch (giờ)",CANCEL_REFUND_PERCENT:"Tỷ lệ hoàn cọc (%)",NO_SHOW_GRACE_MINUTES:"Chờ sau ca (phút)",NO_SHOW_FORFEIT_DEPOSIT:"Không đến mất cọc",MAX_REVIEW_RATING:"Điểm đánh giá tối đa"};
   async function configurationPage() {
@@ -435,7 +407,7 @@ export async function initAdminWorkspace(key) {
       const input=target.closest(".admin-clearable-input")?.querySelector("input,textarea");
       if(input&&!input.disabled&&!input.readOnly){input.value="";input.dispatchEvent(new Event("input",{bubbles:true}));input.dispatchEvent(new Event("change",{bubbles:true}));input.focus();}return;
     }
-    if(name==="collection-add") {target.closest("[data-collection]").querySelector("[data-collection-items]").insertAdjacentHTML("beforeend",collectionItemMarkup(target.dataset.name,{},Boolean(target.closest("form")?.dataset.id)));return;}
+    if(name==="collection-add") {target.closest("[data-collection]").querySelector("[data-collection-items]").insertAdjacentHTML("beforeend",collectionItemMarkup(target.dataset.name,{},key==="departments"||Boolean(target.closest("form")?.dataset.id)));return;}
     if(name==="collection-remove") {target.closest("[data-item]").remove();return;}
     if(name==="close-dialog"){close();return;}
     if(name==="previous"||name==="next"){page+=name==="next"?1:-1;await reload();return;}
@@ -444,7 +416,6 @@ export async function initAdminWorkspace(key) {
     if(name==="edit")await editResource(id);
     if(name==="archive")await confirmation(name,id);
     if(name==="export-report")exportReport();
-    if(name==="payment-detail"||name==="refund")await paymentDetail(id,name==="refund");
     if(name==="audit-detail")await auditDetail(id);
     if(name==="leave-detail")await leaveDetail(id);
     if(name==="patient-history")await patientHistory(id);
@@ -478,18 +449,32 @@ export async function initAdminWorkspace(key) {
       }
       if(type==="resource") {
         const row=id?records.get(String(id)):null;
-        const payload=resourcePayload(key,raw,row);
-        if(key==="departments"&&id)return saveDepartmentImage(id,{...payload,expected_version:Number(form.dataset.departmentVersion)},form.querySelector("[data-department-image]")?.files[0],{signal,galleryFiles:[...form.querySelectorAll('[data-collection="gallery"] [data-item]')].map(item=>item.querySelector("[data-gallery-image]")?.files[0])});
+        const payload=key==="patients"&&id&&(row.is_archived||row.archived_at)?{}:resourcePayload(key,raw,row);
+        if(key==="patients"&&id) {
+          const relatives=[...form.querySelectorAll("[data-relative-id]")].map(block=>({
+            patient_id:block.dataset.relativeId,
+            values:Object.fromEntries([...block.querySelectorAll("[data-relative-field]")].filter(input=>!input.disabled&&!input.closest("fieldset[disabled]")).map(input=>[input.dataset.relativeField,input.value])),
+          }));
+          return savePatientAccount(row,payload,relatives,{signal,accountStatus:raw.account_status,
+            onPatientSaved:patient=>{if(String(patient.patient_id)!==String(id))records.set(String(patient.patient_id),patient);},
+          });
+        }
+        if(key==="departments") {
+          const file=form.querySelector("[data-department-image]")?.files[0];
+          const options={signal,galleryFiles:[...form.querySelectorAll('[data-collection="gallery"] [data-item]')].map(item=>item.querySelector("[data-gallery-image]")?.files[0])};
+          if(id)return saveDepartmentImage(id,{...payload,expected_version:Number(form.dataset.departmentVersion)},file,options);
+          return createDepartmentWithImages(payload,file,{...options,onCreated:department=>{
+            form.dataset.id=String(department.department_id);form.dataset.departmentVersion=String(department.version);
+            records.set(String(department.department_id),department);
+            form.querySelector('button[type="submit"]').textContent="Lưu thông tin và hình ảnh";
+          }});
+        }
         if(key==="users"&&id)return saveUserAccount(id,payload,{signal,onSaved:user=>records.set(String(id),user)});
         return id?resources[key].update(id,payload,{signal}):resources[key].create(payload,{signal});
       }
       if(type==="confirm") {
         const row=records.get(String(id));
         if(form.dataset.action==="archive")return patients.archivePatient(id,{signal});
-      }
-      if(type==="refund") {
-        if(!raw.reason?.trim())throw new Error("Vui lòng nhập lý do hoàn tiền.");
-        return payments.refund(id,{reason:raw.reason.trim()},{signal});
       }
       if(type==="review") {
         if(!["APPROVED","REJECTED"].includes(raw.decision)||!raw.note?.trim())throw new Error("Chọn quyết định và nhập ý kiến xét duyệt.");
@@ -548,7 +533,6 @@ export async function initAdminWorkspace(key) {
   modalBody.addEventListener("change",event=>{if(event.target.type==="file"){const form=event.target.closest("[data-form]");if(form)delete form.dataset.uploadedUrl;}});
   if(resources[key])await resourcePage();
   else if(key==="statistics")await statisticsPage();
-  else if(key==="payments")await paymentsPage();
   else if(key==="configuration")await configurationPage();
   else if(key==="audit")await auditPage();
   // Editors and the bulk assignment screen keep their current contents.

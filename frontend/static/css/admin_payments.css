@@ -1,0 +1,52 @@
+body[data-page="payments"] #page-header { align-items: center; gap: 18px; }
+body[data-page="payments"] #request-refund { flex-shrink: 0; margin-left: auto; }
+body[data-page="payments"] #page-body { display: grid; gap: 24px; }
+body[data-page="payments"] .admin-card { min-width: 0; }
+body[data-page="payments"] .admin-table th:last-child,
+body[data-page="payments"] .admin-table td:last-child { text-align: center; width: 104px; }
+body[data-page="payments"] .admin-table [data-payment-detail] { text-decoration: underline; text-underline-offset: 3px; padding-inline: 8px; }
+body[data-page="payments"] .admin-table :is(th,td):nth-child(4) { white-space: nowrap; font-variant-numeric: tabular-nums; }
+body[data-page="payments"] .admin-payment-detail { display: grid; gap: 18px; }
+body[data-page="payments"] .admin-payment-summary { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 20px; background: #f2f8f4; border: 1px solid #dcebe1; }
+body[data-page="payments"] .admin-payment-code { display: block; margin-bottom: 8px; font-size: 12px; color: #617a6c; }
+body[data-page="payments"] .admin-payment-summary strong { display: block; color: #21583b; font-size: 28px; font-weight: 600; line-height: 1.3; }
+body[data-page="payments"] .admin-payment-summary .badge { flex-shrink: 0; }
+body[data-page="payments"] .admin-payment-section { min-width: 0; padding: 18px 20px; border: 1px solid #e1eae5; }
+body[data-page="payments"] .admin-payment-section h3 { margin: 0 0 18px; color: #2e5641; font-size: 15px; }
+body[data-page="payments"] .admin-payment-section .admin-dialog-facts { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px 24px; margin: 0; }
+body[data-page="payments"] .admin-payment-section .admin-dialog-facts > div { min-width: 0; }
+body[data-page="payments"] .admin-payment-section .admin-dialog-facts dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+body[data-page="payments"] .admin-payment-detail-actions { display: flex; align-items: center; justify-content: flex-end; gap: 20px; padding-top: 18px; border-top: 1px solid #e1eae5; }
+body[data-page="payments"] .admin-payment-detail-actions p,
+body[data-page="payments"] .admin-payment-state-note { margin: 0; color: #687b70; font-size: 12px; line-height: 1.6; }
+body[data-page="payments"] .admin-payment-detail-actions button { flex-shrink: 0; }
+body[data-page="payments"] .admin-refund-request { display: grid; gap: 22px; }
+body[data-page="payments"] .admin-payment-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px 22px; }
+body[data-page="payments"] .admin-payment-fields > label { min-width: 0; margin: 0; }
+body[data-page="payments"] .admin-payment-fields :is(input,select,textarea) { margin-bottom: 0; }
+body[data-page="payments"] .admin-payment-fields .full-width { grid-column: 1 / -1; }
+body[data-page="payments"] .admin-payment-fields .admin-refund-reason { grid-column: 1 / -1; }
+body[data-page="payments"] .admin-refund-summary { min-width: 0; padding: 18px 20px; border: 1px solid #dce9e0; background: #f7fbf8; }
+body[data-page="payments"] .admin-refund-summary:empty { display: none; }
+body[data-page="payments"] .admin-refund-summary .admin-dialog-facts { margin: 0; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px 22px; }
+body[data-page="payments"] .admin-refund-summary dd { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
+body[data-page="payments"] .admin-refund-status { margin: 0; color: #687b70; font-size: 13px; line-height: 1.6; }
+body[data-page="payments"] .admin-refund-status:empty { display: none; }
+body[data-page="payments"] .admin-refund-status[data-error="true"] { color: #b14040; }
+body[data-page="payments"] .admin-refund-request > .actions { justify-content: flex-end; margin: 0; padding-top: 18px; border-top: 1px solid #e1eae5; }
+body[data-page="payments"] .admin-refund-request .admin-note { margin: 0; }
+@media (max-width: 800px) {
+  body[data-page="payments"] .admin-payment-section .admin-dialog-facts { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 540px) {
+  body[data-page="payments"] #page-header { flex-wrap: wrap; }
+  body[data-page="payments"] #request-refund { width: 100%; margin-left: 0; }
+  body[data-page="payments"] .admin-payment-summary { align-items: flex-start; flex-wrap: wrap; padding: 16px; }
+  body[data-page="payments"] .admin-payment-summary strong { font-size: 24px; }
+  body[data-page="payments"] .admin-payment-section,
+  body[data-page="payments"] .admin-refund-summary { padding: 16px; }
+  body[data-page="payments"] .admin-payment-section .admin-dialog-facts,
+  body[data-page="payments"] .admin-payment-fields,
+  body[data-page="payments"] .admin-refund-summary .admin-dialog-facts { grid-template-columns: 1fr; }
+  body[data-page="payments"] .admin-payment-detail-actions { align-items: stretch; flex-direction: column; gap: 12px; }
+}
