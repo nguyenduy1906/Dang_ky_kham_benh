@@ -2,13 +2,13 @@ from backend.app.core.errors import not_found
 from backend.app.db.database import get_db_connection
 from backend.app.models import configuration_model as model
 from backend.app.utils.database_helpers import jsonable
-from backend.app.schemas.configuration_schema import FIXED, EDITABLE, validate_configuration
+from backend.app.schemas.configuration_schema import EDITABLE, validate_configuration
 from backend.app.core.security import require_role
 
 
 def _present(row):
     return {**jsonable(row), 'read_only': row['config_key'] not in EDITABLE,
-            'effective_value': FIXED.get(row['config_key'], row['config_value'])}
+            'effective_value': row['config_value']}
 
 
 def listing(actor, page, size):

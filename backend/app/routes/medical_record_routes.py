@@ -3,6 +3,8 @@ from flasgger import swag_from
 from backend.app.core.security import current_user, login_required, roles_required
 from backend.app.schemas import medical_record_schema
 from backend.app.utils.validation import page_params
+from backend.app.utils.validation import optional_int_arg, ensure_object
+from backend.app.core.errors import bad_request
 from backend.app.services import medical_record_service as service
 from backend.app.utils.swagger_helpers import spec, path, body, PAGE
 
@@ -69,3 +71,23 @@ def create(encounter_id):
                 [path('doctor_profile_id')] + PAGE, public=True))
 def listing(doctor_profile_id):
     return jsonify(service.list_public_reviews(doctor_profile_id, *page_params(request.args)))
+
+
+@review_bp.get('/admin/reviews')
+@roles_required('ADMIN')
+@swag_from(spec('Reviews Admin', 'Danh sách và chi tiết đánh giá, bao gồm đánh giá đang ẩn', PAGE + [{'in': 'query', 'name': 'review_id', 'type': 'integer'}]))
+def admin_review_list():
+    review_id = optional_int_arg(request.args, 'review_id')
+    if review_id is not None and review_id < 1:
+        raise bad_request('review_id phải là số nguyên dương')
+    return jsonify(service.admin_reviews(current_user(), *page_params(request.args), review_id=review_id))
+
+
+@review_bp.patch('/admin/reviews/<int:review_id>/visibility')
+@roles_required('ADMIN')
+@swag_from(spec('Reviews Admin', 'Ẩn/hiện đánh giá, giữ nguyên nội dung và dữ liệu', [path('review_id'), body({'is_hidden': {'type': 'boolean'}}, ('is_hidden',))]))
+def admin_review_visibility(review_id):
+    data = ensure_object(request.get_json(silent=True))
+    if set(data) != {'is_hidden'} or type(data['is_hidden']) is not bool:
+        raise bad_request('Chỉ nhận is_hidden kiểu boolean')
+    return jsonify(service.set_review_visibility(current_user(), review_id, data['is_hidden']))

@@ -1,3 +1,4 @@
+import { checkInInstruction } from "../core/encounter_policy.js";
 import { listDoctors } from "../api/doctor.js";
 import { listPatients, createPatient } from "../api/patient.js";
 import { listDoctorSchedules } from "../api/schedule.js";
@@ -236,7 +237,7 @@ function showBooking() {
   $("#booking-confirm-note").hidden = status !== "HOLDING";
   ui.refresh.hidden = false; ui.cancel.hidden = status !== "HOLDING";
   renderReview();
-  ui.dialogStatus.textContent = confirmed ? "Lịch khám đã được hệ thống xác nhận. Vui lòng đến làm thủ tục trước khung giờ đã chọn ít nhất 30 phút."
+  ui.dialogStatus.textContent = confirmed ? "Lịch khám đã được hệ thống xác nhận. "+checkInInstruction(encounter)
     : status === "HOLDING" ? "Thanh toán trước khi giữ chỗ hết hạn để được cấp phiếu khám."
       : "Lượt khám này không còn giữ chỗ. Bạn có thể quay lại và chọn lịch mới.";
 }

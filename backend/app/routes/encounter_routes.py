@@ -78,7 +78,7 @@ _REASON = _body({'reason': {'type': 'string', 'example': 'Bệnh nhân đổi k�
 
 @encounter_bp.post('/encounters/online')
 @login_required
-@swag_from({'tags': ['Encounters'], 'summary': 'USER giữ chỗ 10 phút, cọc 100% giá bác sĩ; chưa phát phiếu',
+@swag_from({'tags': ['Encounters'], 'summary': 'USER giữ chỗ và chốt tiền cọc theo cấu hình; chưa phát phiếu',
             'description': 'Chọn khung giờ trong ca sáng/chiều, ít nhất 5 giờ trước giờ bắt đầu ca (Asia/Saigon). '
                            'Đúng mốc 5 giờ được nhận; sau mốc này hoặc trong ca bị từ chối với 409/SCHEDULE_TOO_LATE. '
                            'Lượt đã HOLDING vẫn có 10 phút để thanh toán.',
@@ -127,7 +127,7 @@ def walk_in():
 
 @encounter_bp.post('/staff/encounters/<int:encounter_id>/check-in')
 @login_required
-@swag_from({'tags': ['Reception'], 'summary': 'Check-in online ít nhất 30 phút trước giờ hẹn',
+@swag_from({'tags': ['Reception'], 'summary': 'Check-in online theo thời hạn đã chốt của lượt khám',
             'security': _SECURITY, 'parameters': [_ID], 'responses': _ACTION_RESPONSES})
 def check_in(encounter_id):
     return jsonify(encounter_service.action(current_user(), encounter_id, 'check-in'))

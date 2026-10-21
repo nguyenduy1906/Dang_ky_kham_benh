@@ -1,3 +1,4 @@
+import { checkInInstruction } from "../core/encounter_policy.js";
 import { startAutoRefresh } from "../core/auto_refresh.js";
 import { hasSession } from "../core/session.js";
 import { listEncounters, getEncounter, getTicket, cancel } from "../api/encounter.js";
@@ -201,7 +202,7 @@ async function loadDetail() {
       ? "Lượt khám này không còn hiệu lực. Mã phiếu được giữ để đối chiếu lịch sử."
       : !upcoming ? "Đây là lịch sử khám được lưu trong hệ thống."
         : item.encounter_status === "HOLDING" ? "Chưa xác nhận. Tiếp tục đăng ký để thanh toán trong thời gian giữ chỗ."
-          : "Vui lòng đến làm thủ tục trước khung giờ đã chọn ít nhất 30 phút.";
+          : checkInInstruction(item);
     if (upcoming && item.encounter_status === "HOLDING") {
       ui.action.textContent = "Tiếp tục đăng ký"; ui.action.href = appointmentActionUrl(item); ui.action.hidden = false;
     }

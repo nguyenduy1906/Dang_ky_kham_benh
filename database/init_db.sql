@@ -168,6 +168,7 @@ CREATE TABLE IF NOT EXISTS encounter (
     created_by_id        INTEGER REFERENCES users(user_id),
     consultation_fee_snapshot BIGINT CHECK (consultation_fee_snapshot >= 0),
     deposit_amount_snapshot   BIGINT CHECK (deposit_amount_snapshot >= 0),
+    policy_snapshot           jsonb,
     symptoms             text,
     registration_details jsonb CHECK (registration_details IS NULL OR jsonb_typeof(registration_details) = 'object'),
     encounter_status         text NOT NULL DEFAULT 'CONFIRMED'
@@ -278,6 +279,7 @@ CREATE TABLE IF NOT EXISTS review (
     review_code text GENERATED ALWAYS AS (business_code('DG', review_id)) STORED UNIQUE,
     record_id     INTEGER NOT NULL REFERENCES medical_record(record_id),
     rating        integer NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    is_hidden     boolean NOT NULL DEFAULT false,
     comment       text,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -627,3 +629,76 @@ CREATE TABLE IF NOT EXISTS department_membership_log (
  CHECK (old_department_id <> new_department_id)
 );
 CREATE INDEX IF NOT EXISTS idx_department_membership_doctor ON department_membership_log(doctor_profile_id,changed_at);
+
+-- Additive audit storage. Admin identity is set locally by the application per transaction.
+CREATE TABLE IF NOT EXISTS admin_activity_log (
+    log_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    actor_id integer NOT NULL,
+    actor_name text NOT NULL,
+    action text NOT NULL,
+    target text NOT NULL,
+    target_id text NOT NULL,
+    before_data jsonb,
+    after_data jsonb,
+    created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+CREATE INDEX IF NOT EXISTS idx_admin_activity_created ON admin_activity_log(created_at DESC,log_id DESC);
+CREATE OR REPLACE FUNCTION capture_admin_activity() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+    actor text := current_setting('app.admin_id',true);
+    old_value jsonb;
+    new_value jsonb;
+    object_id text;
+    operation text;
+    selected text[] := string_to_array(TG_ARGV[2],',');
+BEGIN
+    IF actor IS NULL OR actor='' THEN RETURN NULL; END IF;
+    IF TG_OP <> 'INSERT' THEN
+        SELECT coalesce(jsonb_object_agg(key,value),'{}') INTO old_value FROM jsonb_each(to_jsonb(OLD)) WHERE key=ANY(selected);
+        object_id := to_jsonb(OLD)->>TG_ARGV[1];
+    END IF;
+    IF TG_OP <> 'DELETE' THEN
+        SELECT coalesce(jsonb_object_agg(key,value),'{}') INTO new_value FROM jsonb_each(to_jsonb(NEW)) WHERE key=ANY(selected);
+        object_id := to_jsonb(NEW)->>TG_ARGV[1];
+    END IF;
+    IF TG_OP='UPDATE' AND old_value IS NOT DISTINCT FROM new_value THEN RETURN NULL; END IF;
+    operation := CASE TG_OP WHEN 'INSERT' THEN 'CREATE' WHEN 'DELETE' THEN 'DELETE' ELSE 'UPDATE' END;
+    IF TG_OP='UPDATE' AND old_value->>'account_status' IS DISTINCT FROM new_value->>'account_status' THEN
+        operation := CASE WHEN new_value->>'account_status'='LOCKED' THEN 'LOCK' ELSE 'UNLOCK' END;
+    END IF;
+    IF TG_OP='UPDATE' AND ((new_value->>'is_active' IN ('false','0') AND old_value->>'is_active' IN ('true','1'))
+        OR (old_value->>'deleted_at' IS NULL AND new_value->>'deleted_at' IS NOT NULL)
+        OR (old_value->>'archived_at' IS NULL AND new_value->>'archived_at' IS NOT NULL)
+        OR (old_value->>'revoked_at' IS NULL AND new_value->>'revoked_at' IS NOT NULL)) THEN operation := 'DELETE'; END IF;
+    INSERT INTO admin_activity_log(actor_id,actor_name,action,target,target_id,before_data,after_data)
+    VALUES(actor::integer,coalesce(current_setting('app.admin_name',true),''),operation,TG_ARGV[0],object_id,old_value,new_value);
+    RETURN NULL;
+END $$;
+DO $$
+DECLARE item text[];
+BEGIN
+    FOREACH item SLICE 1 IN ARRAY ARRAY[
+      ARRAY['users','USER','user_id','full_name,role_id,account_status,approval_status,deleted_at'],
+      ARRAY['patient','PATIENT','patient_id','full_name,gender,archived_at'],
+      ARRAY['doctor_profile','DOCTOR','doctor_profile_id','user_id,department_id,academic_degree,specialization,experience_years,consultation_fee,introduction,is_active'],
+      ARRAY['department','DEPARTMENT','department_id','name,description,group_type,is_active,overview,mission,cover_image_url,specialties,clinical_services,equipment,achievements,patient_guide,gallery,extra_sections'],
+      ARRAY['department_leadership','DEPARTMENT','department_id','department_id,doctor_profile_id,position,ended_at'],
+      ARRAY['room','ROOM','room_id','department_id,room_name,description,is_active'],
+      ARRAY['work_schedule','WORK_SCHEDULE','schedule_id','doctor_profile_id,room_id,work_date,start_time,end_time,slot_minutes,max_quota,schedule_status'],
+      ARRAY['nurse_assignment','ASSIGNMENT','assignment_id','nurse_id,schedule_id,revoked_at'],
+      ARRAY['article','ARTICLE','article_id','author_id,title,slug,category,thumbnail_url,content,is_active,published_at'],
+      ARRAY['system_configuration','CONFIGURATION','config_key','config_key,config_value'],
+      ARRAY['payment','PAYMENT','payment_id','encounter_id,payment_type,amount,payment_method,transaction_status,original_payment_id,reason'],
+      ARRAY['review','REVIEW','review_id','is_hidden'],
+      ARRAY['staff_leave_request','STAFF_LEAVE','request_id','user_id,from_date,to_date,period,reason,status,review_note']
+    ] LOOP
+      IF to_regclass(item[1]) IS NOT NULL THEN
+        EXECUTE format('DROP TRIGGER IF EXISTS admin_activity_capture ON %I',item[1]);
+        EXECUTE format('CREATE TRIGGER admin_activity_capture AFTER INSERT OR UPDATE OR DELETE ON %I FOR EACH ROW EXECUTE FUNCTION capture_admin_activity(%L,%L,%L)',item[1],item[2],item[3],item[4]);
+      END IF;
+    END LOOP;
+END $$;
+CREATE OR REPLACE FUNCTION protect_admin_activity() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN RAISE EXCEPTION 'Admin activity history is immutable'; END $$;
+DROP TRIGGER IF EXISTS admin_activity_protect ON admin_activity_log;
+CREATE TRIGGER admin_activity_protect BEFORE UPDATE OR DELETE ON admin_activity_log FOR EACH ROW EXECUTE FUNCTION protect_admin_activity();

@@ -30,3 +30,20 @@ def reminder_hours(db):
 def walk_in_allowed(db):
     row = get(db, 'ALLOW_WALK_IN')
     return row is None or row['config_value'].lower() == 'true'
+
+
+def policies(db):
+    from backend.app.schemas.configuration_schema import POLICY_DEFAULTS, validate_configuration
+    rows = db.execute('SELECT config_key,config_value FROM system_configuration WHERE config_key=ANY(%s)',
+                      (list(POLICY_DEFAULTS),)).fetchall()
+    result = dict(POLICY_DEFAULTS)
+    for row in rows:
+        key = row['config_key']
+        value = validate_configuration(key, {'config_value': row['config_value']})
+        result[key] = value == 'true' if isinstance(POLICY_DEFAULTS[key], bool) else int(value)
+    return result
+
+
+def encounter_policy(encounter):
+    from backend.app.schemas.configuration_schema import POLICY_DEFAULTS
+    return {**POLICY_DEFAULTS, **(encounter.get('policy_snapshot') or {})}

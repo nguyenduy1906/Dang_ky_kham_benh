@@ -1,3 +1,4 @@
+import {bulkRefundMarkup,bindBulkRefundPreview} from "./admin_refund_bulk_preview.js";
 import { openAdminFormDialog } from "./admin_form_dialog.js";
 import { readPaymentContext, submitRefundRequest, refundOutcome } from "./admin_payment_data.js";
 import { canRequestRefund, paymentMethodLabel } from "./admin_payment_view.js";
@@ -5,10 +6,11 @@ import { code, parseCode } from "./business_codes.js";
 import { esc, facts, money, label } from "./admin_ui.js";
 
 export function refundRequestMarkup() {
-  return `<form class="admin-refund-request" autocomplete="off">
+  return `<form class="admin-refund-request" autocomplete="off" data-refund-mode="single">
+    <nav class="admin-refund-modes" aria-label="Cách chọn giao dịch hoàn tiền"><button type="button" class="secondary" data-refund-mode="single" aria-pressed="true">Theo giao dịch</button><button type="button" class="secondary" data-refund-mode="bulk" aria-pressed="false">Theo phòng / ca khám</button></nav>
+    <div data-refund-single>
     <section class="admin-payment-section"><h3>Chọn giao dịch cần hoàn</h3>
       <div class="admin-payment-fields"><label>Mã thanh toán hoặc mã giao dịch<input type="search" name="payment_query" placeholder="TT_001 hoặc mã giao dịch"></label><label>Mã lượt khám<input type="text" name="encounter_query" placeholder="LK_001"></label></div>
-      <div class="actions"><button type="button" class="secondary" data-refund-lookup>Tra cứu giao dịch</button></div>
       <label>Giao dịch đã thanh toán *<select name="source_payment_id" required><option value="">Chọn giao dịch</option></select></label>
       <p class="admin-refund-status" data-lookup-status role="status"></p>
     </section>
@@ -19,6 +21,7 @@ export function refundRequestMarkup() {
     </div><p class="admin-patient-field-note">Khoản hoàn và phương thức hoàn được hệ thống xác định theo giao dịch gốc và chính sách áp dụng.</p></section>
     <div class="actions"><button type="submit" disabled>Xác nhận hoàn tiền</button><button type="button" class="secondary" data-refund-close>Hủy</button></div>
     <p class="form-feedback admin-refund-status" data-refund-feedback role="status" aria-live="polite"></p>
+    </div>${bulkRefundMarkup()}
   </form>`;
 }
 
@@ -67,9 +70,10 @@ export async function openRefundRequest({ ctx, rows, paymentId = null, trigger, 
         ["Số tiền đã thu",money(payment.amount)],["Phương thức",paymentMethodLabel(payment.payment_method)],
         ["Trạng thái lượt khám",label(encounter.encounter_status)],...(encounter.cancel_reason?[["Lý do hủy",encounter.cancel_reason]]:[]),
       ])}`;
-      const allowed = canRequestRefund(payment) && encounter.encounter_status === "CANCELLED";
+      const eligibleStatus = encounter.encounter_status === "CANCELLED" || encounter.encounter_status === "NO_SHOW" && encounter.policy_snapshot?.NO_SHOW_FORFEIT_DEPOSIT === false && payment.payment_type === "DEPOSIT";
+      const allowed = canRequestRefund(payment) && eligibleStatus;
       lookupStatus.dataset.error = String(!allowed);
-      lookupStatus.textContent = !canRequestRefund(payment) ? "Giao dịch chưa thu thành công hoặc đã được hoàn tiền." : encounter.encounter_status !== "CANCELLED" ? "Lượt khám cần được hủy trước khi yêu cầu hoàn tiền." : "Kiểm tra thông tin và nhập lý do trước khi xác nhận hoàn tiền.";
+      lookupStatus.textContent = !canRequestRefund(payment) ? "Giao dịch chưa thu thành công hoặc đã được hoàn tiền." : !eligibleStatus ? "Lượt khám cần hủy hoặc đủ điều kiện hoàn cọc khi không đến khám." : "Kiểm tra thông tin và nhập lý do trước khi xác nhận hoàn tiền.";
       submit.disabled = !allowed || completed;
       return { ...loaded, version: current };
     } catch (error) { if (alive(current)) showError(error,lookupStatus); }
@@ -81,22 +85,15 @@ export async function openRefundRequest({ ctx, rows, paymentId = null, trigger, 
     if(canRequestRefund(loaded.payment))candidates.set(String(id),loaded.payment);
     choices(String(id));lookupStatus.textContent=notice;lookupStatus.dataset.error=error;
   }
-  async function lookup() {
-    if (saving || completed) return;
-    choices(); await select("");
-    const raw = payment_query.value.trim();
-    if (/^(?:TT_)?[1-9]\d*$/i.test(raw)) {
-      const id = parseCode(raw,"TT");
-      selectedResult(id,await select(id));
-    }
+  for (const input of [payment_query,encounter_query]) {
+    input.addEventListener("input",() => { if (!saving && !completed) { void select(""); choices(); } });
+    input.addEventListener("keydown",event => { if (event.key === "Enter") event.preventDefault(); });
   }
-  form.querySelector("[data-refund-lookup]").addEventListener("click",lookup);
-  for (const input of [payment_query,encounter_query]) input.addEventListener("input",() => { if (!saving && !completed) { choices(); void select(""); } });
   source_payment_id.addEventListener("change",() => { if (!saving && !completed) void select(source_payment_id.value); });
   form.querySelector("[data-refund-close]").addEventListener("click",opened.close);
   form.addEventListener("submit",async event => {
     event.preventDefault();
-    if (saving || completed || !context || submit.disabled || !form.reportValidity()) return;
+    if (form.dataset.refundMode === "bulk" || saving || completed || !context || submit.disabled || !form.reportValidity()) return;
     const detail = reason.value.trim();
     if (!detail) { reason.setCustomValidity("Vui lòng nhập lý do hoàn tiền."); reason.reportValidity(); return; }
     const current = version, selected = context.payment.payment_id;
@@ -127,6 +124,7 @@ export async function openRefundRequest({ ctx, rows, paymentId = null, trigger, 
     }
   });
   reason.addEventListener("input",() => reason.setCustomValidity(""));
+  bindBulkRefundPreview(form,opened.close);
   choices();
   if (paymentId) {
     const id = String(paymentId);

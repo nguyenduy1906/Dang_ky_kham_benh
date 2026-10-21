@@ -48,11 +48,12 @@ export function createAdminContext() {
   async function load(task,commit) {
     if(!active)return;
     const current=++version; controller?.abort(); controller=new AbortController(); const request=controller; requests.add(request);
-    const status=$("#admin-status"); if(status){status.hidden=false;status.textContent="Đang tải…";status.dataset.error="false";}
+    const status=$("#admin-status");
+    const loadingTimer=setTimeout(()=>{if(active&&current===version&&status){status.hidden=false;status.textContent="Đang tải…";status.dataset.error="false";}},180);
     content.setAttribute("aria-busy","true");
     try {const result=await task(request.signal);if(active&&current===version){commit(result);if(status)status.hidden=true;}}
     catch(error){if(active&&current===version)handle(error);}
-    finally{requests.delete(request);if(active&&current===version)content.setAttribute("aria-busy","false");}
+    finally{clearTimeout(loadingTimer);requests.delete(request);if(active&&current===version)content.setAttribute("aria-busy","false");}
   }
   async function show(title, task) {
     if(!active)return;

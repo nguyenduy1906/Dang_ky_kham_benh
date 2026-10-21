@@ -81,7 +81,7 @@ def demo_result(payment_id):
 
 @payment_bp.post('/staff/encounters/<int:encounter_id>/exam-fees')
 @login_required
-@swag_from({'tags': ['Payments'], 'summary': 'ADMIN/RECEPTIONIST thu giả lập phần còn lại; không thu lại giá sau cọc 100%',
+@swag_from({'tags': ['Payments'], 'summary': 'ADMIN/RECEPTIONIST thu giả lập phần phí khám còn lại sau tiền cọc đã thu',
             'security': SECURITY, 'parameters': [path_id('encounter_id'), body_field('payment_method', payment_schema.METHODS)],
             'responses': RESPONSES})
 def exam_fee(encounter_id):

@@ -1,7 +1,7 @@
 import { esc, facts, date, money, badge, label } from "./admin_ui.js";
 import { code } from "./business_codes.js";
 
-export function encounterDetails(row) {
+export function encounterDetails(row, {showActions=true} = {}) {
   const formatter = new Intl.DateTimeFormat("vi-VN", {
     timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit",
   });
@@ -17,6 +17,6 @@ export function encounterDetails(row) {
     <section class="admin-encounter-symptoms"><h3>Triệu chứng</h3><p>${esc(row.symptoms || "Chưa ghi nhận triệu chứng")}</p></section>
     <dl class="admin-encounter-fee"><div><dt>Tiền khám bệnh</dt><dd>${esc(row.consultation_fee_snapshot == null ? "Chưa có thông tin" : money(row.consultation_fee_snapshot))}</dd></div></dl>
     ${row.cancel_reason ? `<section class="admin-encounter-cancellation"><h3>Lý do hủy</h3><p>${esc(row.cancel_reason)}</p></section>` : ""}
-    <div class="actions admin-encounter-actions"><a class="button-link secondary" href="payments.html?encounter_id=${id}">Giao dịch của lượt khám</a><a class="button-link secondary" href="audit.html?encounter_id=${id}">Lịch sử và đối soát</a></div>
+    ${showActions?`<div class="actions admin-encounter-actions"><a class="button-link secondary" href="payments.html?encounter_id=${id}">Giao dịch của lượt khám</a></div>`:""}
   </div>`;
 }

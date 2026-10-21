@@ -1,4 +1,5 @@
 """Thanh toán mô phỏng; khóa ca → lượt khám → payment trong cùng transaction."""
+from backend.app.models.configuration_model import encounter_policy
 from backend.app.utils.business_codes import business_code
 import os
 from datetime import timedelta
@@ -162,9 +163,15 @@ def refund(actor, payment_id, reason):
             return _response(db, payment, actor, refund=existing)
         if payment['payment_type'] == 'REFUND' or payment['transaction_status'] != 'SUCCESS':
             raise conflict('Chỉ hoàn giao dịch thu thành công chưa hoàn', 'PAYMENT_NOT_REFUNDABLE')
-        if encounter['encounter_status'] != 'CANCELLED':
-            raise conflict('Hủy lượt khám trước khi hoàn; no-show không được hoàn cọc', 'ENCOUNTER_NOT_CANCELLED')
-        if encounter['cancel_origin'] == 'HOSPITAL':
+        policy = encounter_policy(encounter)
+        no_show_refund = encounter['encounter_status'] == 'NO_SHOW' and not policy['NO_SHOW_FORFEIT_DEPOSIT']
+        if encounter['encounter_status'] != 'CANCELLED' and not no_show_refund:
+            raise conflict('Lượt khám chưa hủy hoặc không đủ điều kiện hoàn khi vắng mặt', 'ENCOUNTER_NOT_CANCELLED')
+        if no_show_refund:
+            if payment['payment_type'] != 'DEPOSIT':
+                raise conflict('Chỉ hoàn tiền cọc khi không đến khám', 'PAYMENT_NOT_REFUNDABLE')
+            amount = payment['amount']
+        elif encounter['cancel_origin'] == 'HOSPITAL':
             amount = payment['amount']
         else:
             if payment['payment_type'] != 'DEPOSIT':
@@ -172,9 +179,9 @@ def refund(actor, payment_id, reason):
             reference = encounter['refund_reference_at'] or encounter['estimated_exam_at']
             if reference is None or encounter['cancelled_at'] is None:
                 raise conflict('Thiếu thời điểm hủy/giờ hẹn để xác định chính sách', 'REFUND_REFERENCE_MISSING')
-            if reference - encounter['cancelled_at'] < timedelta(hours=12):
-                raise conflict('Hủy dưới 12 giờ trước lịch khám: mất cọc', 'REFUND_NOT_ELIGIBLE')
-            amount = payment['amount'] // 2
+            if reference - encounter['cancelled_at'] < timedelta(hours=policy['CANCEL_HOURS_LIMIT']):
+                raise conflict('Thời điểm hủy không đủ điều kiện hoàn cọc của lượt khám', 'REFUND_NOT_ELIGIBLE')
+            amount = payment['amount'] * policy['CANCEL_REFUND_PERCENT'] // 100
         if amount == 0:
             return {**_response(db, payment, actor), 'refund': None, 'amount_refunded': 0,
                     'message': 'Số tiền hoàn sau làm tròn là 0 đồng'}

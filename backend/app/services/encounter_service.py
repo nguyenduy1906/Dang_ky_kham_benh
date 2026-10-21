@@ -186,7 +186,7 @@ def create_online(actor, fields):
         _require_available(schedule, now, online=True)
         doctor = _active_doctor(db, schedule)
         _reject_duplicate(db, fields['patient_id'], doctor['doctor_profile_id'], schedule['work_date'])
-        # Quyết định mới: cọc bằng toàn bộ giá đăng ký khám của bác sĩ.
+        policy = configuration_model.policies(db)
         start, finish = reserve_interval(db, schedule, fields['appointment_time'])
         booking_fields = {k: v for k, v in fields.items() if k != 'appointment_time'}
         if 'registration_details' in booking_fields:
@@ -195,10 +195,11 @@ def create_online(actor, fields):
             **booking_fields, 'encounter_type': 'ONLINE', 'encounter_status': 'HOLDING',
             'doctor_profile_id': doctor['doctor_profile_id'], 'room_id': schedule['room_id'],
             'created_by_id': actor['user_id'], 'consultation_fee_snapshot': doctor['consultation_fee'],
-            'deposit_amount_snapshot': doctor['consultation_fee'],
-            'estimated_exam_at': start, 'appointment_end_at': finish, 'hold_expires_at': now + timedelta(minutes=10)})
+            'deposit_amount_snapshot': doctor['consultation_fee'] * policy['DEFAULT_DEPOSIT_PERCENT'] // 100,
+            'policy_snapshot': Jsonb(policy),
+            'estimated_exam_at': start, 'appointment_end_at': finish, 'hold_expires_at': now + timedelta(minutes=policy['APPOINTMENT_HOLD_MINUTES'])})
         _change_quota(db, schedule, 1)
-        model.add_status(db, row['encounter_id'], None, 'HOLDING', actor['user_id'], 'Giữ chỗ online 10 phút')
+        model.add_status(db, row['encounter_id'], None, 'HOLDING', actor['user_id'], f"Giữ chỗ online {policy['APPOINTMENT_HOLD_MINUTES']} phút")
         result = _present(visible_encounter(db, actor, row['encounter_id']))
     return {'encounter': result}
 
@@ -283,18 +284,20 @@ def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIEN
                           cancel_origin=origin, refund_reference_at=encounter['estimated_exam_at'])
             _change_quota(db, schedule, -1)
         elif operation == 'check-in':
+            policy = configuration_model.encounter_policy(encounter)
+            deadline = encounter['estimated_exam_at'] + timedelta(minutes=policy['CHECKIN_LATE_MINUTES'] - policy['CHECKIN_EARLY_MINUTES'])
             if status != 'CONFIRMED':
                 raise conflict('Chỉ check-in lượt đã thanh toán xác nhận', 'INVALID_ENCOUNTER_STATUS')
-            if now > encounter['estimated_exam_at'] - timedelta(minutes=30):
-                raise conflict('Phải check-in ít nhất 30 phút trước giờ hẹn', 'CHECK_IN_TOO_LATE')
+            if now > deadline:
+                raise conflict('Đã quá thời hạn check-in áp dụng cho lượt khám', 'CHECK_IN_TOO_LATE')
             if schedule['schedule_status'] in ('CLOSED', 'UNAVAILABLE'):
                 raise conflict('Ca không hoạt động; cần điều phối', 'SCHEDULE_UNAVAILABLE')
             fields['checked_in_at'] = now
         elif operation == 'no-show':
             if status != 'CONFIRMED':
                 raise conflict('Chỉ đánh dấu vắng mặt lượt chưa check-in', 'INVALID_ENCOUNTER_STATUS')
-            if now <= end + timedelta(minutes=15):
-                raise conflict('Chưa đến mốc vắng mặt (kết thúc ca + 15 phút)', 'NO_SHOW_TOO_EARLY')
+            if now <= end + timedelta(minutes=configuration_model.encounter_policy(encounter)['NO_SHOW_GRACE_MINUTES']):
+                raise conflict('Chưa đến mốc vắng mặt áp dụng cho lượt khám', 'NO_SHOW_TOO_EARLY')
             _change_quota(db, schedule, -1)
         else:
             if status != 'CHECKED_IN':
@@ -382,6 +385,7 @@ def create_walk_in(actor, fields):
             'doctor_profile_id': doctor['doctor_profile_id'], 'schedule_id': schedule['schedule_id'],
             'room_id': schedule['room_id'], 'created_by_id': actor['user_id'],
             'consultation_fee_snapshot': doctor['consultation_fee'], 'deposit_amount_snapshot': 0,
+            'policy_snapshot': Jsonb(configuration_model.policies(db)),
             'estimated_exam_at': start, 'appointment_end_at': finish, 'checked_in_at': now})
         ticket = row['ticket_code']
         _change_quota(db, schedule, 1)

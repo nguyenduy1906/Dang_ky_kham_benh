@@ -348,7 +348,7 @@ body.admin-page[data-page="rooms"] #admin-dialog { width: min(720px, calc(100% -
 @media (max-width: 540px) { .admin-page .admin-assignment-schedule-info .admin-dialog-facts { grid-template-columns: 1fr; } }
 
 .admin-page .admin-assignments-list .badge::before { content: none; }
-.admin-page .badge.assignment-revoked { background: #edf0f2; color: #687682; }
+.admin-page .badge.assignment-revoked { background: #fce9eb; color: #b33e48; }
 
 /* Consistent 5px fields and status badges on the three staff management pages. */
 .admin-page:is([data-page="users"],[data-page="doctors"],[data-page="assignments"],[data-page="departments"]) :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea,.badge) {
@@ -785,3 +785,35 @@ body.admin-page[data-page="rooms"] #admin-dialog { width: min(720px, calc(100% -
 .admin-page .admin-gallery-image > button { height: 42px; margin: 0; }
 .admin-page .admin-gallery-image > img { height: 180px; max-height: 180px; box-sizing: border-box; }
 .admin-page .admin-gallery-image > .admin-gallery-feedback:empty { display: none; }
+
+.admin-page #staff-sidebar nav a:has(.admin-nav-unread) { position: relative; }
+.admin-page .admin-nav-unread { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; width: 32px; height: 22px; margin-left: auto; border-radius: 11px; background: #ffdc70; color: #244535; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.admin-page .admin-nav-unread[hidden] { display: none; }
+.admin-page.staff-sidebar-collapsed .admin-nav-unread { position: absolute; right: 0; top: 0; width: 26px; height: 18px; font-size: 9px; }
+
+
+.admin-page .admin-support-notification-list { display: flex; flex-direction: column; gap: 10px; padding: 2px 4px 4px 0; }
+.admin-page .admin-support-notification-item { border: 1px solid #dce7e0; border-radius: 6px; padding: 14px 12px; margin: 0; flex-shrink: 0; }
+.admin-page .admin-support-notification-item.is-unread { border-color: #d0e3d7; }
+.admin-page .admin-support-notification-item:focus-visible { outline: 2px solid #008753; outline-offset: 1px; }
+
+
+.admin-page[data-page="home"] .chart-column { border-radius: 0 !important; }
+
+
+.admin-page #admin-weekly-chart { position: relative; }
+.admin-page #admin-weekly-chart .admin-chart-week-feedback { position: absolute; inset: auto 20px 8px auto; z-index: 1; margin: 0; padding: 5px 10px; background: #fff; border: 1px solid #dce7e0; border-radius: 4px; box-shadow: 0 2px 8px #163a2410; font-size: 11px; }
+
+
+body.admin-page[data-page="users"] #admin-dialog:has(form[data-form="resource"][data-id=""]) { height: fit-content; min-height: 0; max-height: calc(100dvh - 48px); inset: 0; margin: auto; }
+body.admin-page[data-page="users"] #admin-dialog:has(form[data-form="resource"][data-id=""]) .form-feedback:empty { display: none; }
+.admin-page #page-body[aria-busy="true"] { opacity: 1; }
+.admin-page #admin-status:not([data-error="true"]):not([hidden]) { position: fixed; right: 24px; bottom: 20px; z-index: 20; margin: 0; min-height: 0; padding: 8px 14px; border: 1px solid #d7e5dc; border-radius: 5px; background: #fff; color: #365f49; box-shadow: 0 3px 12px #173b2514; font-size: 12px; pointer-events: none; }
+.admin-page :is(#admin-results,#activity-results)[aria-busy="true"] { position: relative; }
+.admin-page #admin-results[aria-busy="true"]::after { content: "Đang tìm kiếm…"; position: absolute; top: 4px; right: 24px; padding: 5px 10px; background: #fff; border: 1px solid #dce7e0; border-radius: 4px; font-size: 11px; pointer-events: none; }
+.admin-page #admin-results[aria-busy="true"] .row-action { pointer-events: none; }
+
+
+body.admin-page #admin-dialog { height: fit-content; min-height: 0; inset: 0; margin: auto; }
+html:has(body.admin-page) { scrollbar-gutter: stable; }
+

@@ -1,0 +1,38 @@
+/* Statistics uses the same typography, borders and five-pixel corners as admin lists. */
+.statistics-workspace {display:grid;gap:24px;min-width:0;}
+.statistics-filter {padding:24px;}
+.statistics-filter > header {display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;}
+.statistics-filter h2,.statistics-card h2 {margin:0;font-size:17px;line-height:1.5;color:var(--staff-text);}
+.statistics-filter header p,.statistics-card header p {margin:7px 0 0;color:var(--staff-muted);font-size:12px;}
+.statistics-preview-label {flex-shrink:0;padding:5px 10px;border:1px solid var(--staff-line);background:#f1f7f4;color:#47725d;font-size:11px;}
+.statistics-filter-fields {display:grid;grid-template-columns:1.2fr 1fr 1fr 1.2fr;gap:18px;}
+.statistics-filter-fields label {display:grid;gap:9px;font-size:12px;font-weight:600;color:#426251;min-width:0;}
+.statistics-filter-fields input,.statistics-filter-fields select {width:100%;min-width:0;box-sizing:border-box;height:44px;font-size:13px;font-weight:400;}
+.statistics-period-note {border-top:1px solid var(--staff-line);margin:20px 0 0;padding-top:14px;color:var(--staff-muted);font-size:12px;}
+.statistics-filter-feedback {color:#a12b2b;font-size:13px;margin:12px 0 0;}
+.statistics-tabs {display:flex;gap:8px;flex-wrap:wrap;}
+.statistics-tabs button {font-size:12px;min-height:40px;padding:8px 16px;}
+.statistics-tabs button[aria-pressed="true"] {color:#087f53;border-color:#008957;background:#edf7f1;box-shadow:none;font-weight:600;}
+#statistics-results {display:grid;gap:24px;min-width:0;}
+#statistics-results .admin-summary {margin:0;gap:20px;}
+#statistics-results .admin-metric {border:1px solid var(--staff-line);border-top:1px solid var(--staff-line);box-shadow:none;padding:22px 24px;min-width:0;}
+#statistics-results .admin-metric strong {font-size:25px;line-height:1.4;overflow-wrap:anywhere;margin:10px 0 6px;}
+#statistics-results .admin-metric small {display:block;font-size:11px;line-height:1.6;color:var(--staff-muted);}
+.statistics-grid {display:grid;grid-template-columns:1.15fr 1fr;gap:24px;min-width:0;align-items:stretch;}
+.statistics-card {min-width:0;overflow:hidden;box-shadow:none;}
+.statistics-card > header {padding:22px 24px 18px;border-bottom:1px solid var(--staff-line);}
+.statistics-rows {padding:4px 24px 12px;margin:0;}
+.statistics-rows > div {display:flex;align-items:center;justify-content:space-between;gap:24px;padding:15px 0;min-height:24px;}
+.statistics-rows > div + div {border-top:1px solid var(--staff-line);}
+.statistics-rows dt {font-size:12px;line-height:1.6;color:var(--staff-muted);overflow-wrap:anywhere;}
+.statistics-rows dd {font-size:13px;font-weight:600;flex-shrink:0;text-align:right;font-variant-numeric:tabular-nums;margin:0;color:#294f3c;}
+.statistics-card .admin-table-scroll {margin:20px 24px;}
+.statistics-card .admin-table {white-space:nowrap;}
+.statistics-card .admin-table td {border-bottom:1px solid var(--staff-line);}
+.statistics-card .admin-table th:not(:first-child),.statistics-card .admin-table td:not(:first-child) {text-align:right;}
+.statistics-card .admin-pagination {padding:0 24px 20px;gap:12px;}
+.statistics-scope-note {margin:0;padding:16px 20px;border:1px solid var(--staff-line);background:#f4f8f5;color:var(--staff-muted);font-size:12px;line-height:1.7;}
+.statistics-export {font-size:12px;}
+@media(max-width:1100px) {.statistics-filter-fields {grid-template-columns:repeat(2,minmax(0,1fr));}.statistics-grid {grid-template-columns:repeat(2,minmax(0,1fr));}#statistics-results .admin-summary {grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:700px) {.statistics-grid {grid-template-columns:minmax(0,1fr);}.statistics-filter {padding:18px;}.statistics-filter > header {flex-wrap:wrap;}.statistics-card > header {padding:18px;}.statistics-rows {padding-left:18px;padding-right:18px;}.statistics-card .admin-table-scroll {margin:16px 18px;}.statistics-card .admin-pagination {padding:0 18px 18px;flex-wrap:wrap;}.statistics-export {align-self:flex-start;}.statistics-filter-fields {gap:14px;}#statistics-results .admin-metric {padding:18px;}#statistics-results .admin-metric strong {font-size:22px;}.statistics-tabs {gap:6px;}.statistics-tabs button {padding:8px 12px;}}
+@media(max-width:420px) {.statistics-filter-fields {grid-template-columns:minmax(0,1fr);}#statistics-results .admin-summary {gap:12px;}.statistics-rows > div {gap:16px;} .statistics-card .admin-pagination > div {display:flex;gap:8px;}}

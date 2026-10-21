@@ -1,7 +1,10 @@
+import {replaceAdminRegion} from "./admin_render.js";
 import * as reports from "../api/statistics.js";
 import { startAutoRefresh } from "./auto_refresh.js";
 import * as notifications from "../api/notification.js";
-import { $, esc, stamp, money, metrics, panel, today } from "./admin_ui.js";
+import {notificationRow} from "./admin_notification_data.js";
+import {notificationDetail} from "./admin_feedback_presentation.js";
+import { $, esc, money, metrics, panel, today } from "./admin_ui.js";
 import { resources } from "./admin_resources.js";
 import { encounterDailyChart, encounterWeekValue, encounterWeekRange } from "./admin_encounter_chart.js";
 import { overviewEncounterTable } from "./admin_overview_encounters.js";
@@ -16,13 +19,13 @@ export function adminOverviewMarkup(data) {
     ["Thu ròng",money(payment.summary.net_received),"Thu thành công trừ số hoàn thực tế"],
     ["Thông báo",notices.error?"—":notices.unreadCount,notices.error?"Không tải được thông báo":"Thông báo chưa đọc"],
   ]);
-  return summary+`<div id="admin-weekly-chart">${encounterDailyChart(data.weekly.items,encounterWeekRange(week),{week})}</div>`
-    +panel("Lượt khám hôm nay",overviewEncounterTable(data.recent,resources.encounters),'<a href="encounters.html">Xem danh sách →</a>')
+  return `<div id="admin-overview-summary">${summary}</div>`+`<div id="admin-weekly-chart">${encounterDailyChart(data.weekly.items,encounterWeekRange(week),{week})}</div>`
+    +`<div id="admin-overview-recent">${panel("Lượt khám hôm nay",overviewEncounterTable(data.recent,resources.encounters),'<a href="encounters.html">Xem danh sách →</a>')}</div>`
     +`<div id="admin-overview-support">${adminOverviewSupportCards({day,calendar:data.calendar,notices})}</div>`;
 }
 
 export async function initAdminOverview(ctx) {
-  const body=$("#page-body"), modalBody=$("#admin-dialog-body");
+  const body=$("#page-body");
   $("#overview-period-control")?.remove();
   $("#page-header").classList.remove("overview-period-header");
   let data, week=encounterWeekValue(today()), weekVersion=0, noticeVersion=0, scheduleVersion=0;
@@ -64,7 +67,7 @@ export async function initAdminOverview(ctx) {
       const result=await overviewSection(()=>loadOverviewNotifications(request.signal));
       if(!ctx.active||version!==noticeVersion||!host?.isConnected)return;
       data.notices=result;
-      host.innerHTML=adminOverviewSupportCards({day:data.day,calendar:data.calendar,notices:result});
+      replaceAdminRegion(host,adminOverviewSupportCards({day:data.day,calendar:data.calendar,notices:result}));
       const metric=body.querySelector(".admin-summary .admin-metric:last-child");
       metric.querySelector("strong").textContent=result.error?"—":String(result.unreadCount);
       metric.querySelector("small").textContent=result.error?"Không tải được thông báo":"Thông báo chưa đọc";
@@ -87,7 +90,7 @@ export async function initAdminOverview(ctx) {
       const calendar=await loadOverviewSchedules(day,request.signal);
       if(!ctx.active||version!==scheduleVersion||!host.isConnected)return;
       data.day=day;data.calendar=calendar;
-      host.innerHTML=adminOverviewSupportCards({day,calendar,notices:data.notices});
+      replaceAdminRegion(host,adminOverviewSupportCards({day,calendar,notices:data.notices}));
     } catch(error) {
       if(ctx.active&&version===scheduleVersion)ctx.handle(error);
     } finally {
@@ -111,13 +114,10 @@ export async function initAdminOverview(ctx) {
     if(!notification)return;
     const row=data.notices.items?.find(item=>String(item.notification_id)===notification.dataset.overviewNotification);
     if(!row)return;
-    ctx.show(row.title,async()=>`<p class="muted">${esc(stamp(row.created_at))} · ${row.is_read?"Đã đọc":"Chưa đọc"}</p><div class="admin-notification-content">${esc(row.content)}</div>${row.is_read?"":`<form data-overview-read-form data-id="${esc(row.notification_id)}"><button type="submit">Đánh dấu đã đọc</button><p class="form-feedback" role="status"></p></form>`}`);
-  });
-  modalBody.addEventListener("submit",event=>{
-    const form=event.target.closest("[data-overview-read-form]");if(!form)return;
-    event.preventDefault();
-    ctx.submit(form,signal=>notifications.markRead(form.dataset.id,{signal}),async()=>{
-      await refreshNotifications();if(ctx.active)$("#admin-dialog").close();
+    ctx.show("Chi tiết thông báo",async signal=>{
+      const result=await notifications.markRead(row.notification_id,{signal});
+      await refreshNotifications();
+      return notificationDetail(notificationRow(result.notification));
     });
   });
   await ctx.load(signal=>loadAdminOverview(today(),week,signal),result=>{data=result;body.innerHTML=adminOverviewMarkup(result);});
@@ -129,7 +129,12 @@ export async function initAdminOverview(ctx) {
       return result;
     },result=>{
       if(version!==weekVersion||calendarVersion!==scheduleVersion)return;
-      data=result;body.innerHTML=adminOverviewMarkup(result);
+      data=result;
+      const template=document.createElement('template');template.innerHTML=adminOverviewMarkup(result);
+      for(const id of ['admin-overview-summary','admin-weekly-chart','admin-overview-recent','admin-overview-support']) {
+        const current=body.querySelector('#'+id),next=template.content.querySelector('#'+id);
+        if(current&&next)replaceAdminRegion(current,next.innerHTML);
+      }
     });
   },{canRefresh:()=>ctx.active});
 }

@@ -1,3 +1,4 @@
+from backend.app.models.configuration_model import encounter_policy
 from backend.app.core.errors import conflict, not_found
 from backend.app.core.security import require_role
 from backend.app.utils import date as date_utils
@@ -126,6 +127,8 @@ def create_review(actor, encounter_id, fields):
         record = records.lock_review_record(db, encounter_id)
         if record is None:
             raise conflict('Lượt khám chưa có bệnh án', 'MEDICAL_RECORD_REQUIRED')
+        if fields['rating'] > encounter_policy(encounter)['MAX_REVIEW_RATING']:
+            raise conflict('Điểm đánh giá vượt giới hạn áp dụng cho lượt khám', 'REVIEW_RATING_LIMIT')
         row = records.create_review(db, record['record_id'], fields)
     return {'review': jsonable(row)}, True
 
@@ -139,3 +142,19 @@ def list_public_reviews(doctor_id, page, size):
     return {'items': jsonable(rows), 'total': stats['total'],
             'average_rating': round(float(stats['average_rating']), 2) if stats['average_rating'] is not None else None,
             'page': page, 'page_size': size}
+
+
+def admin_reviews(actor, page, size, review_id=None):
+    require_role(actor, 'ADMIN')
+    with get_db_connection() as db:
+        rows, total = records.admin_reviews(db, page, size, review_id)
+    return {'items': jsonable(rows), 'total': total, 'page': page, 'page_size': size}
+
+
+def set_review_visibility(actor, review_id, hidden):
+    require_role(actor, 'ADMIN')
+    with get_db_connection() as db:
+        row = records.set_review_visibility(db, review_id, hidden)
+        if row is None:
+            raise not_found('Không tìm thấy đánh giá')
+    return {'review': jsonable(row)}

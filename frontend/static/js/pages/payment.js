@@ -1,3 +1,4 @@
+import { checkInInstruction } from "../core/encounter_policy.js";
 import { getMe } from "../api/auth.js";
 import { getEncounter, getTicket, cancel } from "../api/encounter.js";
 import { startAutoRefresh } from "../core/auto_refresh.js";
@@ -67,7 +68,7 @@ function showBooking() {
   $("#booking-payment-result-note").textContent = "Chọn kết quả để cập nhật trạng thái giao dịch trên hệ thống.";
   if (confirmed) {
     showSuccess();
-    ui.status.textContent = "Lịch khám đã được hệ thống xác nhận. Vui lòng đến làm thủ tục trước khung giờ đã chọn ít nhất 30 phút.";
+    ui.status.textContent = "Lịch khám đã được hệ thống xác nhận. "+checkInInstruction(encounter);
   } else if (status === "HOLDING") {
     ui.status.textContent = payment?.transaction_status === "FAILED"
       ? "Thanh toán không thành công. Bạn có thể tạo phiên mới khi thời gian giữ chỗ còn hiệu lực."

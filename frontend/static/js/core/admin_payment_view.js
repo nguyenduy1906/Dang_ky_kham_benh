@@ -58,7 +58,7 @@ export function paymentDetails(row, encounter = null) {
     ...(row.failure_reason ? [["Thông tin lỗi", row.failure_reason]] : []),
   ];
   const refund = canRequestRefund(row)
-    ? `<div class="admin-payment-detail-actions"><p>Điều kiện và số tiền hoàn sẽ được hệ thống kiểm tra khi xác nhận.</p><button type="button" data-request-refund="${esc(row.payment_id)}">Hoàn tiền</button></div>`
+    ? `<div class="admin-payment-detail-actions"><button type="button" data-request-refund="${esc(row.payment_id)}">Hoàn tiền</button></div>`
     : `<p class="admin-payment-state-note">${row.payment_type === "REFUND" ? "Đây là giao dịch hoàn tiền." : row.transaction_status === "REFUNDED" ? "Giao dịch đã được hoàn tiền." : "Giao dịch chưa thu thành công nên chưa thể yêu cầu hoàn tiền."}</p>`;
   return `<div class="admin-payment-detail" data-payment-id="${esc(row.payment_id)}">
     <div class="admin-payment-summary"><div><span class="admin-payment-code">${esc(code("TT", row.payment_id))} · ${esc(label(row.payment_type))}</span><strong>${esc(amount(row.amount))}</strong></div>${paymentStatusBadge(row.transaction_status)}</div>

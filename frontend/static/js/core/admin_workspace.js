@@ -1,6 +1,9 @@
+import {initAdminStatistics} from "./admin_statistics.js";
+import {replaceAdminRegion} from "./admin_render.js";
 import {initAdminPayments} from "./admin_payments.js";
+import {patientHistoryTable,readPatientVisit,patientVisitMarkup} from "./admin_patient_visit.js";
 import {configurationMarkup,bindConfigurationHours} from "./admin_configuration_view.js";
-import {activityLogMarkup,bindActivityLogFilter} from "./admin_audit_view.js";
+import {initActivityLog} from "./admin_activity.js";
 import {loadPatientAccount,savePatientAccount} from "./admin_patient_account.js";
 import {validateDepartmentImage,saveDepartmentImage,createDepartmentWithImages} from "./admin_department_image.js";
 import {thumbnailUrl} from "./articles.js";
@@ -14,12 +17,10 @@ import * as doctors from "../api/doctor.js";
 import * as catalog from "../api/catalog.js";
 import * as schedules from "../api/schedule.js";
 import * as articles from "../api/article.js";
-import * as reports from "../api/statistics.js";
 import * as configurations from "../api/configuration.js";
 import * as leave from "../api/staff_leave.js";
 import * as encounters from "../api/encounter.js";
-import {initOverviewPeriod} from "./staff_overview.js";
-import {$,esc,date,stamp,money,badge,label,table,facts,panel,options,button,metrics,chart,allPages,createAdminContext,today} from "./admin_ui.js";
+import {$,esc,date,stamp,money,badge,label,table,facts,panel,options,button,allPages,createAdminContext,today} from "./admin_ui.js";
 import {resources,fieldMarkup,resourcePayload,collectionItemMarkup} from "./admin_resources.js";
 import {bindLiveSearch} from "./live_search.js";
 import {searchAdminSchedules} from "./admin_schedule_search.js";
@@ -95,6 +96,7 @@ export async function initAdminWorkspace(key) {
   const body=$("#page-body"), modal=$("#admin-dialog"), modalBody=$("#admin-dialog-body");
   if(key==="home"){await initAdminOverview(ctx);return ctx;}
   if(key==="payments"){await initAdminPayments(ctx);return ctx;}
+  if(key==="statistics"){await initAdminStatistics(ctx);return ctx;}
   const records=new Map();
   let page=1, reload=async()=>{}, listResult, refs={};
   function bindTextFilters(form,apply,resultId,pagerId) {
@@ -106,9 +108,9 @@ export async function initAdminWorkspace(key) {
       refreshers.forEach(refresh=>refresh.cancel());
       ctx.cancelLoad();
       if(!ctx.active)return;
-      $(resultId).innerHTML='<p class="admin-search-status" role="status">Đang tìm kiếm…</p>';$(pagerId).innerHTML="";
+      $(resultId).setAttribute('aria-busy','true');
     };
-    const safelyApply=async()=>{try { await apply(); } catch(error) { ctx.handle(error); $(resultId).innerHTML=""; $(pagerId).innerHTML=""; }};
+    const safelyApply=async()=>{try { await apply(); } catch(error) { ctx.handle(error); } finally {$(resultId)?.removeAttribute('aria-busy');}};
     inputs.forEach(input=>refreshers.push(bindLiveSearch(input,safelyApply,{invalidate})));
     const refresh=refreshers[0];
     form.addEventListener("submit",event=>{event.preventDefault();refresh();});
@@ -180,8 +182,8 @@ export async function initAdminWorkspace(key) {
       if(key==="departments")$("#department-name-suggestions").innerHTML=result.departmentNames.map(name=>`<option value="${esc(name)}"></option>`).join("");
       const columns=key==="schedule"?[...config.columns.slice(0,-1),"Thao tác","Xem chi tiết"]:[...config.columns,"Thao tác"];
       const cells=row=>key==="schedule"?[...config.cells(row).slice(0,-1),rowActions(key,row),button("schedule-view",row.schedule_id,"Xem chi tiết")]:[...config.cells(row),rowActions(key,row)];
-      $("#admin-results").innerHTML=table(columns,result.items.map(cells),config.title || "Danh sách quản trị");
-      $("#admin-pager").innerHTML=paginationMarkup(result);
+      replaceAdminRegion($("#admin-results"),table(columns,result.items.map(cells),config.title || "Danh sách quản trị"));
+      replaceAdminRegion($("#admin-pager"),paginationMarkup(result));
     });
     await ctx.load(signal=>references(config.filters.map(f=>f.reference).filter(Boolean),signal),result=>{
       refs=result;
@@ -245,49 +247,6 @@ export async function initAdminWorkspace(key) {
     }
   }
 
-  async function fullReport(reader,params,signal) {
-    const first=await reader({...params,page:1,page_size:100},{signal}),items=[...first.items];
-    for(let next=2;(next-1)*first.page_size<first.total;next++)items.push(...(await reader({...params,page:next,page_size:first.page_size},{signal})).items);
-    return {...first,items};
-  }
-  const reportMetrics = (encounter,payment,review) => metrics([
-    ["Tổng lượt khám",encounter.summary.total,"Theo ngày ca khám"],
-    ["Đã hoàn thành",encounter.by_status.find(r=>r.encounter_status==="COMPLETED")?.count ?? 0,"Lượt khám hoàn tất"],
-    ["Thu ròng",money(payment.summary.net_received),"Thu thành công trừ số hoàn thực tế"],
-    ["Đánh giá",review.summary.average_rating==null?"Chưa có":`${review.summary.average_rating} / 5`,`${review.summary.review_count} đánh giá`],
-  ]);
-  let reportData;
-  async function statisticsPage() {
-    if(!$("#overview-period-control"))$("#page-header").insertAdjacentHTML("beforeend",'<div id="overview-period-control" class="overview-period-control"></div>');
-    $("#page-header").classList.add("overview-period-header");
-    await initOverviewPeriod(async(range,{signal})=>{
-      try {
-        const params={from_date:range.from,to_date:range.to};
-        const [encounter,payment,review]=await Promise.all([
-          fullReport(reports.getEncounterStatistics,params,signal),
-          fullReport(reports.getPaymentStatistics,params,signal),
-          fullReport(reports.getReviewStatistics,params,signal),
-        ]);
-        if(!ctx.active)throw new Error("Trang đã đóng.");
-        reportData={encounter,payment,review,range};
-        const summary=reportMetrics(encounter,payment,review);
-        const graphs=`<div class="admin-grid">${chart("Theo trạng thái",encounter.by_status.map(r=>[label(r.encounter_status),r.count]))}${chart("Theo hình thức tiếp nhận",[["Trực tuyến",encounter.summary.online_count],["Trực tiếp",encounter.summary.walk_in_count]])}</div>`;
-        return summary+`<div class="admin-panel-heading"><h2>${date(range.from)} – ${date(range.to)}</h2><button data-action="export-report" type="button" class="secondary">↓ Xuất CSV</button></div>`+graphs
-          +panel("Lượt khám theo ngày",table(["Ngày","Tổng lượt","Trực tuyến","Trực tiếp"],encounter.items.map(r=>[date(r.group_value),esc(r.total),esc(r.online_count),esc(r.walk_in_count)])))
-          +panel("Dòng tiền theo ngày giao dịch",table(["Ngày","Số giao dịch","Tiền cọc","Phí khám","Hoàn tiền","Thu ròng"],payment.items.map(r=>[date(r.group_value),esc(r.transaction_count),money(r.deposit_received),money(r.exam_fee_received),money(r.refunded_amount),money(r.net_received)])))
-          +panel("Đánh giá người bệnh",table(["Ngày","Số đánh giá","Điểm trung bình"],review.items.map(r=>[date(r.group_value),esc(r.review_count),esc(r.average_rating ?? "—")])))
-          +chart("Phân bố điểm đánh giá",review.rating_distribution.map(r=>[`${r.rating} sao`,r.count]));
-      }catch(error){if(error.status===401||error.status===403)ctx.handle(error);throw error;}
-    });
-  }
-  function exportReport() {
-    if(!reportData)return;
-    const {encounter,payment,review,range}=reportData;
-    const rows=[["Báo cáo NEU Medical",range.from,range.to],["LƯỢT KHÁM"],["Ngày","Tổng lượt","Trực tuyến","Trực tiếp"],...encounter.items.map(r=>[r.group_value,r.total,r.online_count,r.walk_in_count]),["DÒNG TIỀN"],["Ngày","Số giao dịch","Tiền cọc","Phí khám","Hoàn tiền","Thu ròng"],...payment.items.map(r=>[r.group_value,r.transaction_count,r.deposit_received,r.exam_fee_received,r.refunded_amount,r.net_received]),["ĐÁNH GIÁ"],["Ngày","Số đánh giá","Điểm trung bình"],...review.items.map(r=>[r.group_value,r.review_count,r.average_rating ?? ""])];
-    const csv="\uFEFF"+rows.map(row=>row.map(value=>`"${String(value).replace(/"/g,'""')}"`).join(",")).join("\r\n");
-    const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
-    const anchor=document.createElement("a");anchor.href=url;anchor.download=`neu-bao-cao-${range.from}-${range.to}.csv`;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),0);
-  }
   async function configurationPage() {
     reload=async()=>ctx.load(signal=>allPages(configurations.listConfigurations,{},signal),rows=>{
       rows.forEach(r=>records.set(r.config_key,r));
@@ -296,37 +255,15 @@ export async function initAdminWorkspace(key) {
     });
     await reload();
   }
-  const issues={SCHEDULE_QUOTA_MISMATCH:"Sức chứa ca không khớp số lượt",COMPLETED_WITHOUT_VALID_RECORD:"Hoàn tất nhưng thiếu bệnh án hợp lệ",PRICE_SNAPSHOT_MISSING:"Thiếu giá khám đã chốt",CHARGED_ABOVE_SNAPSHOT:"Thu vượt giá khám đã chốt",REFUND_EXCEEDS_RECEIPTS:"Hoàn vượt số tiền đã thu",ONLINE_DEPOSIT_NOT_FULLY_PAID:"Cọc trực tuyến chưa đủ"};
   async function auditPage() {
-    const linked=new URLSearchParams(location.search).get("encounter_id");
-    body.innerHTML=activityLogMarkup()+`<details class="admin-audit-reconciliation" ${linked&&/^\d+$/.test(linked)?"open":""}><summary>Lịch sử lượt khám và đối soát</summary><p>Tra cứu lịch sử trạng thái, điều phối bác sĩ, thanh toán và sửa bệnh án đã được hệ thống lưu. Đây là lịch sử nghiệp vụ lượt khám.</p>`
-      +panel("Đối soát lượt khám",`<form id="audit-filter" class="admin-toolbar"><label>Mã lượt khám<input name="encounter_id" type="text" placeholder="LK_001" value="${linked&&/^\d+$/.test(linked)?esc(linked):""}"></label><label>Từ ngày<input name="from_date" type="date"></label><label>Đến ngày<input name="to_date" type="date"></label><button type="submit">Tra cứu</button></form><div id="audit-results"></div><div id="audit-pager"></div>`)+"</details>";
-    bindActivityLogFilter(body);
-    reload=async()=>ctx.load(async signal=>{
-      const params=dataForm($("#audit-filter"));
-      if(params.from_date&&params.to_date&&params.to_date<params.from_date)throw new Error("Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.");
-      return reports.getEncounterAudit({...params,page,page_size:12},{signal});
-    },result=>{listResult=result;$("#audit-results").innerHTML=table(["Mã lượt","Trạng thái","Giá chốt","Đã thu","Đã hoàn","Thu ròng","Đối soát","Lịch sử"],result.items.map(r=>[esc(code("LK", r.encounter_id)),badge(r.encounter_status),money(r.consultation_fee_snapshot),money(r.gross_received),money(r.refunded_amount),money(r.net_received),r.issues.map(i=>esc(issues[i] || i)).join("<br>") || "Không phát hiện lệch",button("audit-detail",r.encounter_id,"Xem lịch sử")]));$("#audit-pager").innerHTML=paginationMarkup(result);});
-    bindTextFilters($("#audit-filter"),()=>{page=1;return reload();},"#audit-results","#audit-pager");await reload();
-  }
-  async function auditDetail(id) {
-    await ctx.show("Lịch sử lượt khám",async signal=>{
-      const result=await reports.getEncounterAudit({encounter_id:id,page_size:1},{signal}),row=result.items[0];
-      if(!row)throw new Error("Không tìm thấy lượt khám.");
-      const section=(title,rows,columns,mapper)=>panel(title,table(columns,(rows || []).map(mapper)));
-      return facts([["Mã lượt khám",code("LK", id)],["Bệnh án",code("BA", row.record_id)],["Phiên bản bệnh án",row.record_version]])+notice(`Hiển thị tối đa ${row.history_limit || 100} bản ghi gần nhất của mỗi loại.`)
-        +section("Thay đổi trạng thái",row.status_history,["Thời điểm","Từ","Đến","Người thay đổi","Ghi chú"],r=>[stamp(r.changed_at),esc(label(r.old_status)),esc(label(r.new_status)),esc(code("TK", r.changed_by_id)),esc(r.note || "—")])
-        +section("Điều phối bác sĩ",row.transfer_history,["Thời điểm","Bác sĩ cũ","Bác sĩ mới","Người thực hiện","Lý do"],r=>[stamp(r.transferred_at || r.created_at),esc(code("BS", r.old_doctor_id)),esc(code("BS", r.new_doctor_id)),esc(code("TK", r.transferred_by_id || r.changed_by_id)),esc(r.reason || "—")])
-        +section("Thanh toán",row.payment_history,["Mã","Loại","Số tiền","Trạng thái"],r=>[esc(code("TT", r.payment_id)),esc(label(r.payment_type)),money(r.amount),badge(r.transaction_status)])
-        +section("Bổ sung bệnh án",row.medical_revision_history,["Thời điểm","Người sửa","Lý do","Chi tiết"],r=>[stamp(r.changed_at || r.at),esc(code("TK", r.changed_by_id || r.actor_id)),esc(r.reason),`<details><summary>Nội dung trước / sau</summary><pre class="admin-text-content">${esc(JSON.stringify(r,null,2))}</pre></details>`]);
-    });
+    await initActivityLog(ctx,body);
   }
 
   let leavePage=1;
   async function leaveList() {
     if(!ctx.active||!$("#leave-filter"))return;
     await ctx.load(signal=>leave.listAdminLeaveRequests({...dataForm($("#leave-filter")),page:leavePage,page_size:10},{signal}),result=>{
-      $("#leave-results").innerHTML=table(["Mã đơn","Nhân viên","Vai trò","Từ ngày","Đến ngày","Buổi nghỉ","Trạng thái","Thao tác"],result.items.map(r=>[esc(code("NP", r.request_id)),esc(r.staff_name),badge(r.role_name),date(r.from_date),date(r.to_date),esc(label(r.period)),badge(r.status),button("leave-detail",r.request_id,r.status==="PENDING"?"Xem / xét duyệt":"Chi tiết")]));
+      replaceAdminRegion($("#leave-results"),table(["Mã đơn","Nhân viên","Vai trò","Từ ngày","Đến ngày","Buổi nghỉ","Trạng thái","Thao tác"],result.items.map(r=>[esc(code("NP", r.request_id)),esc(r.staff_name),badge(r.role_name),date(r.from_date),date(r.to_date),esc(label(r.period)),badge(r.status),button("leave-detail",r.request_id,r.status==="PENDING"?"Xem / xét duyệt":"Chi tiết")])));
       const pages=Math.max(1,Math.ceil(result.total/result.page_size));
       $("#leave-pager").innerHTML=`<div class="admin-pagination"><span>${result.total} đơn · Trang ${result.page} / ${pages}</span><div><button type="button" class="secondary" data-action="leave-prev" ${leavePage<=1?"disabled":""}>Trang trước</button><button type="button" class="secondary" data-action="leave-next" ${leavePage>=pages?"disabled":""}>Trang sau</button></div></div>`;
     });
@@ -337,12 +274,26 @@ export async function initAdminWorkspace(key) {
       return leaveRequestDetails(result,id);
     });
   }
+  let historyPatientId;
   async function patientHistory(id) {
+    historyPatientId=id;
+    $("#patient-visit-back")?.remove();
     await ctx.show("Lịch sử khám",async signal=>{
       const rows=await allPages((params,opt)=>patients.listEncounters(id,params,opt),{},signal);
-      return table(["Mã lượt","Ngày","Bác sĩ","Phòng","Trạng thái"],rows.map(r=>[esc(code("LK", r.encounter_id)),date(r.work_date),esc(r.doctor_name),esc(r.room_name),badge(r.encounter_status)]));
+      return patientHistoryTable(rows);
     });
   }
+  async function patientVisit(id) {
+    if(!historyPatientId)return;
+    const patientId=historyPatientId;
+    if(!$("#patient-visit-back")) {
+      $("#admin-dialog-title").insertAdjacentHTML("beforebegin",'<button type="button" class="secondary" id="patient-visit-back">← Lịch sử khám</button>');
+      $("#patient-visit-back").addEventListener("click",()=>patientHistory(patientId));
+    }
+    await ctx.show(`Hồ sơ lần khám ${code("LK",id)}`,async signal=>patientVisitMarkup(await readPatientVisit(id,patientId,{signal})));
+    modal.scrollTop=0;
+  }
+  modal.addEventListener("close",()=>{$("#patient-visit-back")?.remove();historyPatientId=null;});
   let memberDraft=[],memberCandidates=[],memberDepartmentId,memberVersion,departmentEditor;
   async function leadership(id) {
     memberDepartmentId=id;
@@ -416,10 +367,9 @@ export async function initAdminWorkspace(key) {
     if(name==="detail")await showDetail(id);
     if(name==="edit")await editResource(id);
     if(name==="archive")await confirmation(name,id);
-    if(name==="export-report")exportReport();
-    if(name==="audit-detail")await auditDetail(id);
     if(name==="leave-detail")await leaveDetail(id);
     if(name==="patient-history")await patientHistory(id);
+    if(name==="patient-visit")await patientVisit(id);
     if(name==="leadership")await leadership(id);
     if(name==="article-image")await uploadForm(id);
   }
@@ -541,13 +491,23 @@ export async function initAdminWorkspace(key) {
   });
   modalBody.addEventListener("change",event=>{if(event.target.type==="file"){const form=event.target.closest("[data-form]");if(form)delete form.dataset.uploadedUrl;}});
   if(resources[key])await resourcePage();
-  else if(key==="statistics")await statisticsPage();
   else if(key==="configuration")await configurationPage();
+  const linkParams=new URLSearchParams(location.search);
+  const detailId=linkParams.get("detail_id"),leaveId=linkParams.get("leave_request_id");
+  if(key==="schedule"&&leaveId&&/^[1-9]\d*$/.test(leaveId))await leaveDetail(leaveId);
+  else if(resources[key]&&detailId&&/^[1-9]\d*$/.test(detailId)) {
+    if(!records.has(detailId)&&!resources[key].get){
+      const rows=await allPages(resources[key].list,resources[key].params||{});
+      const row=rows.find(item=>String(item[resources[key].id])===detailId);
+      if(row)records.set(detailId,row);
+    }
+    await showDetail(detailId);
+  }
   else if(key==="audit")await auditPage();
   // Editors and the bulk assignment screen keep their current contents.
   if(key!=="configuration"&&key!=="statistics")startAutoRefresh(async()=>{await reload();if(key==="schedule")await leaveList();},{
     canRefresh:()=>ctx.active&&!body.querySelector("[data-form], #bulk-assignment-form")&&
-      Boolean(body.querySelector("#resource-filter, #payment-search, #audit-filter")),
+      Boolean(body.querySelector("#resource-filter, #payment-search")),
   });
   return ctx;
 }

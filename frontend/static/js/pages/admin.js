@@ -5,6 +5,7 @@ import { staffTopbar } from "../core/staff_topbar.js";
 import { enhanceDialogDismiss } from "../core/dialog_dismiss.js";
 
 import { requireAdmin } from "../core/admin_access.js";
+import {initAdminNotificationBadge} from "../core/admin_notification_badge.js";
 import { signOut, loginUrl, hasSession } from "../core/session.js";
 
 // Verify the existing administrator session before loading management data.
@@ -32,10 +33,10 @@ const shapes = {
 const icon = key => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${shapes[key] || shapes.record}</svg>`;
 const key = Object.hasOwn(pages, document.body.dataset.page) ? document.body.dataset.page : "home";
 const page = pages[key];
-const presentationPage = ["articles", "reviews", "notifications"].includes(key);
+const presentationPage = false;
 const profileHref = adminPageHref("profile");
 const dialog = $("#admin-dialog");
-enhanceDialogDismiss(dialog);
+enhanceDialogDismiss(dialog, {canClose: () => dialog.getAttribute("aria-busy") !== "true"});
 $("#dialog-close").addEventListener("click", () => dialog.close());
 $("#staff-sidebar").innerHTML = `<a class="staff-brand" href="home.html"><img src="../../static/assets/bieu_trung_neu.png" alt="Biểu trưng NEU"><span><strong>NEU Medical</strong><small>KHÔNG GIAN QUẢN TRỊ</small></span></a><nav aria-label="Điều hướng quản trị">${sections.map(([title, items]) => `<p class="staff-nav-label">${title}</p>${items.map(([id, label, symbol]) => `<a href="${adminPageHref(id)}" ${key === id ? 'aria-current="page"' : ""}>${icon(symbol)}<span>${label}</span></a>`).join("")}`).join("")}</nav><div class="staff-sidebar-bottom admin-logout"><button type="button" id="admin-signout" title="Đăng xuất"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 3H3v18h6M10 12h11M17 8l4 4-4 4"/></svg><span>Đăng xuất</span></button></div>`;
 $("#staff-topbar").innerHTML = staffTopbar({ title: page.title, profileHref, name: "Quản trị viên", initials: "QT" });
@@ -98,7 +99,14 @@ if (presentationPage) {
 } else {
   const administrator = await requireAdmin();
   if (administrator) {
+    initAdminNotificationBadge();
     $("#staff-account-name").textContent = administrator.full_name;
-    if (!page.placeholder) await initAdminWorkspace(key);
+    if (key === "articles") {
+      const { initArticlePresentation } = await import("../core/admin_article_presentation.js");
+      await initArticlePresentation(administrator);
+    } else if (["reviews", "notifications"].includes(key)) {
+      const {initFeedbackPresentation} = await import("../core/admin_feedback_presentation.js");
+      await initFeedbackPresentation(key);
+    } else if (!page.placeholder) await initAdminWorkspace(key);
   }
 }

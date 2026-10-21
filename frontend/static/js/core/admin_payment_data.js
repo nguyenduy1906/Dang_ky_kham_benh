@@ -1,5 +1,6 @@
 import * as payments from "../api/payment.js";
 import { getEncounter } from "../api/encounter.js";
+import { getDepartment } from "../api/catalog.js";
 import { code, parseCode } from "./business_codes.js";
 
 export async function readAdminPaymentHistory({ signal } = {}) {
@@ -22,24 +23,40 @@ export function paymentPage(rows, filters = {}, page = 1, { refunds = false, siz
   const id = filters.encounter_id ? parseCode(filters.encounter_id, "LK") : null;
   const source = filters.original_payment_id ? parseCode(filters.original_payment_id, "TT") : null;
   if (filters.from_date && filters.to_date && filters.from_date > filters.to_date) throw new Error("Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.");
-  const query = text(filters.q).trim();
+  const input = text(filters.q).trim();
+  const reference = input.match(/^(tt|lk)_([0-9]+)$/);
+  const query = input;
+  const matchesQuery = row => {
+    if(reference) {
+      const number=Number(reference[2]);
+      if(!Number.isSafeInteger(number)||number<1)return false;
+      return reference[1]==="lk"?Number(row.encounter_id)===number:
+        Number(row.payment_id)===number || refunds&&Number(row.original_payment_id)===number || text(row.payment_code)===input || text(row.transaction_code)===input;
+    }
+    return !query || text([code("TT",row.payment_id),row.payment_code,row.transaction_code,row.reason,code("TT",row.original_payment_id),code("LK",row.encounter_id)].join(" ")).includes(query);
+  };
   const matches = rows.filter(row => (row.payment_type === "REFUND") === refunds &&
     (!id || Number(row.encounter_id) === id) && (!source || Number(row.original_payment_id) === source) &&
     (!filters.payment_type || row.payment_type === filters.payment_type) &&
     (!filters.transaction_status || row.transaction_status === filters.transaction_status) &&
     (!filters.payment_method || row.payment_method === filters.payment_method) &&
     (!filters.from_date || dayOf(row) >= filters.from_date) && (!filters.to_date || dayOf(row) <= filters.to_date) &&
-    (!query || text([code("TT",row.payment_id),row.payment_code,row.transaction_code,row.reason,code("TT",row.original_payment_id)].join(" ")).includes(query)));
+    matchesQuery(row));
   const current = Math.min(Math.max(1,page),Math.max(1,Math.ceil(matches.length / size)));
   return { items: matches.slice((current-1)*size,current*size), total: matches.length, page: current, page_size: size };
 }
 
-export async function readPaymentContext(paymentId, { signal } = {}) {
+export async function readPaymentContext(paymentId, { signal, includeDepartment = false } = {}) {
   const id = parseCode(paymentId,"TT");
   const { payment } = await payments.getPayment(id, { signal });
   if (Number(payment.payment_id) !== id) throw new Error("Thông tin thanh toán không khớp mã đã chọn.");
   const { encounter } = await getEncounter(payment.encounter_id, { signal });
   if (Number(encounter.encounter_id) !== Number(payment.encounter_id)) throw new Error("Thông tin lượt khám không khớp giao dịch.");
+  if (includeDepartment && encounter.department_id && !encounter.department_name) {
+    const { department } = await getDepartment(encounter.department_id,{signal,params:{include_inactive:true}});
+    if (Number(department.department_id)!==Number(encounter.department_id)) throw new Error("Thông tin chuyên khoa không khớp lượt khám.");
+    encounter.department_name=department.name;
+  }
   return { payment, encounter };
 }
 

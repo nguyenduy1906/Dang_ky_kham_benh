@@ -59,7 +59,7 @@ def create_review(db, record_id, fields):
 
 def list_public_reviews(db, doctor_id, page, size):
     base = ('FROM review r JOIN medical_record m ON m.record_id=r.record_id '
-            "JOIN encounter e ON e.encounter_id=m.encounter_id WHERE e.doctor_profile_id=%s AND e.encounter_status='COMPLETED'")
+            "JOIN encounter e ON e.encounter_id=m.encounter_id WHERE e.doctor_profile_id=%s AND e.encounter_status='COMPLETED' AND NOT r.is_hidden")
     stats = db.execute('SELECT COUNT(*) AS total,AVG(r.rating) AS average_rating ' + base, (doctor_id,)).fetchone()
     # Không JOIN patient/users, không trả record/encounter ID hoặc bệnh án.
     rows = db.execute('SELECT r.review_id,r.rating,r.comment,r.created_at ' + base +
@@ -71,3 +71,26 @@ def list_public_reviews(db, doctor_id, page, size):
 # Keep the old Python names available; new callers use the review-specific names.
 create = create_review
 list_public = list_public_reviews
+
+
+def admin_reviews(db, page, size, review_id=None):
+    base = (' FROM review r JOIN medical_record m ON m.record_id=r.record_id '
+            'JOIN encounter e ON e.encounter_id=m.encounter_id '
+            'JOIN doctor_profile d ON d.doctor_profile_id=e.doctor_profile_id '
+            'JOIN users u ON u.user_id=d.user_id '
+            'JOIN department dep ON dep.department_id=d.department_id ')
+    params = []
+    if review_id is not None:
+        base += ' WHERE r.review_id=%s'
+        params.append(review_id)
+    total = db.execute('SELECT COUNT(*) AS n' + base, params).fetchone()['n']
+    rows = db.execute('SELECT r.review_id,r.rating,r.comment,r.created_at,r.is_hidden,'
+                      'u.full_name AS doctor,dep.name AS department' + base +
+                      ' ORDER BY r.created_at DESC,r.review_id DESC LIMIT %s OFFSET %s',
+                      params + [size, (page-1)*size]).fetchall()
+    return rows, total
+
+
+def set_review_visibility(db, review_id, hidden):
+    return db.execute('UPDATE review SET is_hidden=%s WHERE review_id=%s RETURNING review_id,is_hidden',
+                      (hidden, review_id)).fetchone()
