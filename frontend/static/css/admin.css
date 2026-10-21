@@ -296,6 +296,17 @@ body.admin-page dialog { box-sizing: border-box; width: min(1180px, calc(100% - 
 }
 
 /* Shared admin dialog presentation and close control. */
+.admin-page .admin-schedule-builder .admin-schedule-conflict { display: block; margin-top: 6px; color: #b42318; font-size: 12px; line-height: 1.5; font-weight: 600; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.admin-page .admin-schedule-builder [data-draft-feedback][data-error="true"] { color: #b42318; }
+body.admin-page[data-page="rooms"] #admin-dialog { width: min(720px, calc(100% - 32px)); height: fit-content; min-height: 0; padding: 24px; }
+.admin-page[data-page="rooms"] #admin-dialog .admin-contact-fields { gap: 16px 20px; }
+.admin-page[data-page="rooms"] #admin-dialog textarea { height: 96px; min-height: 80px; }
+.admin-page[data-page="rooms"] #admin-dialog label:has(select[name="is_active"]) { max-width: 240px; }
+.admin-page[data-page="rooms"] #admin-dialog .form-feedback:empty { display: none; }
+@media (max-width: 680px) {
+  body.admin-page[data-page="rooms"] #admin-dialog { width: calc(100% - 16px); padding: 20px; }
+  .admin-page[data-page="rooms"] #admin-dialog label:has(select[name="is_active"]) { max-width: none; }
+}
 .admin-page #admin-dialog { padding: 28px; border-radius: 5px !important; }
 .admin-page #admin-dialog > .section-heading { padding-bottom: 18px; margin-bottom: 22px; border-bottom: 1px solid #e4ece7; }
 .admin-page #admin-dialog #dialog-close { min-height: 40px; padding: 8px 20px; border: 1px solid #cfddd5; border-radius: 5px !important; background: #fff; color: #38634e; font-size: 13px; font-weight: 600; transition: background-color .15s, color .15s, border-color .15s; }

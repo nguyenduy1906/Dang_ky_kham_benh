@@ -24,11 +24,11 @@ export const adminPages = {
   rooms:{title:"Quản lý phòng khám",description:"Quản lý phòng khám theo chuyên khoa."},
   users:{title:"Quản lý tài khoản",description:"Quản lý tài khoản, vai trò và trạng thái nhân viên."},
   articles:{title:"Quản lý tin tức",description:"Soạn thảo và quản lý các bài viết trên website."},
-  reviews:{title:"Đánh giá",description:"",placeholder:true},
-  notifications:{title:"Thông báo",description:"",placeholder:true},
+  reviews:{title:"Đánh giá",description:"Theo dõi phản hồi của người bệnh sau khám."},
+  notifications:{title:"Thông báo",description:"Hộp thư thông báo dành cho tài khoản quản trị viên."},
   payments:{title:"Lịch sử thanh toán",description:"Lịch sử giao dịch toàn hệ thống, tối đa 20 bản ghi mỗi trang."},
   statistics:{title:"Báo cáo & thống kê",description:"Thống kê lượt khám, dòng tiền và đánh giá trong khoảng thời gian đã chọn."},
-  audit:{title:"Nhật ký hoạt động",description:"Đối soát lượt khám và tra cứu lịch sử trạng thái, điều phối, thanh toán, bệnh án."},
+  audit:{title:"Nhật ký hoạt động",description:"Theo dõi người thực hiện, thời điểm và nội dung thay đổi trong hệ thống."},
   configuration:{title:"Cấu hình hệ thống",description:"Quản lý thông tin cơ sở và các cài đặt được phép thay đổi."},
 };
 const f=(name,title,type="text",extra={})=>({name,title,type,...extra});
@@ -56,7 +56,7 @@ export const resources = {
   },
   departments:{id:"department_id",list:catalog.listDepartments,get:async(id,opt)=>(await catalog.getDepartment(id,opt)).department,create:catalog.createDepartment,update:catalog.updateDepartment,add:"Thêm chuyên khoa",params:{include_inactive:true},local:true,columns:["Mã","Chuyên khoa","Khối","Số bác sĩ","Trưởng khoa","Trạng thái"],
     cells:r=>[esc(code("CK", r.department_id)),esc(r.name),esc(label(r.group_type)),esc(r.doctor_count ?? "—"),esc(r.leadership?.head?.full_name || "Chưa phân công"),badge(r.is_active?"ACTIVE":"LOCKED")],
-    filters:[f("q","Tên chuyên khoa","search")],fields:[f("name","Tên chuyên khoa","text",{required:true,max:150}),f("description","Mô tả ngắn","textarea",{max:1000}),{...choice("group_type","Khối",["CLINICAL","PARACLINICAL"]),default:"CLINICAL"},active,f("overview","Giới thiệu tổng quan","textarea",{max:12000,advanced:true}),f("mission","Chức năng, nhiệm vụ","textarea",{max:4000,advanced:true}),f("cover_image_url","Đường dẫn ảnh bìa","text",{max:2000,advanced:true}),...[["specialties","Chuyên môn"],["clinical_services","Dịch vụ"],["equipment","Trang thiết bị"],["achievements","Thành tựu"],["patient_guide","Hướng dẫn người bệnh"]].map(([name,title])=>f(name,`${title} (mỗi dòng một mục)`,"lines",{advanced:true})),f("gallery","Thư viện ảnh","json",{advanced:true}),f("extra_sections","Mục nội dung thêm","json",{advanced:true}),f("content_is_demo","Đánh dấu nội dung minh họa","checkbox",{advanced:true})],
+    filters:[f("q","Tên chuyên khoa","search")],fields:[f("name","Tên chuyên khoa","text",{required:true,max:150}),f("description","Mô tả ngắn","textarea",{max:1000}),{...choice("group_type","Khối",["CLINICAL","PARACLINICAL"]),default:"CLINICAL"},active,f("overview","Giới thiệu tổng quan","textarea",{max:12000,advanced:true}),f("mission","Chức năng, nhiệm vụ","textarea",{max:4000,advanced:true}),f("cover_image_url","Đường dẫn ảnh bìa","text",{max:2000,advanced:true}),...[["specialties","Chuyên môn"],["clinical_services","Dịch vụ"],["equipment","Trang thiết bị"],["achievements","Thành tựu"],["patient_guide","Hướng dẫn người bệnh"]].map(([name,title])=>f(name,`${title} (mỗi dòng một mục)`,"lines",{advanced:true})),f("gallery","Thư viện ảnh","json",{advanced:true}),f("extra_sections","Mục nội dung thêm","json",{advanced:true})],
   },
   rooms:{id:"room_id",list:catalog.listRooms,create:catalog.createRoom,update:catalog.updateRoom,add:"Thêm phòng khám",params:{include_inactive:true},local:true,columns:["Mã","Phòng khám","Chuyên khoa","Mô tả","Trạng thái"],cells:r=>[esc(code("PH", r.room_id)),esc(r.room_name),esc(r.department_name),esc(r.description || "—"),badge(r.is_active?"ACTIVE":"LOCKED")],
     filters:[f("q","Tên phòng","search"),dept],fields:[dept,f("room_name","Tên phòng","text",{required:true,max:100}),f("description","Mô tả","textarea",{max:1000}),active],

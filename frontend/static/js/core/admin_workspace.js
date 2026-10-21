@@ -1,8 +1,11 @@
 import {initAdminPayments} from "./admin_payments.js";
+import {configurationMarkup,bindConfigurationHours} from "./admin_configuration_view.js";
+import {activityLogMarkup,bindActivityLogFilter} from "./admin_audit_view.js";
 import {loadPatientAccount,savePatientAccount} from "./admin_patient_account.js";
 import {validateDepartmentImage,saveDepartmentImage,createDepartmentWithImages} from "./admin_department_image.js";
 import {thumbnailUrl} from "./articles.js";
 import { departmentDetails, departmentMemberGroups, addDepartmentMember, departmentDeputyLimit } from "./admin_department_view.js";
+import {saveDepartmentLeadership} from "./admin_department_leadership.js";
 import { userAccountDetails, saveUserAccount } from "./admin_user_account.js";
 import { code, codeParams } from "./business_codes.js";
 import * as auth from "../api/auth.js";
@@ -153,7 +156,7 @@ export async function initAdminWorkspace(key) {
     if(config.add)$("#page-header").insertAdjacentHTML("beforeend",`<button id="add-record" type="button">＋ ${esc(config.add)}</button>`);
     $("#add-record")?.addEventListener("click",event=>{
       if(key==="assignments"){ctx.cancelLoad();openBulkAssignment({ctx,body,trigger:event.currentTarget,onBack:()=>reload()});}
-      else if(key==="schedule"){ctx.cancelLoad();openScheduleBuilder({body,trigger:event.currentTarget,suggestions:[...records.values()]});}
+      else if(key==="schedule"){ctx.cancelLoad();openScheduleBuilder({body,trigger:event.currentTarget,ctx,onSaved:()=>reload()}).catch(error=>ctx.handle(error));}
       else editResource();
     });
     body.innerHTML=panel("Danh sách",'<div id="admin-filters"></div><div id="admin-results"></div><div id="admin-pager"></div>')+(key==="schedule"?panel("Đơn xin nghỉ",'<form id="leave-filter" class="admin-toolbar"><label>Trạng thái<select name="status">'+options(["PENDING","APPROVED","REJECTED","CANCELLED"],"PENDING")+'</select></label><label>Mã nhân viên<input type="text" name="user_id"></label><button type="submit">Xem đơn</button></form><div id="leave-results"></div><div id="leave-pager"></div>'):"");
@@ -285,24 +288,20 @@ export async function initAdminWorkspace(key) {
     const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
     const anchor=document.createElement("a");anchor.href=url;anchor.download=`neu-bao-cao-${range.from}-${range.to}.csv`;anchor.click();setTimeout(()=>URL.revokeObjectURL(url),0);
   }
-  const configTitles={HOSPITAL_NAME:"Tên cơ sở",SUPPORT_PHONE:"Điện thoại hỗ trợ",SUPPORT_EMAIL:"Email hỗ trợ",EXAM_HOURS:"Giờ khám",REMINDER_BEFORE_HOURS:"Nhắc lịch trước (giờ)",ALLOW_WALK_IN:"Tiếp nhận trực tiếp",APPOINTMENT_HOLD_MINUTES:"Thời gian giữ chỗ (phút)",DEFAULT_DEPOSIT_PERCENT:"Tỷ lệ đặt cọc (%)",CHECKIN_EARLY_MINUTES:"Check-in sớm (phút)",CHECKIN_LATE_MINUTES:"Check-in muộn (phút)",CANCEL_HOURS_LIMIT:"Mốc hủy lịch (giờ)",CANCEL_REFUND_PERCENT:"Tỷ lệ hoàn cọc (%)",NO_SHOW_GRACE_MINUTES:"Chờ sau ca (phút)",NO_SHOW_FORFEIT_DEPOSIT:"Không đến mất cọc",MAX_REVIEW_RATING:"Điểm đánh giá tối đa"};
   async function configurationPage() {
     reload=async()=>ctx.load(signal=>allPages(configurations.listConfigurations,{},signal),rows=>{
       rows.forEach(r=>records.set(r.config_key,r));
-      body.innerHTML=panel("Cấu hình hệ thống",`<div class="admin-config-list">${rows.map(row=>{
-        const value=row.effective_value ?? row.config_value;
-        if(row.read_only)return `<div class="admin-setting"><span>${esc(configTitles[row.config_key] || row.config_key)}<small>Quy tắc cố định</small></span><strong>${esc(value)}</strong></div>`;
-        const field=row.config_key==="ALLOW_WALK_IN"?`<select name="config_value">${options([["true","Bật"],["false","Tắt"]],value,"Chọn…")}</select>`:`<input name="config_value" type="${row.config_key==="SUPPORT_EMAIL"?"email":row.config_key==="REMINDER_BEFORE_HOURS"?"number":"text"}" ${row.config_key==="REMINDER_BEFORE_HOURS"?'min="1" max="168" step="1"':""} maxlength="255" value="${esc(value)}" required>`;
-        return `<form data-form="configuration" data-key="${esc(row.config_key)}"><label>${esc(configTitles[row.config_key] || row.config_key)}${field}</label><button type="submit">Lưu</button>${feedback}</form>`;
-      }).join("") || notice("Chưa có khóa cấu hình.")}</div>`);
+      body.innerHTML=configurationMarkup(rows);
+      bindConfigurationHours(body);
     });
     await reload();
   }
   const issues={SCHEDULE_QUOTA_MISMATCH:"Sức chứa ca không khớp số lượt",COMPLETED_WITHOUT_VALID_RECORD:"Hoàn tất nhưng thiếu bệnh án hợp lệ",PRICE_SNAPSHOT_MISSING:"Thiếu giá khám đã chốt",CHARGED_ABOVE_SNAPSHOT:"Thu vượt giá khám đã chốt",REFUND_EXCEEDS_RECEIPTS:"Hoàn vượt số tiền đã thu",ONLINE_DEPOSIT_NOT_FULLY_PAID:"Cọc trực tuyến chưa đủ"};
   async function auditPage() {
     const linked=new URLSearchParams(location.search).get("encounter_id");
-    body.innerHTML=notice("Nhật ký hiện hỗ trợ lượt khám. Lịch sử thay đổi tài khoản, danh mục, bài viết và cấu hình chưa được hỗ trợ.")
-      +panel("Đối soát lượt khám",`<form id="audit-filter" class="admin-toolbar"><label>Mã lượt khám<input name="encounter_id" type="text" placeholder="LK_001" value="${linked&&/^\d+$/.test(linked)?esc(linked):""}"></label><label>Từ ngày<input name="from_date" type="date"></label><label>Đến ngày<input name="to_date" type="date"></label><button type="submit">Tra cứu</button></form><div id="audit-results"></div><div id="audit-pager"></div>`);
+    body.innerHTML=activityLogMarkup()+`<details class="admin-audit-reconciliation" ${linked&&/^\d+$/.test(linked)?"open":""}><summary>Lịch sử lượt khám và đối soát</summary><p>Tra cứu lịch sử trạng thái, điều phối bác sĩ, thanh toán và sửa bệnh án đã được hệ thống lưu. Đây là lịch sử nghiệp vụ lượt khám.</p>`
+      +panel("Đối soát lượt khám",`<form id="audit-filter" class="admin-toolbar"><label>Mã lượt khám<input name="encounter_id" type="text" placeholder="LK_001" value="${linked&&/^\d+$/.test(linked)?esc(linked):""}"></label><label>Từ ngày<input name="from_date" type="date"></label><label>Đến ngày<input name="to_date" type="date"></label><button type="submit">Tra cứu</button></form><div id="audit-results"></div><div id="audit-pager"></div>`)+"</details>";
+    bindActivityLogFilter(body);
     reload=async()=>ctx.load(async signal=>{
       const params=dataForm($("#audit-filter"));
       if(params.from_date&&params.to_date&&params.to_date<params.from_date)throw new Error("Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.");
@@ -358,13 +357,15 @@ export async function initAdminWorkspace(key) {
       } else editResource(id).catch(error=>ctx.handle(error));
     });
     await ctx.show("Lãnh đạo và thành viên khoa",async signal=>{
-      const [history,members]=await Promise.all([catalog.getDepartmentLeadership(id,{signal}),catalog.getDepartmentMembers(id,{signal})]);
+      const members=await catalog.getDepartmentMembers(id,{signal});
+      const history=await catalog.getDepartmentLeadership(id,{signal});
+      if(history.version!==members.version)throw new Error("Khoa vừa được thay đổi. Bấm Quay lại và mở lại danh sách thành viên.");
       const department={department:members.department};
       const candidates=(await allPages(doctors.listDoctors,{include_inactive:true},signal)).filter(r=>r.is_active&&r.account_ok);
       memberCandidates=candidates;
       memberVersion=members.version;
       memberDraft=members.items;
-      return `<h3>${esc(department.department.name)}</h3><section class="admin-department-section"><div class="admin-member-section-heading"><h3>Thành viên khoa</h3></div><div id="department-members">${departmentMemberGroups(memberDraft,id)}</div><form class="admin-member-add-form"><div class="admin-contact-fields"><label>Thêm bác sĩ<input type="text" name="member_doctor" list="department-doctor-suggestions" placeholder="Nhập tên hoặc mã bác sĩ để tìm" autocomplete="off" required><datalist id="department-doctor-suggestions">${candidates.filter(r=>!memberDraft.some(v=>v.doctor_profile_id===r.doctor_profile_id)).map(r=>`<option value="${esc(`${r.full_name} (${code("BS",r.doctor_profile_id)})`)}">${esc(r.department_name||"Chưa có khoa")}</option>`).join("")}</datalist></label><label>Chức vụ<select name="position"><option value="HEAD" ${memberDraft.some(r=>r.position==="HEAD")?"disabled":""}>Trưởng khoa${memberDraft.some(r=>r.position==="HEAD")?" (đã có)":""}</option><option value="DEPUTY" ${memberDraft.filter(r=>r.position==="DEPUTY").length>=departmentDeputyLimit(memberDraft.length+1)?"disabled":""}>Phó khoa</option><option value="DOCTOR" selected>Bác sĩ</option></select></label></div><div class="actions"><button type="submit">Thêm thành viên</button></div><p class="form-feedback" role="status"></p></form></section>`
+      return `<h3>${esc(department.department.name)}</h3><section class="admin-department-section"><div class="admin-member-section-heading"><h3>Thành viên khoa</h3></div><div id="department-members">${departmentMemberGroups(memberDraft,id)}</div><form class="admin-member-add-form"><div class="admin-contact-fields"><label>Thêm bác sĩ<input type="text" name="member_doctor" list="department-doctor-suggestions" placeholder="Nhập tên hoặc mã bác sĩ để tìm" autocomplete="off" required><datalist id="department-doctor-suggestions">${candidates.map(r=>`<option value="${esc(`${r.full_name} (${code("BS",r.doctor_profile_id)})`)}">${esc(r.department_name||"Chưa có khoa")}</option>`).join("")}</datalist></label><label>Chức vụ<select name="position"><option value="HEAD" ${memberDraft.some(r=>r.position==="HEAD")?"disabled":""}>Trưởng khoa${memberDraft.some(r=>r.position==="HEAD")?" (đã có)":""}</option><option value="DEPUTY" ${memberDraft.filter(r=>r.position==="DEPUTY").length>=departmentDeputyLimit(memberDraft.length+1)?"disabled":""}>Phó khoa</option><option value="DOCTOR" selected>Bác sĩ</option></select></label></div><div class="actions"><button type="submit">Thêm thành viên</button></div><p class="form-feedback" role="status"></p></form></section>`
         +'<div class="admin-department-history">'+panel("Lịch sử phân công",table(["Bác sĩ","Chức vụ","Bắt đầu","Kết thúc"],history.items.map(r=>[esc(r.full_name),r.position==="HEAD"?"Trưởng khoa":"Phó khoa",stamp(r.appointed_at),stamp(r.ended_at)])))+'</div>';
     });
   }
@@ -381,7 +382,7 @@ export async function initAdminWorkspace(key) {
       return;
     }
     if(name==="back-department-edit"){await editResource(id);return;}
-    if(name==="revoke-member-role") {
+        if(name==="revoke-member-role") {
       const form=modalBody.querySelector(".admin-member-add-form");
       await ctx.submit(form,signal=>catalog.revokeDepartmentMemberRole(memberDepartmentId,id,{expected_version:memberVersion},{signal}),async result=>{
         updateDepartmentEditorVersion(result);await leadership(memberDepartmentId);await reload();
@@ -426,7 +427,7 @@ export async function initAdminWorkspace(key) {
   modalBody.addEventListener("click",event=>action(event).catch(error=>ctx.handle(error)));
   function updateDepartmentEditorVersion(result) {
     const form=departmentEditor?.nodes.find(node=>node.nodeType===1&&node.matches?.('form[data-form="resource"]'));
-    if(form&&Number(form.dataset.departmentVersion)===memberVersion)form.dataset.departmentVersion=String(result.version);
+    if(form&&Number(form.dataset.departmentVersion)===memberVersion)form.dataset.departmentVersion=String(result.version??result.department.version);
     records.set(String(memberDepartmentId),result.department);
   }
   modalBody.addEventListener("submit",event=>{
@@ -435,6 +436,14 @@ export async function initAdminWorkspace(key) {
     ctx.submit(form,async signal=>{
       const chosen=form.elements.member_doctor.value.trim();
       const doctor=memberCandidates.find(r=>`${r.full_name} (${code("BS",r.doctor_profile_id)})`===chosen);
+      const existing=doctor&&memberDraft.find(row=>String(row.doctor_profile_id)===String(doctor.doctor_profile_id));
+      if(existing) {
+        const position=form.elements.position.value;
+        const head=position==="HEAD"?doctor.doctor_profile_id:memberDraft.find(row=>row.position==="HEAD"&&String(row.doctor_profile_id)!==String(doctor.doctor_profile_id))?.doctor_profile_id??null;
+        const deputies=memberDraft.filter(row=>row.position==="DEPUTY"&&String(row.doctor_profile_id)!==String(doctor.doctor_profile_id)).map(row=>row.doctor_profile_id);
+        if(position==="DEPUTY")deputies.push(doctor.doctor_profile_id);
+        return saveDepartmentLeadership(memberDepartmentId,memberDraft,memberCandidates,head,deputies,memberVersion,{signal});
+      }
       addDepartmentMember(memberDraft,doctor,form.elements.position.value);
       return catalog.addDepartmentMember(memberDepartmentId,{doctor_profile_id:doctor.doctor_profile_id,position:form.elements.position.value,expected_version:memberVersion,expected_source_department_id:doctor.department_id},{signal});
     },async result=>{updateDepartmentEditorVersion(result);await leadership(memberDepartmentId);await reload();});
@@ -496,7 +505,7 @@ export async function initAdminWorkspace(key) {
         const row=result.configuration;records.set(row.config_key,row);form.elements.config_value.value=row.effective_value ?? row.config_value;return;
       }
       close();
-      if(type==="review"){await leaveList();return;}
+      if(type==="review"){await reload();await leaveList();return;}
       await reload();
     });
   }

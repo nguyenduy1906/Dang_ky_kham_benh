@@ -32,6 +32,7 @@ const shapes = {
 const icon = key => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${shapes[key] || shapes.record}</svg>`;
 const key = Object.hasOwn(pages, document.body.dataset.page) ? document.body.dataset.page : "home";
 const page = pages[key];
+const presentationPage = ["articles", "reviews", "notifications"].includes(key);
 const profileHref = adminPageHref("profile");
 const dialog = $("#admin-dialog");
 enhanceDialogDismiss(dialog);
@@ -39,6 +40,7 @@ $("#dialog-close").addEventListener("click", () => dialog.close());
 $("#staff-sidebar").innerHTML = `<a class="staff-brand" href="home.html"><img src="../../static/assets/bieu_trung_neu.png" alt="Biểu trưng NEU"><span><strong>NEU Medical</strong><small>KHÔNG GIAN QUẢN TRỊ</small></span></a><nav aria-label="Điều hướng quản trị">${sections.map(([title, items]) => `<p class="staff-nav-label">${title}</p>${items.map(([id, label, symbol]) => `<a href="${adminPageHref(id)}" ${key === id ? 'aria-current="page"' : ""}>${icon(symbol)}<span>${label}</span></a>`).join("")}`).join("")}</nav><div class="staff-sidebar-bottom admin-logout"><button type="button" id="admin-signout" title="Đăng xuất"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 3H3v18h6M10 12h11M17 8l4 4-4 4"/></svg><span>Đăng xuất</span></button></div>`;
 $("#staff-topbar").innerHTML = staffTopbar({ title: page.title, profileHref, name: "Quản trị viên", initials: "QT" });
 $("#admin-signout").addEventListener("click", async event => {
+  if (presentationPage) { location.href = "../public/home.html"; return; }
   event.currentTarget.disabled = true;
   try { await signOut(); }
   catch { /* The local session is cleared even if the backend is unavailable. */ }
@@ -49,6 +51,7 @@ function suspendAdmin() {
   $("#main-content").inert = true;
 }
 window.addEventListener("neu:auth-change", () => {
+  if (presentationPage) return;
   if (!hasSession()) { suspendAdmin(); location.replace(loginUrl(new URL(location.href)).href); }
 });
 $("#page-title").textContent = page.title;
@@ -80,9 +83,22 @@ document.addEventListener("keydown", event => {
 });
 matchMedia("(max-width: 960px)").addEventListener("change", event => { if (!event.matches) setMenu(false); });
 
-// Mount the public shell first; only render page data after verifying /me.
-const administrator = await requireAdmin();
-if (administrator) {
-  $("#staff-account-name").textContent = administrator.full_name;
-  if (!page.placeholder) await initAdminWorkspace(key);
+// Presentation pages stay standalone while their API integration is deferred.
+if (presentationPage) {
+  document.body.classList.remove("staff-auth-pending");
+  $("#main-content").inert = false;
+  $("#staff-access").hidden = true;
+  if (key === "articles") {
+    const { initArticlePresentation } = await import("../core/admin_article_presentation.js");
+    initArticlePresentation();
+  } else {
+    const { initFeedbackPresentation } = await import("../core/admin_feedback_presentation.js");
+    initFeedbackPresentation(key);
+  }
+} else {
+  const administrator = await requireAdmin();
+  if (administrator) {
+    $("#staff-account-name").textContent = administrator.full_name;
+    if (!page.placeholder) await initAdminWorkspace(key);
+  }
 }

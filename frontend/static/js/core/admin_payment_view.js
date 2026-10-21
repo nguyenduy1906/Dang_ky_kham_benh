@@ -24,9 +24,9 @@ export function paymentTable(rows) {
 }
 
 export function refundHistoryTable(rows) {
-  return table(["Mã hoàn tiền", "Giao dịch gốc", "Lượt khám", "Số tiền hoàn", "Phương thức", "Thời điểm", "Trạng thái", "Thao tác"], rows.map(row => [
+  return table(["Mã hoàn tiền", "Giao dịch gốc", "Lượt khám", "Số tiền hoàn", "Phương thức", "Thời điểm", "Trạng thái", "Lý do", "Thao tác"], rows.map(row => [
     esc(code("TT", row.payment_id)), esc(code("TT", row.original_payment_id)), esc(code("LK", row.encounter_id)), esc(amount(row.amount)),
-    esc(paymentMethodLabel(row.payment_method)), esc(timestamp(row.refunded_at || row.paid_at || row.created_at)), paymentStatusBadge(row.transaction_status), detailButton(row),
+    esc(paymentMethodLabel(row.payment_method)), esc(timestamp(row.refunded_at || row.paid_at || row.created_at)), paymentStatusBadge(row.transaction_status), esc(value(row.reason)), detailButton(row),
   ]), "Lịch sử hoàn tiền");
 }
 
