@@ -1,4 +1,5 @@
-import {esc,date,money,label,metrics,table} from './admin_ui.js';
+import {encounterDailyChart} from "./admin_encounter_chart.js";
+import {esc,date,money,label,metrics,table,badge} from './admin_ui.js';
 import {reportStatuses,encounterGroup,capacityGroup,percent} from './admin_statistics_data.js';
 export const statisticsTabs=[['overview','Tổng hợp'],['encounters','Lượt khám'],['departments','Chuyên khoa'],['doctors','Bác sĩ'],['payments','Thanh toán'],['capacity','Công suất'],['reviews','Đánh giá']];
 const number=value=>new Intl.NumberFormat('vi-VN',{maximumFractionDigits:1}).format(Number(value||0));
@@ -30,16 +31,17 @@ export function statisticsView(data,tab='overview') {
   let summary,panels,columns,rows,title;
   if(tab==='overview') {
     summary=metricsFor([['Tổng lượt theo lịch',number(e.total),'Trực tuyến và trực tiếp'],['Đã hoàn thành',number(e.completed),'Lượt khám hoàn tất'],['Không đến',number(e.noShow),'Lượt được ghi nhận không đến'],['Thu ròng ghi nhận',money(cash.net_received),'Thu thành công trừ hoàn tiền']]);
-    panels=[dailyCard,statusCard,departmentCard,statisticsList('Theo dõi vận hành',[
-      ['Tỷ lệ không đến',percent(e.noShow,e.total)],['Lượt đã hủy',number(e.cancelled)],['Đã check-in hoặc đang khám',number(data.encounters.filter(row=>['CHECKED_IN','IN_PROGRESS'].includes(row.encounter_status)).length)],['Chỗ đã đặt / sức chứa',`${number(c.booked)} / ${number(c.capacity)}`],['Điểm đánh giá trung bình',average(r.average_rating)]])];
+    const chartRows=group(data.encounters,'work_date').map(([day,rows])=>({group_value:day,online_count:rows.filter(row=>row.encounter_type==='ONLINE').length,walk_in_count:rows.filter(row=>row.encounter_type==='WALK_IN').length}));
+    const chart=encounterDailyChart(chartRows,data.range,{showRange:false,title:'Lượt khám theo ngày'});
+    panels=[`<div class="statistics-overview-chart">${chart}</div>`,statusCard,departmentCard.replace('statistics-card','statistics-card statistics-departments')];
   } else if(tab==='encounters') {
-    summary=fourVisits();panels=[dailyCard,statusCard];title='Danh sách tổng hợp theo ngày';columns=['Ngày khám','Tổng lượt','Trực tuyến','Trực tiếp','Hoàn thành','Không đến','Đã hủy'];rows=daily;
+    summary=fourVisits();panels=[];title='Danh sách tổng hợp theo ngày';columns=['Ngày khám','Tổng lượt','Trực tuyến','Trực tiếp','Hoàn thành','Không đến','Đã hủy'];rows=daily;
   } else if(tab==='departments') {
     summary=metricsFor([['Chuyên khoa trong bộ lọc',number(data.departments.length),'Các chuyên khoa được chọn'],['Bác sĩ trong bộ lọc',number(data.doctors.length),'Theo chuyên khoa'],['Tổng lượt khám',number(e.total),'Theo ngày ca khám'],['Đã hoàn thành',number(e.completed),'Lượt khám hoàn tất']]);
-    panels=[departmentCard,capacityCard];title='Bảng thống kê chuyên khoa';columns=['Chuyên khoa','Bác sĩ','Tổng lượt','Hoàn thành','Không đến','Đã đặt / sức chứa'];rows=departmentRows.map(d=>[d.name,d.doctors,d.total,d.completed,d.noShow,`${d.booked} / ${d.capacity}`]);
+    panels=[];title='Bảng thống kê chuyên khoa';columns=['Chuyên khoa','Bác sĩ','Tổng lượt','Hoàn thành','Không đến','Đã đặt / sức chứa'];rows=departmentRows.map(d=>[d.name,d.doctors,d.total,d.completed,d.noShow,`${d.booked} / ${d.capacity}`]);
   } else if(tab==='doctors') {
     summary=metricsFor([['Bác sĩ trong bộ lọc',number(data.doctors.length),'Bao gồm bác sĩ chưa có lịch'],['Ca làm việc',number(data.shifts.length),'Theo khoảng ngày đã chọn'],['Tổng lượt khám',number(e.total),'Theo ngày ca khám'],['Đã hoàn thành',number(e.completed),'Lượt khám hoàn tất']]);
-    panels=[statisticsList('Bác sĩ có lượt khám nhiều nhất',[...doctorRows].sort((a,b)=>b.total-a.total).map(d=>[d.name,number(d.total)])),statisticsList('Tỷ lệ đặt chỗ theo bác sĩ',doctorRows.map(d=>[d.name,percent(d.booked,d.capacity)]))];
+    panels=[];
     title='Báo cáo bác sĩ';columns=['Bác sĩ','Chuyên khoa','Ca làm việc','Lượt khám','Hoàn thành','Đã đặt / sức chứa','Điểm đánh giá'];rows=doctorRows.map(d=>[d.name,d.department,d.shifts,d.total,d.completed,`${d.booked} / ${d.capacity}`,average(d.rating)]);
   } else if(tab==='payments') {
     summary=metricsFor([['Thu thành công',money(cash.gross_received),'Tiền cọc và phí khám'],['Hoàn tiền thành công',money(cash.refunded_amount),'Số tiền đã hoàn thực tế'],['Thu ròng',money(cash.net_received),'Thu thành công trừ hoàn tiền'],['Chờ thanh toán',number(data.payments.filter(p=>p.transaction_status==='PENDING').length),'Giao dịch đang chờ xử lý']]);
@@ -47,15 +49,15 @@ export function statisticsView(data,tab='overview') {
     title='Giao dịch trong kỳ';columns=['Mã giao dịch','Ngày giao dịch','Loại','Trạng thái','Số tiền'];rows=data.payments.map(p=>[`TT_${String(p.payment_id).padStart(3,'0')}`,date(p.paid_at||p.created_at),label(p.payment_type),p.transaction_status==='PENDING'?'Chờ thanh toán':label(p.transaction_status),money(p.amount)]);
   } else if(tab==='capacity') {
     summary=metricsFor([['Tổng ca làm việc',number(data.shifts.length),'Theo khoảng ngày đã chọn'],['Tổng sức chứa',number(c.capacity),'Ca đang mở hoặc đã đầy'],['Chỗ đã đặt',number(c.booked),'Theo các ca được tính sức chứa'],['Ca kín chỗ',number(c.full),'Đã đạt sức chứa tối đa']]);
-    panels=[statisticsList('Tình trạng công suất',[['Tỷ lệ đặt chỗ',percent(c.booked,c.capacity)],['Chỗ còn trống',number(Math.max(0,c.capacity-c.booked))],['Ca đang mở hoặc đã đầy',number(c.open)],['Ca đã đóng hoặc báo nghỉ',number(data.shifts.length-c.open)]]),capacityCard];
-    title='Các ca làm việc';columns=['Ngày','Bác sĩ','Phòng','Giờ khám','Đã đặt','Sức chứa','Tỷ lệ','Trạng thái'];rows=data.shifts.map(s=>[date(s.work_date),s.doctor_name,s.room_name,`${s.start_time.slice(0,5)} – ${s.end_time.slice(0,5)}`,s.booked_count,s.max_quota,['OPEN','FULL'].includes(s.schedule_status)?percent(s.booked_count,s.max_quota):'—',label(s.schedule_status)]);
+    panels=[statisticsList('Tình trạng công suất',[['Tỷ lệ đặt chỗ',percent(c.booked,c.capacity)],['Chỗ còn trống',number(Math.max(0,c.capacity-c.booked))],['Ca đang mở hoặc đã đầy',number(c.open)],['Ca đã đóng hoặc báo nghỉ',number(data.shifts.length-c.open)]]).replace('statistics-card','statistics-card statistics-capacity-summary'),capacityCard.replace('statistics-card','statistics-card statistics-capacity-departments')];
+    title='Các ca làm việc';columns=['Ngày','Bác sĩ','Phòng','Giờ khám','Đã đặt / Sức chứa','Tỷ lệ','Trạng thái'];rows=data.shifts.map(s=>[date(s.work_date),s.doctor_name,s.room_name,`${s.start_time.slice(0,5)} – ${s.end_time.slice(0,5)}`,`${s.booked_count} / ${s.max_quota}`,['OPEN','FULL'].includes(s.schedule_status)?percent(s.booked_count,s.max_quota):'—',label(s.schedule_status)]);
   } else {
     const countStars=star=>Number(data.reviews.rating_distribution.find(row=>Number(row.rating)===star)?.count||0);
     summary=metricsFor([['Tổng đánh giá',number(r.review_count),'Đánh giá trong kỳ'],['Điểm trung bình',average(r.average_rating),'Trên thang điểm 5'],['Đánh giá 5 sao',number(countStars(5)),'Phản hồi ở mức cao nhất'],['Đánh giá 1–2 sao',number(countStars(1)+countStars(2)),'Phản hồi cần quan tâm']]);
-    panels=[statisticsList('Phân bố số sao',[5,4,3,2,1].map(star=>[`${star} sao`,number(countStars(star))])),card('Đánh giá theo chuyên khoa',table(['Chuyên khoa','Số đánh giá','Điểm trung bình'],data.departments.map(d=>{const v=data.reviewDepartment.find(row=>String(row.group_value)===String(d.department_id));return [esc(d.name),number(v?.review_count),average(v?.average_rating)];}),'Đánh giá theo chuyên khoa'))];
+    panels=[card('Đánh giá theo chuyên khoa',table(['Chuyên khoa','Số đánh giá','Điểm trung bình'],data.departments.map(d=>{const v=data.reviewDepartment.find(row=>String(row.group_value)===String(d.department_id));return [esc(d.name),number(v?.review_count),average(v?.average_rating)];}),'Đánh giá theo chuyên khoa')).replace('statistics-card','statistics-card statistics-review-departments'),statisticsList('Phân bố số sao',[5,4,3,2,1].map(star=>[`${star} sao`,number(countStars(star))]))];
     title='Tổng hợp đánh giá theo ngày';columns=['Ngày đánh giá','Số đánh giá','Điểm trung bình'];rows=[...data.reviews.items].reverse().map(row=>[date(row.group_value),row.review_count,average(row.average_rating)]);
   }
-  return {summary,panels,columns:columns||[],rows:rows||[],title:title||'',exportRows:[['Số liệu tổng hợp'],...summaryToRows(summary),...panels.flatMap(panel=>panelToRows(panel)),...(columns?[[title],columns,...rows]:[])]};
+  return {summary,panels,scrollTable:['encounters','departments','doctors','payments','capacity','reviews'].includes(tab),paymentTags:tab==='payments'?data.payments.map(p=>[p.payment_type,p.transaction_status]):[],capacityStatuses:tab==='capacity'?data.shifts.map(s=>s.schedule_status):[],tab,layout:tab==='overview'?'statistics-grid-overview':tab==='capacity'?'statistics-grid-capacity':tab==='reviews'?'statistics-grid-reviews':'',columns:columns||[],rows:rows||[],title:title||'',exportRows:[['Số liệu tổng hợp'],...summaryToRows(summary),...panels.flatMap((panel,index)=>tab==='overview'&&index===0?[["Lượt khám theo ngày"],["Ngày","Trực tuyến","Trực tiếp"],...group(data.encounters,'work_date').map(([day,visits])=>[date(day),visits.filter(row=>row.encounter_type==='ONLINE').length,visits.filter(row=>row.encounter_type==='WALK_IN').length])]:panelToRows(panel)),...(columns?[[title],columns,...rows]:[])]};
 }
 // Export receives the same visible content as the active report, without HTML.
 function panelToRows(markup) {
@@ -71,6 +73,17 @@ function summaryToRows(markup) {
 }
 export function statisticsReportMarkup(view,page=1) {
   const size=10,pages=Math.max(1,Math.ceil(view.rows.length/size));
-  const detail=view.columns.length?card(view.title,table(view.columns,view.rows.slice((page-1)*size,page*size).map(row=>row.map(esc)),view.title)+`<div class="admin-pagination"><span>${view.rows.length} bản ghi · Trang ${page} / ${pages}</span><div><button type="button" class="secondary" data-report-page="-1" ${page<=1?'disabled':''}>Trang trước</button><button type="button" class="secondary" data-report-page="1" ${page>=pages?'disabled':''}>Trang sau</button></div></div>`):'';
-  return `${view.summary}<div class="statistics-grid">${view.panels.join('')}</div>${detail}`;
+  if(view.scrollTable) {
+    const detailRows=view.rows.map((row,index)=>row.map((value,column)=>{
+      if(view.tab==='capacity'&&column===6)return badge(view.capacityStatuses[index]);
+      if(view.tab!=='payments'||![2,3].includes(column))return esc(value);
+      const raw=view.paymentTags[index]?.[column-2];
+      const tone=column===2?({DEPOSIT:'blue',EXAM_FEE:'green',REFUND:'purple'}[raw]||'blue'):({SUCCESS:'green',PENDING:'amber',FAILED:'red',REFUNDED:'purple'}[raw]||'blue');
+      return `<span class="badge ${tone} statistics-payment-badge">${esc(value)}</span>`;
+    }));
+    const detail=card(view.title,table(view.columns,detailRows,view.title)+`<div class="statistics-row-count">${view.rows.length} bản ghi</div>`);
+    return `${view.summary}${view.panels.length?`<div class="statistics-grid ${view.layout||''}">${view.panels.join('')}</div>`:''}<div class="statistics-scroll-report statistics-report-${view.tab} ${view.tab==='capacity'?'statistics-detail-capacity':''}">${detail}</div>`;
+  }
+  const detail=view.columns.length?`<div class="statistics-detail-${view.tab}">`+card(view.title,table(view.columns,view.rows.slice((page-1)*size,page*size).map((row,index)=>row.map((value,column)=>view.tab==='capacity'&&column===6?badge(view.capacityStatuses[(page-1)*size+index]):esc(value))),view.title)+`<div class="admin-pagination"><span>${view.rows.length} bản ghi · Trang ${page} / ${pages}</span><div><button type="button" class="secondary" data-report-page="-1" ${page<=1?'disabled':''}>Trang trước</button><button type="button" class="secondary" data-report-page="1" ${page>=pages?'disabled':''}>Trang sau</button></div></div>`)+ '</div>':'';
+  return `${view.summary}<div class="statistics-grid ${view.layout||''}">${view.panels.join('')}</div>${detail}`;
 }

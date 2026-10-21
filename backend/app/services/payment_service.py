@@ -150,7 +150,8 @@ def _refund_amount(db, payment, actor_id, reason, amount):
     db.execute("UPDATE payment SET transaction_status='REFUNDED',refunded_at=%s WHERE payment_id=%s",
                (now, payment['payment_id']))
     notifications.notify_encounter(db, payment['encounter_id'], f'refund:{payment["payment_id"]}', 'REFUND',
-                                   'Đã hoàn tiền giả lập', f'Hoàn {amount:,} đồng. Lý do: {reason}')
+                                   'Đã hoàn tiền giả lập', f'Hoàn {amount:,} đồng. Lý do: {reason}',
+                                   admin_reference=('PAYMENT', refund['payment_id']))
     return refund
 
 

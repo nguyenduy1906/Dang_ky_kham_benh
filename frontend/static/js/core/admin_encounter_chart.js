@@ -30,7 +30,7 @@ export function encounterChartScale(maximum) {
   return { maximum: step * 5, step };
 }
 
-export function encounterDailyChart(items, range, { week = "" } = {}) {
+export function encounterDailyChart(items, range, { week = "", showRange = true, title = "Thống kê lượt khám" } = {}) {
   const days = new Map();
   for (const row of items) {
     const day = String(row.group_value).slice(0, 10);
@@ -53,7 +53,7 @@ export function encounterDailyChart(items, range, { week = "" } = {}) {
   const fromParts=range.from.split("-"), toParts=range.to.split("-");
   const dateRange=fromParts[0]===toParts[0] ? `${fromParts[2]}/${fromParts[1]} – ${toParts[2]}/${toParts[1]}/${toParts[0]}` : `${fromParts.reverse().join("/")} – ${toParts.reverse().join("/")}`;
   const weekPicker = week ? `<div class="admin-chart-week-controls"><strong class="admin-chart-week-range">${esc(dateRange)}</strong><div class="admin-chart-week-buttons"><button type="button" class="secondary" data-chart-week="previous" aria-label="Tuần trước">‹</button><button type="button" class="secondary" data-chart-week="next" aria-label="Tuần sau">›</button><button type="button" class="secondary" data-chart-week="current">Tuần này</button></div></div>` : "";
-  const heading = `<div class="admin-daily-chart-heading"><div><h2>Thống kê lượt khám</h2><p>${week ? "Theo hình thức tiếp nhận" : esc(dateRange)+" · Theo hình thức tiếp nhận"}</p></div><div class="admin-daily-chart-tools">${weekPicker}<ul class="admin-daily-chart-legend" aria-label="Chú giải"><li><span class="online"></span>Online</li><li><span class="walk-in"></span>Walk-in</li></ul></div></div>`;
+  const heading = `<div class="admin-daily-chart-heading"><div><h2>${esc(title)}</h2><p>${week || !showRange ? "Theo hình thức tiếp nhận" : esc(dateRange)+" · Theo hình thức tiếp nhận"}</p></div><div class="admin-daily-chart-tools">${weekPicker}<ul class="admin-daily-chart-legend" aria-label="Chú giải"><li><span class="online"></span>Online</li><li><span class="walk-in"></span>Walk-in</li></ul></div></div>`;
   if (!rows.length) return `<section class="admin-card admin-daily-chart">${heading}<p class="admin-empty">Chưa có dữ liệu lượt khám trong khoảng đã chọn.</p></section>`;
   let largest = 0;
   for (const row of rows) largest = Math.max(largest, row.online, row.walkIn);

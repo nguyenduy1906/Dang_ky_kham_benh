@@ -14,6 +14,7 @@ from backend.app.utils.date import VN_TZ
 from backend.app.db.database import get_db_connection
 from backend.app.models.configuration_model import reminder_hours, encounter_policy
 from backend.app.services import encounter_service as service, notification_service as notifications
+from backend.app.services.admin_notification_service import enqueue_article_publications
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,7 @@ def main():
         try:
             logger.info('Expired holds: %s', expire_holds())
             logger.info('Appointment reminders: %s', enqueue_reminders())
+            logger.info('Scheduled articles published: %s', enqueue_article_publications())
         except Exception:
             logger.exception('Expiry cycle failed; transaction rolled back')
             if args.once:

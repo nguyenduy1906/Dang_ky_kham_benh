@@ -6,7 +6,7 @@ import {notificationTypes as baseTypes} from "../data/admin_notification_templat
 import { esc, table, facts, stamp, options } from "./admin_ui.js";
 import { code } from "./business_codes.js";
 
-const types={...baseTypes,ENCOUNTER_STATUS:"Trạng thái lượt khám",PAYMENT_RESULT:"Kết quả thanh toán",APPOINTMENT_REMINDER:"Nhắc lịch khám"};
+const types={...baseTypes};
 const normalize=value=>String(value??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLocaleLowerCase("vi");
 const day=value=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(value)); // Preview timestamps are explicitly in UTC+07:00.
 

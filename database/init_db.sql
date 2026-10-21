@@ -670,6 +670,12 @@ BEGIN
         OR (old_value->>'deleted_at' IS NULL AND new_value->>'deleted_at' IS NOT NULL)
         OR (old_value->>'archived_at' IS NULL AND new_value->>'archived_at' IS NOT NULL)
         OR (old_value->>'revoked_at' IS NULL AND new_value->>'revoked_at' IS NOT NULL)) THEN operation := 'DELETE'; END IF;
+    IF TG_OP='UPDATE' THEN
+        -- A single edited field is a complete audit event. Keep only changed values.
+        SELECT jsonb_object_agg(key,old_value->key),jsonb_object_agg(key,new_value->key)
+        INTO old_value,new_value FROM unnest(selected) AS key
+        WHERE old_value->key IS DISTINCT FROM new_value->key;
+    END IF;
     INSERT INTO admin_activity_log(actor_id,actor_name,action,target,target_id,before_data,after_data)
     VALUES(actor::integer,coalesce(current_setting('app.admin_name',true),''),operation,TG_ARGV[0],object_id,old_value,new_value);
     RETURN NULL;
@@ -678,14 +684,14 @@ DO $$
 DECLARE item text[];
 BEGIN
     FOREACH item SLICE 1 IN ARRAY ARRAY[
-      ARRAY['users','USER','user_id','full_name,role_id,account_status,approval_status,deleted_at'],
-      ARRAY['patient','PATIENT','patient_id','full_name,gender,archived_at'],
+      ARRAY['users','USER','user_id','full_name,phone,email,dob,gender,id_card,address,emergency_contact_name,emergency_contact_phone,emergency_contact_relationship,avatar_url,email_verified,role_id,account_status,approval_status,deleted_at'],
+      ARRAY['patient','PATIENT','patient_id','user_id,full_name,phone,email,dob,gender,id_card,address,health_insurance,relationship,emergency_contact_name,emergency_contact_phone,emergency_contact_relationship,archived_at'],
       ARRAY['doctor_profile','DOCTOR','doctor_profile_id','user_id,department_id,academic_degree,specialization,experience_years,consultation_fee,introduction,is_active'],
       ARRAY['department','DEPARTMENT','department_id','name,description,group_type,is_active,overview,mission,cover_image_url,specialties,clinical_services,equipment,achievements,patient_guide,gallery,extra_sections'],
       ARRAY['department_leadership','DEPARTMENT','department_id','department_id,doctor_profile_id,position,ended_at'],
       ARRAY['room','ROOM','room_id','department_id,room_name,description,is_active'],
-      ARRAY['work_schedule','WORK_SCHEDULE','schedule_id','doctor_profile_id,room_id,work_date,start_time,end_time,slot_minutes,max_quota,schedule_status'],
-      ARRAY['nurse_assignment','ASSIGNMENT','assignment_id','nurse_id,schedule_id,revoked_at'],
+      ARRAY['work_schedule','WORK_SCHEDULE','schedule_id','doctor_profile_id,room_id,work_date,start_time,end_time,slot_minutes,max_quota,schedule_status,unavailable_reason'],
+      ARRAY['nurse_assignment','ASSIGNMENT','assignment_id','nurse_id,schedule_id,note,assigned_by_id,revoked_at,revoked_by_id'],
       ARRAY['article','ARTICLE','article_id','author_id,title,slug,category,thumbnail_url,content,is_active,published_at'],
       ARRAY['system_configuration','CONFIGURATION','config_key','config_key,config_value'],
       ARRAY['payment','PAYMENT','payment_id','encounter_id,payment_type,amount,payment_method,transaction_status,original_payment_id,reason'],

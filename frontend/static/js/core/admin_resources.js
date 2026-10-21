@@ -40,7 +40,7 @@ export const resources = {
   users:{id:"user_id",list:auth.listUsers,get:async(id,opt)=>(await auth.getUser(id,opt)).user,create:auth.createUser,update:auth.updateUser,add:"Tạo tài khoản",columns:["Mã","Người dùng","Liên hệ","Vai trò","Trạng thái","Phê duyệt"],
     cells:r=>[esc(code("TK", r.user_id)),esc(r.full_name),esc([r.email,r.phone].filter(Boolean).join(" · ")),badge(r.role_name),badge(r.account_status),badge(r.approval_status)],
     filters:[f("q","Tên / email / điện thoại","search"),f("role","Vai trò","select",{reference:"roles"}),choice("account_status","Trạng thái",["ACTIVE","LOCKED"]),choice("approval_status","Phê duyệt",["PENDING","APPROVED","REJECTED"])],
-    fields:[f("full_name","Họ và tên","text",{required:true,max:150}),f("email","Email","email",{max:254,omitEmpty:true}),f("phone","Điện thoại","tel",{max:20,omitEmpty:true}),f("password","Mật khẩu ban đầu","password",{required:true,minLength:12,max:128,createOnly:true}),f("role","Vai trò","select",{reference:"roles",required:true}),{...choice("approval_status","Phê duyệt",["APPROVED","PENDING","REJECTED"]),default:"APPROVED",createOnly:true},{...choice("account_status","Trạng thái tài khoản",[["ACTIVE","Hoạt động"],["LOCKED","Đã khóa"]]),editOnly:true,required:true},
+    fields:[f("full_name","Họ và tên","text",{required:true,max:150}),f("email","Email","email",{max:254,omitEmpty:true}),f("phone","Điện thoại","tel",{max:20,omitEmpty:true}),f("password","Mật khẩu ban đầu","password",{required:true,minLength:12,max:128,createOnly:true}),f("role","Vai trò","select",{reference:"roles",required:true}),{...choice("account_status","Trạng thái tài khoản",[["ACTIVE","Hoạt động"],["LOCKED","Đã khóa"]]),editOnly:true,required:true},
       f("dob","Ngày sinh","date",{editOnly:true}),{...choice("gender","Giới tính",["Nam","Nữ","Khác"]),editOnly:true},
       f("id_card","CCCD","text",{editOnly:true,max:12,pattern:"[0-9]{12}"}),f("address","Địa chỉ","text",{editOnly:true,max:255}),
       f("emergency_contact_name","Người liên hệ khẩn cấp","text",{editOnly:true,max:150}),f("emergency_contact_phone","Số điện thoại khẩn cấp","tel",{editOnly:true,max:30})],
@@ -130,6 +130,7 @@ export function resourcePayload(key, raw, row) {
     payload[field.name]=value;
   }
   if(key==="users"&&!payload.email&&!payload.phone&&!edit)throw new Error("Cần nhập email hoặc số điện thoại.");
+  if(key==="users"&&!edit)payload.approval_status='APPROVED';
   if(key==="patients"&&!edit&&!payload.dob&&!payload.id_card)throw new Error("Cần ngày sinh hoặc CCCD để phân biệt hồ sơ bệnh nhân.");
   if(key==="schedule"&&payload.start_time&&payload.end_time&&payload.end_time<=payload.start_time)throw new Error("Giờ kết thúc phải sau giờ bắt đầu.");
   if(key==="users"&&edit) {

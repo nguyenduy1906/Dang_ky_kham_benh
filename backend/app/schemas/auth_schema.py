@@ -139,8 +139,7 @@ def validate_admin_create(data):
         'phone': phone,
         'password': check_password(data.get('password')),
         'role': _choice(data.get('role', constants.ROLE_USER), constants.ALL_ROLES, 'role'),
-        'approval_status': _choice(data.get('approval_status', constants.APPROVAL_APPROVED),
-                                   constants.APPROVAL_STATUSES, 'approval_status'),
+        'approval_status': constants.APPROVAL_APPROVED,
         'email_verified': verified,
         **personal_fields(data),
     }

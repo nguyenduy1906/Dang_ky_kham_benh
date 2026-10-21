@@ -7,6 +7,7 @@ import { allPages, dateLabel, clock } from "../core/booking.js";
 import { statusLabels } from "../core/appointments.js";
 import { protectPatientPage } from "../core/patient_access.js";
 import { bindLiveSearch } from "../core/live_search.js";
+import {createPatientRecordPdf,downloadPatientRecordPdf} from '../core/patient_record_pdf.js';
 
 const $ = selector => document.querySelector(selector);
 const el = (tag, text = "", className = "") => { const node = document.createElement(tag); node.textContent = text; node.className = className; return node; };
@@ -21,6 +22,7 @@ const ui = {
 let profiles = [], selected = null, currentPage = 1, lastEncounter = null;
 let profileVersion = 0, historyVersion = 0, resultVersion = 0, lookupVersion = 0;
 let profileController, historyController, resultController, lookupController;
+const exportControllers = new Set();
 function facts(target, pairs) {
   const dl = el("dl", "", "booking-review-list");
   for (const [label, value] of pairs) dl.append(el("dt", label), el("dd", String(value ?? "Chưa cập nhật")));
@@ -80,7 +82,14 @@ async function loadHistory(id, page = 1) {
     ui.encounters.replaceChildren();
     for (const encounter of data.items) {
       const card = el("article", "", "record-encounter-card");
-      card.append(el("h4", encounter.doctor_name || "Bác sĩ phụ trách"));
+      const heading = el("div", "", "record-encounter-heading");
+      const exportButton = el("button", "Xuất hồ sơ", "outline-button record-export-button");
+      exportButton.type = "button";
+      exportButton.addEventListener('click',()=>exportRecord(profile,encounter,exportButton));
+      exportButton.dataset.encounterId = String(encounter.encounter_id);
+      exportButton.dataset.patientId = String(profile.patient_id);
+      heading.append(el("h4", encounter.doctor_name || "Bác sĩ phụ trách"), exportButton);
+      card.append(heading);
       facts(card, [["Ngày khám", dateLabel(encounter.work_date)], ["Khung giờ", `${clock(encounter.estimated_exam_at)}–${clock(encounter.appointment_end_at)}`], ["Phòng", encounter.room_name], ["Mã lượt khám", code("LK", encounter.encounter_id)], ["Trạng thái", statusLabels[encounter.encounter_status] || encounter.encounter_status]]);
       if (["IN_PROGRESS", "COMPLETED"].includes(encounter.encounter_status)) {
         const button = el("button", "Xem kết quả & đơn thuốc", "outline-button"); button.type = "button";
@@ -92,6 +101,26 @@ async function loadHistory(id, page = 1) {
     ui.page.textContent = `Trang ${page} / ${count}`; ui.prev.disabled = page <= 1; ui.next.disabled = page >= count;
   } catch (error) { if (version === historyVersion) { ui.historyStatus.textContent = errorText(error); ui.historyRetry.hidden = false; } }
   finally { if (version === historyVersion) ui.encounters.setAttribute("aria-busy", "false"); }
+}
+async function exportRecord(profile,encounter,button) {
+  const controller=new AbortController();exportControllers.add(controller);
+  button.disabled=true;button.textContent='Đang xuất…';
+  try {
+    let record=null,medications=[];
+    if(['IN_PROGRESS','COMPLETED'].includes(encounter.encounter_status)){
+      try{record=(await getRecord(encounter.encounter_id,{signal:controller.signal})).medical_record;}
+      catch(error){if(error.code!=='MEDICAL_RECORD_NOT_FOUND')throw error;}
+      if(record){
+        if(!record.record_id||String(record.encounter_id)!==String(encounter.encounter_id))throw new Error('Kết quả khám không khớp lượt khám đã chọn.');
+        medications=await allPages((params,options)=>listPrescriptionItems(record.record_id,params,options),{},{signal:controller.signal});
+      }
+    }
+    if(controller.signal.aborted||!hasSession())return;
+    const blob=await createPatientRecordPdf({profile,encounter,record,medications});
+    if(controller.signal.aborted||!hasSession())return;
+    downloadPatientRecordPdf(blob,profile,encounter);
+  }catch(error){if(!controller.signal.aborted)ui.historyStatus.textContent=errorText(error);}
+  finally{exportControllers.delete(controller);button.disabled=false;button.textContent='Xuất hồ sơ';}
 }
 async function showResult(encounter) {
   const version = ++resultVersion;
@@ -174,6 +203,7 @@ ui.next.addEventListener("click", () => { if (!ui.next.disabled) loadHistory(sel
 const errorText = protectPatientPage({
   status: $("#records-auth-status"), main: $("#main"), onAccess: loadProfiles,
   onSuspend: () => {
+    for(const controller of exportControllers)controller.abort();
     profileVersion++; historyVersion++; resultVersion++; lookupVersion++;
     for (const controller of [profileController, historyController, resultController, lookupController]) controller?.abort();
     profiles = []; selected = null; lastEncounter = null;
@@ -184,4 +214,5 @@ const errorText = protectPatientPage({
     ui.lookup.close(); ui.result.close();
   },
 });
-startAutoRefresh(() => selected ? loadHistory(selected, currentPage) : loadProfiles(), { canRefresh: () => hasSession() });
+window.addEventListener('pagehide',()=>{for(const controller of exportControllers)controller.abort();},{once:true});
+startAutoRefresh(() => selected ? loadHistory(selected, currentPage) : loadProfiles(), { canRefresh: () => hasSession()&&!exportControllers.size });

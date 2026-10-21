@@ -1,11 +1,3 @@
-@font-face {
-  font-family: "Great Vibes";
-  src: url("../fonts/great-vibes/great-vibes-regular.ttf") format("truetype");
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
-
 :root {
   --font-ui: Arial, "Segoe UI", sans-serif;
   --green: #008349;
@@ -143,7 +135,7 @@ button {
 }
 .motto {
   color: #ffbf16;
-  font: 400 44px/1.5 "Great Vibes", "Segoe Script", cursive;
+  font: 400 44px/1.5 "Segoe Script", cursive;
   -webkit-text-stroke: 0.45px currentColor;
   letter-spacing: 0.25px;
   margin: 0;

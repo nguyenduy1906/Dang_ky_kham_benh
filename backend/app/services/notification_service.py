@@ -5,10 +5,17 @@ from backend.app.models import notification_model as model
 from backend.app.utils.database_helpers import jsonable
 
 
-def notify_encounter(db, encounter_id, event_key, kind, title, content):
+def notify_encounter(db, encounter_id, event_key, kind, title, content, *, admin_reference=None):
     owner = model.encounter_owner(db, encounter_id)
+    created = None
     if owner and owner['user_id'] is not None:
-        return model.create_once(db, owner['user_id'], event_key, kind, title, content, encounter_id)
+        created = model.create_once(db, owner['user_id'], event_key, kind, title, content, encounter_id)
+    if kind in ('REFUND', 'REMINDER'):
+        from backend.app.services.admin_notification_service import publish
+        reference, identifier = admin_reference or ('ENCOUNTER', encounter_id)
+        publish(db, {'key':f'admin-{event_key}', 'kind':kind, 'reference':reference,'id':identifier,
+                     'title':title,'content':f'Lượt khám {business_code("LK",encounter_id)}: {content}'})
+    return created
 
 
 def notify_status(db, encounter_id, log_id, status, note):
@@ -19,7 +26,8 @@ def notify_status(db, encounter_id, log_id, status, note):
     notify_encounter(db, encounter_id, f'encounter-status:{log_id}', 'ENCOUNTER_STATUS',
                      titles[status], f'Lượt khám {business_code("LK", encounter_id)}: {note or status}')
     from backend.app.services.admin_notification_service import publish
-    publish(db, {'key':f'admin-encounter-status:{log_id}', 'kind':'CANCELLATION' if status=='CANCELLED' else 'ENCOUNTER',
+    kind = 'CANCELLATION' if status=='CANCELLED' else 'APPOINTMENT' if status in ('HOLDING','CONFIRMED') else 'ENCOUNTER'
+    publish(db, {'key':f'admin-encounter-status:{log_id}', 'kind':kind,
                  'reference':'ENCOUNTER','id':encounter_id,'title':titles[status],
                  'content':f'Lượt khám {business_code("LK", encounter_id)}: {note or status}'})
 

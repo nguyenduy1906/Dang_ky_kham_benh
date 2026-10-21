@@ -414,6 +414,10 @@ body:has(> .patient-header) > .skip-link { position: fixed; z-index: 30; }
 .records-page .records-illustration { width: 85px; height: 85px; }
 .records-page .records-welcome h2 { font-size: 20px; }
 .records-page .record-encounter-card { background: #fbfdfb; padding: 22px; }
+.records-page .record-encounter-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.records-page .record-encounter-heading h4 { margin: 0; flex: 1; min-width: 160px; }
+.records-page .record-export-button { flex: none; padding: 9px 16px; font-size: 14px; white-space: nowrap; }
+.records-page .record-export-button:disabled { opacity: .6; cursor: not-allowed; }
 .records-page #records-encounters { min-height: 330px; }
 .records-page #records-history-status { min-height: 24px; }
 .records-page .record-encounter-card .booking-review-list { grid-template-columns: 135px minmax(0, 1fr); gap: 9px 16px; }

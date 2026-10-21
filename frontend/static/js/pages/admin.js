@@ -6,6 +6,7 @@ import { enhanceDialogDismiss } from "../core/dialog_dismiss.js";
 
 import { requireAdmin } from "../core/admin_access.js";
 import {initAdminNotificationBadge} from "../core/admin_notification_badge.js";
+import {initAdminTopbar,focusAdminFunction} from '../core/admin_topbar.js';
 import { signOut, loginUrl, hasSession } from "../core/session.js";
 
 // Verify the existing administrator session before loading management data.
@@ -99,6 +100,7 @@ if (presentationPage) {
 } else {
   const administrator = await requireAdmin();
   if (administrator) {
+    initAdminTopbar();
     initAdminNotificationBadge();
     $("#staff-account-name").textContent = administrator.full_name;
     if (key === "articles") {
@@ -108,5 +110,6 @@ if (presentationPage) {
       const {initFeedbackPresentation} = await import("../core/admin_feedback_presentation.js");
       await initFeedbackPresentation(key);
     } else if (!page.placeholder) await initAdminWorkspace(key);
+    focusAdminFunction();
   }
 }
