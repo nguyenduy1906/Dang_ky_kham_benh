@@ -1,3 +1,4 @@
+import { startAutoRefresh } from "../core/auto_refresh.js";
 import { listDoctors } from "../api/doctor.js";
 import { listDepartments } from "../api/catalog.js";
 import { doctorPage, doctorCard, element } from "../core/doctors.js";
@@ -126,3 +127,4 @@ window.addEventListener("pagehide", () => {
 window.addEventListener("pageshow", event => { if (event.persisted) { refreshFeeAccess(); loadDepartments(); } });
 refreshFeeAccess();
 loadDepartments();
+startAutoRefresh(load);

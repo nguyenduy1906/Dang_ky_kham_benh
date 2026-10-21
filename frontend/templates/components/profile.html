@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Hồ sơ cá nhân | NEU Medical</title>
   <link rel="stylesheet" href="../../static/css/staff_workspace.css">
-  <link rel="stylesheet" href="../../static/css/staff_profile.css?v=20261017-profile-actions">
-  <script type="module" src="../../static/js/pages/staff_profile.js?v=20261017-profile-actions" blocking="render"></script>
+  <link rel="stylesheet" href="../../static/css/staff_profile.css?v=20261018-profile-avatar">
+  <script type="module" src="../../static/js/pages/staff_profile.js?v=20261018-profile-avatar" blocking="render"></script>
 </head>
-<body class="staff-page staff-profile-page staff-auth-pending" data-page="profile">
+<body class="staff-page staff-profile-page staff-auth-pending" data-page-title="Hồ sơ cá nhân" data-page="profile">
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>
   <noscript>Bạn cần bật JavaScript để sử dụng khu vực nhân viên.</noscript>
   <div class="staff-shell">
@@ -17,7 +17,7 @@
       <header id="staff-topbar" class="staff-topbar"></header>
       <div id="staff-access" class="staff-access" role="status">Đang kiểm tra quyền truy cập…</div>
       <main id="main-content" class="staff-content" tabindex="-1" inert>
-        <header class="page-header"><div><p class="eyebrow">NEU MEDICAL · KHÔNG GIAN NHÂN VIÊN</p><h1>Hồ sơ cá nhân</h1><p id="staff-profile-description">Thông tin tài khoản và liên hệ của nhân viên bệnh viện.</p></div></header>
+        <header class="page-header"><div><p id="staff-profile-description">Thông tin tài khoản và liên hệ của nhân viên bệnh viện.</p></div></header>
         <p id="page-status" class="scope-note" role="status" hidden></p>
         <div id="page-body" aria-live="polite"></div>
       </main>
@@ -25,9 +25,8 @@
     </div>
   </div>
   <dialog id="staff-dialog" aria-labelledby="staff-dialog-title"><div class="section-heading"><h2 id="staff-dialog-title">Thông tin</h2><button id="staff-dialog-close" class="secondary" type="button" aria-label="Đóng hộp thoại">Đóng ×</button></div><div id="staff-dialog-content"></div></dialog>
-  <dialog id="staff-password-dialog" aria-labelledby="staff-password-title" aria-describedby="staff-password-note">
+  <dialog id="staff-password-dialog" aria-labelledby="staff-password-title">
     <div class="section-heading"><h2 id="staff-password-title">Đổi mật khẩu</h2><button id="staff-password-close" type="button" class="secondary" aria-label="Đóng đổi mật khẩu">Đóng ×</button></div>
-    <p id="staff-password-note" class="scope-note">Biểu mẫu hiện chỉ xem trước. Mật khẩu chưa được thay đổi.</p>
     <form id="staff-password-form">
       <div class="staff-password-fields">
         <label>Mật khẩu hiện tại<input name="current_password" type="password" required maxlength="128" autocomplete="current-password"></label>
@@ -35,7 +34,7 @@
         <small id="staff-password-help">Từ 12 đến 128 ký tự, gồm chữ cái và chữ số.</small>
         <label>Nhập lại mật khẩu mới<input name="confirm_password" type="password" required minlength="12" maxlength="128" autocomplete="new-password"></label>
       </div>
-      <div class="actions"><button type="submit">Kiểm tra thông tin</button></div>
+      <div class="actions"><button id="staff-password-submit" type="submit">Xác nhận đổi mật khẩu</button></div>
       <p id="staff-password-feedback" class="form-feedback" role="status"></p>
     </form>
   </dialog>

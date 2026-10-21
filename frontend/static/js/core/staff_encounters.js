@@ -1,3 +1,5 @@
+import { code } from "./business_codes.js";
+import { startAutoRefresh } from "./auto_refresh.js";
 import * as api from "../api/encounter.js";
 import * as records from "../api/medical_record.js";
 import { getPatient } from "../api/patient.js";
@@ -19,7 +21,7 @@ export async function readMedicalRecord(encounter) {
   return panel("Bệnh án", facts([["Chẩn đoán", record.diagnosis], ["Hướng điều trị", record.treatment], ["Ghi chú bác sĩ", record.doctor_notes], ["Ngày khám", date(record.examined_at)]])) + panel("Đơn thuốc", table(["Thuốc", "Liều dùng", "Số lượng", "Hướng dẫn"], items.map(item => `<tr><td>${esc(item.medication_name)}</td><td>${esc(item.dosage || "—")}</td><td>${item.quantity}</td><td>${esc(item.instructions || "—")}</td></tr>`)));
 }
 
-export function initEncounterList({ role, completed = false, assignments = [] }) {
+export async function initEncounterList({ role, completed = false, assignments = [] }) {
   const params = new URLSearchParams(location.search);
   const scheduleId = /^\d+$/.test(params.get("schedule_id") || "") ? params.get("schedule_id") : "";
   const initialDate = /^\d{4}-\d{2}-\d{2}$/.test(params.get("work_date") || "") ? params.get("work_date") : "";
@@ -30,20 +32,24 @@ export function initEncounterList({ role, completed = false, assignments = [] })
     <label>Tìm tên hoặc mã trong trang<input type="search" id="encounter-search" placeholder="Tên người bệnh, mã phiếu hoặc mã lượt"></label>
     <div id="encounter-list"></div><div id="list-pagination" class="list-pagination"></div>`);
   const form = $("#encounter-filters");
-  let rows = [], page = 1, version = 0;
+  let rows = [], page = 1, version = 0, active = true;
+  const stop = () => { active = false; version++; };
+  window.addEventListener("pagehide", stop, { once: true });
+  window.addEventListener("neu:auth-change", stop, { once: true });
   async function load(next = 1) {
+    if (!active) return;
     page = next;
     const current = ++version;
     await run(async () => {
       const query = Object.fromEntries(new FormData(form));
       const result = await api.listEncounters({ ...query, encounter_status: completed ? "COMPLETED" : query.encounter_status, page, page_size: 20 });
-      if (current !== version) return;
+      if (!active || current !== version) return;
       rows = result.items; render(); pagination(result, load);
     });
   }
   function render() {
     const query = $("#encounter-search").value.trim().normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-    const matches = rows.filter(e => `${e.patient_name} ${e.encounter_id} ${e.ticket_code || ""}`.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().includes(query));
+    const matches = rows.filter(e => `${e.patient_name} ${code("LK",e.encounter_id)} ${code("BN",e.patient_id)} ${e.ticket_code || ""}`.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().includes(query));
     $("#encounter-list").innerHTML = table(["Người bệnh / phiếu khám", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", "Thao tác"], matches.map(e => `<tr>${encounterColumns(e)}<td><div class="actions"><button class="secondary" data-detail="${e.encounter_id}">Chi tiết</button>${role === "doctor" ? `<a class="button-link secondary" href="clinical.html?encounter_id=${e.encounter_id}">${completed ? "Xem / bổ sung" : "Mở bệnh án"}</a>` : ""}${role === "reception" && e.encounter_status === "CONFIRMED" ? `<button data-checkin="${e.encounter_id}">Check-in</button>` : ""}</div></td></tr>`));
     $("#encounter-list").querySelectorAll("[data-detail]").forEach(button => button.addEventListener("click", () => run(async () => {
       const e = (await api.getEncounter(button.dataset.detail)).encounter;
@@ -80,5 +86,6 @@ export function initEncounterList({ role, completed = false, assignments = [] })
   form.addEventListener("submit", event => { event.preventDefault(); load(); });
   form.addEventListener("reset", event => { event.preventDefault(); for (const input of form.querySelectorAll("input, select")) input.value = ""; $("#encounter-search").value = ""; load(); });
   $("#encounter-search").addEventListener("input", render);
-  return load();
+  await load();
+  startAutoRefresh(() => load(page), { canRefresh: () => active });
 }

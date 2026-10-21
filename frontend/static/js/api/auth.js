@@ -52,6 +52,30 @@ export function updateMe(data, options = {}) {
   return apiRequest("/me", { ...options, method: "PATCH", data });
 }
 
+/** POST /me/avatar; the same account avatar endpoint is available to every role. */
+export function uploadMyAvatar(file, options = {}) {
+  const data = new FormData();
+  data.append("file", file);
+  return apiRequest("/me/avatar", { ...options, method: "POST", data });
+}
+
+/** DELETE /me/avatar */
+export function deleteMyAvatar(options = {}) {
+  return apiRequest("/me/avatar", { ...options, method: "DELETE" });
+}
+
+/** POST /admin/users/<int:user_id>/avatar */
+export function uploadUserAvatar(userId, file, options = {}) {
+  const data = new FormData();
+  data.append("file", file);
+  return apiRequest(`/admin/users/${pathSegment(userId)}/avatar`, { ...options, method: "POST", data });
+}
+
+/** DELETE /admin/users/<int:user_id>/avatar */
+export function deleteUserAvatar(userId, options = {}) {
+  return apiRequest(`/admin/users/${pathSegment(userId)}/avatar`, { ...options, method: "DELETE" });
+}
+
 /** POST /me/change-password */
 export function changePassword(data, options = {}) {
   return apiRequest("/me/change-password", { ...options, method: "POST", data });

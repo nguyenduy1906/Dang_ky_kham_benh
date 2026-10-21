@@ -1,3 +1,4 @@
+import { startAutoRefresh } from "../core/auto_refresh.js";
 import { getDoctor } from "../api/doctor.js";
 import { listDoctorSchedules } from "../api/schedule.js";
 import { listDoctorReviews, createReview } from "../api/medical_record.js";
@@ -160,3 +161,4 @@ window.addEventListener("pagehide", () => {
 });
 window.addEventListener("pageshow", event => { if (event.persisted) load(); });
 load();
+startAutoRefresh(loadSchedules);

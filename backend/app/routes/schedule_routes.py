@@ -260,3 +260,26 @@ def list_own_assignments():
       403: {description: Chỉ NURSE được truy cập}
     """
     return jsonify(service.list_assignments(schedule_schema.parse_assignment_query(request.args), current_user()['user_id']))
+
+
+@schedule_bp.post('/admin/schedules/<int:schedule_id>/move')
+@roles_required(constants.ROLE_ADMIN)
+def move_schedule(schedule_id):
+    """Move an unstarted, unbooked shift to an existing shift of the same doctor.
+    Body: target_schedule_id, reason. Preserves the old shift and records actor/time.
+    """
+    return jsonify(service.move_schedule(current_user(), schedule_id,
+                   schedule_schema.validate_move(request.get_json(silent=True))))
+
+
+@nurse_assignment_bp.get('/admin/nurse-assignments/<int:assignment_id>')
+@roles_required(constants.ROLE_ADMIN)
+def get_assignment(assignment_id):
+    return jsonify(service.get_assignment(assignment_id))
+
+
+@nurse_assignment_bp.patch('/admin/nurse-assignments/<int:assignment_id>')
+@roles_required(constants.ROLE_ADMIN)
+def update_assignment(assignment_id):
+    return jsonify(service.update_assignment(current_user(),assignment_id,
+                   schedule_schema.validate_assignment_update(request.get_json(silent=True))))

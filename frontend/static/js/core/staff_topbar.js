@@ -1,0 +1,6 @@
+const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+
+// The nurse workspace's heading and profile shortcut, shared by every staff role.
+export function staffTopbar({ title, profileHref, name, initials, portrait = "" }) {
+  return `<div class="staff-topbar-left"><button class="staff-menu-toggle" type="button" id="staff-menu-toggle" aria-label="Mở điều hướng" aria-controls="staff-sidebar" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><h1 class="staff-page-title">${esc(title)}</h1></div><div class="staff-topbar-right"><a class="staff-account" href="${esc(profileHref)}" aria-label="Hồ sơ cá nhân"><span id="staff-account-name">${esc(name)}</span><span class="staff-initials" aria-hidden="true">${portrait ? `<img src="${esc(portrait)}" width="40" height="40" alt="">` : esc(initials)}</span></a></div>`;
+}

@@ -1,5 +1,6 @@
 """SQL cho gói 3; tất cả nghiệp vụ nhiều bước dùng connection do service truyền vào."""
 from backend.app.utils.database_helpers import insert_row, update_row
+from backend.app.models.schedule_model import lock_schedules  # Compatibility import.
 
 SELECT = '''SELECT e.*, p.full_name AS patient_name, p.user_id AS owner_id,
  d.department_id, u.full_name AS doctor_name, d.user_id AS doctor_user_id,
@@ -12,7 +13,7 @@ SELECT = '''SELECT e.*, p.full_name AS patient_name, p.user_id AS owner_id,
  JOIN room r ON r.room_id=s.room_id'''
 
 COLUMNS = ('encounter_type', 'patient_id', 'doctor_profile_id', 'schedule_id', 'room_id',
-           'created_by_id', 'consultation_fee_snapshot', 'deposit_amount_snapshot', 'symptoms', 'registration_details',
+           'created_by_id', 'consultation_fee_snapshot', 'deposit_amount_snapshot', 'policy_snapshot', 'symptoms', 'registration_details',
            'encounter_status', 'ticket_code', 'appointment_end_at', 'estimated_exam_at', 'hold_expires_at', 'checked_in_at')
 UPDATABLE = {'doctor_profile_id', 'schedule_id', 'room_id', 'encounter_status', 'ticket_code', 'appointment_end_at',
              'estimated_exam_at', 'checked_in_at', 'cancelled_by_id', 'cancel_reason', 'cancelled_at',
@@ -61,9 +62,42 @@ def list_encounters(db, actor, query, *, queue=False):
     return rows, total
 
 
-def lock_schedules(db, schedule_ids):
-    return db.execute('SELECT * FROM work_schedule WHERE schedule_id=ANY(%s) '
-                      'ORDER BY schedule_id FOR UPDATE', (sorted(set(schedule_ids)),)).fetchall()
+def schedule_reference(db, encounter_id):
+    return db.execute('SELECT schedule_id FROM encounter WHERE encounter_id=%s',
+                      (encounter_id,)).fetchone()
+
+
+def patient_reference(db, encounter_id):
+    return db.execute('SELECT patient_id FROM encounter WHERE encounter_id=%s', (encounter_id,)).fetchone()
+
+
+def find_active_same_day(db, patient_id, doctor_id, work_date):
+    return db.execute('SELECT e.encounter_id FROM encounter e JOIN work_schedule s ON s.schedule_id=e.schedule_id '
+                           "WHERE e.patient_id=%s AND e.doctor_profile_id=%s AND s.work_date=%s "
+                           "AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS') LIMIT 1",
+                           (patient_id, doctor_id, work_date)).fetchone()
+
+
+def occupied_slot_starts(db, schedule_id, statuses):
+    return db.execute('SELECT estimated_exam_at FROM encounter WHERE schedule_id=%s '
+                      'AND encounter_status=ANY(%s)',
+                      (schedule_id, statuses)).fetchall()
+
+
+def count_active_for_schedules(db, ids):
+    return db.execute('''SELECT COUNT(*) AS n FROM encounter WHERE schedule_id=ANY(%s)
+            AND encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS')''', (ids,)).fetchone()['n']
+
+
+def list_affected(db, actor, schedule_id, query):
+    clause, params = access_clause(actor)
+    base = (f'{SELECT} WHERE e.schedule_id=%s AND {clause} '
+            "AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS')")
+    params = [schedule_id] + params
+    total = db.execute(f'SELECT COUNT(*) AS n FROM ({base}) affected', params).fetchone()['n']
+    rows = db.execute(f'{base} ORDER BY e.encounter_id LIMIT %s OFFSET %s',
+                      params + [query['page_size'], (query['page'] - 1) * query['page_size']]).fetchall()
+    return rows, total
 
 
 def lock_encounter(db, encounter_id):
@@ -76,6 +110,11 @@ def create_encounter(db, fields):
 
 def update_encounter(db, encounter_id, fields):
     return update_row(db, 'encounter', 'encounter_id', encounter_id, fields, UPDATABLE)
+
+
+def update_registration(db, encounter_id, symptoms, registration_details):
+    db.execute('UPDATE encounter SET symptoms=%s,registration_details=%s WHERE encounter_id=%s',
+                   (symptoms, registration_details, encounter_id))
 
 
 def add_status(db, encounter_id, old_status, new_status, actor_id, note=None):
@@ -99,3 +138,20 @@ def list_logs(db, encounter_id, kind, page, page_size):
     rows = db.execute(f'SELECT * FROM {table} WHERE encounter_id=%s ORDER BY log_id '
                       'LIMIT %s OFFSET %s', (encounter_id, page_size, (page - 1) * page_size)).fetchall()
     return rows, total
+
+
+def next_checked_in(db,schedule_id):
+    return db.execute("SELECT encounter_id FROM encounter WHERE schedule_id=%s AND encounter_status='CHECKED_IN' ORDER BY estimated_exam_at,checked_in_at,encounter_id LIMIT 1",(schedule_id,)).fetchone()
+
+
+def clinical_in_progress(db,doctor_id,room_id):
+    return db.execute("SELECT encounter_id FROM encounter WHERE (doctor_profile_id=%s OR room_id=%s) AND encounter_status='IN_PROGRESS' LIMIT 1",(doctor_id,room_id)).fetchone()
+
+
+def occupied_intervals(db,schedule_id,statuses):
+    return db.execute('SELECT estimated_exam_at,appointment_end_at FROM encounter WHERE schedule_id=%s AND encounter_status=ANY(%s) ORDER BY estimated_exam_at,encounter_id',(schedule_id,statuses)).fetchall()
+
+
+def finished_schedule(db,schedule_id):
+    row=db.execute("SELECT count(*) FILTER(WHERE encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS')) AS active, count(*) FILTER(WHERE encounter_status='COMPLETED') AS completed FROM encounter WHERE schedule_id=%s",(schedule_id,)).fetchone()
+    return row['active']==0 and row['completed']>0

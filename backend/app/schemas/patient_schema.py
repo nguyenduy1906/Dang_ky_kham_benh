@@ -1,34 +1,22 @@
 import re
 
 from backend.app.core.errors import bad_request
-from backend.app.utils.date import today_vn
-from backend.app.schemas.auth_schema import ensure_object, normalize_phone, text_field
-from backend.app.utils.validation import (bool_arg, int_field, page_params, parse_date)
+from backend.app.utils.validation import (
+    ensure_object, normalize_phone, normalize_email, text_field, bool_arg, int_field, page_params
+)
+from backend.app.schemas.profile_schema import personal_fields
 
-ID_CARD_RE = re.compile(r'^(\d{9}|\d{12})$')
 INSURANCE_RE = re.compile(r'^[A-Za-z0-9]{10,15}$')
 RELATIONSHIPS = ('SELF', 'PARENT', 'CHILD', 'SPOUSE', 'OTHER')
 
 
 def _fields(data, partial):
-    fields = {}
+    fields = personal_fields(data, patient=True)
     if not partial or 'full_name' in data:
         fields['full_name'] = text_field(data, 'full_name', required=True, max_len=150)
-    if 'dob' in data:
-        value = data['dob']
-        dob = None if value is None else parse_date(value, 'dob')
-        if dob and dob > today_vn():
-            raise bad_request('dob không được ở tương lai')
-        fields['dob'] = dob
-    if 'gender' in data:
-        fields['gender'] = text_field(data, 'gender', max_len=20)
-    if 'id_card' in data:
-        value = text_field(data, 'id_card', max_len=20)
-        if value and not ID_CARD_RE.match(value):
-            raise bad_request('id_card gồm 9 hoặc 12 chữ số')
-        fields['id_card'] = value
-    if 'address' in data:
-        fields['address'] = text_field(data, 'address', max_len=255)
+    if 'email' in data:
+        value = text_field(data, 'email', max_len=254)
+        fields['email'] = normalize_email(value) if value else None
     if 'phone' in data:
         value = text_field(data, 'phone', max_len=20)
         fields['phone'] = normalize_phone(value) if value else None

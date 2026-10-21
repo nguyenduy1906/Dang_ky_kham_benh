@@ -57,12 +57,17 @@ def create_patient():
             id_card: {type: string}
             address: {type: string}
             phone: {type: string}
+            email: {type: string, format: email, x-nullable: true}
+            emergency_contact_name: {type: string, maxLength: 150, x-nullable: true}
+            emergency_contact_phone: {type: string, x-nullable: true}
+            emergency_contact_relationship: {type: string, maxLength: 50, x-nullable: true}
             health_insurance: {type: string}
             relationship: {type: string, example: SELF}
             confirm_shared_phone: {type: boolean, description: Xác nhận lưu hồ sơ người thân vào tài khoản người đặt khi trùng số điện thoại}
             user_id: {type: integer, description: Chỉ ADMIN hoặc RECEPTIONIST; nếu gửi phải khớp tài khoản của số điện thoại}
     responses:
       201:
+        schema: {$ref: '#/definitions/PatientProfileResponse'}
         description: Đã tạo
       200:
         description: Dùng lại hồ sơ đúng người bệnh; account_exists báo tài khoản đã tồn tại
@@ -89,6 +94,7 @@ def get_patient(patient_id):
       - {in: path, name: patient_id, type: integer, required: true}
     responses:
       200:
+        schema: {$ref: '#/definitions/PatientProfileResponse'}
         description: Hồ sơ
       404:
         description: Không tìm thấy hoặc không có quyền xem
@@ -99,7 +105,7 @@ def get_patient(patient_id):
 @patient_bp.patch('/<int:patient_id>')
 @login_required
 def update_patient(patient_id):
-    """Sửa hồ sơ, gồm cả thẻ BHYT
+    """Sửa người thực tế được khám, gồm email và liên hệ khẩn cấp; không sửa tài khoản
     ---
     tags:
       - Patients
@@ -119,10 +125,15 @@ def update_patient(patient_id):
             id_card: {type: string}
             address: {type: string}
             phone: {type: string}
+            email: {type: string, format: email, x-nullable: true}
+            emergency_contact_name: {type: string, maxLength: 150, x-nullable: true}
+            emergency_contact_phone: {type: string, x-nullable: true}
+            emergency_contact_relationship: {type: string, maxLength: 50, x-nullable: true}
             health_insurance: {type: string}
             relationship: {type: string}
     responses:
       200:
+        schema: {$ref: '#/definitions/PatientProfileResponse'}
         description: Đã cập nhật
       409:
         description: Hồ sơ đã lưu trữ
@@ -144,6 +155,7 @@ def archive_patient(patient_id):
       - {in: path, name: patient_id, type: integer, required: true}
     responses:
       200:
+        schema: {$ref: '#/definitions/PatientProfileResponse'}
         description: Đã lưu trữ
       409:
         description: Đã lưu trữ trước đó

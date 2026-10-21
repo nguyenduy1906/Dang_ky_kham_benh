@@ -1,5 +1,6 @@
 import * as authApi from "../api/auth.js";
 import { ApiError, setAccessToken } from "./api.js";
+import { resetOverviewPreferences } from "./overview_preferences.js";
 
 const STORAGE_KEY = "neu-medical.auth";
 const templates = new URL("../../../templates/", import.meta.url);
@@ -7,6 +8,7 @@ export const homeUrl = new URL("public/home.html", templates);
 export const portalUrl = new URL("(patient)/portal.html", templates);
 export const bookingUrl = new URL("(patient)/booking.html", templates);
 export const bookingReviewUrl = new URL("(patient)/booking_review.html", templates);
+export const paymentUrl = new URL("(patient)/payment.html", templates);
 export const appointmentsUrl = new URL("(patient)/appointments.html", templates);
 export const profileUrl = new URL("(patient)/profile.html", templates);
 export const recordsUrl = new URL("(patient)/records.html", templates);
@@ -19,6 +21,7 @@ function announce() { window.dispatchEvent(new Event("neu:auth-change")); }
 
 export function clearSession() {
   try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* Storage may be disabled. */ }
+  resetOverviewPreferences();
   setAccessToken(null);
   announce();
 }
@@ -75,6 +78,7 @@ export async function signIn(credentials) {
     throw new ApiError("Trình duyệt không cho phép lưu phiên đăng nhập. Vui lòng bật lưu trữ cho trang này.", { cause });
   }
   setAccessToken(result.access_token);
+  resetOverviewPreferences();
   announce();
   return result.user;
 }
@@ -129,11 +133,11 @@ export function returnUrl(value, role = "USER") {
     const relative = decodeURIComponent(url.pathname.slice(templates.pathname.length));
     const staffFiles = { ADMIN: ["home", "encounters", "patients", "schedule", "assignments", "doctors", "departments", "rooms", "users", "articles", "payments", "statistics", "audit", "configuration"], DOCTOR: ["home", "schedule", "encounters", "clinical", "history"], NURSE: ["home", "patients", "assignments", "records", "work_calendar"], RECEPTIONIST: ["home", "encounters", "walk_in", "patients", "coordination"] };
     const folder = { ADMIN: "admin", DOCTOR: "doctor", NURSE: "nurse", RECEPTIONIST: "reception" }[role];
-    const staffAllowed = role !== "USER" && ((role !== "ADMIN" && relative === "components/profile.html") || (staffFiles[role] || []).some(file => relative === `(${folder})/${file}.html`));
+    const staffAllowed = Object.hasOwn(staffFiles, role) && (relative === "components/profile.html" || staffFiles[role].some(file => relative === `(${folder})/${file}.html`));
     if (url.origin === homeUrl.origin && url.protocol === homeUrl.protocol &&
         url.pathname.startsWith(templates.pathname) &&
         !url.username && !url.password &&
-        (staffAllowed || (role === "USER" && [homeUrl.pathname, portalUrl.pathname, bookingUrl.pathname, bookingReviewUrl.pathname, appointmentsUrl.pathname,
+        (staffAllowed || (role === "USER" && [homeUrl.pathname, portalUrl.pathname, bookingUrl.pathname, bookingReviewUrl.pathname, paymentUrl.pathname, appointmentsUrl.pathname,
           profileUrl.pathname, recordsUrl.pathname].includes(url.pathname)))) return url;
   } catch { /* Never redirect to an untrusted next URL. */ }
   return new URL(fallback);

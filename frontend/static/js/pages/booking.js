@@ -1,3 +1,4 @@
+import { startAutoRefresh } from "../core/auto_refresh.js";
 import { listDoctors } from "../api/doctor.js";
 import { listDepartments } from "../api/catalog.js";
 import { listDoctorSchedules } from "../api/schedule.js";
@@ -53,18 +54,37 @@ function portrait(doctor) {
   }
   return holder;
 }
-const selectedPatient = () => patients.find(p => String(p.patient_id) === ui.patients.value);
+const selectedPatient = () => ui.patients.value === "self" ? actor : patients.find(p => String(p.patient_id) === ui.patients.value);
 function renderPatients(preferred = ui.patients.value) {
-  ui.patients.replaceChildren(new Option(patients.length ? "Chọn người tới khám" : "Chưa có hồ sơ người khám", ""));
+  const self = patients.find(p => p.relationship === "SELF" && String(p.user_id) === String(actor.user_id));
+  const selfValue = self ? String(self.patient_id) : "self";
+  const label = person => {
+    const detail = person.dob ? dateLabel(person.dob) : person.phone;
+    return `${person.full_name || "Thông tin tài khoản"}${detail ? ` — ${detail}` : ""}`;
+  };
+  ui.patients.replaceChildren(new Option(`${label(self || actor)} (Bản thân)`, selfValue));
   for (const p of patients) {
-    ui.patients.add(new Option(`${p.full_name}${p.dob ? ` — ${dateLabel(p.dob)}` : ""}${p.relationship === "SELF" ? " (Bản thân)" : ""}`, p.patient_id));
+    if (p === self) continue;
+    ui.patients.add(new Option(label(p), p.patient_id));
   }
   if (patients.some(p => String(p.patient_id) === String(preferred))) ui.patients.value = String(preferred);
-  else if (patients.length === 1) ui.patients.value = String(patients[0].patient_id);
-  $("#relative-status").textContent = patients.length ? "" : "Thêm hồ sơ bản thân hoặc người thân để đặt lịch khám.";
+  else ui.patients.value = selfValue;
+  $("#relative-status").textContent = "";
   updateReviewState();
 }
 const normalize = value => value.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
+const specialtyImages = {
+  "co xuong khop": "khoa_xuong_khop.png",
+  "da lieu": "khoa_da_lieu.png",
+  "mat": "khoa_mat.png",
+  "nhi": "khoa_nhi.png",
+  "noi tong quat": "khoa_moi_tong_quat.png",
+  "rang ham mat": "khoa_rang_ham_mat.png",
+  "san phu khoa": "khoa_phu_san.png",
+  "tai mui hong": "khoa_tai_mui_hong.png",
+  "than kinh": "khoa_than_kinh.png",
+  "tim mach": "khoa_tim_mach.png",
+};
 function renderDepartments() {
   const term = normalize($("#department-search").value.trim());
   const holder = $("#booking-departments");
@@ -79,7 +99,12 @@ function renderDepartments() {
     const label = el("span");
     const count = doctors.filter(doctor => !id || String(doctor.department_id) === id).length;
     label.append(el("strong", department.name), el("small", `${count} bác sĩ`));
-    const icon = el("span", "+", "booking-department-icon"); icon.setAttribute("aria-hidden", "true");
+    const icon = el("span", "", "booking-department-icon"); icon.setAttribute("aria-hidden", "true");
+    const image = el("img");
+    const specialtyImage = specialtyImages[normalize(department.name).trim()];
+    image.src = specialtyImage ? `../../static/assets/medical_specialty/${specialtyImage}` : "../../static/assets/bieu_trung_neu.png";
+    image.alt = ""; image.width = 40; image.height = 40;
+    icon.append(image);
     button.append(icon, label);
     button.addEventListener("click", () => {
       ui.departments.value = id;
@@ -112,7 +137,7 @@ function renderDoctors() {
     photoLink.setAttribute("aria-label", `Xem hồ sơ ${doctor.full_name}`);
     photoLink.append(portrait(doctor));
     const price = el("div", "", "booking-price");
-    price.append(el("span", "Giá khám"), el("strong", money(doctor.consultation_fee)));
+    price.append(el("strong", money(doctor.consultation_fee)));
     const button = el("button", chosen ? "Bỏ chọn" : "Chọn", "solid-button");
     button.type = "button";
     button.setAttribute("aria-pressed", String(chosen));
@@ -170,8 +195,9 @@ async function selectDoctor(doctor, { scrollToDoctor = false } = {}) {
     }
   }
 }
-async function loadSchedules() {
+async function loadSchedules(preserveSelection = false) {
   if (!selectedDoctor) return;
+  const previousSlot = preserveSelection === true ? selectedSlot?.key : null;
   scheduleAbort?.abort();
   scheduleAbort = new AbortController();
   const version = ++scheduleVersion, doctorId = selectedDoctor.doctor_profile_id;
@@ -188,6 +214,12 @@ async function loadSchedules() {
       { from_date: ui.from.value, to_date: ui.to.value }, { signal: scheduleAbort.signal });
     if (version !== scheduleVersion) return;
     schedules = availableSchedules(rows);
+    if (previousSlot) {
+      for (const schedule of schedules) {
+        const slot = schedule.slots.find(slot => `${schedule.schedule_id}/${slot.appointment_time}` === previousSlot);
+        if (slot) selectedSlot = { schedule, slot, key: previousSlot };
+      }
+    }
     const dates = [...new Set(schedules.map(s => s.work_date))];
     if (!dates.includes(selectedDate)) selectedDate = dates[0] || "";
     const dateSelect = $("#appointment-date");
@@ -198,6 +230,7 @@ async function loadSchedules() {
       : "Chưa có khung giờ có thể đặt online trong khoảng ngày này. Bạn có thể đổi ngày hoặc chọn bác sĩ khác.";
     renderDays();
     renderSlots();
+    updateReviewState();
   } catch (error) {
     if (version !== scheduleVersion) return;
     ui.scheduleStatus.textContent = errorMessage(error);
@@ -293,6 +326,7 @@ async function loadData() {
       await selectDoctor(doctor, { scrollToDoctor: !query.get("encounter") });
     }
     if (draft && doctor && String(draft.doctor_profile_id) === String(doctor.doctor_profile_id)) {
+      if (draft.registration_details) registrationEntries.set(draft.patient_type === "SELF" ? "self" : draft.patient_id, draft.registration_details);
       renderPatients(draft.patient_id); $("#appointment-symptoms").value = draft.symptoms;
       const schedule = schedules.find(s => String(s.schedule_id) === String(draft.schedule_id));
       const slot = schedule?.slots.find(s => s.appointment_time === draft.appointment_time);
@@ -356,10 +390,15 @@ ui.form.addEventListener("submit", event => {
   }
   clearBookingErrors();
   try {
-    const key = saveDraft({ user_id: actor.user_id, patient_id: patient.patient_id,
+    const selfPreview = ui.patients.value === "self";
+    const registrationDetails = selfPreview
+      ? registrationEntries.get("self") ?? Object.fromEntries(["full_name", "phone", "dob", "id_card", "gender", "address", "health_insurance"].map(key => [key, actor[key] ?? null]))
+      : registrationEntries.get(patient.patient_id);
+    const key = saveDraft({ user_id: actor.user_id, patient_id: patient.patient_id ?? null,
+      ...(selfPreview ? { patient_type: "SELF" } : {}),
       doctor_profile_id: selectedDoctor.doctor_profile_id, schedule_id: selectedSlot.schedule.schedule_id,
       work_date: selectedSlot.schedule.work_date, from_date: ui.from.value, to_date: ui.to.value,
-      appointment_time: selectedSlot.slot.appointment_time, symptoms, registration_details: registrationEntries.get(patient.patient_id) });
+      appointment_time: selectedSlot.slot.appointment_time, symptoms, registration_details: registrationDetails });
     location.assign(`booking_review.html?draft=${encodeURIComponent(key)}`);
   } catch { $("#appointment-status").textContent = "Trình duyệt không cho phép lưu thông tin tạm. Vui lòng bật lưu trữ để tiếp tục."; }
 });
@@ -433,3 +472,4 @@ window.addEventListener("pageshow", event => { if (event.persisted) checkAccess(
 const resumeId = new URLSearchParams(location.search).get("encounter");
 if (resumeId && /^[1-9]\d*$/.test(resumeId)) location.replace(`booking_review.html?encounter=${resumeId}`);
 else checkAccess();
+startAutoRefresh(() => loadSchedules(true), { canRefresh: () => hasSession() && !ui.main.inert && Boolean(selectedDoctor) });

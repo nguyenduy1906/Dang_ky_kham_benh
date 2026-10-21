@@ -1,9 +1,12 @@
 """Thanh toán mô phỏng; khóa ca → lượt khám → payment trong cùng transaction."""
+from backend.app.models.configuration_model import encounter_policy
+from backend.app.utils.business_codes import business_code
 import os
 from datetime import timedelta
-from uuid import uuid4
 
 from backend.app.core.errors import conflict, not_found
+from backend.app.core.security import require_role
+from backend.app.utils import date as date_utils
 from backend.app.db.database import get_db_connection
 from backend.app.models import payment_model as model, encounter_model
 from backend.app.utils.database_helpers import jsonable
@@ -11,7 +14,7 @@ from backend.app.services import encounter_service as encounters, notification_s
 
 
 def _financial_access(db, actor, encounter_id):
-    encounters.require_role(actor, 'USER', 'ADMIN', 'RECEPTIONIST')
+    require_role(actor, 'USER', 'ADMIN', 'RECEPTIONIST')
     return encounters._visible(db, actor, encounter_id)
 
 
@@ -45,6 +48,14 @@ def list_payments(actor, encounter_id, page, size):
     return {'items': jsonable(rows), 'total': total, 'page': page, 'page_size': size}
 
 
+def list_admin_payments(actor, page, size):
+    require_role(actor, 'ADMIN')
+    size = min(size, 20)
+    with get_db_connection() as db:
+        rows, total = model.list_history(db, page, size)
+    return {'items': jsonable(rows), 'total': total, 'page': page, 'page_size': size}
+
+
 def get_payment(actor, payment_id):
     with get_db_connection() as db:
         row = model.get(db, payment_id)
@@ -55,7 +66,7 @@ def get_payment(actor, payment_id):
 
 
 def create_intent(actor, encounter_id, fields):
-    encounters.require_role(actor, 'USER')
+    require_role(actor, 'USER')
     expired = False
     with get_db_connection() as db:
         _financial_access(db, actor, encounter_id)
@@ -80,7 +91,7 @@ def create_intent(actor, encounter_id, fields):
             else:
                 row = model.create(db, {'encounter_id': encounter_id, 'payment_type': 'DEPOSIT',
                     'amount': encounter['deposit_amount_snapshot'], **fields, 'transaction_status': 'PENDING',
-                    'transaction_code': 'DEMO-' + uuid4().hex, 'created_by_id': actor['user_id']})
+                    'created_by_id': actor['user_id']})
                 created = True
             result = _response(db, row, actor)
     # Raise sau khi commit để giữ trạng thái EXPIRED/quota/log.
@@ -90,7 +101,7 @@ def create_intent(actor, encounter_id, fields):
 
 
 def collect_exam_fee(actor, encounter_id, fields):
-    encounters.require_role(actor, 'ADMIN', 'RECEPTIONIST')
+    require_role(actor, 'ADMIN', 'RECEPTIONIST')
     with get_db_connection() as db:
         encounter, _ = encounters.locked_context(db, encounter_id)
         _financial_access(db, actor, encounter_id)
@@ -109,12 +120,12 @@ def collect_exam_fee(actor, encounter_id, fields):
                              "AND transaction_status='PENDING'", (encounter_id,)).fetchone()
         if pending:
             raise conflict('Có phiên phí khám chưa xử lý; không thu lần hai', 'PAYMENT_INTENT_EXISTS')
-        now = encounters.utc_now()
+        now = date_utils.utc_now()
         row = model.create(db, {'encounter_id': encounter_id, 'payment_type': 'EXAM_FEE', 'amount': remaining,
-            **fields, 'transaction_status': 'SUCCESS', 'transaction_code': 'DEMO-' + uuid4().hex,
+            **fields, 'transaction_status': 'SUCCESS',
             'paid_at': now, 'result_received_at': now, 'created_by_id': actor['user_id'], 'processed_by_id': actor['user_id']})
         notifications.notify_encounter(db, encounter_id, f'exam-fee:{row["payment_id"]}', 'PAYMENT',
-                                       'Đã thu phí khám', f'Đã thu {remaining:,} đồng cho lượt khám #{encounter_id} (giả lập).')
+                                       'Đã thu phí khám', f'Đã thu {remaining:,} đồng cho lượt khám {business_code("LK", encounter_id)} (giả lập).')
         result = _response(db, row, actor)
         result['amount_due'] = 0
     return result, True
@@ -130,10 +141,10 @@ def _refund_amount(db, payment, actor_id, reason, amount):
         raise conflict('Chỉ hoàn giao dịch thu thành công chưa hoàn', 'PAYMENT_NOT_REFUNDABLE')
     if amount <= 0 or amount > payment['amount']:
         raise conflict('Số tiền hoàn không hợp lệ', 'INVALID_REFUND_AMOUNT')
-    now = encounters.utc_now()
+    now = date_utils.utc_now()
     refund = model.create(db, {'encounter_id': payment['encounter_id'], 'payment_type': 'REFUND',
         'amount': amount, 'payment_method': payment['payment_method'], 'transaction_status': 'SUCCESS',
-        'original_payment_id': payment['payment_id'], 'transaction_code': 'DEMO-REFUND-' + uuid4().hex,
+        'original_payment_id': payment['payment_id'],
         'paid_at': now, 'refunded_at': now, 'result_received_at': now, 'reason': reason,
         'created_by_id': actor_id, 'processed_by_id': actor_id})
     db.execute("UPDATE payment SET transaction_status='REFUNDED',refunded_at=%s WHERE payment_id=%s",
@@ -144,7 +155,7 @@ def _refund_amount(db, payment, actor_id, reason, amount):
 
 
 def refund(actor, payment_id, reason):
-    encounters.require_role(actor, 'ADMIN')
+    require_role(actor, 'ADMIN')
     with get_db_connection() as db:
         payment, encounter, _ = _locked_payment(db, actor, payment_id)
         existing = db.execute("SELECT * FROM payment WHERE original_payment_id=%s AND payment_type='REFUND'", (payment_id,)).fetchone()
@@ -152,9 +163,15 @@ def refund(actor, payment_id, reason):
             return _response(db, payment, actor, refund=existing)
         if payment['payment_type'] == 'REFUND' or payment['transaction_status'] != 'SUCCESS':
             raise conflict('Chỉ hoàn giao dịch thu thành công chưa hoàn', 'PAYMENT_NOT_REFUNDABLE')
-        if encounter['encounter_status'] != 'CANCELLED':
-            raise conflict('Hủy lượt khám trước khi hoàn; no-show không được hoàn cọc', 'ENCOUNTER_NOT_CANCELLED')
-        if encounter['cancel_origin'] == 'HOSPITAL':
+        policy = encounter_policy(encounter)
+        no_show_refund = encounter['encounter_status'] == 'NO_SHOW' and not policy['NO_SHOW_FORFEIT_DEPOSIT']
+        if encounter['encounter_status'] != 'CANCELLED' and not no_show_refund:
+            raise conflict('Lượt khám chưa hủy hoặc không đủ điều kiện hoàn khi vắng mặt', 'ENCOUNTER_NOT_CANCELLED')
+        if no_show_refund:
+            if payment['payment_type'] != 'DEPOSIT':
+                raise conflict('Chỉ hoàn tiền cọc khi không đến khám', 'PAYMENT_NOT_REFUNDABLE')
+            amount = payment['amount']
+        elif encounter['cancel_origin'] == 'HOSPITAL':
             amount = payment['amount']
         else:
             if payment['payment_type'] != 'DEPOSIT':
@@ -162,9 +179,9 @@ def refund(actor, payment_id, reason):
             reference = encounter['refund_reference_at'] or encounter['estimated_exam_at']
             if reference is None or encounter['cancelled_at'] is None:
                 raise conflict('Thiếu thời điểm hủy/giờ hẹn để xác định chính sách', 'REFUND_REFERENCE_MISSING')
-            if reference - encounter['cancelled_at'] < timedelta(hours=12):
-                raise conflict('Hủy dưới 12 giờ trước lịch khám: mất cọc', 'REFUND_NOT_ELIGIBLE')
-            amount = payment['amount'] // 2
+            if reference - encounter['cancelled_at'] < timedelta(hours=policy['CANCEL_HOURS_LIMIT']):
+                raise conflict('Thời điểm hủy không đủ điều kiện hoàn cọc của lượt khám', 'REFUND_NOT_ELIGIBLE')
+            amount = payment['amount'] * policy['CANCEL_REFUND_PERCENT'] // 100
         if amount == 0:
             return {**_response(db, payment, actor), 'refund': None, 'amount_refunded': 0,
                     'message': 'Số tiền hoàn sau làm tròn là 0 đồng'}
@@ -177,7 +194,7 @@ def demo_result(actor, payment_id, outcome):
     # Kiểm tra cả ở service để không gọi mô phỏng khi môi trường thật tắt demo.
     if os.environ.get('SEND_EMAIL', '0') != '1':
         raise not_found('Không tìm thấy API', 'NOT_FOUND')
-    encounters.require_role(actor, 'USER', 'ADMIN')
+    require_role(actor, 'USER', 'ADMIN')
     with get_db_connection() as db:
         payment, encounter, schedule = _locked_payment(db, actor, payment_id)
         if payment['payment_type'] != 'DEPOSIT' or encounter['encounter_type'] != 'ONLINE':
@@ -194,7 +211,7 @@ def demo_result(actor, payment_id, outcome):
             if outcome != 'FAILED':
                 raise conflict('Không đổi kết quả giao dịch đã xử lý', 'PAYMENT_RESULT_CONFLICT')
             return _response(db, payment, actor)
-        now = encounters.utc_now()
+        now = date_utils.utc_now()
         if encounter['encounter_status'] == 'HOLDING':
             expired = encounters.expire_locked(db, encounter, schedule, actor['user_id'])
             if expired:

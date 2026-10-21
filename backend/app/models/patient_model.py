@@ -1,9 +1,11 @@
 from backend.app.utils.database_helpers import insert_row, update_row
 
 _COLUMNS = ['user_id', 'full_name', 'dob', 'gender', 'id_card', 'address', 'phone',
-            'health_insurance', 'relationship']
+            'health_insurance', 'relationship', 'email', 'emergency_contact_name',
+            'emergency_contact_phone', 'emergency_contact_relationship']
 _UPDATABLE = {'full_name', 'dob', 'gender', 'id_card', 'address', 'phone',
-              'health_insurance', 'relationship'}
+              'health_insurance', 'relationship', 'email', 'emergency_contact_name',
+              'emergency_contact_phone', 'emergency_contact_relationship'}
 
 
 def _nurse_scope(patient_expression):
@@ -50,6 +52,14 @@ def get_patient(db, patient_id):
     return db.execute('SELECT * FROM patient WHERE patient_id = %s', (patient_id,)).fetchone()
 
 
+def get_for_update(db, patient_id):
+    return db.execute('SELECT * FROM patient WHERE patient_id=%s FOR UPDATE', (patient_id,)).fetchone()
+
+
+def lock_reference(db, patient_id):
+    db.execute('SELECT patient_id FROM patient WHERE patient_id=%s FOR UPDATE', (patient_id,))
+
+
 def can_book(db, patient_id, user_id):
     return db.execute('SELECT 1 FROM patient p WHERE p.patient_id=%s AND '
                       '(p.user_id=%s OR EXISTS (SELECT 1 FROM patient_delegate pd '
@@ -75,6 +85,24 @@ def find_identity(db, fields):
                       "AND dob=%s) ORDER BY patient_id FOR UPDATE",
                       (fields.get('id_card'), fields['phone'],
                        ' '.join(fields['full_name'].split()).lower(), fields.get('dob'))).fetchall()
+
+
+def lock_account_links(db):
+    db.execute('SELECT pg_advisory_xact_lock(78124003)')
+
+
+def link_account(db, patient_id, user_id):
+    db.execute('UPDATE patient SET user_id=%s WHERE patient_id=%s',
+                           (user_id, patient_id))
+
+
+def link_account_and_phone(db, patient_id, user_id, phone):
+    db.execute('UPDATE patient SET user_id=%s,phone=%s WHERE patient_id=%s',
+                   (user_id, phone, patient_id))
+
+
+def sync_account_phone(db, phone, user_id):
+    db.execute('UPDATE patient SET phone=%s WHERE user_id=%s', (phone, user_id))
 
 
 def create_patient(db, fields):

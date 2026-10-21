@@ -1,4 +1,8 @@
-import { listPatients, getPatient, listEncounters } from "../api/patient.js";
+import { startAutoRefresh } from "./auto_refresh.js";
+import { code } from "./business_codes.js";
+import { listPatients, getPatient } from "../api/patient.js";
+import { allPages, nurseEncounters, historyStatuses, localPage, nurseRange, nurseFormRange, recentNursePatients } from "./nurse_encounter_data.js";
+import { nurseRecordTable } from "./nurse_tables.js";
 import { getEncounter } from "../api/encounter.js";
 import { readMedicalRecord } from "./staff_encounters.js";
 import { sessionError } from "./staff_workspace.js";
@@ -7,12 +11,17 @@ import { $, esc, date, facts, panel, empty, table, pagination, badge, dialog, en
 
 // All reads use the existing server-side nurse scope. There are no patient or clinical writes here.
 export async function initNurseRecords() {
+  const initialRange = nurseRange();
   $("#page-body").innerHTML = panel("Tra cứu hồ sơ", `
-    <p class="scope-note">Chỉ hiển thị người bệnh thuộc phân công còn hiệu lực của bạn. Lịch sử khám và bệnh án được giới hạn theo quyền trên từng lượt khám.</p>
-    <form id="nurse-record-search" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tên, số điện thoại hoặc CCCD<input type="search" name="q" maxlength="100" placeholder="Nhập thông tin người bệnh…" autocomplete="off" aria-controls="nurse-record-list"></label><button type="reset" class="secondary">Bỏ tìm kiếm</button></form>
+    <form id="nurse-record-search" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tên, số điện thoại hoặc CCCD<input type="search" name="q" maxlength="100" placeholder="Nhập thông tin người bệnh…" autocomplete="off" aria-controls="nurse-record-list"></label><label>Trạng thái<select name="encounter_status"><option value="">Tất cả</option><option value="COMPLETED">Đã khám xong</option><option value="NO_SHOW">Không đến khám</option></select></label><label>Từ ngày<input type="date" name="from_date" value="${esc(initialRange?.from || "")}"></label><label>Đến ngày<input type="date" name="to_date" value="${esc(initialRange?.to || "")}"></label></form>
     <p id="nurse-record-status" class="scope-note" role="status" hidden></p><div id="nurse-record-list"></div><div id="nurse-record-pages" class="list-pagination"></div>`)
     + '<section id="nurse-record-detail" class="panel" tabindex="-1" aria-label="Hồ sơ đang xem" hidden></section>';
   const search = $("#nurse-record-search"), detail = $("#nurse-record-detail");
+  if (initialRange) {
+    search.elements.from_date.value = initialRange.from;
+    search.elements.to_date.value = initialRange.to;
+  }
+  let matchingPatients = [];
   let active = true, listVersion = 0, detailVersion = 0, recordVersion = 0;
   let listRequest, detailRequest, recordRequest, selectedPatient = null, historyRows = [];
 
@@ -27,16 +36,29 @@ export async function initNurseRecords() {
   window.addEventListener("pagehide", stop, { once: true });
   window.addEventListener("neu:auth-change", stop, { once: true });
 
+  let currentPage = 1, historyPageNumber = 1;
   async function load(page = 1) {
+    currentPage = page;
     const version = ++listVersion;
+    matchingPatients = [];
     listRequest?.abort(); listRequest = new AbortController(); clearDetail();
     const status = $("#nurse-record-status");
     status.hidden = false; status.textContent = "Đang tải hồ sơ…";
     $("#nurse-record-list").innerHTML = ""; $("#nurse-record-pages").innerHTML = "";
     try {
-      const result = await listPatients({ q: search.elements.q.value.trim(), page, page_size: 12 }, { signal: listRequest.signal });
+      const range = nurseFormRange(search);
+      const options = { signal: listRequest.signal };
+      const state = search.elements.encounter_status.value;
+      if (state && !historyStatuses.includes(state)) throw new Error("Trạng thái lọc không hợp lệ.");
+      const [patients, visits] = await Promise.all([
+        allPages((paging, request) => listPatients({ q: search.elements.q.value.trim(), include_archived: true, ...paging }, request), options),
+        nurseEncounters(state ? [state] : historyStatuses, range?.from && range.from === range.to ? { work_date: range.from } : {}, options),
+      ]);
       if (!active || version !== listVersion) return;
-      $("#nurse-record-list").innerHTML = result.items.length ? table(["Người bệnh", "Ngày sinh", "Giới tính", "Điện thoại", "Hồ sơ"], result.items.map(p => `<tr><td><strong>${esc(p.full_name)}</strong><small class="cell-subtitle">Mã hồ sơ #${esc(p.patient_id)}</small></td><td>${date(p.dob)}</td><td>${esc(p.gender || "—")}</td><td>${esc(p.phone || "—")}</td><td><button type="button" class="secondary" data-patient="${esc(p.patient_id)}">Xem hồ sơ</button></td></tr>`)) : empty("Chưa có hồ sơ phù hợp trong phạm vi được phân công.");
+      const { items: matching, latest } = recentNursePatients(patients, visits, range);
+      matchingPatients = matching;
+      const result = localPage(matching, page);
+      $("#nurse-record-list").innerHTML = nurseRecordTable(result.items, latest);
       pagination(result, load, $("#nurse-record-pages")); status.hidden = true;
     } catch (error) {
       if (!active || version !== listVersion) return;
@@ -44,27 +66,34 @@ export async function initNurseRecords() {
     }
   }
 
-  async function showPatient(patientId, page = 1) {
+  async function showPatient(patientId, page = 1, silent = false) {
+    historyPageNumber = page;
     const version = ++detailVersion;
     recordVersion++; recordRequest?.abort(); detailRequest?.abort(); detailRequest = new AbortController();
-    selectedPatient = null; historyRows = []; detail.hidden = false;
-    detail.innerHTML = '<p role="status">Đang tải hồ sơ và lịch sử được phép xem…</p>';
+    if (!silent) {
+      selectedPatient = null; historyRows = []; detail.hidden = false;
+      detail.innerHTML = '<p role="status">Đang tải hồ sơ và lịch sử được phép xem…</p>';
+    }
     try {
       const [{ patient }, history] = await Promise.all([
         getPatient(patientId, { signal: detailRequest.signal }),
-        listEncounters(patientId, { page, page_size: 10 }, { signal: detailRequest.signal }),
+        nurseEncounters(historyStatuses, { patient_id: patientId }, { signal: detailRequest.signal }),
       ]);
       if (!active || version !== detailVersion) return;
-      if (Number(patient.patient_id) !== Number(patientId) || history.items.some(e => Number(e.patient_id) !== Number(patientId))) throw new Error("Không nhận được hồ sơ hợp lệ của người bệnh đã chọn.");
-      selectedPatient = patient; historyRows = history.items;
-      detail.innerHTML = `<div class="section-heading"><div><p class="eyebrow">HỒ SƠ #${esc(patient.patient_id)} · CHỈ XEM</p><h2>${esc(patient.full_name)}</h2></div><button type="button" class="secondary" data-profile-close>Đóng hồ sơ</button></div>
+      if (Number(patient.patient_id) !== Number(patientId) || history.some(e => Number(e.patient_id) !== Number(patientId))) throw new Error("Không nhận được hồ sơ hợp lệ của người bệnh đã chọn.");
+      history.sort((a, b) => `${b.work_date}${b.estimated_exam_at || ""}`.localeCompare(`${a.work_date}${a.estimated_exam_at || ""}`) || b.encounter_id - a.encounter_id);
+      const historyPage = localPage(history, page, 10);
+      selectedPatient = patient; historyRows = historyPage.items;
+      detail.innerHTML = `<div class="section-heading"><div><p class="eyebrow">HỒ SƠ ${esc(code("BN", patient.patient_id))} · CHỈ XEM</p><h2>${esc(patient.full_name)}</h2></div><button type="button" class="secondary" data-profile-close>Đóng hồ sơ</button></div>
         ${facts([["Ngày sinh", date(patient.dob)], ["Giới tính", patient.gender], ["Điện thoại", patient.phone], ["CCCD / mã định danh", patient.id_card], ["Địa chỉ", patient.address], ["BHYT", patient.health_insurance]])}
-        <div class="nurse-record-history"><h3>Các lượt khám được phép xem</h3><p class="muted">Danh sách này chỉ gồm các lượt thuộc phạm vi phân công của bạn.</p>
-        ${history.items.length ? table(["Ngày khám", "Bác sĩ / phòng", "Trạng thái", "Kết quả"], history.items.map(e => `<tr><td>${date(e.work_date)}<small class="cell-subtitle">Lượt #${esc(e.encounter_id)}</small></td><td>${esc(e.doctor_name || "—")}<small class="cell-subtitle">${esc(e.room_name || "—")}</small></td><td>${badge(e.encounter_status)}</td><td><button type="button" class="secondary" data-record="${esc(e.encounter_id)}">Xem bệnh án / đơn thuốc</button></td></tr>`)) : empty("Chưa có lượt khám được phép xem.")}
+        <div class="nurse-record-history"><h3>Các lượt đã khám xong hoặc không đến</h3>
+        ${historyPage.items.length ? table(["Ngày khám", "Bác sĩ / phòng", "Trạng thái", "Kết quả"], historyPage.items.map(e => `<tr><td>${date(e.work_date)}<small class="cell-subtitle">Lượt ${esc(code("LK", e.encounter_id))}</small></td><td>${esc(e.doctor_name || "—")}<small class="cell-subtitle">${esc(e.room_name || "—")}</small></td><td>${badge(e.encounter_status)}</td><td><button type="button" class="secondary" data-record="${esc(e.encounter_id)}">${e.encounter_status === "COMPLETED" ? "Xem bệnh án / đơn thuốc" : "Xem lượt khám"}</button></td></tr>`)) : empty("Chưa có lượt đã khám xong hoặc không đến được phép xem.")}
         <div id="nurse-history-pages" class="list-pagination"></div><p id="nurse-history-status" class="scope-note" role="status" hidden></p></div>`;
-      pagination(history, next => showPatient(patientId, next), $("#nurse-history-pages"));
-      detail.focus({ preventScroll: true });
-      detail.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+      pagination(historyPage, next => showPatient(patientId, next), $("#nurse-history-pages"));
+      if (!silent) {
+        detail.focus({ preventScroll: true });
+        detail.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" });
+      }
     } catch (error) {
       if (!active || version !== detailVersion) return;
       detail.innerHTML = `<p class="scope-note" role="status">${esc(sessionError(error))}</p><button type="button" class="secondary" data-profile-close>Đóng hồ sơ</button>`;
@@ -88,9 +117,10 @@ export async function initNurseRecords() {
       const { encounter } = await getEncounter(row.encounter_id, { signal: recordRequest.signal });
       if (!active || version !== recordVersion) return;
       if (Number(encounter.patient_id) !== Number(patientId)) throw new Error("Lượt khám không thuộc hồ sơ đang xem.");
-      const clinical = await readMedicalRecord(encounter);
+      if (!historyStatuses.includes(encounter.encounter_status)) throw new Error("Lượt khám không còn thuộc danh sách hồ sơ đã kết thúc.");
+      const clinical = encounter.encounter_status === "COMPLETED" ? await readMedicalRecord(encounter) : '<p class="scope-note">Người bệnh không đến khám.</p>';
       if (!active || version !== recordVersion) return;
-      dialog("Bệnh án & đơn thuốc · Chỉ xem", encounterSummary(encounter) + clinical); status.hidden = true;
+      dialog(encounter.encounter_status === "COMPLETED" ? "Bệnh án & đơn thuốc · Chỉ xem" : "Lượt không đến khám", encounterSummary(encounter) + clinical); status.hidden = true;
     } catch (error) {
       if (active && version === recordVersion) { status.textContent = sessionError(error); status.hidden = false; }
     }
@@ -103,6 +133,11 @@ export async function initNurseRecords() {
     const status = $("#nurse-record-status"); status.hidden = false; status.textContent = "Đang tìm hồ sơ…";
   } });
   search.addEventListener("submit", event => { event.preventDefault(); refreshSearch(); });
-  search.addEventListener("reset", event => { event.preventDefault(); search.elements.q.value = ""; refreshSearch(); });
+  search.elements.encounter_status.addEventListener("change", () => refreshSearch());
+  for (const key of ["from_date", "to_date"]) search.elements[key]?.addEventListener("change", () => refreshSearch());
+  search.addEventListener("reset", event => { event.preventDefault(); for (const key of ["q", "encounter_status", "from_date", "to_date"]) if (search.elements[key]) search.elements[key].value = ""; refreshSearch(); });
   await load();
+  const patientId = new URLSearchParams(globalThis.location?.search || "").get("patient_id");
+  if (patientId && matchingPatients.some(p => String(p.patient_id) === patientId)) await showPatient(patientId);
+  startAutoRefresh(() => selectedPatient ? showPatient(selectedPatient.patient_id, historyPageNumber, true) : load(currentPage), { canRefresh: () => active });
 }

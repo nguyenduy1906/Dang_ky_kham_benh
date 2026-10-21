@@ -1,3 +1,6 @@
+import { startAutoRefresh } from "../core/auto_refresh.js";
+import { hasSession } from "../core/session.js";
+import { code } from "../core/business_codes.js";
 import { listPatients, listEncounters } from "../api/patient.js";
 import { getRecord, listPrescriptionItems } from "../api/medical_record.js";
 import { allPages, dateLabel, clock } from "../core/booking.js";
@@ -29,7 +32,7 @@ function renderProfiles() {
     const button = el("button", "", "record-profile-button"); button.type = "button";
     button.dataset.patientId = String(p.patient_id);
     button.setAttribute("aria-pressed", String(String(p.patient_id) === String(selected)));
-    button.append(el("strong", p.full_name), el("span", `Mã hồ sơ: ${p.patient_id}`), el("small", `${p.dob ? dateLabel(p.dob) : "Chưa có ngày sinh"}${p.is_archived ? " · Đã lưu trữ" : ""}`));
+    button.append(el("strong", p.full_name), el("span", `Mã hồ sơ: ${code("BN", p.patient_id)}`), el("small", `${p.dob ? dateLabel(p.dob) : "Chưa có ngày sinh"}${p.is_archived ? " · Đã lưu trữ" : ""}`));
     button.addEventListener("click", () => loadHistory(p.patient_id)); ui.profiles.append(button);
   }
 }
@@ -78,7 +81,7 @@ async function loadHistory(id, page = 1) {
     for (const encounter of data.items) {
       const card = el("article", "", "record-encounter-card");
       card.append(el("h4", encounter.doctor_name || "Bác sĩ phụ trách"));
-      facts(card, [["Ngày khám", dateLabel(encounter.work_date)], ["Khung giờ", `${clock(encounter.estimated_exam_at)}–${clock(encounter.appointment_end_at)}`], ["Phòng", encounter.room_name], ["Mã lượt khám", encounter.encounter_id], ["Trạng thái", statusLabels[encounter.encounter_status] || encounter.encounter_status]]);
+      facts(card, [["Ngày khám", dateLabel(encounter.work_date)], ["Khung giờ", `${clock(encounter.estimated_exam_at)}–${clock(encounter.appointment_end_at)}`], ["Phòng", encounter.room_name], ["Mã lượt khám", code("LK", encounter.encounter_id)], ["Trạng thái", statusLabels[encounter.encounter_status] || encounter.encounter_status]]);
       if (["IN_PROGRESS", "COMPLETED"].includes(encounter.encounter_status)) {
         const button = el("button", "Xem kết quả & đơn thuốc", "outline-button"); button.type = "button";
         button.addEventListener("click", () => showResult(encounter)); card.append(button);
@@ -181,3 +184,4 @@ const errorText = protectPatientPage({
     ui.lookup.close(); ui.result.close();
   },
 });
+startAutoRefresh(() => selected ? loadHistory(selected, currentPage) : loadProfiles(), { canRefresh: () => hasSession() });

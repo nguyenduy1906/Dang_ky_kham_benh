@@ -70,7 +70,11 @@ document.querySelectorAll("[data-panel]").forEach((button) => {
   });
 });
 dialog.querySelector(".dialog-close").addEventListener("click", () => dialog.close());
-dialog.addEventListener("click", (event) => {
+if (dialog.dataset.dialogDismissScope === "public") {
+  import("./dialog_dismiss.js").then(({ enhanceDialogDismiss }) => enhanceDialogDismiss(dialog, {
+    closeButtons: [dialog.querySelector(".dialog-close"), dialog.querySelector(".dialog-done")],
+  }));
+} else dialog.addEventListener("click", (event) => {
   if (event.target === dialog) {
     const rect = dialog.getBoundingClientRect();
     if (

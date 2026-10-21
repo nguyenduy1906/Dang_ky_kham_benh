@@ -9,6 +9,19 @@ from backend.app.db.database import get_db_connection
 def init_database():
     with get_db_connection() as db:
         db.execute('SELECT pg_advisory_xact_lock(78124001)')
+        if db.execute("SELECT to_regclass('review') AS name").fetchone()['name']:
+            db.execute('ALTER TABLE review ADD COLUMN IF NOT EXISTS is_hidden boolean NOT NULL DEFAULT false')
+        # Additive upgrade: keep existing visits and their previously effective policy.
+        exists = db.execute("SELECT to_regclass('encounter') AS name").fetchone()['name']
+        if exists:
+            column = db.execute("SELECT 1 FROM information_schema.columns WHERE table_schema=current_schema() "
+                                "AND table_name='encounter' AND column_name='policy_snapshot'").fetchone()
+            if not column:
+                db.execute('ALTER TABLE encounter ADD COLUMN policy_snapshot jsonb')
+                from backend.app.schemas.configuration_schema import POLICY_DEFAULTS
+                for key, value in POLICY_DEFAULTS.items():
+                    value = str(value).lower()
+                    db.execute('UPDATE system_configuration SET config_value=%s WHERE config_key=%s', (value, key))
         db.execute((DATABASE_DIR / 'init_db.sql').read_text(encoding='utf-8'))
 
 

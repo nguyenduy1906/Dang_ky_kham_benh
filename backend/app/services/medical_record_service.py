@@ -1,4 +1,7 @@
+from backend.app.models.configuration_model import encounter_policy
 from backend.app.core.errors import conflict, not_found
+from backend.app.core.security import require_role
+from backend.app.utils import date as date_utils
 from backend.app.db.database import get_db_connection
 from backend.app.models import medical_record_model as records, doctor_model
 from backend.app.utils.database_helpers import jsonable
@@ -7,8 +10,8 @@ from backend.app.services import encounter_service as encounters
 
 def _read_access(db, actor, encounter_id):
     # Lễ tân tiếp nhận không cần nội dung bệnh án; NURSE xem theo phân công còn hiệu lực.
-    encounters.require_role(actor, 'USER', 'DOCTOR', 'NURSE', 'ADMIN')
-    return encounters._visible(db, actor, encounter_id)
+    require_role(actor, 'USER', 'DOCTOR', 'NURSE', 'ADMIN')
+    return encounters.visible_encounter(db, actor, encounter_id)
 
 
 def _snapshot(db, record):
@@ -47,10 +50,10 @@ def _editable(encounter, record, fields):
 
 
 def put_record(actor, encounter_id, fields):
-    encounters.require_role(actor, 'DOCTOR')
+    require_role(actor, 'DOCTOR')
     with get_db_connection() as db:
         encounter, _ = encounters.locked_context(db, encounter_id)
-        encounters._visible(db, actor, encounter_id)
+        encounters.visible_encounter(db, actor, encounter_id)
         record = records.get(db, encounter_id, lock=True)
         _editable(encounter, record, fields)
         before = _snapshot(db, record) if record else None
@@ -58,12 +61,9 @@ def put_record(actor, encounter_id, fields):
         if record:
             if all(record[k] == v for k, v in values.items()):
                 return {'medical_record': _public(record)}
-            db.execute('UPDATE medical_record SET diagnosis=%s,treatment=%s,doctor_notes=%s WHERE record_id=%s',
-                       (values['diagnosis'], values['treatment'], values['doctor_notes'], record['record_id']))
+            records.update_record(db, record['record_id'], values)
         else:
-            record = db.execute('INSERT INTO medical_record(encounter_id,diagnosis,treatment,doctor_notes,examined_at) '
-                                'VALUES (%s,%s,%s,%s,%s) RETURNING *',
-                                (encounter_id, values['diagnosis'], values['treatment'], values['doctor_notes'], encounters.utc_now())).fetchone()
+            record = records.create_record(db, encounter_id, values, date_utils.utc_now())
         after = records.get(db, encounter_id)
         records.append_revision(db, record['record_id'], actor['user_id'], fields['reason'] or 'Ghi bệnh án', before, _snapshot(db, after))
         result = records.get(db, encounter_id)
@@ -71,7 +71,7 @@ def put_record(actor, encounter_id, fields):
 
 
 def _record_encounter_id(db, record_id):
-    row = db.execute('SELECT encounter_id FROM medical_record WHERE record_id=%s', (record_id,)).fetchone()
+    row = records.encounter_reference(db, record_id)
     if row is None:
         raise not_found('Không tìm thấy bệnh án', 'MEDICAL_RECORD_NOT_FOUND')
     return row['encounter_id']
@@ -88,11 +88,11 @@ def get_items(actor, record_id, page, size):
 
 
 def put_items(actor, record_id, fields):
-    encounters.require_role(actor, 'DOCTOR')
+    require_role(actor, 'DOCTOR')
     with get_db_connection() as db:
         encounter_id = _record_encounter_id(db, record_id)
         encounter, _ = encounters.locked_context(db, encounter_id)
-        encounters._visible(db, actor, encounter_id)
+        encounters.visible_encounter(db, actor, encounter_id)
         record = records.get(db, encounter_id, lock=True)
         _editable(encounter, record, fields)
         before = _snapshot(db, record)
@@ -106,10 +106,10 @@ def put_items(actor, record_id, fields):
 
 
 def complete(actor, encounter_id):
-    encounters.require_role(actor, 'DOCTOR')
+    require_role(actor, 'DOCTOR')
     with get_db_connection() as db:
         encounter, _ = encounters.locked_context(db, encounter_id)
-        encounters._visible(db, actor, encounter_id)
+        encounters.visible_encounter(db, actor, encounter_id)
         record = records.get(db, encounter_id, lock=True)
         if record is None or not (record['diagnosis'] or '').strip() or record['examined_at'] is None:
             raise conflict('Cần bệnh án có chẩn đoán và thời điểm khám trước khi hoàn tất', 'MEDICAL_RECORD_INCOMPLETE')
@@ -118,16 +118,18 @@ def complete(actor, encounter_id):
 
 
 def create_review(actor, encounter_id, fields):
-    encounters.require_role(actor, 'USER')
+    require_role(actor, 'USER')
     with get_db_connection() as db:
         encounter, _ = encounters.locked_context(db, encounter_id)
-        encounters._visible(db, actor, encounter_id)
+        encounters.visible_encounter(db, actor, encounter_id)
         if encounter['encounter_status'] != 'COMPLETED':
             raise conflict('Chỉ đánh giá lượt khám đã hoàn tất', 'ENCOUNTER_NOT_COMPLETED')
-        record = db.execute('SELECT record_id FROM medical_record WHERE encounter_id=%s FOR UPDATE', (encounter_id,)).fetchone()
+        record = records.lock_review_record(db, encounter_id)
         if record is None:
             raise conflict('Lượt khám chưa có bệnh án', 'MEDICAL_RECORD_REQUIRED')
-        row = records.create(db, record['record_id'], fields)
+        if fields['rating'] > encounter_policy(encounter)['MAX_REVIEW_RATING']:
+            raise conflict('Điểm đánh giá vượt giới hạn áp dụng cho lượt khám', 'REVIEW_RATING_LIMIT')
+        row = records.create_review(db, record['record_id'], fields)
     return {'review': jsonable(row)}, True
 
 
@@ -136,7 +138,23 @@ def list_public_reviews(doctor_id, page, size):
         doctor = doctor_model.get_by_id(db, doctor_id)
         if doctor is None or not doctor['is_active'] or not doctor['account_ok']:
             raise not_found('Không tìm thấy bác sĩ', 'DOCTOR_NOT_FOUND')
-        rows, stats = records.list_public(db, doctor_id, page, size)
+        rows, stats = records.list_public_reviews(db, doctor_id, page, size)
     return {'items': jsonable(rows), 'total': stats['total'],
             'average_rating': round(float(stats['average_rating']), 2) if stats['average_rating'] is not None else None,
             'page': page, 'page_size': size}
+
+
+def admin_reviews(actor, page, size, review_id=None):
+    require_role(actor, 'ADMIN')
+    with get_db_connection() as db:
+        rows, total = records.admin_reviews(db, page, size, review_id)
+    return {'items': jsonable(rows), 'total': total, 'page': page, 'page_size': size}
+
+
+def set_review_visibility(actor, review_id, hidden):
+    require_role(actor, 'ADMIN')
+    with get_db_connection() as db:
+        row = records.set_review_visibility(db, review_id, hidden)
+        if row is None:
+            raise not_found('Không tìm thấy đánh giá')
+    return {'review': jsonable(row)}

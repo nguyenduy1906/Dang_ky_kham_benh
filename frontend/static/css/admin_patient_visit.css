@@ -1,0 +1,21 @@
+.patient-visit-file { display:grid; gap:22px; }
+.admin-page .patient-visit-status.visit-holding { background:#fff5cd; color:#795700; }
+.admin-page .patient-visit-status.visit-confirmed { background:#e6efff; color:#2858a1; }
+.admin-page .patient-visit-status.visit-checked_in { background:#dff4f1; color:#126e65; }
+.admin-page .patient-visit-status.visit-in_progress { background:#eee7fa; color:#6c4097; }
+.admin-page .patient-visit-status.visit-completed { background:#e2f2e5; color:#286b38; }
+.admin-page .patient-visit-status.visit-cancelled { background:#fce5e7; color:#a13643; }
+.admin-page .patient-visit-status.visit-no_show { background:#fff0df; color:#985719; }
+.admin-page .patient-visit-status.visit-expired,.admin-page .patient-visit-status.visit-unknown { background:#edf0f3; color:#596474; }
+.patient-visit-file > .admin-card { min-width:0; box-shadow:none; }
+.patient-visit-file .admin-panel-heading { padding:20px; border-bottom:1px solid #e7eee9; }
+.patient-visit-file .admin-panel-heading h2 { font-size:16px; }
+.patient-visit-file .admin-table td { white-space:normal; overflow-wrap:anywhere; }
+.patient-visit-text { margin:0 20px; padding:18px 0; border-top:1px solid #e7eee9; }
+.patient-visit-text h3 { font-size:13px; font-weight:600; color:#315840; }
+.patient-visit-text p { margin:0; white-space:pre-wrap; font-size:13px; line-height:1.8; }
+.patient-visit-note { padding:0 20px 20px; margin:0; color:var(--staff-muted); font-size:12px; line-height:1.8; }
+.patient-visit-file .admin-table-scroll { margin-top:20px; }
+.admin-page #patient-visit-back { min-height:34px; padding:6px 10px; font-size:12px; flex-shrink:0; }
+.admin-page #admin-dialog:has(#patient-visit-back) > .section-heading { flex-wrap:wrap; gap:14px; }
+.admin-page #admin-dialog:has(#patient-visit-back) #admin-dialog-title { flex:1; font-size:19px; }

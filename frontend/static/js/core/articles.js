@@ -130,7 +130,7 @@ function inlineText(node, value) {
 
 export function articleContent(container, value) {
   container.replaceChildren();
-  const lines = displayText(value).replace(/\r\n?/g, "\n").split("\n");
+  const lines = displayText(value).replaceAll("<!-- article-section -->", "").replace(/\r\n?/g, "\n").split("\n");
   const block = line => /^(#{1,6}\s|[-*+]\s|\d+\.\s|>\s?|```|!\[)/.test(line);
   let index = 0;
   while (index < lines.length) {

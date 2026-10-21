@@ -1,10 +1,10 @@
 import os
 from flask import Blueprint, jsonify, request
 from flasgger import swag_from
-from backend.app.core.security import current_user, login_required
+from backend.app.core.security import current_user, login_required, roles_required
 from backend.app.core.errors import not_found
 from backend.app.schemas import payment_schema
-from backend.app.utils.validation import page_params
+from backend.app.utils.validation import page_params, int_arg
 from backend.app.services import payment_service
 
 payment_bp = Blueprint('payment', __name__)
@@ -27,6 +27,19 @@ def body_field(name, enum=None):
     if enum: prop['enum'] = list(enum)
     return {'in': 'body', 'name': 'body', 'required': True, 'schema': {
         'type': 'object', 'required': [name], 'properties': {name: prop}}}
+
+
+@payment_bp.get('/admin/payments')
+@roles_required('ADMIN')
+@swag_from({'tags': ['Payments'], 'summary': 'ADMIN xem lịch sử giao dịch toàn hệ thống, mới nhất trước',
+            'security': SECURITY, 'parameters': [
+                {'in': 'query', 'name': 'page', 'type': 'integer', 'default': 1, 'minimum': 1},
+                {'in': 'query', 'name': 'page_size', 'type': 'integer', 'default': 20, 'minimum': 1, 'maximum': 20}],
+            'responses': RESPONSES})
+def list_admin_payments():
+    page = int_arg(request.args, 'page', 1, 1, 100000)
+    size = int_arg(request.args, 'page_size', 20, 1, 20)
+    return jsonify(payment_service.list_admin_payments(current_user(), page, size))
 
 
 @payment_bp.get('/encounters/<int:encounter_id>/payments')
@@ -68,7 +81,7 @@ def demo_result(payment_id):
 
 @payment_bp.post('/staff/encounters/<int:encounter_id>/exam-fees')
 @login_required
-@swag_from({'tags': ['Payments'], 'summary': 'ADMIN/RECEPTIONIST thu giả lập phần còn lại; không thu lại giá sau cọc 100%',
+@swag_from({'tags': ['Payments'], 'summary': 'ADMIN/RECEPTIONIST thu giả lập phần phí khám còn lại sau tiền cọc đã thu',
             'security': SECURITY, 'parameters': [path_id('encounter_id'), body_field('payment_method', payment_schema.METHODS)],
             'responses': RESPONSES})
 def exam_fee(encounter_id):

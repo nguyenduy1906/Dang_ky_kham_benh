@@ -237,3 +237,23 @@ def update_room(room_id):
     """
     fields = catalog_schema.validate_room_update(request.get_json(silent=True))
     return jsonify(catalog_service.update_room(room_id, fields))
+
+
+@department_bp.get('/admin/departments/<int:department_id>/members')
+@roles_required(constants.ROLE_ADMIN)
+def department_members(department_id):
+    return jsonify(catalog_service.get_members(department_id))
+
+
+@department_bp.post('/admin/departments/<int:department_id>/members')
+@roles_required(constants.ROLE_ADMIN)
+def department_add_member(department_id):
+    return jsonify(catalog_service.add_member(current_user(),department_id,
+                   catalog_schema.validate_member(request.get_json(silent=True))))
+
+
+@department_bp.post('/admin/departments/<int:department_id>/members/<int:doctor_id>/revoke-role')
+@roles_required(constants.ROLE_ADMIN)
+def department_revoke_role(department_id,doctor_id):
+    return jsonify(catalog_service.revoke_member_role(current_user(),department_id,doctor_id,
+                   catalog_schema.validate_member_revoke(request.get_json(silent=True))))

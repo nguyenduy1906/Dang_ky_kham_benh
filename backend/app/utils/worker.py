@@ -8,9 +8,11 @@ from datetime import timedelta
 
 from werkzeug.security import generate_password_hash
 from backend.app.core.constants import SYSTEM_WORKER_EMAIL
+from backend.app.utils import date as date_utils
+from backend.app.utils.date import VN_TZ
 
 from backend.app.db.database import get_db_connection
-from backend.app.models.configuration_model import reminder_hours
+from backend.app.models.configuration_model import reminder_hours, encounter_policy
 from backend.app.services import encounter_service as service, notification_service as notifications
 
 logger = logging.getLogger(__name__)
@@ -39,11 +41,11 @@ def expire_holds():
                                 "(SELECT 1 FROM encounter e WHERE e.schedule_id=s.schedule_id "
                                 "AND e.encounter_status='HOLDING' AND e.hold_expires_at<=%s) "
                                 'ORDER BY s.schedule_id LIMIT 100 FOR UPDATE OF s SKIP LOCKED',
-                                (service.utc_now(),)).fetchall()
+                                (date_utils.utc_now(),)).fetchall()
         for schedule in schedules:
             holds = db.execute("SELECT * FROM encounter WHERE schedule_id=%s AND encounter_status='HOLDING' "
                                 'AND hold_expires_at<=%s ORDER BY encounter_id FOR UPDATE',
-                                (schedule['schedule_id'], service.utc_now())).fetchall()
+                                (schedule['schedule_id'], date_utils.utc_now())).fetchall()
             for encounter in holds:
                 count += service.expire_locked(db, encounter, schedule, actor_id)
     return count
@@ -52,23 +54,26 @@ def expire_holds():
 def enqueue_reminders():
     count = 0
     with get_db_connection() as db:
-        now = service.utc_now()
+        now = date_utils.utc_now()
         cutoff = now + timedelta(hours=reminder_hours(db))
-        rows = db.execute("SELECT e.encounter_id,e.estimated_exam_at FROM encounter e "
+        rows = db.execute("SELECT e.encounter_id,e.estimated_exam_at,e.policy_snapshot FROM encounter e "
                           "JOIN work_schedule s ON s.schedule_id=e.schedule_id JOIN patient p ON p.patient_id=e.patient_id "
                           "WHERE e.encounter_type='ONLINE' AND e.encounter_status='CONFIRMED' "
                           "AND p.user_id IS NOT NULL AND s.schedule_status IN ('OPEN','FULL') "
-                          'AND e.estimated_exam_at>%s AND e.estimated_exam_at<=%s '
+                          "AND e.estimated_exam_at + make_interval(mins => COALESCE((e.policy_snapshot->>'CHECKIN_LATE_MINUTES')::int,0) "
+                          "- COALESCE((e.policy_snapshot->>'CHECKIN_EARLY_MINUTES')::int,30)) > %s AND e.estimated_exam_at<=%s "
                           "AND NOT EXISTS (SELECT 1 FROM notification n WHERE n.user_id=p.user_id "
                           "AND n.event_key='reminder:' || e.encounter_id::text || ':' || "
                           "to_char(e.estimated_exam_at AT TIME ZONE 'UTC','YYYYMMDDHH24MISS')) "
                           'ORDER BY e.estimated_exam_at,e.encounter_id LIMIT 100 FOR UPDATE OF e SKIP LOCKED',
-                          (now + timedelta(minutes=30), cutoff)).fetchall()
+                          (now, cutoff)).fetchall()
         for row in rows:
             key = f'reminder:{row["encounter_id"]}:{row["estimated_exam_at"].strftime("%Y%m%d%H%M%S")}'
-            local = row['estimated_exam_at'].astimezone(service.VN_TZ)
+            local = row['estimated_exam_at'].astimezone(VN_TZ)
+            policy = encounter_policy(row)
+            deadline = local + timedelta(minutes=policy['CHECKIN_LATE_MINUTES'] - policy['CHECKIN_EARLY_MINUTES'])
             created = notifications.notify_encounter(db, row['encounter_id'], key, 'REMINDER', 'Nhắc lịch khám',
-                f'Giờ hẹn {local:%d/%m/%Y %H:%M} (Asia/Saigon). Cần check-in ít nhất 30 phút trước giờ hẹn.')
+                f'Giờ hẹn {local:%d/%m/%Y %H:%M} (Asia/Saigon). Vui lòng check-in trước {deadline:%d/%m/%Y %H:%M}.')
             count += created is not None
     return count
 

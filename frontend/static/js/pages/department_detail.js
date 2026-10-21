@@ -1,3 +1,4 @@
+import { startAutoRefresh } from "../core/auto_refresh.js";
 import { getDepartment } from "../api/catalog.js";
 import { element, portrait, doctorCard } from "../core/doctors.js";
 import { thumbnailUrl } from "../core/articles.js";
@@ -75,3 +76,4 @@ $("#department-retry").addEventListener("click", load);
 window.addEventListener("pagehide", () => request?.abort());
 window.addEventListener("pageshow", event => { if (event.persisted) load(); });
 load();
+startAutoRefresh(load);

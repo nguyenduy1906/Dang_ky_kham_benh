@@ -33,6 +33,22 @@ def listing(db, user_id, status, page, size):
     return rows, total
 
 
+def create_request(db, user_id, fields):
+    return db.execute('''INSERT INTO staff_leave_request(user_id,from_date,to_date,period,reason)
+            VALUES (%s,%s,%s,%s,%s) RETURNING request_id''',
+            (user_id, fields['from_date'], fields['to_date'], fields['period'], fields['reason'])).fetchone()['request_id']
+
+
+def cancel_request(db, request_id):
+    db.execute("UPDATE staff_leave_request SET status='CANCELLED',cancelled_at=CURRENT_TIMESTAMP WHERE request_id=%s", (request_id,))
+
+
+def review_request(db, request_id, fields, actor_id, effects):
+    db.execute('''UPDATE staff_leave_request SET status=%s,review_note=%s,reviewed_by_id=%s,
+            reviewed_at=CURRENT_TIMESTAMP,effects=%s WHERE request_id=%s''',
+            (fields['decision'], fields['note'], actor_id, effects, request_id))
+
+
 def overlapping(db, user_id, start, end, period, *, approved_only=False):
     # Calendar intersection must contain a weekday (Fri and Mon requests may share a weekend).
     return db.execute('''SELECT l.* FROM staff_leave_request l WHERE user_id=%s
@@ -49,6 +65,12 @@ def notify(db, user_id, request_id, event, title, content):
         VALUES (%s,%s,'STAFF_LEAVE',%s,%s,'STAFF_LEAVE_REQUEST',%s)
         ON CONFLICT(user_id,event_key) DO NOTHING''',
                (user_id, f'staff-leave:{request_id}:{event}', title, content, request_id))
+
+
+def calendar_leaves(db, target_id, query):
+    return db.execute('''SELECT * FROM staff_leave_request WHERE user_id=%s AND status IN ('PENDING','APPROVED')
+            AND from_date<=%s AND to_date>=%s ORDER BY request_id''',
+            (target_id, query['to_date'], query['from_date'])).fetchall()
 
 
 def affected_schedules(db, leave, role, *, lock=False):

@@ -94,6 +94,11 @@ def current_user():
     return g.current_user
 
 
+def require_role(actor, *roles):
+    if actor['role_name'] not in roles:
+        raise forbidden()
+
+
 def login_required(view):
     @wraps(view)
     def wrapper(*args, **kwargs):

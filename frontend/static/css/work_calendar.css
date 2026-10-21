@@ -14,8 +14,8 @@
 .calendar-day-heading { padding: 16px 8px; border-bottom: 1px solid var(--staff-line); text-align: center; background: #f8faf9; }
 .calendar-day-heading span { color: var(--staff-muted); font-size: 11px; display: block; }
 .calendar-day-heading time { display: inline-grid; place-items: center; min-width: 32px; height: 32px; font-size: 18px; font-weight: 700; margin-top: 4px; }
-.calendar-day.is-today .calendar-day-heading { background: #edf6f0; }
-.calendar-day.is-today .calendar-day-heading time { color: #fff; background: #087f5b; border-radius: 5px; }
+.work-calendar-page .calendar-day.is-today .calendar-day-heading { position: relative; outline: 2px solid #087f5b; outline-offset: -2px; z-index: 1; background: #f8faf9; }
+.calendar-day.is-today .calendar-day-heading time { color: #087f5b; background: transparent; border-radius: 5px; }
 .calendar-day.is-weekend { background: #fafbf9; }
 .calendar-slot { padding: 9px 7px; min-height: 145px; }
 .calendar-slot + .calendar-slot { border-top: 1px dashed #e2eae5; }
@@ -38,12 +38,8 @@
 .calendar-legend .legend-leave { background: #a16b27; }
 .calendar-legend .legend-free { background: #e7ece8; border: 1px solid #becbc2; }
 .work-calendar-page .calendar-hint { font-size: 11px; padding: 0 22px 16px; color: var(--staff-muted); margin: 0; }
-.leave-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 32px; }
+.leave-layout { display: block; }
 .leave-description { color: var(--staff-muted); font-size: 13px; }
-.leave-aside { padding: 20px; background: #f5f8f6; border: 1px solid #e3ebe6; border-radius: 5px; align-self: start; }
-.leave-aside h3 { font-size: 14px; }
-.leave-aside p { font-size: 12px; color: var(--staff-muted); }
-.leave-aside p:last-child { margin-bottom: 0; }
 .leave-form label > span { color: #b3392a; }
 .leave-form .form-grid { gap: 18px; }
 .leave-form small { margin-top: 5px; font-size: 11px; font-weight: 400; }
@@ -68,7 +64,6 @@
 @media (max-width: 1250px) and (min-width: 961px) {
   .calendar-grid { min-width: 850px; }
   .calendar-scroll { overflow-x: auto; }
-  .leave-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
 }
 @media (max-width: 760px) {
   .calendar-grid { grid-template-columns: 1fr; }
@@ -81,7 +76,6 @@
   .calendar-week-control { width: 100%; }
   .calendar-week-control h2 { flex: 1; margin: 0; min-width: 150px; font-size: 15px; }
   .calendar-controls { width: 100%; justify-content: space-between; }
-  .leave-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
   .calendar-legend { gap: 12px; padding-inline: 16px; }
   .work-calendar-page .calendar-hint { padding-inline: 16px; }
 }

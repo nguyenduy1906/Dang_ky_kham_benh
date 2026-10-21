@@ -13,12 +13,16 @@ export function getUnreadCount(options = {}) {
 }
 
 /** PATCH /notifications/<int:notification_id>/read */
-export function markRead(notificationId, options = {}) {
-  return apiRequest(`/notifications/${pathSegment(notificationId)}/read`, { ...options, method: "PATCH" });
+export async function markRead(notificationId, options = {}) {
+  const result=await apiRequest(`/notifications/${pathSegment(notificationId)}/read`, { ...options, method: "PATCH" });
+  if(typeof window!=='undefined'&&typeof window.dispatchEvent==='function')window.dispatchEvent(new Event('notifications-changed'));
+  return result;
 }
 
 /** POST /notifications/read-all */
-export function readAll(options = {}) {
-  return apiRequest("/notifications/read-all", { ...options, method: "POST" });
+export async function readAll(options = {}) {
+  const result=await apiRequest("/notifications/read-all", { ...options, method: "POST" });
+  if(typeof window!=='undefined'&&typeof window.dispatchEvent==='function')window.dispatchEvent(new Event('notifications-changed'));
+  return result;
 }
 

@@ -4,6 +4,7 @@ from flasgger import Swagger
 from backend.app.core.errors import register_error_handlers
 from backend.app.core.cors import register_cors
 from backend.app.core.security import get_secret_key
+from backend.app.utils.swagger_helpers import PROFILE_DEFINITIONS
 from backend.app.db.database import get_db_connection
 from backend.app.routes import health_routes
 from backend.app.routes.auth_routes import auth_bp, user_admin_bp
@@ -19,6 +20,7 @@ from backend.app.routes.configuration_routes import configuration_bp
 from backend.app.routes.statistics_routes import statistics_bp
 from backend.app.routes.schedule_routes import schedule_bp, nurse_assignment_bp
 from backend.app.routes.staff_leave_routes import staff_leave_bp
+from backend.app.routes.admin_activity_routes import admin_activity_bp
 
 
 def create_app():
@@ -31,14 +33,17 @@ def create_app():
     app = Flask(__name__)
     register_error_handlers(app)
     register_cors(app)
+    from backend.app.services.admin_notification_service import register_admin_notifications
+    register_admin_notifications(app)
     app.register_blueprint(health_routes)
     for blueprint in (auth_bp, user_admin_bp, department_bp, room_bp, doctor_bp,
                       patient_bp, schedule_bp, nurse_assignment_bp, staff_leave_bp, encounter_bp, payment_bp, notification_bp,
-                      medical_record_bp, review_bp, article_bp, configuration_bp, statistics_bp):
+                      medical_record_bp, review_bp, article_bp, configuration_bp, statistics_bp, admin_activity_bp):
         app.register_blueprint(blueprint)
     app.config['SWAGGER'] = {'title': 'Medical Booking API', 'uiversion': 3}
     Swagger(app, config={'specs_route': '/docs/'}, merge=True, template={
         'swagger': '2.0',
+        'definitions': PROFILE_DEFINITIONS,
         'info': {'title': 'Medical Booking API', 'version': '1.0.0',
                  'description': 'Tài liệu API của dự án đăng ký và đặt lịch khám bệnh.'},
         'securityDefinitions': {'Bearer': {

@@ -8,7 +8,6 @@
     <link rel="stylesheet" href="../../static/css/public_pages.css?v=20261014-interface-update" />
     <link rel="stylesheet" href="../../static/css/patient_pages.css?v=20261017-phone-lookup" />
     <script src="../../static/js/core/public.js?v=20261014-interface-update" defer></script>
-    <script src="../../static/js/pages/patient_pages.js" defer></script>
     <script type="module" src="../../static/js/pages/records.js?v=20261017-phone-lookup"></script>
   </head>
   <body class="auth-pending">
@@ -67,6 +66,7 @@
       <form id="record-lookup-form" role="search" aria-label="Tìm người bệnh đã đặt khám hộ">
         <label for="lookup-phone">Số điện thoại *</label>
         <input id="lookup-phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" aria-describedby="record-lookup-status" aria-controls="record-lookup-matches" />
+        <button id="record-lookup-submit" type="submit" class="solid-button lookup-submit">Tìm kiếm</button>
         <div id="record-lookup-matches" class="record-lookup-matches"></div>
         <p id="record-lookup-status" class="lookup-status" role="status"></p>
       </form>

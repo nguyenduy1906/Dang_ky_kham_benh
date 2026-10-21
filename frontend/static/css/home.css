@@ -276,14 +276,14 @@ footer {
 
 dialog {
   border: 0;
-  border-top: 5px solid var(--green);
   padding: 26px;
   width: min(560px, calc(100% - 32px));
   color: var(--ink);
   box-shadow: 0 20px 80px #0003;
 }
 dialog::backdrop {
-  background: #001e1b80;
+  background: transparent;
+  backdrop-filter: blur(4px);
 }
 .dialog-heading {
   display: flex;
@@ -309,6 +309,8 @@ dialog::backdrop {
   padding: 11px 24px;
   margin-top: 15px;
 }
+.dialog-close[data-dialog-dismiss] { border: 1px solid #cbdcd2; background: white; color: #33644e; font-size: 13px; font-weight: 600; line-height: 1.5; padding: 10px 16px; border-radius: 5px; cursor: pointer; }
+button[data-dialog-dismiss]:is(:hover, :focus-visible):not(:disabled) { color: #fff; background: #c73535; border-color: #c73535; }
 #dialog-content {
   line-height: 1.75;
   color: #536158;

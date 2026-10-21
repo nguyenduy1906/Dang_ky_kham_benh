@@ -1,8 +1,48 @@
-"""Hàm kiểm tra dữ liệu dùng chung cho các schema Gói 2."""
+"""Hàm kiểm tra dữ liệu dùng chung cho các schema."""
+import re
 from datetime import date, time
 
 from backend.app.core import constants
 from backend.app.core.errors import bad_request
+
+EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+PHONE_RE = re.compile(r'^\+?[0-9]{9,15}$')
+
+
+def ensure_object(data):
+    if not isinstance(data, dict):
+        raise bad_request('Body phải là JSON object hợp lệ')
+    return data
+
+
+def text_field(data, key, *, required=False, max_len=255):
+    value = data.get(key)
+    if value is None or (isinstance(value, str) and not value.strip()):
+        if required:
+            raise bad_request(f'Thiếu trường {key}')
+        return None
+    if not isinstance(value, str):
+        raise bad_request(f'Trường {key} phải là chuỗi')
+    value = value.strip()
+    if len(value) > max_len:
+        raise bad_request(f'Trường {key} tối đa {max_len} ký tự')
+    return value
+
+
+def normalize_email(value, key='email'):
+    value = value.strip().lower()
+    if len(value) > 254 or not EMAIL_RE.match(value):
+        raise bad_request(f'{key} không hợp lệ')
+    return value
+
+
+def normalize_phone(value, key='phone'):
+    value = re.sub(r'[\s.\-]', '', value)
+    if re.fullmatch(r'\+?84[35789]\d{8}', value):
+        value = '0' + value.lstrip('+')[2:]
+    if not PHONE_RE.match(value):
+        raise bad_request(f'{key} không hợp lệ (9-15 chữ số)')
+    return value
 
 
 def int_arg(args, key, default, lo, hi):

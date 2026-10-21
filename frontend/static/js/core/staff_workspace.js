@@ -1,17 +1,13 @@
 import { getSessionUser, loginUrl, workspaceUrl, signOut, clearSession, hasSession } from "./session.js";
-import { API_CONFIG } from "../config.js";
-import { getOwnProfile } from "../api/doctor.js";
-import { mountStaffWorkspace, getStaffRole } from "./staff_shell.js";
+import { renderAccountAvatar } from "./avatar.js";
+import { mountStaffWorkspace, getStaffRole, staffRoles, nursePortraitUrl } from "./staff_shell.js";
 export { staffRoles, resolveStaffRole, getStaffRole } from "./staff_shell.js";
+export { avatarUrl } from "./avatar.js";
 
 export const backendRoles = Object.freeze({ DOCTOR: "doctor", NURSE: "nurse", RECEPTIONIST: "reception", ADMIN: "admin" });
 export function canOpenStaffPage(roleName, requestedRole, page) {
   const actual = Object.hasOwn(backendRoles, roleName) ? backendRoles[roleName] : null;
-  return Boolean(actual && (page === "profile" ? actual !== "admin" : actual === requestedRole));
-}
-export function avatarUrl(value) {
-  if (typeof value !== "string" || !/^\/uploads\/avatars\/[0-9a-f]{32}\.(jpg|png|webp)$/.test(value)) return "";
-  return new URL(value, API_CONFIG.baseUrl).href;
+  return Boolean(actual && (page === "profile" || actual === requestedRole));
 }
 export async function requireStaff() {
   const main = document.querySelector("#main-content");
@@ -20,7 +16,7 @@ export async function requireStaff() {
   suspend();
   // Render public navigation before waiting for /me; private content stays gated.
   const previewRole = getStaffRole();
-  const shellMounted = Boolean(previewRole && previewRole !== "admin");
+  const shellMounted = Boolean(previewRole);
   if (shellMounted) mountStaffWorkspace();
   let active = true;
   window.addEventListener("pagehide", () => { active = false; }, { once: true });
@@ -29,9 +25,6 @@ export async function requireStaff() {
     if (!active) return null;
     if (!user) { location.replace(loginUrl(new URL(location.href)).href); return null; }
     const actualRole = backendRoles[user.role_name];
-    if (actualRole === "admin" && document.body.dataset.page === "profile") {
-      location.replace(workspaceUrl(user.role_name).href); return null;
-    }
     const requestedRole = getStaffRole();
     if (!canOpenStaffPage(user.role_name, requestedRole, document.body.dataset.page)) {
       if (status) {
@@ -51,14 +44,9 @@ export async function requireStaff() {
     document.body.dataset.role = actualRole;
     if (!shellMounted) mountStaffWorkspace();
     document.querySelector("#staff-account-name").textContent = user.full_name;
-    if (actualRole === "doctor") {
-      getOwnProfile().then(({ doctor }) => {
-        const url = avatarUrl(doctor.avatar_url), container = document.querySelector(".staff-initials");
-        if (!url || !container) return;
-        const img = document.createElement("img"); img.src = url; img.alt = "";
-        img.addEventListener("error", () => { container.textContent = "BS"; }); container.replaceChildren(img);
-      }).catch(() => { /* A missing professional profile does not block account access. */ });
-    }
+    renderAccountAvatar(document.querySelector(".staff-initials"), user, {
+      initials: staffRoles[actualRole].initials, className: "staff-avatar-image", fallback: actualRole === "nurse" ? nursePortraitUrl : "",
+    });
     document.querySelector("#staff-signout").addEventListener("click", async event => {
       event.currentTarget.disabled = true;
       try { await signOut(); } catch { /* Local session is cleared by signOut. */ }

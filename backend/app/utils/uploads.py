@@ -1,4 +1,4 @@
-"""Lưu ảnh bác sĩ và bài viết: giải mã ảnh, giới hạn dung lượng, đặt tên ngẫu nhiên.
+"""Lưu avatar mọi vai trò và ảnh bài viết, kiểm tra nội dung ảnh thực tế.
 
 Docker gắn backend/uploads vào /app/uploads; ảnh không mất khi tạo lại container.
 """
@@ -17,9 +17,7 @@ MAX_AVATAR_BYTES = 2 * 1024 * 1024
 MAX_ARTICLE_BYTES = 5 * 1024 * 1024
 URL_PREFIX = '/uploads/avatars/'
 ARTICLE_URL_PREFIX = '/uploads/articles/'
-FILENAME_RE = re.compile(r'^[0-9a-f]{32}\.(jpg|png|webp)$')
-
-
+FILENAME_RE = re.compile(r'^[0-9a-f]{32}\.(jpg|png|webp)\Z')
 def _image_dir(folder):
     root = os.environ.get('UPLOAD_DIR', str(Path(__file__).resolve().parents[2] / 'uploads'))
     path = os.path.join(root, folder)

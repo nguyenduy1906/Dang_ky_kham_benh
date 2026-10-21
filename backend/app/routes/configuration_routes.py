@@ -24,7 +24,7 @@ def listing():
 
 @configuration_bp.patch('/admin/configurations/<string:key>')
 @roles_required('ADMIN')
-@swag_from(spec('Configurations', 'Cập nhật HOSPITAL_NAME, SUPPORT_PHONE, SUPPORT_EMAIL, EXAM_HOURS, REMINDER_BEFORE_HOURS hoặc ALLOW_WALK_IN',
+@swag_from(spec('Configurations', 'Admin cập nhật thông tin cơ sở, tiếp nhận và chính sách cho lượt khám mới; kiểm tra giới hạn từng khóa',
                 [path('key', type_name='string'), body({'config_value': {'type': 'string'}}, ('config_value',))]))
 def update(key):
     return jsonify(service.update(current_user(), key, validate_configuration(key, request.get_json(silent=True))))

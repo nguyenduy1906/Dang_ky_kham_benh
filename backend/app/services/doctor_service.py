@@ -1,11 +1,11 @@
 from psycopg import errors as pg_errors
 
 from backend.app.core import constants
-from backend.app.utils import uploads
 from backend.app.core.errors import bad_request, conflict, forbidden, not_found
 from backend.app.db.database import get_db_connection
-from backend.app.models import catalog_model, doctor_model, auth_model
+from backend.app.models import doctor_model, auth_model, catalog_model
 from backend.app.utils.database_helpers import flags, jsonable
+from backend.app.services import auth_service, catalog_service
 
 _PRIVATE = ('user_id', 'email', 'phone', 'account_ok')
 
@@ -37,38 +37,45 @@ def get_doctor(doctor_profile_id, is_admin):
     return {'doctor': _present(row, is_admin)}
 
 
-def _check_department(db, department_id):
-    department = catalog_model.get_department(db, department_id)
-    if department is None or not department['is_active']:
-        raise bad_request('Chuyên khoa không tồn tại hoặc đã ngưng hoạt động', 'DEPARTMENT_INVALID')
+_check_department = catalog_service.require_active_department
 
 
 def create_doctor(fields):
     with get_db_connection() as db:
+        catalog_model.lock_memberships(db)
         user = auth_model.get_user_by_id(db, fields['user_id'])
         if user is None or user['deleted_at'] is not None:
             raise not_found('Không tìm thấy tài khoản', 'USER_NOT_FOUND')
         if user['role_name'] != constants.ROLE_DOCTOR:
             raise bad_request('Tài khoản phải có vai trò DOCTOR', 'NOT_A_DOCTOR')
-        _check_department(db, fields['department_id'])
+        catalog_service.require_active_department(db, fields['department_id'])
         try:
             profile_id = doctor_model.create_profile(db, fields)
         except pg_errors.UniqueViolation:
             raise conflict('Tài khoản này đã có hồ sơ bác sĩ', 'DUPLICATE_DOCTOR_PROFILE') from None
+        catalog_model.advance_leadership_version(db,fields['department_id'])
         row = doctor_model.get_by_id(db, profile_id)
     return {'doctor': _present(row, True)}
 
 
-def update_doctor(doctor_profile_id, fields):
+def update_doctor(doctor_profile_id, fields, actor=None):
     with get_db_connection() as db:
-        if doctor_model.get_by_id(db, doctor_profile_id) is None:
+        catalog_model.lock_memberships(db)
+        current=doctor_model.get_by_id(db, doctor_profile_id)
+        if current is None:
             raise not_found('Không tìm thấy bác sĩ', 'DOCTOR_NOT_FOUND')
+        changed='department_id' in fields and fields['department_id']!=current['department_id']
+        if changed and not catalog_model.check_source_deputies(db,current['department_id']):
+            raise conflict('Khoa cũ sẽ vượt giới hạn phó khoa sau khi chuyển','SOURCE_DEPUTY_LIMIT')
         if 'department_id' in fields:
-            _check_department(db, fields['department_id'])
+            catalog_service.require_active_department(db, fields['department_id'])
         try:
             doctor_model.update_profile(db, doctor_profile_id, fields)
         except pg_errors.CheckViolation:
             raise conflict('Hãy gỡ phân công trưởng/phó khoa trước khi chuyển bác sĩ sang khoa khác','DOCTOR_LEADERSHIP_ACTIVE') from None
+        if changed:
+            catalog_model.record_membership_transfer(db,doctor_profile_id,current['department_id'],fields['department_id'],actor['user_id'] if actor else None)
+            for dep_id in sorted({current['department_id'],fields['department_id']}):catalog_model.advance_leadership_version(db,dep_id)
         row = doctor_model.get_by_id(db, doctor_profile_id)
     return {'doctor': _present(row, True)}
 
@@ -108,21 +115,11 @@ def upload_admin_avatar(user, doctor_profile_id, file_storage):
 
 
 def _replace_avatar(doctor_profile_id, file_storage):
-    if file_storage is None or not file_storage.filename:
-        raise bad_request("Thiếu file ảnh (trường form 'file')", 'MISSING_FILE')
-    new_url = None
-    try:
-        with get_db_connection() as db:
-            current = db.execute('SELECT avatar_url FROM doctor_profile WHERE doctor_profile_id=%s FOR UPDATE',
-                                 (doctor_profile_id,)).fetchone()
-            if current is None:
-                raise not_found('Không tìm thấy bác sĩ', 'DOCTOR_NOT_FOUND')
-            new_url = uploads.save_avatar(file_storage)
-            doctor_model.update_profile(db, doctor_profile_id, {'avatar_url': new_url})
-            row = doctor_model.get_by_id(db, doctor_profile_id)
-    except Exception:
-        if new_url:
-            uploads.delete_avatar(new_url)
-        raise
-    uploads.delete_avatar(current['avatar_url'])
+    with get_db_connection() as db:
+        current = doctor_model.get_by_id(db, doctor_profile_id)
+        if current is None:
+            raise not_found('Không tìm thấy bác sĩ', 'DOCTOR_NOT_FOUND')
+    auth_service.replace_avatar(current['user_id'], file_storage)
+    with get_db_connection() as db:
+        row = doctor_model.get_by_id(db, doctor_profile_id)
     return {'doctor': _present(row, True)}

@@ -1,5 +1,5 @@
 from backend.app.core.errors import bad_request
-from backend.app.schemas.auth_schema import ensure_object, text_field
+from backend.app.utils.validation import ensure_object, text_field
 
 METHODS = ('CASH', 'BANK', 'EWALLET', 'CARD')
 

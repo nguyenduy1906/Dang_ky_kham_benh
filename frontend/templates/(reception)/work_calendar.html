@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="../../static/css/work_calendar.css?v=20261017-api">
   <script type="module" src="../../static/js/pages/work_calendar.js?v=20261017-api" blocking="render"></script>
 </head>
-<body class="staff-page work-calendar-page reception-page staff-auth-pending" data-role="reception" data-page="work_calendar">
+<body class="staff-page work-calendar-page reception-page staff-auth-pending" data-role="reception" data-page-title="Lịch làm việc" data-page="work_calendar">
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>
   <noscript>Bật JavaScript và đăng nhập để xem lịch làm việc.</noscript>
   <div class="staff-shell">
@@ -18,7 +18,7 @@
       <div id="staff-access" class="staff-access" role="status">Đang kiểm tra quyền truy cập…</div>
       <main id="main-content" class="staff-content" tabindex="-1" inert>
         <header class="page-header calendar-intro">
-          <div><p class="eyebrow">NEU MEDICAL · KHÔNG GIAN NHÂN VIÊN</p><h1>Lịch làm việc</h1><p>Theo dõi ca trong tuần, gửi đơn xin nghỉ và xem kết quả duyệt.</p></div>
+          <div><p>Xem lịch làm việc trong tuần.</p></div>
           <a class="button-link" href="#leave-section">＋ Tạo đơn xin nghỉ</a>
         </header>
         <section class="panel calendar-panel" aria-labelledby="week-title">
@@ -48,7 +48,6 @@
                 <p id="leave-feedback" class="leave-feedback" role="status"></p>
               </form>
             </div>
-            <aside class="leave-aside"><h3>Trước khi xin nghỉ</h3><p>Lịch mặc định từ thứ Hai đến thứ Sáu. Đơn đang chờ duyệt chưa làm thay đổi lịch.</p><p>Chọn nghỉ cả ngày hoặc một buổi, tối đa 31 ngày mỗi đơn. Các ngày cuối tuần không được tính là ngày nghỉ làm.</p><p>Chỉ admin được duyệt đơn. Bạn có thể rút đơn khi còn chờ duyệt.</p></aside>
           </div>
         </section>
         <section class="panel" aria-labelledby="leave-history-title">

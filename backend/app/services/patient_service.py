@@ -63,7 +63,12 @@ def list_patients(actor, query):
             'page': query['page'], 'page_size': query['page_size']}
 
 
-def _account_for_patient(db, fields):
+def ensure_patient_account(db, fields):
+    """Return (account, created) for a normalized phone under lock_account_links().
+
+    The caller owns the connection and transaction. Account creation uses a
+    savepoint for identity conflicts and never commits an independent connection.
+    """
     account = auth_model.get_user_by_phone(db, fields['phone'])
     created = False
     if account is None:
@@ -88,6 +93,9 @@ def _account_for_patient(db, fields):
     return account, created
 
 
+_account_for_patient = ensure_patient_account  # Preserve the previous Python entry point.
+
+
 def create_patient(actor, fields):
     role = actor['role_name']
     if role not in STAFF_WRITE + (constants.ROLE_USER,):
@@ -103,7 +111,7 @@ def create_patient(actor, fields):
         raise conflict('Số điện thoại trùng tài khoản của bạn. Xác nhận lưu hồ sơ người thân '
                        'và bệnh án của người này trong tài khoản của bạn?', 'CONFIRM_SHARED_PHONE')
     with get_db_connection() as db:
-        db.execute('SELECT pg_advisory_xact_lock(78124003)')
+        patient_model.lock_account_links(db)
         matches = (patient_model.find_booking_contact(db, fields) if role == constants.ROLE_USER
                    else patient_model.find_identity(db, fields))
         if len(matches) > 1:
@@ -122,16 +130,15 @@ def create_patient(actor, fields):
             account = auth_model.get_user_by_phone(db, fields['phone'])
             created = False
             if account is not None:
-                account, _ = _account_for_patient(db, fields)
+                account, _ = ensure_patient_account(db, fields)
         else:
-            account, created = _account_for_patient(db, fields)
+            account, created = ensure_patient_account(db, fields)
         if requested_owner is not None and (account is None or requested_owner != account['user_id']):
             raise bad_request('user_id phải là tài khoản của số điện thoại bệnh nhân')
         fields['user_id'] = account['user_id'] if account else None
         if row:
             if row['user_id'] is None and role in STAFF_WRITE:
-                db.execute('UPDATE patient SET user_id=%s WHERE patient_id=%s',
-                           (account['user_id'], row['patient_id']))
+                patient_model.link_account(db, row['patient_id'], account['user_id'])
                 row = patient_model.get_patient(db, row['patient_id'])
             elif row['user_id'] is not None and (account is None or row['user_id'] != account['user_id']):
                 raise conflict('Hồ sơ đang liên kết với tài khoản khác; cần lễ tân kiểm tra',
@@ -161,7 +168,7 @@ def get_patient(actor, patient_id):
 
 def update_patient(actor, patient_id, fields):
     with get_db_connection() as db:
-        db.execute('SELECT pg_advisory_xact_lock(78124003)')
+        patient_model.lock_account_links(db)
         patient = _load_visible(db, actor, patient_id)
         _require_write(actor, patient)
         if patient['archived_at'] is not None:
@@ -174,7 +181,10 @@ def update_patient(actor, patient_id, fields):
             matches = patient_model.find_identity(db, identity)
             if any(row['patient_id'] != patient_id for row in matches):
                 raise conflict('Thông tin trùng hồ sơ bệnh nhân khác', 'PATIENT_IDENTITY_CONFLICT')
-        row = patient_model.update_patient(db, patient_id, fields)
+        try:
+            row = patient_model.update_patient(db, patient_id, fields)
+        except pg_errors.UniqueViolation:
+            raise conflict('Thông tin trùng hồ sơ bệnh nhân khác', 'PATIENT_IDENTITY_CONFLICT') from None
     return {'patient': _present(row)}
 
 

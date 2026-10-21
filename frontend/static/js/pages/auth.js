@@ -56,10 +56,7 @@ loginForm.addEventListener("submit", async event => {
   try {
     const user = await signIn({ identifier, password });
     document.querySelector("#login-password").value = "";
-    let destination = returnUrl(params.get("next"), user.role_name);
-    if (user.role_name === "ADMIN" && destination.pathname === new URL("../components/profile.html", workspaceUrl("ADMIN")).pathname) {
-      destination = workspaceUrl("ADMIN");
-    }
+    const destination = returnUrl(params.get("next"), user.role_name);
     location.replace(destination.href);
   } catch (error) {
     message(loginStatus, error.message);

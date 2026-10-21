@@ -1,6 +1,28 @@
 import { ApiError } from "./api.js";
 import { thumbnailUrl } from "./articles.js";
 import { money } from "./booking.js";
+import { getDoctor } from "../api/doctor.js";
+import { replaceAvatarImages } from "./avatar.js";
+
+export function refreshDoctorImages(root = document) {
+  const photos = new Map();
+  function collect(id, image) {
+    if (!image || !/^\d+$/.test(String(id))) return;
+    if (!photos.has(id)) photos.set(id, []);
+    photos.get(id).push(image);
+  }
+  root.querySelectorAll('a[href*="doctor_detail.html?id="] img').forEach(image => {
+    collect(new URL(image.closest("a").href).searchParams.get("id"), image);
+  });
+  root.querySelectorAll("img[data-doctor-photo]").forEach(image => collect(image.dataset.doctorPhoto, image));
+  for (const [id, images] of photos) {
+    getDoctor(id, { auth: false }).then(({ doctor }) => {
+      if (!doctor.avatar_url?.startsWith("/uploads/avatars/")) return;
+      const src = thumbnailUrl(doctor.avatar_url);
+      if (src) replaceAvatarImages(images, src);
+    }).catch(() => { /* Keep existing illustrations if the public profile cannot load. */ });
+  }
+}
 
 export function element(tag, text = "", className = "") {
   const node = document.createElement(tag);
