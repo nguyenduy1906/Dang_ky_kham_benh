@@ -1,4 +1,4 @@
-import {esc,facts,date,stamp,money,badge,label,options} from './admin_ui.js';
+import { esc, facts, stamp, money, badge, label, options } from './admin_ui.js';
 import {fieldMarkup} from './admin_resources.js';
 import {avatarUrl} from './avatar.js';
 import {code} from './business_codes.js';

@@ -4,7 +4,6 @@
 .statistics-filter > header {display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;}
 .statistics-filter h2,.statistics-card h2 {margin:0;font-size:17px;line-height:1.5;color:var(--staff-text);}
 .statistics-filter header p,.statistics-card header p {margin:7px 0 0;color:var(--staff-muted);font-size:12px;}
-.statistics-preview-label {flex-shrink:0;padding:5px 10px;border:1px solid var(--staff-line);background:#f1f7f4;color:#47725d;font-size:11px;}
 .statistics-filter-fields {display:grid;grid-template-columns:1.2fr 1fr 1fr 1.2fr;gap:18px;}
 .statistics-filter-fields label {display:grid;gap:9px;font-size:12px;font-weight:600;color:#426251;min-width:0;}
 .statistics-filter-fields input,.statistics-filter-fields select {width:100%;min-width:0;box-sizing:border-box;height:44px;font-size:13px;font-weight:400;}
@@ -31,7 +30,6 @@
 .statistics-card .admin-table td {border-bottom:1px solid var(--staff-line);}
 .statistics-card .admin-table th:not(:first-child),.statistics-card .admin-table td:not(:first-child) {text-align:right;}
 .statistics-card .admin-pagination {padding:0 24px 20px;gap:12px;}
-.statistics-scope-note {margin:0;padding:16px 20px;border:1px solid var(--staff-line);background:#f4f8f5;color:var(--staff-muted);font-size:12px;line-height:1.7;}
 .statistics-export {font-size:12px;}
 @media(max-width:1100px) {.statistics-filter-fields {grid-template-columns:repeat(2,minmax(0,1fr));}.statistics-grid {grid-template-columns:repeat(2,minmax(0,1fr));}#statistics-results .admin-summary {grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:700px) {.statistics-grid {grid-template-columns:minmax(0,1fr);}.statistics-filter {padding:18px;}.statistics-filter > header {flex-wrap:wrap;}.statistics-card > header {padding:18px;}.statistics-rows {padding-left:18px;padding-right:18px;}.statistics-card .admin-table-scroll {margin:16px 18px;}.statistics-card .admin-pagination {padding:0 18px 18px;flex-wrap:wrap;}.statistics-export {align-self:flex-start;}.statistics-filter-fields {gap:14px;}#statistics-results .admin-metric {padding:18px;}#statistics-results .admin-metric strong {font-size:22px;}.statistics-tabs {gap:6px;}.statistics-tabs button {padding:8px 12px;}}
@@ -45,7 +43,6 @@
 .statistics-departments .statistics-rows dt { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 @media(max-width:700px) { .statistics-grid-overview { grid-template-columns: minmax(0, 1fr); } }
 
-
 .statistics-scroll-report .admin-table-scroll { max-height: 568px; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
 .statistics-scroll-report .admin-table { border-collapse: separate; border-spacing: 0; width: 100%; }
 .statistics-scroll-report .admin-table thead th { position: sticky; top: 0; z-index: 1; background: #eaf3ed; height: 48px; box-sizing: border-box; }
@@ -56,12 +53,10 @@
 .statistics-report-doctors .admin-table :is(th,td):nth-child(2) { text-align: left; }
 .statistics-row-count { padding: 0 24px 18px; color: var(--staff-muted); font-size: 12px; }
 
-
 .statistics-report-payments .admin-table :is(th,td):nth-child(n+2) { text-align: center; }
 .admin-page .statistics-payment-badge { display: inline-flex; align-items: center; justify-content: center; border-radius: 5px !important; padding: 5px 9px; white-space: nowrap; }
 .admin-page .statistics-payment-badge.red { background: #fce9eb; color: #b33e48; }
 .admin-page .statistics-payment-badge.purple { background: #f2edfa; color: #7654a5; }
-
 
 .statistics-grid-capacity { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: stretch; }
 .statistics-capacity-summary { display: flex; flex-direction: column; }
@@ -73,7 +68,6 @@
 .statistics-detail-capacity .admin-table :is(th,td):nth-child(n+3) { text-align: center; }
 .statistics-detail-capacity .badge { border-radius: 5px !important; }
 @media(max-width:700px) { .statistics-grid-capacity { grid-template-columns: minmax(0, 1fr); } }
-
 
 .statistics-grid-reviews { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
 .statistics-review-departments .admin-table-scroll { max-height: 412px; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }

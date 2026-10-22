@@ -8,7 +8,6 @@ import { allPages, nurseRange, nurseFormRange, inNurseRange, localPage, normaliz
 import { code } from "../core/business_codes.js";
 import { renderNurseOverview } from "../core/nurse_overview.js";
 import { nurseAssignmentTable } from "../core/nurse_tables.js";
-import { initDragScroll } from "../core/drag_scroll.js";
 import { $, panel, pagination, bindDialog, run } from "../core/staff_ui.js";
 
 const user = await staffReady;
@@ -29,7 +28,6 @@ async function allAssignments(options = {}) {
   return allPages((paging, request) => schedules.listOwnNurseAssignments(paging, request), options);
 }
 async function overview() {
-  initDragScroll($("#page-body"), ".nurse-compact-shifts");
   await initTodayOverview(renderNurseOverview);
 }
 async function assignmentsPage() {

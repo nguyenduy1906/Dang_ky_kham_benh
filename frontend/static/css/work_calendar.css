@@ -80,3 +80,20 @@
   .work-calendar-page .calendar-hint { padding-inline: 16px; }
 }
 @media (prefers-reduced-motion: reduce) { .work-calendar-page * { scroll-behavior: auto; } }
+
+/* Shared calendar cards and leave history for all staff roles. */
+.work-calendar-page :is(.badge, .status) { border-radius: 5px; }
+.work-calendar-page button.calendar-shift { border-left-width: 1px; border-left-color: #cce5d6; }
+.work-calendar-page button.calendar-shift.is-afternoon { border-left-color: #d3e1f1; }
+.work-calendar-page button.calendar-shift.is-leave { border-left-color: #e4be89; }
+.work-calendar-page #leave-requests table { table-layout: fixed; min-width: 900px; }
+.work-calendar-page #leave-requests :is(th, td) { padding: 16px 12px; vertical-align: middle; }
+.work-calendar-page #leave-requests th:nth-child(1) { width: 22%; }
+.work-calendar-page #leave-requests th:nth-child(2) { width: 11%; }
+.work-calendar-page #leave-requests th:nth-child(3) { width: 27%; }
+.work-calendar-page #leave-requests th:nth-child(4) { width: 16%; }
+.work-calendar-page #leave-requests th:nth-child(5) { width: 24%; }
+.work-calendar-page #leave-requests .leave-reason { min-width: 0; max-width: none; }
+.work-calendar-page #leave-requests .leave-row-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.work-calendar-page #leave-requests .leave-row-actions button { width: 100%; }
+.work-calendar-page #leave-requests .leave-detail-title { display: inline-block; width: calc((100% - 8px) / 2); text-align: center; }

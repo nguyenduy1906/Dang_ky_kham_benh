@@ -1,9 +1,10 @@
+import { doctorEncounterStatuses, loadDoctorEncounterRows, doctorEncounterTable } from "./doctor_encounter_list.js";
 import { code } from "./business_codes.js";
 import { startAutoRefresh } from "./auto_refresh.js";
 import * as api from "../api/encounter.js";
 import * as records from "../api/medical_record.js";
 import { getPatient } from "../api/patient.js";
-import { $, esc, date, time, facts, panel, dialog, badge, empty, encounterSummary, encounterColumns, table, statusOptions, pagination, run, submit, showError } from "./staff_ui.js";
+import { $, esc, date, today, time, facts, panel, dialog, badge, encounterSummary, encounterColumns, table, statusOptions, pagination, run, submit } from "./staff_ui.js";
 
 export function registrationSummary(encounter) {
   const entry = encounter.registration_details;
@@ -18,20 +19,31 @@ export async function readMedicalRecord(encounter) {
   try { record = (await records.getRecord(encounter.encounter_id)).medical_record; }
   catch (error) { if (error.code === "MEDICAL_RECORD_NOT_FOUND") return panel("Bệnh án", "<p>Chưa có bệnh án cho lượt khám này.</p>"); throw error; }
   const items = (await records.listPrescriptionItems(record.record_id, { page_size: 100 })).items;
+  return medicalRecordMarkup(record,items);
+}
+export function medicalRecordMarkup(record, items = []) {
+  if(!record) return panel("Bệnh án","<p>Chưa có bệnh án cho lượt khám này.</p>");
   return panel("Bệnh án", facts([["Chẩn đoán", record.diagnosis], ["Hướng điều trị", record.treatment], ["Ghi chú bác sĩ", record.doctor_notes], ["Ngày khám", date(record.examined_at)]])) + panel("Đơn thuốc", table(["Thuốc", "Liều dùng", "Số lượng", "Hướng dẫn"], items.map(item => `<tr><td>${esc(item.medication_name)}</td><td>${esc(item.dosage || "—")}</td><td>${item.quantity}</td><td>${esc(item.instructions || "—")}</td></tr>`)));
 }
 
-export async function initEncounterList({ role, completed = false, assignments = [] }) {
+export async function initEncounterList({ role, completed = false, assignments = [], target = "#page-body", compact = false }) {
   const params = new URLSearchParams(location.search);
   const scheduleId = /^\d+$/.test(params.get("schedule_id") || "") ? params.get("schedule_id") : "";
-  const initialDate = /^\d{4}-\d{2}-\d{2}$/.test(params.get("work_date") || "") ? params.get("work_date") : "";
-  $("#page-body").innerHTML = panel(completed ? "Các lượt đã hoàn tất" : "Danh sách lượt khám", `
+  const initialDate = /^\d{4}-\d{2}-\d{2}$/.test(params.get("work_date") || "") ? params.get("work_date") : role === "doctor" ? today() : "";
+  const doctorSearch = role === "doctor" && compact;
+  const doctorList = doctorSearch && !completed;
+  const visibleStatuses = new Set(doctorEncounterStatuses);
+  const searchField = `<label class="encounter-search-field">Tìm kiếm<input type="search" id="encounter-search" placeholder="Tên bệnh nhân, mã phiếu, phòng, bác sĩ…"></label>`;
+  $(target).innerHTML = panel(completed ? "Các lượt đã hoàn tất" : "Danh sách lượt khám", `
     <form id="encounter-filters" class="staff-toolbar"><label>Ngày khám<input type="date" name="work_date" value="${initialDate}"></label>
     ${role === "nurse" ? `<label>Ca được phân công<select name="schedule_id"><option value="">Tất cả ca được giao</option>${assignments.map(a => `<option value="${a.schedule_id}" ${String(a.schedule_id) === scheduleId ? "selected" : ""}>${esc(a.room_name)} · ${date(a.work_date)} · ${esc(a.start_time.slice(0, 5))}</option>`).join("")}</select></label>` : `<input type="hidden" name="schedule_id" value="${scheduleId}">`}
-    ${completed ? "" : `<label>Trạng thái<select name="encounter_status">${statusOptions()}</select></label>`}<button type="submit">Lọc lượt khám</button><button type="reset" class="secondary">Bỏ bộ lọc</button></form>
-    <label>Tìm tên hoặc mã trong trang<input type="search" id="encounter-search" placeholder="Tên người bệnh, mã phiếu hoặc mã lượt"></label>
+    ${completed ? "" : `<label>Trạng thái<select name="encounter_status">${statusOptions()}</select></label>`}${doctorSearch ? searchField : ""}${compact ? "" : '<button type="submit">Lọc lượt khám</button><button type="reset" class="secondary">Bỏ bộ lọc</button>'}</form>
+    ${doctorSearch ? "" : searchField}
     <div id="encounter-list"></div><div id="list-pagination" class="list-pagination"></div>`);
   const form = $("#encounter-filters");
+  if (doctorList) form.elements.encounter_status.querySelectorAll("option").forEach(option => {
+    if (option.value && !visibleStatuses.has(option.value)) option.remove();
+  });
   let rows = [], page = 1, version = 0, active = true;
   const stop = () => { active = false; version++; };
   window.addEventListener("pagehide", stop, { once: true });
@@ -42,15 +54,35 @@ export async function initEncounterList({ role, completed = false, assignments =
     const current = ++version;
     await run(async () => {
       const query = Object.fromEntries(new FormData(form));
+      if (doctorList) {
+        const collected = await loadDoctorEncounterRows(query);
+        if (!active || current !== version) return;
+        rows = collected;
+        render();
+        return;
+      }
       const result = await api.listEncounters({ ...query, encounter_status: completed ? "COMPLETED" : query.encounter_status, page, page_size: 20 });
       if (!active || current !== version) return;
       rows = result.items; render(); pagination(result, load);
     });
   }
   function render() {
-    const query = $("#encounter-search").value.trim().normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
-    const matches = rows.filter(e => `${e.patient_name} ${code("LK",e.encounter_id)} ${code("BN",e.patient_id)} ${e.ticket_code || ""}`.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().includes(query));
-    $("#encounter-list").innerHTML = table(["Người bệnh / phiếu khám", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", "Thao tác"], matches.map(e => `<tr>${encounterColumns(e)}<td><div class="actions"><button class="secondary" data-detail="${e.encounter_id}">Chi tiết</button>${role === "doctor" ? `<a class="button-link secondary" href="clinical.html?encounter_id=${e.encounter_id}">${completed ? "Xem / bổ sung" : "Mở bệnh án"}</a>` : ""}${role === "reception" && e.encounter_status === "CONFIRMED" ? `<button data-checkin="${e.encounter_id}">Check-in</button>` : ""}</div></td></tr>`));
+    const normalize = value => String(value || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[đĐ]/g,"d").toLowerCase().trim();
+    const query = normalize($("#encounter-search").value);
+    let matches = rows.filter(e => {
+      if (!doctorSearch) return normalize(`${e.patient_name} ${code("LK",e.encounter_id)} ${code("BN",e.patient_id)} ${e.ticket_code || ""}`).includes(query);
+      const content = document.createElement("template");
+      content.innerHTML = `<table><tbody><tr>${encounterColumns(e)}</tr></tbody></table>`;
+      const text = normalize(`${Array.from(content.content.querySelectorAll("td, small, strong")).map(node => node.textContent).join(" ")} ${code("BN", e.patient_id)}`);
+      return query.split(/\s+/).every(word => text.includes(word));
+    });
+    if (doctorList) {
+      const total = matches.length;
+      page = Math.min(page, Math.max(1, Math.ceil(total / 10)));
+      matches = matches.slice((page - 1) * 10, page * 10);
+      pagination({total, page, page_size:10}, next => { page = next; render(); });
+    }
+    $("#encounter-list").innerHTML = doctorList ? doctorEncounterTable(matches) : table(["Người bệnh / phiếu khám", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", compact && !completed ? "Mở hồ sơ bệnh án" : "Thao tác"], matches.map(e => `<tr>${encounterColumns(e)}<td><div class="actions">${doctorList ? "" : `<button class="secondary" data-detail="${e.encounter_id}">Chi tiết</button>`}${role === "doctor" && !completed ? `<a class="button-link secondary" href="clinical.html?encounter_id=${e.encounter_id}&mode=${e.encounter_status === "IN_PROGRESS" ? "edit" : "view"}">${completed ? "Xem / bổ sung" : "Mở bệnh án"}</a>` : ""}${role === "reception" && e.encounter_status === "CONFIRMED" ? `<button data-checkin="${e.encounter_id}">Check-in</button>` : ""}</div></td></tr>`));
     $("#encounter-list").querySelectorAll("[data-detail]").forEach(button => button.addEventListener("click", () => run(async () => {
       const e = (await api.getEncounter(button.dataset.detail)).encounter;
       const history = await api.listStatusHistory(e.encounter_id, { page_size: 100 });
@@ -83,9 +115,20 @@ export async function initEncounterList({ role, completed = false, assignments =
       $("#checkin-form").addEventListener("submit", event => { event.preventDefault(); submit(event.currentTarget, async () => { await api.checkIn(e.encounter_id); await load(page); }, "Đã check-in lượt khám."); });
     }));
   }
+  if (compact) form.addEventListener("change", event => { if (event.target.id !== "encounter-search") load(); });
   form.addEventListener("submit", event => { event.preventDefault(); load(); });
   form.addEventListener("reset", event => { event.preventDefault(); for (const input of form.querySelectorAll("input, select")) input.value = ""; $("#encounter-search").value = ""; load(); });
-  $("#encounter-search").addEventListener("input", render);
+  $("#encounter-search").addEventListener("input", () => { if (doctorList) page = 1; render(); });
   await load();
   startAutoRefresh(() => load(page), { canRefresh: () => active });
+  return { selectSchedule(id, day) {
+    if (compact && !Array.from(form.elements.schedule_id.options).some(option => option.value === String(id))) {
+      form.elements.schedule_id.add(new Option(`Ca ${id} · ${date(day)}`, String(id)));
+    }
+    form.elements.schedule_id.value = String(id);
+    form.elements.work_date.value = day || "";
+    form.elements.encounter_status.value = "";
+    load();
+    $(target).scrollIntoView({ behavior: "smooth", block: "start" });
+  } };
 }

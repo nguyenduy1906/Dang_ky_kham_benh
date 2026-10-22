@@ -34,10 +34,6 @@ body[data-page="payments"] .admin-payment-fields > label { min-width: 0; margin:
 body[data-page="payments"] .admin-payment-fields :is(input,select,textarea) { margin-bottom: 0; }
 body[data-page="payments"] .admin-payment-fields .full-width { grid-column: 1 / -1; }
 body[data-page="payments"] .admin-payment-fields .admin-refund-reason { grid-column: 1 / -1; }
-body[data-page="payments"] .admin-refund-summary { min-width: 0; padding: 18px 20px; border: 1px solid #dce9e0; background: #f7fbf8; }
-body[data-page="payments"] .admin-refund-summary:empty { display: none; }
-body[data-page="payments"] .admin-refund-summary .admin-dialog-facts { margin: 0; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px 22px; }
-body[data-page="payments"] .admin-refund-summary dd { margin: 0; line-height: 1.6; overflow-wrap: anywhere; }
 body[data-page="payments"] .admin-refund-status { margin: 0; color: #687b70; font-size: 13px; line-height: 1.6; }
 body[data-page="payments"] .admin-refund-status:empty { display: none; }
 body[data-page="payments"] .admin-refund-status[data-error="true"] { color: #b14040; }
@@ -51,21 +47,15 @@ body[data-page="payments"] .admin-refund-request .admin-note { margin: 0; }
   body[data-page="payments"] #request-refund { width: 100%; margin-left: 0; }
   body[data-page="payments"] .admin-payment-summary { align-items: flex-start; flex-wrap: wrap; padding: 16px; }
   body[data-page="payments"] .admin-payment-summary strong { font-size: 24px; }
-  body[data-page="payments"] .admin-payment-section,
-  body[data-page="payments"] .admin-refund-summary { padding: 16px; }
+  body[data-page="payments"] .admin-payment-section{ padding: 16px; }
   body[data-page="payments"] .admin-payment-section .admin-dialog-facts,
-  body[data-page="payments"] .admin-payment-fields,
-  body[data-page="payments"] .admin-refund-summary .admin-dialog-facts { grid-template-columns: 1fr; }
+  body[data-page="payments"] .admin-payment-fields{ grid-template-columns: 1fr; }
   body[data-page="payments"] .admin-payment-detail-actions { align-items: stretch; flex-direction: column; gap: 12px; }
 }
 body[data-page="payments"] .admin-refund-request [hidden] { display: none !important; }
 body[data-page="payments"] [data-refund-single],
 body[data-page="payments"] .admin-refund-bulk { display: grid; gap: 22px; min-width: 0; }
-body[data-page="payments"] .admin-refund-modes { display: flex; flex-wrap: wrap; gap: 10px; border-bottom: 1px solid #e1eae5; padding-bottom: 18px; }
-body[data-page="payments"] .admin-refund-modes button[aria-pressed="true"] { color: #086f48; border-color: #168258; background: #edf7f1; }
 body[data-page="payments"] [data-refund-single] > .actions { justify-content: flex-end; margin: 0; padding-top: 18px; border-top: 1px solid #e1eae5; }
-body[data-page="payments"] .admin-refund-preview-note { padding: 12px 14px; margin: 0 0 20px; font-size: 12px; color: #5e7467; line-height: 1.7; background: #f2f7f4; border: 1px solid #dce9e0; }
-body[data-page="payments"] .admin-refund-filter-note { font-size: 12px; color: #687b70; line-height: 1.7; margin: 16px 0 0; }
 body[data-page="payments"] .admin-refund-selection-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
 body[data-page="payments"] .admin-refund-selection-heading h3 { margin: 0; }
 body[data-page="payments"] .admin-refund-selection-heading > span { font-size: 12px; color: #426451; }
@@ -80,6 +70,5 @@ body[data-page="payments"] .admin-refund-bulk-actions { display: flex; align-ite
 body[data-page="payments"] .admin-refund-bulk-actions > span { color: #526c5d; font-size: 12px; }
 body[data-page="payments"] .admin-refund-bulk-actions .actions { margin: 0; }
 @media (max-width: 540px) {
-  body[data-page="payments"] .admin-refund-modes button { flex: 1 1 auto; }
   body[data-page="payments"] .admin-refund-bulk-actions .actions { width: 100%; flex-wrap: wrap; }
 }

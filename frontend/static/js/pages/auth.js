@@ -1,5 +1,5 @@
 import * as authApi from "../api/auth.js";
-import { signIn, clearSession, returnUrl, workspaceUrl } from "../core/session.js";
+import { signIn, clearSession, returnUrl } from "../core/session.js";
 
 const card = document.querySelector("#auth-card");
 const params = new URLSearchParams(location.search);

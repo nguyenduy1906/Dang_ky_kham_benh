@@ -2,9 +2,13 @@
 from backend.app.utils.database_helpers import insert_row, update_row
 from backend.app.models.schedule_model import lock_schedules  # Compatibility import.
 
-SELECT = '''SELECT e.*, p.full_name AS patient_name, p.user_id AS owner_id,
+PAYMENT_CONFIRMED_SQL = """EXISTS (SELECT 1 FROM payment ep WHERE ep.encounter_id=e.encounter_id
+ AND ep.payment_type IN ('DEPOSIT','EXAM_FEE') AND ep.transaction_status='SUCCESS')"""
+
+SELECT = f'''SELECT e.*, p.full_name AS patient_name, p.user_id AS owner_id,
  d.department_id, u.full_name AS doctor_name, d.user_id AS doctor_user_id,
  s.work_date, s.start_time, s.end_time, s.schedule_status, r.room_name,
+ {PAYMENT_CONFIRMED_SQL} AS payment_confirmed,
  EXISTS (SELECT 1 FROM medical_record mr JOIN review rv ON rv.record_id=mr.record_id
          WHERE mr.encounter_id=e.encounter_id) AS has_review
  FROM encounter e JOIN patient p ON p.patient_id=e.patient_id
@@ -155,3 +159,33 @@ def occupied_intervals(db,schedule_id,statuses):
 def finished_schedule(db,schedule_id):
     row=db.execute("SELECT count(*) FILTER(WHERE encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS')) AS active, count(*) FILTER(WHERE encounter_status='COMPLETED') AS completed FROM encounter WHERE schedule_id=%s",(schedule_id,)).fetchone()
     return row['active']==0 and row['completed']>0
+
+
+def doctor_history_scope(db, actor, patient_id, local_now):
+    """Cross-doctor reads require an assigned paid encounter within its active shift."""
+    return db.execute(f'''SELECT
+      EXISTS(SELECT 1 FROM encounter e JOIN doctor_profile d USING(doctor_profile_id)
+        WHERE e.patient_id=%s AND d.user_id=%s AND e.encounter_status NOT IN ('HOLDING','EXPIRED','CANCELLED')
+          AND {PAYMENT_CONFIRMED_SQL}) AS own_history,
+      EXISTS(SELECT 1 FROM encounter e JOIN doctor_profile d USING(doctor_profile_id)
+        JOIN work_schedule s ON s.schedule_id=e.schedule_id
+        WHERE e.patient_id=%s AND d.user_id=%s AND d.is_active=1
+          AND e.encounter_status IN ('CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED')
+          AND s.schedule_status NOT IN ('CLOSED','UNAVAILABLE')
+          AND s.work_date=%s AND s.start_time<=%s AND s.end_time>%s
+          AND {PAYMENT_CONFIRMED_SQL}) AS current_assignment''',
+      (patient_id,actor['user_id'],patient_id,actor['user_id'],local_now.date(),local_now.time().replace(tzinfo=None),local_now.time().replace(tzinfo=None))).fetchone()
+
+
+def doctor_patient_history(db, actor, patient_id, cross_doctor, page, size, encounter_id=None):
+    where = ["e.patient_id=%s", "e.encounter_status IN ('COMPLETED','NO_SHOW')", PAYMENT_CONFIRMED_SQL]
+    params = [patient_id]
+    if not cross_doctor:
+        where.append('d.user_id=%s'); params.append(actor['user_id'])
+    if encounter_id is not None:
+        where.append('e.encounter_id=%s'); params.append(encounter_id)
+    base = f"{SELECT} WHERE " + ' AND '.join(where)
+    total = db.execute(f'SELECT COUNT(*) AS n FROM ({base}) history',params).fetchone()['n']
+    rows = db.execute(f'{base} ORDER BY s.work_date DESC,e.estimated_exam_at DESC,e.encounter_id DESC LIMIT %s OFFSET %s',
+                      params+[size,(page-1)*size]).fetchall()
+    return rows,total

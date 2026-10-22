@@ -54,6 +54,20 @@ def complete(encounter_id):
     return jsonify(service.complete(current_user(), encounter_id))
 
 
+@medical_record_bp.get('/doctor/patients/<int:patient_id>/history')
+@roles_required('DOCTOR')
+@swag_from(spec('Medical records', 'Lịch sử đã kết thúc: xem bác sĩ khác chỉ khi đang có bệnh nhân trong ca; chỉ đọc', [path('patient_id')] + PAGE))
+def doctor_history(patient_id):
+    return jsonify(service.doctor_history(current_user(),patient_id,*page_params(request.args)))
+
+
+@medical_record_bp.get('/doctor/patients/<int:patient_id>/history/<int:encounter_id>')
+@roles_required('DOCTOR')
+@swag_from(spec('Medical records', 'Chi tiết bệnh án và thuốc lần khám trước theo phạm vi người bệnh; không cấp quyền sửa', [path('patient_id'),path('encounter_id')]))
+def doctor_history_detail(patient_id,encounter_id):
+    return jsonify(service.doctor_history(current_user(),patient_id,1,1,encounter_id))
+
+
 review_bp = Blueprint('review', __name__)
 
 

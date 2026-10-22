@@ -430,3 +430,38 @@ input[list] { border-radius: 5px !important; }
 @media (max-width: 700px) {
   .staff-page:not(.admin-page) .overview-period-header > div:first-child { padding-top: 0; }
 }
+
+/* Shared read-only record details for doctor and nurse workspaces. */
+.staff-page #staff-dialog:has(.record-detail-view) {width:min(1000px,calc(100vw - 32px));max-width:1000px;max-height:90vh;padding:0;border-radius:5px;overflow:auto}
+.staff-page #staff-dialog:has(.record-detail-view) > .section-heading {position:sticky;top:0;z-index:2;padding:22px 28px;margin:0;background:#fff;border-bottom:1px solid #dce7e1}
+.staff-page #staff-dialog:has(.record-detail-view) > .section-heading h2 {font-size:20px}
+.staff-page #staff-dialog:has(.record-detail-view) #staff-dialog-content {padding:24px 28px;background:#f7faf8}
+.staff-page #staff-dialog .record-detail-person {display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:20px}
+.staff-page #staff-dialog .record-detail-person h3 {font-size:23px;margin:0 0 6px}
+.staff-page #staff-dialog .record-detail-person p {margin:0;color:#708579;font-size:12px}
+.staff-page #staff-dialog .record-detail-person .status {padding:6px 12px;border-radius:5px;text-decoration:none;white-space:nowrap}
+.staff-page #staff-dialog .record-detail-section,.staff-page #staff-dialog .record-detail-clinical > .panel {background:#fff;padding:22px;border:1px solid #dce7e1;border-radius:5px;margin:0 0 18px}
+.staff-page #staff-dialog .record-detail-section h3,.staff-page #staff-dialog .record-detail-clinical .panel h2 {font-size:17px;margin:0 0 18px}
+.staff-page #staff-dialog .record-detail-view .doctor-facts {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px 24px;margin:0}
+.staff-page #staff-dialog .record-detail-view .doctor-facts > div {display:block;min-width:0;padding:0;border:0}
+.staff-page #staff-dialog .record-detail-view .doctor-facts dt {font-size:12px;color:#718579;margin:0 0 7px}
+.staff-page #staff-dialog .record-detail-view .doctor-facts dd {font-size:14px;line-height:1.6;font-weight:600;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.staff-page #staff-dialog .record-detail-symptoms {margin-top:22px;padding-top:18px;border-top:1px solid #e5ede8}
+.staff-page #staff-dialog .record-detail-symptoms h4 {font-size:12px;color:#718579;font-weight:400;margin:0 0 8px}
+.staff-page #staff-dialog .record-detail-symptoms p {font-size:14px;line-height:1.7;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.staff-page #staff-dialog .record-detail-clinical > .panel:first-child .doctor-facts {grid-template-columns:1fr}
+.staff-page #staff-dialog .record-detail-clinical > .panel:first-child .doctor-facts > div {padding-bottom:14px;border-bottom:1px solid #edf2ef}
+.staff-page #staff-dialog .record-detail-clinical table {min-width:600px;white-space:normal;table-layout:fixed}
+.staff-page #staff-dialog .record-detail-clinical :is(th,td) {font-size:13px;line-height:1.6;vertical-align:top;overflow-wrap:anywhere}
+.staff-page #staff-dialog .record-detail-clinical th:nth-child(3) {width:85px}
+.staff-page #staff-dialog .record-detail-clinical :is(th,td):nth-child(3) {text-align:center}
+.staff-page #staff-dialog .record-detail-clinical > .scope-note {border:1px solid #dce7e1;border-radius:5px;background:#fff;padding:18px 22px;line-height:1.7}
+@media(max-width:700px){.staff-page #staff-dialog:has(.record-detail-view) > .section-heading{padding:16px}.staff-page #staff-dialog:has(.record-detail-view) #staff-dialog-content{padding:16px}.staff-page #staff-dialog .record-detail-view .doctor-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.staff-page #staff-dialog .record-detail-section,.staff-page #staff-dialog .record-detail-clinical > .panel{padding:18px}}
+@media(max-width:440px){.staff-page #staff-dialog .record-detail-view .doctor-facts{grid-template-columns:1fr}.staff-page #staff-dialog .record-detail-person h3{font-size:20px}}
+
+/* A single daily shift occupies the upper half in every staff overview. */
+:is(.doctor-page, .nurse-page, .reception-page)[data-page="overview"] .doctor-overview-shifts:has(> article:only-child) {
+  display: grid;
+  grid-template-rows: repeat(2, minmax(160px, 1fr));
+  gap: 12px;
+}

@@ -71,7 +71,7 @@ body:has(> .patient-header) > .skip-link { position: fixed; z-index: 30; }
 .profile-account-facts > div + div { margin-top: 16px; }
 .profile-account-facts dt { color: var(--muted); font-size: 12px; }
 .profile-account-facts dd { margin: 5px 0 0; font-size: 14px; overflow-wrap: anywhere; }
-.profile-fields .full-width { grid-column: 1 / -1; }
+.profile-fields .full-width { grid-column: auto; }
 .profile-emergency { min-width: 0; margin: 26px 0 0; padding: 18px; border: 1px solid #dce7e0; border-radius: 5px; }
 .profile-emergency legend { padding: 0 8px; color: var(--deep); font-size: 14px; font-weight: 600; }
 .profile-emergency-fields { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 16px; margin: 0; }

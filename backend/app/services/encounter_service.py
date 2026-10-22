@@ -99,6 +99,15 @@ def locked_context(db, encounter_id, *, target_schedule_id=None):
     return encounter, schedules
 
 
+def require_clinical_shift(schedule, now=None):
+    start,end = schedule_bounds(schedule)
+    instant = now if now is not None else date_utils.utc_now()
+    if instant < start or instant >= end:
+        raise conflict('Chỉ thao tác bệnh án trong thời gian ca làm việc', 'CLINICAL_SHIFT_CLOSED')
+    if schedule['schedule_status'] in ('CLOSED','UNAVAILABLE'):
+        raise conflict('Ca đã đóng hoặc bác sĩ nghỉ', 'SCHEDULE_UNAVAILABLE')
+
+
 def _active_doctor(db, schedule):
     row = doctor_model.get_for_reception(db, schedule['doctor_profile_id'])
     if (row is None or not row['is_active'] or row['deleted_at'] is not None
@@ -302,6 +311,7 @@ def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIEN
         else:
             if status != 'CHECKED_IN':
                 raise conflict('Chỉ bắt đầu khám lượt đã check-in', 'INVALID_ENCOUNTER_STATUS')
+            require_clinical_shift(schedule, now)
             if now < start or schedule['schedule_status'] in ('CLOSED', 'UNAVAILABLE'):
                 raise conflict('Ca chưa bắt đầu hoặc không hoạt động', 'SCHEDULE_UNAVAILABLE')
             schedule_model.lock_doctor_and_room(db,schedule['doctor_profile_id'],schedule['room_id'])

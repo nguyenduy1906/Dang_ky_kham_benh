@@ -10,6 +10,8 @@ import {thumbnailUrl} from "./articles.js";
 import { departmentDetails, departmentMemberGroups, addDepartmentMember, departmentDeputyLimit } from "./admin_department_view.js";
 import {saveDepartmentLeadership} from "./admin_department_leadership.js";
 import { userAccountDetails, saveUserAccount } from "./admin_user_account.js";
+import { loadAdminDoctor, saveAdminDoctor } from "./admin_doctor_data.js";
+import { doctorForm, doctorDetails } from "./admin_doctor_view.js";
 import { code, codeParams } from "./business_codes.js";
 import * as auth from "../api/auth.js";
 import * as patients from "../api/patient.js";
@@ -20,7 +22,7 @@ import * as articles from "../api/article.js";
 import * as configurations from "../api/configuration.js";
 import * as leave from "../api/staff_leave.js";
 import * as encounters from "../api/encounter.js";
-import {$,esc,date,stamp,money,badge,label,table,facts,panel,options,button,allPages,createAdminContext,today} from "./admin_ui.js";
+import { $, esc, date, stamp, badge, label, table, facts, panel, options, button, allPages, createAdminContext, today } from "./admin_ui.js";
 import {resources,fieldMarkup,resourcePayload,collectionItemMarkup} from "./admin_resources.js";
 import {bindLiveSearch} from "./live_search.js";
 import {searchAdminSchedules} from "./admin_schedule_search.js";
@@ -67,6 +69,7 @@ export function fieldsForm(key,row,refs) {
   const config=resources[key], edit=Boolean(row), values=row?{...row,role:row.role_name}:{};
   const fields=config.fields.filter(f=>!(edit&&f.createOnly || !edit&&f.editOnly || key==="departments"&&f.name==="cover_image_url"));
   if(key==="patients")return edit?patientEditForm(row,fields,refs,formActions("Lưu thay đổi")):patientCreateForm(fields,refs,formActions("Thêm bệnh nhân"));
+  if(key==="doctors")return doctorForm(row,fields,refs,formActions(edit?"Lưu thay đổi":"Tạo hồ sơ bác sĩ"));
   if(key==="users"&&!edit)refs.roles=refs.roles.filter(([role])=>["DOCTOR","NURSE","RECEPTIONIST"].includes(role));
   const normal=fields.filter(f=>!f.advanced).map(f=>{
     const markup=fieldMarkup({...f,clearable:key==="departments"||edit&&["users","doctors"].includes(key),imagePicker:key==="departments"||edit},values,refs,edit);
@@ -79,6 +82,7 @@ function detailMarkup(key,row) {
   if(key==="departments")return departmentDetails(row);
   if(key==="encounters")return encounterDetails(row);
   if(key==="patients")return patientDetails(row);
+  if(key==="doctors")return doctorDetails(row);
   const config=resources[key];
   const extra={users:[["Đã xóa",row.is_deleted?"Có":"Không"],["Ngày tạo",stamp(row.created_at)]],patients:[["CCCD",row.id_card],["Giới tính",row.gender],["Địa chỉ",row.address],["BHYT",row.health_insurance],["Tài khoản liên kết",code("TK", row.user_id)]],doctors:[["Mã tài khoản",code("TK", row.user_id)],["Chuyên môn",row.specialization],["Giới thiệu",row.introduction]],departments:[["Mô tả",row.description],["Giới thiệu",row.overview],["Chức năng, nhiệm vụ",row.mission]],assignments:[["Ghi chú",row.note],["Ngày phân công",stamp(row.assigned_at)],["Người phân công",code("TK", row.assigned_by_id)],["Ngày thu hồi",stamp(row.revoked_at)],["Người thu hồi",code("TK", row.revoked_by_id)]]}[key] || [];
   return (key==="users"?userAccountDetails(row):facts(config.columns.map((name,index)=>[name,config.cells(row)[index].replace(/<[^>]*>/g,"").replace(/&(amp|lt|gt|quot|#39);/g,(_,name)=>({amp:"&",lt:"<",gt:">",quot:'"',"#39":"'"}[name]))]).concat(extra)))
@@ -138,7 +142,7 @@ export async function initAdminWorkspace(key) {
     }
     const config=resources[key];
     await ctx.show(id?"Chỉnh sửa thông tin":config.add,async signal=>{
-      const row=id?(key==="patients"?await loadPatientAccount(id,{signal}):config.get?await config.get(id,{signal}):records.get(String(id))):null;
+      const row=id?(key==="patients"?await loadPatientAccount(id,{signal}):key==="doctors"?await loadAdminDoctor(id,{signal}):config.get?await config.get(id,{signal}):records.get(String(id))):null;
       if(id&&!row)throw new Error("Không tìm thấy bản ghi.");
       if(row)records.set(String(id),row);
       const fields=config.fields.filter(f=>!(row&&f.createOnly || !row&&f.editOnly));
@@ -237,7 +241,7 @@ export async function initAdminWorkspace(key) {
   async function showDetail(id) {
     const config=resources[key];
     await ctx.show("Chi tiết",async signal=>{
-      const row=key==="patients"?await loadPatientAccount(id,{signal}):config.get?await config.get(id,{signal}):records.get(String(id));
+      const row=key==="patients"?await loadPatientAccount(id,{signal}):key==="doctors"?await loadAdminDoctor(id,{signal}):config.get?await config.get(id,{signal}):records.get(String(id));
       if(!row)throw new Error("Không tìm thấy bản ghi.");records.set(String(id),row);
       return detailMarkup(key,row);
     });
@@ -428,6 +432,7 @@ export async function initAdminWorkspace(key) {
             form.querySelector('button[type="submit"]').textContent="Lưu thông tin và hình ảnh";
           }});
         }
+        if(key==="doctors"&&id)return saveAdminDoctor(row,payload,raw.account_status,{signal,onSaved:doctor=>records.set(String(id),doctor)});
         if(key==="users"&&id)return saveUserAccount(id,payload,{signal,onSaved:user=>records.set(String(id),user)});
         return id?resources[key].update(id,payload,{signal}):resources[key].create(payload,{signal});
       }

@@ -52,8 +52,9 @@ def _editable(encounter, record, fields):
 def put_record(actor, encounter_id, fields):
     require_role(actor, 'DOCTOR')
     with get_db_connection() as db:
-        encounter, _ = encounters.locked_context(db, encounter_id)
+        encounter, schedules = encounters.locked_context(db, encounter_id)
         encounters.visible_encounter(db, actor, encounter_id)
+        encounters.require_clinical_shift(schedules[encounter["schedule_id"]])
         record = records.get(db, encounter_id, lock=True)
         _editable(encounter, record, fields)
         before = _snapshot(db, record) if record else None
@@ -91,8 +92,9 @@ def put_items(actor, record_id, fields):
     require_role(actor, 'DOCTOR')
     with get_db_connection() as db:
         encounter_id = _record_encounter_id(db, record_id)
-        encounter, _ = encounters.locked_context(db, encounter_id)
+        encounter, schedules = encounters.locked_context(db, encounter_id)
         encounters.visible_encounter(db, actor, encounter_id)
+        encounters.require_clinical_shift(schedules[encounter["schedule_id"]])
         record = records.get(db, encounter_id, lock=True)
         _editable(encounter, record, fields)
         before = _snapshot(db, record)
@@ -108,8 +110,10 @@ def put_items(actor, record_id, fields):
 def complete(actor, encounter_id):
     require_role(actor, 'DOCTOR')
     with get_db_connection() as db:
-        encounter, _ = encounters.locked_context(db, encounter_id)
+        encounter, schedules = encounters.locked_context(db, encounter_id)
         encounters.visible_encounter(db, actor, encounter_id)
+        if encounter["encounter_status"] != "COMPLETED":
+            encounters.require_clinical_shift(schedules[encounter["schedule_id"]])
         record = records.get(db, encounter_id, lock=True)
         if record is None or not (record['diagnosis'] or '').strip() or record['examined_at'] is None:
             raise conflict('Cần bệnh án có chẩn đoán và thời điểm khám trước khi hoàn tất', 'MEDICAL_RECORD_INCOMPLETE')
@@ -120,7 +124,7 @@ def complete(actor, encounter_id):
 def create_review(actor, encounter_id, fields):
     require_role(actor, 'USER')
     with get_db_connection() as db:
-        encounter, _ = encounters.locked_context(db, encounter_id)
+        encounter, schedules = encounters.locked_context(db, encounter_id)
         encounters.visible_encounter(db, actor, encounter_id)
         if encounter['encounter_status'] != 'COMPLETED':
             raise conflict('Chỉ đánh giá lượt khám đã hoàn tất', 'ENCOUNTER_NOT_COMPLETED')
@@ -158,3 +162,25 @@ def set_review_visibility(actor, review_id, hidden):
         if row is None:
             raise not_found('Không tìm thấy đánh giá')
     return {'review': jsonable(row)}
+
+
+def doctor_history(actor, patient_id, page, size, encounter_id=None):
+    """Read-only history; generic encounter/write permissions are deliberately unchanged."""
+    require_role(actor,'DOCTOR')
+    from backend.app.models import encounter_model
+    with get_db_connection(read_only=True) as db:
+        local_now=date_utils.utc_now().astimezone(date_utils.VN_TZ)
+        scope=encounter_model.doctor_history_scope(db,actor,patient_id,local_now)
+        if not scope['own_history'] and not scope['current_assignment']:
+            raise not_found('Không có hồ sơ bệnh nhân trong phạm vi phụ trách','PATIENT_HISTORY_NOT_FOUND')
+        rows,total=encounter_model.doctor_patient_history(db,actor,patient_id,bool(scope['current_assignment']),page,size,encounter_id)
+        if encounter_id is None:
+            return {'items':[encounters._present(row) for row in rows],'total':total,'page':page,'page_size':size,
+                    'can_view_other_doctors':bool(scope['current_assignment'])}
+        if not rows:
+            raise not_found('Không tìm thấy lần khám được phép xem','ENCOUNTER_NOT_FOUND')
+        encounter=rows[0]
+        record=records.get(db,encounter['encounter_id']) if encounter['encounter_status']=='COMPLETED' else None
+        items=records.list_items(db,record['record_id']) if record else []
+        return {'encounter':encounters._present(encounter),'medical_record':_public(record) if record else None,
+                'items':jsonable(items)}

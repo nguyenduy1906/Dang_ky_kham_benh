@@ -29,7 +29,7 @@ async function initialize() {
   let weekRequest, listRequest, detailRequest, createRequest, cancelRequest, cancelling = false;
   const dialog = $("#calendar-dialog"), form = $("#leave-form"), feedback = $("#leave-feedback");
   const submitButton = $("#leave-submit"), cancelButton = $("#dialog-cancel-request");
-  if (user.role_name === "NURSE") enhanceDialogDismiss(dialog, { closeButtons: [$("#calendar-dialog-close")] });
+  enhanceDialogDismiss(dialog, { closeButtons: [$("#calendar-dialog-close")] });
 
   function message(node, text = "", error = false) {
     if (!active) return;
@@ -89,7 +89,20 @@ async function initialize() {
       const result = await api.getWorkSchedules({ from_date: weekStart, to_date: addDays(weekStart, 6) }, { signal: weekRequest.signal });
       if (!active || version !== weekVersion) return;
       if (result?.user_id !== user.user_id || !Array.isArray(result.items)) throw new Error("Không nhận được lịch hợp lệ của tài khoản hiện tại.");
-      calendar = result.items; renderWeek(); message($("#calendar-status"));
+      calendar = user.role_name === "DOCTOR" ? result.items.map(day => {
+        const assigned = (day.clinical_schedules || []).filter(s => ["OPEN", "FULL"].includes(s.schedule_status));
+        const actualShifts = ["MORNING", "AFTERNOON"].flatMap(period => {
+          const matching = assigned.filter(s => period === "MORNING"
+            ? shortTime(s.start_time) < "12:00" : shortTime(s.end_time) > "12:00");
+          if (!matching.length) return [];
+          const existing = (day.shifts || []).find(s => s.period === period);
+          return [{ ...existing, period, status: existing?.status || "WORKING",
+            start_time: matching.map(s => shortTime(s.start_time)).sort()[0],
+            end_time: matching.map(s => shortTime(s.end_time)).sort().at(-1) }];
+        });
+        return { ...day, shifts: actualShifts, clinical_schedules: assigned };
+      }) : result.items;
+      renderWeek(); message($("#calendar-status"));
     } catch (error) { if (version === weekVersion) reportError($("#calendar-status"), error); }
     finally { if (active && version === weekVersion) $("#calendar-grid").setAttribute("aria-busy", "false"); }
   }
@@ -118,7 +131,7 @@ async function initialize() {
       ["Trạng thái", s.status === "ON_LEAVE" ? "Đã duyệt nghỉ" : s.pending_leave ? "Chờ duyệt nghỉ; lịch làm việc giữ nguyên" : "Làm việc"],
       ["Phân công phòng khám", assigned || "Chưa có phân công phòng khám"],
       ["Mã đơn nghỉ liên quan", (s.leave_request_ids || []).map(id=>code("NP", id)).join(", ") || "Không có"]],
-      user.role_name === "NURSE" ? "Lịch làm việc được cập nhật theo phân công của quản trị viên." : "Lịch đi làm mặc định từ thứ Hai đến thứ Sáu. Phân công phòng khám được quản lý riêng.",
+      user.role_name === "RECEPTIONIST" ? "Lịch đi làm mặc định từ thứ Hai đến thứ Sáu." : "Lịch làm việc được cập nhật theo phân công của quản trị viên.",
       canRequestShiftLeave(s));
   });
   $("#dialog-use-date").addEventListener("click", () => {
@@ -142,9 +155,9 @@ async function initialize() {
       const result = await api.listLeaveRequests({ page, page_size: 10, status: $("#leave-status-filter").value }, { signal: listRequest.signal });
       if (!active || version !== listVersion) return;
       if (!Array.isArray(result?.items) || result.items.some(r => r.user_id !== user.user_id)) throw new Error("Danh sách đơn nghỉ không hợp lệ.");
-      $("#leave-requests").innerHTML = result.items.length ? `<div class="table-wrapper"><table><thead><tr><th>Ngày nghỉ</th><th>Buổi</th><th>Lý do</th><th>Trạng thái</th><th>${user.role_name === "NURSE" ? '<span class="leave-detail-title">Chi tiết</span>' : "Thao tác"}</th></tr></thead><tbody>${result.items.map(r => `<tr><td>${formatDate(r.from_date)} – ${formatDate(r.to_date)}</td><td>${escape(periods[r.period] || r.period)}</td><td class="leave-reason">${escape(r.reason)}</td><td><span class="leave-state state-${escape(r.status)}">${escape(statuses[r.status] || r.status)}</span></td><td><div class="leave-row-actions"><button type="button" class="secondary" data-request="${escape(r.request_id)}">Chi tiết</button>${r.status === "PENDING" ? `<button type="button" class="secondary" data-request="${escape(r.request_id)}" data-action="cancel">Rút đơn</button>` : ""}</div></td></tr>`).join("")}</tbody></table></div>` : '<p class="calendar-empty">Chưa có đơn xin nghỉ phù hợp.</p>';
+      $("#leave-requests").innerHTML = result.items.length ? `<div class="table-wrapper"><table><thead><tr><th>Ngày nghỉ</th><th>Buổi</th><th>Lý do</th><th>Trạng thái</th><th><span class="leave-detail-title">Chi tiết</span></th></tr></thead><tbody>${result.items.map(r => `<tr><td>${formatDate(r.from_date)} – ${formatDate(r.to_date)}</td><td>${escape(periods[r.period] || r.period)}</td><td class="leave-reason">${escape(r.reason)}</td><td><span class="leave-state state-${escape(r.status)}">${escape(statuses[r.status] || r.status)}</span></td><td><div class="leave-row-actions"><button type="button" class="secondary" data-request="${escape(r.request_id)}">Chi tiết</button>${r.status === "PENDING" ? `<button type="button" class="secondary" data-request="${escape(r.request_id)}" data-action="cancel">Rút đơn</button>` : ""}</div></td></tr>`).join("")}</tbody></table></div>` : '<p class="calendar-empty">Chưa có đơn xin nghỉ phù hợp.</p>';
       const pages = Math.max(1, Math.ceil(result.total / result.page_size));
-      $("#requests-page").textContent = `${user.role_name === "NURSE" ? "" : `${result.total} đơn · `}Trang ${result.page}/${pages}`;
+      $("#requests-page").textContent = `Trang ${result.page}/${pages}`;
       $("#requests-previous").disabled = result.page <= 1; $("#requests-next").disabled = result.page >= pages;
       message($("#leave-list-status"));
     } catch (error) { if (version === listVersion) reportError($("#leave-list-status"), error); }

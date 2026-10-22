@@ -3,7 +3,7 @@ import { staffReady, staffRoles, backendRoles } from "../core/staff_workspace.js
 import { nursePortraitUrl } from "../core/staff_shell.js";
 import { changeOwnPassword, clearSession } from "../core/session.js";
 import { updateMe } from "../api/auth.js";
-import { getOwnProfile } from "../api/doctor.js";
+import { getOwnProfile, updateOwnProfile } from "../api/doctor.js";
 import { $, esc, date, money, badge, facts, bindDialog, run, submit } from "../core/staff_ui.js";
 import { enhanceDialogDismiss } from "../core/dialog_dismiss.js";
 import { bindAvatarForm, renderAccountAvatar } from "../core/avatar.js";
@@ -28,13 +28,12 @@ if (user) {
     }
     const url = new URL(location.href); url.searchParams.set("role", role); history.replaceState(null, "", url);
     $("#staff-profile-description").textContent = "Xem và cập nhật thông tin cá nhân của bạn.";
-    const professionalFields = role !== "doctor" ? "" : doctor
+    const professionalFields = () => role !== "doctor" ? "" : doctor
       ? `${[
         ["Khoa", doctor.department_name], ["Học vị / chức danh", doctor.academic_degree],
         ["Chuyên môn", doctor.specialization], ["Số năm kinh nghiệm", doctor.experience_years],
         ["Phí khám", doctor.consultation_fee == null ? null : money(doctor.consultation_fee)],
-        ["Trạng thái chuyên môn", doctor.is_active ? "Đang hoạt động" : "Ngừng hoạt động"],
-      ].map(([label, value]) => readonlyField(label, value)).join("")}${readonlyField("Giới thiệu chuyên môn", doctor.introduction, true)}`
+      ].map(([label, value]) => readonlyField(label, value)).join("")}<label class="profile-introduction" for="doctor-introduction">Giới thiệu chuyên môn<textarea id="doctor-introduction" name="introduction" rows="6" maxlength="5000" readonly>${esc(doctor.introduction || "")}</textarea></label>`
       : '<p class="scope-note full-width">Chưa có hồ sơ chuyên môn. Vui lòng liên hệ quản trị để được bổ sung.</p>';
     const avatarForm = '<form id="avatar-form" class="staff-profile-avatar-form"><input name="file" id="avatar-file" class="avatar-file-input" type="file" hidden aria-hidden="true" accept="image/jpeg,image/png,image/webp" tabindex="-1" aria-label="Ảnh đại diện"><button id="avatar-choose" type="button" class="secondary">Chọn ảnh đại diện</button><p id="avatar-feedback" role="status" aria-live="polite" class="form-feedback"></p></form>';
     $("#page-body").innerHTML = `<div class="staff-profile-grid"><aside class="panel staff-profile-identity"><div class="staff-profile-monogram" id="staff-profile-avatar">${esc(staffRoles[role].initials)}</div>${avatarForm}<h2 id="staff-profile-name"></h2><span class="badge green">${esc(staffRoles[role].label)}</span><div id="staff-profile-facts"></div><p id="staff-profile-status" class="profile-account-status"></p></aside><div class="staff-profile-sections">
@@ -61,6 +60,10 @@ if (user) {
         if (key === "dob") { field.type = active ? "date" : "text"; field.value = active ? user.dob || "" : user.dob ? date(user.dob) : ""; }
         else if (!active) field.value = user[key] || "";
       }
+      if (form.elements.introduction) {
+        form.elements.introduction.readOnly = !active;
+        if (!active) form.elements.introduction.value = doctor.introduction || "";
+      }
     }
     function render() {
       $("#staff-profile-name").textContent = user.full_name;
@@ -74,8 +77,8 @@ if (user) {
         inputField("full_name", "Họ và tên", "text", 150) + inputField("dob", "Ngày sinh", "date") +
         inputField("phone", "Số điện thoại", "tel", 20) + inputField("email", "Email", "email", 254) +
         readonlyField("Giới tính", user.gender) + readonlyField("CCCD", user.id_card) +
-        `<div class="full-width">${readonlyField("Địa chỉ", user.address)}</div>` +
-        `<fieldset class="profile-emergency full-width"><legend>Người liên hệ khẩn cấp</legend><div class="profile-emergency-fields">${inputField("emergency_contact_name", "Họ và tên", "text", 150)}${inputField("emergency_contact_phone", "Số điện thoại", "tel", 30)}${inputField("emergency_contact_relationship", "Quan hệ", "text", 50)}</div></fieldset>` + professionalFields;
+        `<div>${readonlyField("Địa chỉ", user.address)}</div>` +
+        `<fieldset class="profile-emergency full-width"><legend>Người liên hệ khẩn cấp</legend><div class="profile-emergency-fields">${inputField("emergency_contact_name", "Họ và tên", "text", 150)}${inputField("emergency_contact_phone", "Số điện thoại", "tel", 30)}${inputField("emergency_contact_relationship", "Quan hệ", "text", 50)}</div></fieldset>` + professionalFields();
       for (const key of editableKeys) { form.elements[key].value = user[key] || ""; form.elements[key].defaultValue = user[key] || ""; }
       setEditing(false);
       renderAvatar();
@@ -104,13 +107,29 @@ if (user) {
       event.preventDefault();
       if (!editing || form.dataset.busy === "true") return;
       const data = profileChanges(user, Object.fromEntries(editableKeys.map(key => [key, form.elements[key]])));
+      const introduction = form.elements.introduction?.value.trim();
+      const introductionChanged = doctor && introduction !== undefined && introduction !== (doctor.introduction || "").trim();
       if (!form.reportValidity()) return;
-      if (!Object.keys(data).length) { setEditing(false); form.querySelector('[role="status"]').textContent = "Thông tin chưa thay đổi."; editButton.focus(); return; }
+      if (!Object.keys(data).length && !introductionChanged) { setEditing(false); form.querySelector('[role="status"]').textContent = "Thông tin chưa thay đổi."; editButton.focus(); return; }
       editButton.disabled = true;
       submit(form, async () => {
-        const fresh = (await updateMe(data)).user;
-        if (fresh?.user_id !== user.user_id || fresh.role_name !== user.role_name) throw new Error("Phản hồi hồ sơ không hợp lệ. Vui lòng thử lại.");
-        user = { ...fresh, avatar_url: user.avatar_url }; render();
+        let accountSaved = false;
+        if (Object.keys(data).length) {
+          const fresh = (await updateMe(data)).user;
+          if (fresh?.user_id !== user.user_id || fresh.role_name !== user.role_name) throw new Error("Phản hồi hồ sơ không hợp lệ. Vui lòng thử lại.");
+          user = { ...fresh, avatar_url: user.avatar_url }; accountSaved = true;
+        }
+        if (introductionChanged) {
+          try {
+            const fresh = (await updateOwnProfile({ introduction })).doctor;
+            if (fresh?.doctor_profile_id !== doctor.doctor_profile_id) throw new Error("Phản hồi hồ sơ bác sĩ không hợp lệ.");
+            doctor = fresh;
+          } catch (error) {
+            if (accountSaved) throw new Error(`Đã lưu thông tin cá nhân, nhưng chưa xác nhận lưu giới thiệu chuyên môn: ${error.message}`);
+            throw error;
+          }
+        }
+        render();
       })
         .finally(() => { editButton.disabled = false; if (!editing) editButton.focus(); });
     });

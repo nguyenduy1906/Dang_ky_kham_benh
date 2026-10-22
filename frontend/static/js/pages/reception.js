@@ -1,3 +1,5 @@
+import { receptionScheduleOverview } from "../core/reception_schedule_overview.js";
+import { receptionOverviewCounts } from "../core/reception_overview.js";
 import { code, parseCode } from "../core/business_codes.js";
 import { startAutoRefresh } from "../core/auto_refresh.js";
 import { initTodayOverview, overviewRows, overviewDayParams } from "../core/staff_overview.js";
@@ -20,15 +22,33 @@ if (user) {
   if (page === "walk_in") await run(walkInPage);
   if (page === "coordination") await run(coordinationPage);
 }
+function receptionSummary(rows) {
+  const counts = receptionOverviewCounts(rows);
+  const icons = [
+    '<circle cx="9" cy="7" r="3"/><path d="M3 21v-4a6 6 0 0 1 12 0v4M16 4a3 3 0 0 1 0 6M21 21v-4a6 6 0 0 0-3-5"/>',
+    '<circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/>',
+    '<path d="M14 2H6v20h14V8zM14 2v6h6M9 12h6M9 16h6"/>',
+  ];
+  return `<div class="summary-grid reception-status-cards">${[
+    ["Chờ check-in", counts.pending, "Lịch online đã xác nhận"],
+    ["Đang chờ khám", counts.waiting, "Người bệnh đã đến viện"],
+    ["Đã tiếp nhận", counts.received, "Tổng lượt đã tiếp nhận trong ngày"],
+  ].map(([label, value, note], index) => `<article class="summary-card"><span>${label}</span><svg class="reception-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[index]}</svg><strong>${value}</strong><p>${note}</p></article>`).join("")}</div>`;
+}
 async function overview() {
+  $("#page-body").addEventListener("click", event => {
+    const button = event.target.closest("[data-reception-preview-shift]");
+    if (!button) return;
+    const morning = button.dataset.receptionPreviewShift === "morning";
+    dialog(`Danh sách bệnh nhân · ${morning ? "Ca sáng" : "Ca chiều"}`, '<p class="scope-note">Bản xem trước giao diện · Chưa có dữ liệu bệnh nhân cho ca này.</p>' + table(["Người bệnh / phiếu", "Khung giờ", "Phòng / bác sĩ", "Trạng thái"], []));
+  });
   await initTodayOverview(async (range, options) => {
     const params = overviewDayParams(range);
-    const rangeLabel = `${date(range.from)}${range.to !== range.from ? ` – ${date(range.to)}` : ""}`;
     const [all, list] = await Promise.all([
       overviewRows(encounters.listEncounters, params, range, options),
       overviewRows(encounters.listStaffTickets, params, range, options),
     ]);
-    return stats([["Lượt khám", all.length, rangeLabel], ["Chờ check-in", all.filter(e => e.encounter_status === "CONFIRMED").length, "Đã xác nhận lịch khám"], ["Đã check-in", all.filter(e => e.encounter_status === "CHECKED_IN").length, "Đang chờ vào phòng khám"]]) + panel("Tiếp nhận người bệnh", '<div class="doctor-shortcuts"><a href="encounters.html"><h3>Tra cứu phiếu & check-in</h3><p>Đối chiếu thông tin trước khi xác nhận người bệnh đến viện.</p></a><a href="walk_in.html"><h3>Khách khám trực tiếp</h3><p>Dùng hồ sơ đã có; hệ thống chọn ca và phát phiếu.</p></a><a href="patients.html"><h3>Hồ sơ bệnh nhân</h3><p>Tìm đúng người bệnh trước khi tạo hồ sơ mới.</p></a></div>') + panel("Phiếu khám trong thời gian đã chọn", table(["Người bệnh / phiếu", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", "Thao tác"], list.slice(0, 8).map(e => `<tr>${encounterColumns(e)}<td><a href="encounters.html?schedule_id=${e.schedule_id}" class="button-link secondary">Xem ca khám</a></td></tr>`)), '<a href="encounters.html">Tất cả lượt khám →</a>');
+    return receptionSummary(all) + receptionScheduleOverview(range.from) + panel("Phiếu khám trong thời gian đã chọn", table(["Người bệnh / phiếu", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", "Thao tác"], list.slice(0, 8).map(e => `<tr>${encounterColumns(e)}<td><a href="encounters.html?schedule_id=${e.schedule_id}" class="button-link secondary">Xem ca khám</a></td></tr>`)), '<a href="encounters.html">Tất cả lượt khám →</a>');
   });
 }
 function patientFacts(p) { return facts([["Mã hồ sơ", code("BN", p.patient_id)], ["Họ tên", p.full_name], ["Ngày sinh", date(p.dob)], ["Giới tính", p.gender], ["Số điện thoại", p.phone], ["CCCD / mã định danh", p.id_card], ["BHYT", p.health_insurance], ["Địa chỉ", p.address], ["Trạng thái", p.is_archived ? "Đã lưu trữ" : "Đang sử dụng"]]); }

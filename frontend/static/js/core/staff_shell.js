@@ -9,9 +9,9 @@ export const staffRoles = Object.freeze({
   doctor: { label: "Bác sĩ", initials: "BS", description: "Chăm sóc tận tâm, chuyên môn vững vàng", pages: [
     ["overview", "Tổng quan", "home.html", "overview"],
     ["work_calendar", "Lịch làm việc", "work_calendar.html", "calendar"],
-    ["schedule", "Phòng được phân công", "schedule.html", "calendar"],
-    ["encounters", "Lượt khám được giao", "encounters.html", "people"],
+    ["encounters", "Danh sách lượt khám", "encounters.html", "people"],
     ["clinical", "Bệnh án & đơn thuốc", "clinical.html", "record"],
+    ["records", "Hồ sơ bệnh nhân", "records.html", "record"],
     ["history", "Lịch sử khám", "history.html", "history"],
   ] },
   nurse: { label: "Y tá", initials: "YT", description: "Đồng hành cùng bác sĩ, chăm sóc người bệnh", pages: [
@@ -24,7 +24,7 @@ export const staffRoles = Object.freeze({
   reception: { label: "Lễ tân", initials: "LT", description: "Tiếp đón chu đáo, điều phối thuận tiện", pages: [
     ["overview", "Tổng quan", "home.html", "overview"],
     ["work_calendar", "Lịch làm việc", "work_calendar.html", "calendar"],
-    ["encounters", "Tra cứu & tiếp nhận", "encounters.html", "people"],
+    ["encounters", "Tra cứu hồ sơ", "encounters.html", "people"],
     ["walk_in", "Khách khám trực tiếp", "walk_in.html", "record"],
     ["patients", "Hồ sơ bệnh nhân", "patients.html", "badge"],
     ["coordination", "Chọn phòng / ca", "coordination.html", "calendar"],

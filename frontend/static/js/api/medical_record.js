@@ -37,3 +37,11 @@ export function listDoctorReviews(doctorProfileId, params = {}, options = {}) {
   return apiRequest(`/doctors/${pathSegment(doctorProfileId)}/reviews`, { ...options, method: "GET", params, auth: false });
 }
 
+
+/** Read-only history scoped to the doctor's patient assignment. */
+export function listDoctorPatientHistory(patientId, params = {}, options = {}) {
+  return apiRequest(`/doctor/patients/${pathSegment(patientId)}/history`,{...options,method:"GET",params});
+}
+export function getDoctorPatientHistory(patientId, encounterId, options = {}) {
+  return apiRequest(`/doctor/patients/${pathSegment(patientId)}/history/${pathSegment(encounterId)}`,{...options,method:"GET"});
+}
