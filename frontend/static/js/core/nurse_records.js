@@ -10,15 +10,15 @@ import { listDoctorPatientHistory,getDoctorPatientHistory } from "../api/medical
 import { readMedicalRecord,medicalRecordMarkup } from "./staff_encounters.js";
 import { sessionError } from "./staff_workspace.js";
 import { bindLiveSearch } from "./live_search.js";
-import { $, esc, date, facts, panel, empty, table, pagination, badge, dialog, time, money } from "./staff_ui.js";
+import { $, esc, date, facts, panel, empty, table, pagination, badge, dialog, time, money, today } from "./staff_ui.js";
 
 // Shared read-only records screen. Existing endpoints enforce the signed-in staff role and encounter scope; no patient or clinical writes.
 export async function initNurseRecords() {
-  const initialRange = nurseRange();
+  const initialRange = nurseRange() || {from:today(),to:today()};
   const doctorView = document.body?.dataset?.role === "doctor";
   const recordStatuses = historyStatuses.filter(status => registeredEncounterStatuses.includes(status));
   $("#page-body").innerHTML = panel("Tra cứu hồ sơ", `
-    <form id="nurse-record-search" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tên, số điện thoại hoặc CCCD<input type="search" name="q" maxlength="100" placeholder="Nhập thông tin người bệnh…" autocomplete="off" aria-controls="nurse-record-list"></label><label>Trạng thái<select name="encounter_status"><option value="">Tất cả</option><option value="COMPLETED">Đã khám xong</option><option value="NO_SHOW">Không đến khám</option></select></label><label>Từ ngày<input type="date" name="from_date" value="${esc(initialRange?.from || "")}"></label><label>Đến ngày<input type="date" name="to_date" value="${esc(initialRange?.to || "")}"></label></form>
+    <form id="nurse-record-search" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tên, số điện thoại hoặc CCCD<input type="search" name="q" maxlength="100" placeholder="Tên, số điện thoại hoặc CCCD" autocomplete="off" aria-controls="nurse-record-list"></label><label>Trạng thái<select name="encounter_status"><option value="">Tất cả</option><option value="COMPLETED">Đã khám xong</option><option value="NO_SHOW">Không đến khám</option></select></label><label>Từ ngày<input type="date" name="from_date" value="${esc(initialRange?.from || "")}"></label><label>Đến ngày<input type="date" name="to_date" value="${esc(initialRange?.to || "")}"></label></form>
     <p id="nurse-record-status" class="scope-note" role="status" hidden></p><div id="nurse-record-list"></div><div id="nurse-record-pages" class="list-pagination"></div>`)
     + '<section id="nurse-record-detail" class="panel" tabindex="-1" aria-label="Hồ sơ đang xem" hidden></section>';
   const search = $("#nurse-record-search"), detail = $("#nurse-record-detail");

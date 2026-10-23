@@ -4,7 +4,7 @@ import json
 import logging
 import re
 from datetime import datetime, timezone, timedelta
-from flask import g, request
+from flask import g, request, has_request_context
 from backend.app.db.database import get_db_connection
 from backend.app.utils.business_codes import business_code
 
@@ -36,6 +36,10 @@ def publication_stamp(value):
     return (stamp.astimezone(timezone.utc) - datetime(1970, 1, 1, tzinfo=timezone.utc)) // timedelta(microseconds=1)
 
 def business_event(path, method, payload, actor):
+    if actor.get('role_name') == 'ADMIN' or path.startswith('/admin/'):
+        return None
+    if path.startswith('/doctor/medical-records/') or re.fullmatch(r'/doctor/encounters/\d+/medical-record|/staff/encounters/\d+/transfer', path):
+        return None
     if method not in ('POST', 'PUT', 'PATCH', 'DELETE') or not isinstance(payload, dict):
         return None
     if re.fullmatch(r'/admin/configurations/[^/]+', path):
@@ -83,6 +87,9 @@ def business_event(path, method, payload, actor):
     return None
 
 def publish(db, event):
+    # Admin actions are audited, never echoed into the administrator inbox.
+    if has_request_context() and (getattr(g, 'current_user', None) or {}).get('role_name') == 'ADMIN':
+        return
     db.execute('''INSERT INTO notification(user_id,event_key,notification_type,title,content,reference_type,reference_id)
         SELECT u.user_id,%s,%s,%s,%s,%s,%s FROM users u JOIN role r USING(role_id)
         WHERE r.role_name='ADMIN' AND u.account_status='ACTIVE' AND u.approval_status='APPROVED' AND u.deleted_at IS NULL
@@ -103,14 +110,8 @@ def register_admin_notifications(app):
                 actor = payload.get('user')
             if not actor:
                 return response
-            # Prescription responses contain items/version, not the encounter reference.
-            prescription = re.fullmatch(r'/doctor/medical-records/(\d+)/prescription-items', request.path)
-            if prescription and isinstance(payload, dict):
-                with get_db_connection() as db:
-                    record = db.execute('SELECT encounter_id,version FROM medical_record WHERE record_id=%s',
-                                        (int(prescription[1]),)).fetchone()
-                if record:
-                    payload = {**payload, 'medical_record': dict(record)}
+            if actor.get('role_name') == 'ADMIN' or request.path.startswith('/doctor/medical-records/') or re.fullmatch(r'/doctor/encounters/\d+/medical-record', request.path):
+                return response
             event = business_event(request.path, request.method, payload, actor)
             if event:
                 with get_db_connection() as db:
@@ -122,21 +123,5 @@ def register_admin_notifications(app):
 
 
 def enqueue_article_publications():
-    """Notify only articles scheduled through the new hook, with no historical backfill."""
-    with get_db_connection() as db:
-        rows = db.execute('''SELECT a.article_id,a.title,a.published_at FROM article a
-            WHERE a.is_active=1 AND a.published_at<=CURRENT_TIMESTAMP
-            AND EXISTS (SELECT 1 FROM notification n WHERE n.reference_type='ARTICLE'
-                AND n.reference_id=a.article_id AND n.event_key LIKE
-                'admin-article-scheduled:'||a.article_id::text||':'||
-                ((extract(epoch FROM a.published_at)*1000000)::bigint)::text||':%')
-            AND NOT EXISTS (SELECT 1 FROM notification n WHERE n.event_key=
-                'admin-article-published:'||a.article_id::text||':'||
-                ((extract(epoch FROM a.published_at)*1000000)::bigint)::text)
-            ORDER BY a.published_at,a.article_id LIMIT 100''').fetchall()
-        for row in rows:
-            publish(db, {'key':f'admin-article-published:{row["article_id"]}:{publication_stamp(row["published_at"])}',
-                'kind':'ARTICLE','reference':'ARTICLE','id':row['article_id'],
-                'title':'Bài viết hẹn đăng đã xuất bản',
-                'content':f'Bài viết {business_code("BV",row["article_id"])} đã đến giờ xuất bản: {row["title"]}.'})
-    return len(rows)
+    """Admin-authored publication activity belongs in the audit log, not the admin inbox."""
+    return None

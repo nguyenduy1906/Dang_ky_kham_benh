@@ -27,6 +27,9 @@ def _present(row):
         end = datetime.combine(result['work_date'], result['end_time'], VN_TZ)
         status = 'UPCOMING' if now < start else ('COMPLETED' if now >= end else 'WORKING')
     result['work_status'] = status
+    result['version'] = staff_notifications.event_version({k: result.get(k) for k in
+        ('schedule_id', 'doctor_profile_id', 'room_id', 'work_date', 'start_time', 'end_time',
+         'slot_minutes', 'max_quota', 'booked_count', 'schedule_status', 'updated_at', 'move')})
     return jsonable(result)
 
 
@@ -43,6 +46,86 @@ def list_schedules(query):
             to_date=query['to_date'], status=query['status'], limit=query['page_size'],
             offset=(query['page'] - 1) * query['page_size'])
     return _page(rows, total, query)
+
+
+def get_staff_schedule(actor, schedule_id):
+    from backend.app.core.security import require_role
+    require_role(actor, constants.ROLE_ADMIN, constants.ROLE_RECEPTIONIST)
+    with get_db_connection() as db:
+        row = schedule_model.get_schedule(db, schedule_id)
+        if row is None:
+            raise not_found('Không tìm thấy ca làm việc', 'SCHEDULE_NOT_FOUND')
+    return {'schedule': _present(row)}
+
+
+def _room_assignment_guard(db, row):
+    if row.get('move') or schedule_model.get_move(db, row['schedule_id']):
+        raise conflict('Ca đã chuyển, không thể phân phòng', 'SCHEDULE_MOVED')
+    if row['schedule_status'] not in ('OPEN', 'FULL'):
+        raise conflict('Ca đã đóng hoặc bác sĩ nghỉ, không thể phân phòng', 'SCHEDULE_NOT_OPEN')
+    if datetime.combine(row['work_date'], row['start_time'], VN_TZ) <= utc_now():
+        raise conflict('Ca đã bắt đầu hoặc đã qua, không thể đổi phòng', 'SCHEDULE_ALREADY_STARTED')
+    if row['booked_count'] or schedule_model.has_locking_encounters(db, row['schedule_id']):
+        raise conflict('Ca đã có lượt khám, cần xử lý lịch hẹn trước khi đổi phòng', 'SCHEDULE_HAS_ENCOUNTERS')
+    doctor = doctor_model.get_by_id(db, row['doctor_profile_id'])
+    if doctor is None or not doctor['is_active'] or not doctor['account_ok']:
+        raise conflict('Bác sĩ đã ngừng hoạt động', 'DOCTOR_INVALID')
+    return doctor
+
+
+def staff_room_options(actor, schedule_id):
+    from backend.app.core.security import require_role
+    require_role(actor, constants.ROLE_ADMIN, constants.ROLE_RECEPTIONIST)
+    with get_db_connection() as db:
+        row = schedule_model.get_schedule(db, schedule_id)
+        if row is None:
+            raise not_found('Không tìm thấy ca làm việc', 'SCHEDULE_NOT_FOUND')
+        doctor = _room_assignment_guard(db, row)
+        rooms = catalog_model.list_rooms(db, department_id=doctor['department_id'])
+        options = []
+        for room in rooms:
+            if room['room_id'] == row['room_id']:
+                continue
+            occupied = schedule_model.find_overlap(db, 'room_id', room['room_id'],
+                row['work_date'], row['start_time'], row['end_time'], schedule_id)
+            options.append({**jsonable(room), 'available': not occupied,
+                            'unavailable_reason': 'Phòng có ca trùng giờ' if occupied else None})
+    return {'schedule': _present(row), 'items': options}
+
+
+def assign_staff_room(actor, schedule_id, fields):
+    from backend.app.core.security import require_role
+    require_role(actor, constants.ROLE_ADMIN, constants.ROLE_RECEPTIONIST)
+    with get_db_connection() as db:
+        staff_leave_model.lock_changes(db)
+        locked = schedule_model.get_for_update(db, schedule_id)
+        if locked is None:
+            raise not_found('Không tìm thấy ca làm việc', 'SCHEDULE_NOT_FOUND')
+        before = schedule_model.get_schedule(db, schedule_id)
+        if _present(before)['version'] != fields['expected_version']:
+            raise conflict('Ca đã thay đổi. Hãy mở lại để tải dữ liệu mới.', 'SCHEDULE_STALE')
+        doctor = _room_assignment_guard(db, before)
+        if fields['room_id'] == before['room_id']:
+            raise conflict('Vui lòng chọn phòng khác phòng hiện tại', 'SAME_ROOM')
+        schedule_model.lock_doctor_and_room(db, before['doctor_profile_id'], fields['room_id'])
+        room = _active_room(db, fields['room_id'])
+        if room['department_id'] != doctor['department_id']:
+            raise conflict('Chỉ phân phòng cùng chuyên khoa của bác sĩ', 'DEPARTMENT_MISMATCH')
+        staff_leave_service.ensure_available(db, doctor['user_id'], before['work_date'], before['start_time'], before['end_time'])
+        _check_free(db, before['doctor_profile_id'], room['room_id'], before['work_date'], before['start_time'], before['end_time'], schedule_id)
+        try:
+            schedule_model.update_schedule(db, schedule_id, {'room_id': room['room_id']})
+        except pg_errors.UniqueViolation:
+            raise conflict('Phòng đã có ca trùng giờ', 'ROOM_SCHEDULE_OVERLAP') from None
+        after = schedule_model.get_schedule(db, schedule_id)
+        recipients = staff_notifications.schedule_recipients(db, schedule_id) | {actor['user_id']}
+        staff_notifications.send(db, recipients,
+            f"staff-room:{schedule_id}:{staff_notifications.event_version(after)}", 'SCHEDULE',
+            'Phòng khám của ca làm việc đã thay đổi',
+            f"Trước: {staff_notifications.schedule_description(before)}. Sau: {staff_notifications.schedule_description(after)}. "
+            f"Người thực hiện: {actor.get('full_name') or actor['user_id']}. Lý do: {fields['reason']}",
+            'WORK_SCHEDULE', schedule_id)
+    return {'schedule': _present(after)}
 
 
 def list_doctor_public(doctor_profile_id, query):

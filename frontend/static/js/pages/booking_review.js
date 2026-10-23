@@ -133,7 +133,7 @@ function renderReview() {
     ["Giá khám", money(encounter?.consultation_fee_snapshot ?? doctor?.consultation_fee)],
   ];
   if (encounter) {
-    const labels = { HOLDING: "Đang giữ chỗ", CONFIRMED: "Đã xác nhận", CHECKED_IN: "Đã check-in", IN_PROGRESS: "Đang khám", COMPLETED: "Đã khám xong", EXPIRED: "Đã hết hạn", CANCELLED: "Đã hủy", NO_SHOW: "Không tới khám" };
+    const labels = { HOLDING: "Đang giữ chỗ", CONFIRMED: "Đã thanh toán", CHECKED_IN: "Đã check in", IN_PROGRESS: "Đang khám", COMPLETED: "Đã khám xong", EXPIRED: "Đã hết hạn", CANCELLED: "Đã hủy", NO_SHOW: "Không tới khám" };
     pairs.push(["Trạng thái", labels[encounter.encounter_status] || encounter.encounter_status], ["Mã phiếu", ticket?.ticket_code || encounter.ticket_code || "Chưa được cấp"]);
   }
   const list = el("dl", "", "booking-review-list"); details(list, pairs); ui.review.append(list);

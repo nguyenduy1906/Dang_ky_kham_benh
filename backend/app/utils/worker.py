@@ -79,6 +79,28 @@ def enqueue_reminders():
     return count
 
 
+def mark_overdue_no_shows():
+    """Only unarrived confirmed visits; never infer attendance or clinical progress."""
+    from datetime import datetime
+    from backend.app.services.appointment_slot_service import schedule_bounds
+    count = 0
+    with get_db_connection() as db:
+        actor_id = system_actor(db)
+        schedules = db.execute("SELECT s.* FROM work_schedule s WHERE s.work_date <= %s AND s.schedule_status NOT IN ('CLOSED','UNAVAILABLE') AND EXISTS(SELECT 1 FROM encounter e WHERE e.schedule_id=s.schedule_id AND e.encounter_status='CONFIRMED' AND e.checked_in_at IS NULL) ORDER BY s.schedule_id LIMIT 100 FOR UPDATE OF s SKIP LOCKED", (date_utils.utc_now().astimezone(VN_TZ).date(),)).fetchall()
+        for schedule in schedules:
+            rows = db.execute("SELECT * FROM encounter WHERE schedule_id=%s AND encounter_status='CONFIRMED' AND checked_in_at IS NULL ORDER BY encounter_id FOR UPDATE", (schedule['schedule_id'],)).fetchall()
+            for row in rows:
+                now = date_utils.utc_now()
+                deadline = schedule_bounds(schedule)[1] + timedelta(minutes=encounter_policy(row)['NO_SHOW_GRACE_MINUTES'])
+                if now <= deadline:
+                    continue
+                service.model.update_encounter(db,row['encounter_id'],{'encounter_status':'NO_SHOW'})
+                service._change_quota(db,schedule,-1)
+                service.model.add_status(db,row['encounter_id'],'CONFIRMED','NO_SHOW',actor_id,'Tự động đánh dấu không đến: hết ca và thời gian chờ, chưa có check-in')
+                count += 1
+    return count
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--once', action='store_true')
@@ -90,6 +112,7 @@ def main():
     while not stopping.is_set():
         try:
             logger.info('Expired holds: %s', expire_holds())
+            logger.info('No-show visits: %s', mark_overdue_no_shows())
             logger.info('Appointment reminders: %s', enqueue_reminders())
             logger.info('Scheduled articles published: %s', enqueue_article_publications())
         except Exception:

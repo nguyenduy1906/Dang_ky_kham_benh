@@ -297,6 +297,8 @@ def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIEN
             deadline = encounter['estimated_exam_at'] + timedelta(minutes=policy['CHECKIN_LATE_MINUTES'] - policy['CHECKIN_EARLY_MINUTES'])
             if status != 'CONFIRMED':
                 raise conflict('Chỉ check-in lượt đã thanh toán xác nhận', 'INVALID_ENCOUNTER_STATUS')
+            if now.astimezone(VN_TZ).date() != schedule['work_date']:
+                raise conflict('Chỉ check-in trong đúng ngày khám', 'CHECK_IN_WRONG_DAY')
             if now > deadline:
                 raise conflict('Đã quá thời hạn check-in áp dụng cho lượt khám', 'CHECK_IN_TOO_LATE')
             if schedule['schedule_status'] in ('CLOSED', 'UNAVAILABLE'):
@@ -311,6 +313,10 @@ def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIEN
         else:
             if status != 'CHECKED_IN':
                 raise conflict('Chỉ bắt đầu khám lượt đã check-in', 'INVALID_ENCOUNTER_STATUS')
+            if not encounter.get('checked_in_at') or encounter['checked_in_at'] > now:
+                raise conflict('Chưa có xác nhận bệnh nhân đã đến hợp lệ', 'CHECK_IN_REQUIRED')
+            if now < encounter['estimated_exam_at']:
+                raise conflict('Chưa đến giờ hẹn khám của người bệnh', 'APPOINTMENT_NOT_STARTED')
             require_clinical_shift(schedule, now)
             if now < start or schedule['schedule_status'] in ('CLOSED', 'UNAVAILABLE'):
                 raise conflict('Ca chưa bắt đầu hoặc không hoạt động', 'SCHEDULE_UNAVAILABLE')

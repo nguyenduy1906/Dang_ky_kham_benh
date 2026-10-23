@@ -8,7 +8,7 @@ import { allPages, nurseRange, nurseFormRange, inNurseRange, localPage, normaliz
 import { code } from "../core/business_codes.js";
 import { renderNurseOverview } from "../core/nurse_overview.js";
 import { nurseAssignmentTable } from "../core/nurse_tables.js";
-import { $, panel, pagination, bindDialog, run } from "../core/staff_ui.js";
+import { $, panel, pagination, bindDialog, run, today } from "../core/staff_ui.js";
 
 const user = await staffReady;
 if (user) {
@@ -31,7 +31,7 @@ async function overview() {
   await initTodayOverview(renderNurseOverview);
 }
 async function assignmentsPage() {
-  let range = nurseRange();
+  let range = nurseRange() || {from:today(),to:today()};
   $("#page-body").innerHTML = panel("Phân công còn hiệu lực", `
     <form id="nurse-assignment-search" class="staff-toolbar" role="search" aria-label="Tìm phân công">
       <label>Mã phòng<input type="search" name="room_code" maxlength="100" placeholder="Nhập mã phòng, ví dụ PH_001" autocomplete="off" aria-controls="assignment-list"></label>

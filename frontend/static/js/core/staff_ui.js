@@ -1,3 +1,5 @@
+import {isScheduleStatus,scheduleStatusBadge} from "./schedule_status.js";
+import {encounterStatusBadge,encounterStatusLabels} from "./encounter_status.js";
 import { code } from "./business_codes.js";
 import { sessionError } from "./staff_workspace.js";
 import { enhanceDialogDismiss } from "./dialog_dismiss.js";
@@ -8,8 +10,8 @@ export const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho
 export const date = value => value ? new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date(value.length === 10 ? `${value}T00:00:00+07:00` : value)) : "—";
 export const time = value => value ? new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(value)) : "—";
 export const money = value => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(Number(value || 0));
-export const labels = { HOLDING: "Chờ thanh toán", CONFIRMED: "Đã xác nhận", CHECKED_IN: "Đã check-in", IN_PROGRESS: "Đang khám", COMPLETED: "Hoàn tất", CANCELLED: "Đã hủy", NO_SHOW: "Vắng mặt", EXPIRED: "Hết hạn", OPEN: "Đang mở", FULL: "Đã đầy", CLOSED: "Đã đóng", UNAVAILABLE: "Bác sĩ báo nghỉ", ACTIVE: "Hoạt động", LOCKED: "Đã khóa", APPROVED: "Đã duyệt", PENDING: "Chờ duyệt", REJECTED: "Từ chối" };
-export const badge = status => `<span class="status ${["COMPLETED", "OPEN", "APPROVED", "ACTIVE"].includes(status) ? "done" : ["IN_PROGRESS", "CHECKED_IN"].includes(status) ? "examining" : "waiting"}">${esc(labels[status] || status || "—")}</span>`;
+export const labels = { HOLDING: "Chờ thanh toán", CONFIRMED: "Đã thanh toán", CHECKED_IN: "Đã check in", IN_PROGRESS: "Đang khám", COMPLETED: "Hoàn tất", CANCELLED: "Đã hủy", NO_SHOW: "Vắng mặt", EXPIRED: "Hết hạn", OPEN: "Đang hoạt động", FULL: "Đã đầy", CLOSED: "Đã đóng", UNAVAILABLE: "Báo nghỉ", ACTIVE: "Hoạt động", LOCKED: "Đã khóa", APPROVED: "Đã duyệt", PENDING: "Chờ duyệt", REJECTED: "Từ chối" };
+export const badge = status => status==="LOCKED" ? `<span class="badge account-locked">Đã khóa</span>` : isScheduleStatus(status) ? scheduleStatusBadge(status) : Object.hasOwn(encounterStatusLabels,status) ? encounterStatusBadge(status) : `<span class="status ${["COMPLETED", "OPEN", "APPROVED", "ACTIVE"].includes(status) ? "done" : ["IN_PROGRESS", "CHECKED_IN"].includes(status) ? "examining" : "waiting"}">${esc(labels[status] || status || "—")}</span>`;
 export const empty = (text = "Chưa có dữ liệu phù hợp.") => `<div class="empty-state"><span class="empty-symbol" aria-hidden="true">—</span><h3>${esc(text)}</h3><p>Thử thay đổi bộ lọc hoặc tải lại dữ liệu.</p></div>`;
 export const facts = entries => `<dl class="doctor-facts">${entries.map(([key, value]) => `<div><dt>${esc(key)}</dt><dd>${esc(value || "—")}</dd></div>`).join("")}</dl>`;
 export const stats = entries => `<div class="summary-grid">${entries.map(([label, value, note]) => `<article class="summary-card"><span>${esc(label)}</span><strong>${esc(value)}</strong><p>${esc(note || "")}</p></article>`).join("")}</div>`;

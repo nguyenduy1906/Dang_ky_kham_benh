@@ -7,13 +7,17 @@ import { readMedicalRecord } from "./staff_encounters.js";
 import { sessionError } from "./staff_workspace.js";
 import { activeStatuses, nurseEncounters, allPages, localPage, shiftEnd, normalizeSearch, nurseRange, inNurseRange, visitOrder } from "./nurse_encounter_data.js";
 import { nurseVisitTable } from "./nurse_tables.js";
-import { $, esc, date, facts, panel, pagination, dialog, encounterSummary } from "./staff_ui.js";
+import { $, esc, date, facts, panel, pagination, dialog, encounterSummary, today } from "./staff_ui.js";
 
 export async function initNursePatients({ assignments }) {
-  const initialRange = nurseRange();
+  let initialRange = nurseRange();
   let inheritedRange = initialRange;
   const requested = new URLSearchParams(location.search).get("schedule_id") || "";
   const selected = assignments.some(a => String(a.schedule_id) === requested) ? requested : "";
+  if (!initialRange) {
+    const day = assignments.find(a=>String(a.schedule_id)===selected)?.work_date || today();
+    initialRange = {from:day,to:day}; inheritedRange = initialRange;
+  }
   const shifts = [...assignments].sort((a, b) => `${a.work_date}${a.start_time}`.localeCompare(`${b.work_date}${b.start_time}`));
   $("#page-body").innerHTML = panel("Người bệnh trong ca", `
     <form id="nurse-visit-filters" class="staff-toolbar">

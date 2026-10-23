@@ -83,9 +83,6 @@
 .reception-shift-scroll td:last-child .button-link { white-space: nowrap; }
 
 .reception-shift-scroll :is(th, td):is(:nth-child(3), :nth-child(5)) { text-align: center; }
-.reception-shift-scroll .reception-visit-type { display: inline-flex; align-items: center; justify-content: center; padding: 5px 10px; font-size: 12px; font-weight: 600; line-height: 1.5; white-space: nowrap; border-radius: 5px; }
-.reception-shift-scroll .reception-visit-type.is-online { background: #e5f0fb; color: #24618e; }
-.reception-shift-scroll .reception-visit-type.is-direct { background: #e5f4ec; color: #236b49; }
 .reception-page table .badge,
 .reception-page table .status { border-radius: 5px; }
 
@@ -152,7 +149,7 @@ body.reception-page[data-page="walk_in"] *::after { border-radius: 5px !importan
 .reception-checkin .doctor-facts > div { min-width: 0; padding: 0; border: 0; }
 .reception-checkin .doctor-facts dt { margin-bottom: 5px; color: #718579; font-size: 12px; }
 .reception-checkin .doctor-facts dd { margin: 0; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
-.reception-checkin-note { margin: 0; padding: 16px 18px; border-left: 3px solid #008349; background: #f0f7f3; color: #486454; font-size: 13px; line-height: 1.7; }
+.reception-checkin-note { margin: 0; padding: 16px 18px; border-left: 0; background: #f0f7f3; color: #486454; font-size: 13px; line-height: 1.7; }
 .reception-checkin-footer { display: flex; justify-content: flex-end; align-items: center; gap: 18px; padding-top: 20px; }
 .reception-checkin-footer .form-feedback { margin: 0; flex: 1; }
 .reception-checkin-footer button { background: #008349; border-color: #008349; min-height: 46px; padding-inline: 22px; white-space: nowrap; }
@@ -223,9 +220,6 @@ body.reception-page[data-page="patients"] dialog, body.reception-page[data-page=
 .reception-page #reception-patient-history th:nth-child(4) { width: 26%; }
 .reception-page #reception-patient-history th:nth-child(5) { width: 13%; }
 .reception-page #reception-patient-history :is(th, td):last-child { width: 15%; text-align: center; }
-.reception-page #reception-patient-history .reception-history-type { display: inline-flex; align-items: center; padding: 5px 10px; font-size: 12px; font-weight: 600; white-space: nowrap; border-radius: 5px; }
-.reception-page #reception-patient-history .reception-history-type.is-online { background: #e5f0fb; color: #24618e; }
-.reception-page #reception-patient-history .reception-history-type.is-direct { background: #e5f4ec; color: #236b49; }
 
 .reception-page #doctor-schedule-filter { display: grid; grid-template-columns: minmax(0, 3fr) minmax(200px, 1fr); gap: 16px; align-items: end; }
 .reception-page #doctor-schedule-filter > label { min-width: 0; margin: 0; }
@@ -267,6 +261,9 @@ body.reception-page[data-page="doctor_schedule"] *, body.reception-page[data-pag
 .reception-page button.coordination-choice { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, .8fr); align-items: center; justify-items: start; gap: 18px; width: 100%; padding: 18px; border: 1px solid #d7e3dc; border-radius: 5px; background: white; color: #243d32; text-align: left; font-weight: 400; }
 .reception-page .coordination-choice strong { display: block; font-size: 15px; }
 .reception-page .coordination-choice small { display: block; margin-top: 5px; color: #687b70; font-size: 12px; }
+.reception-page #assignment-doctor-results > .coordination-choice { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, .8fr); align-items: center; gap: 18px; padding: 16px; border: 1px solid #d7e3dc; background: white; }
+.reception-page #assignment-doctor-results > .coordination-choice.is-selected { border: 2px solid #008349; padding: 15px; background: #edf7f1; }
+@media (max-width: 680px) { .reception-page #assignment-doctor-results > .coordination-choice { grid-template-columns: 1fr; gap: 8px; } }
 .reception-page button.coordination-choice:hover:not(:disabled) { border-color: #73ae8d; background: #f7fbf8; }
 .reception-page button.coordination-choice.is-selected { border: 2px solid #008349; padding: 17px; background: #edf7f1; }
 .reception-page .coordination-footer { justify-content: flex-end; }
@@ -303,3 +300,43 @@ body.reception-page[data-page="coordination"] *, body.reception-page[data-page="
 .reception-transfer-detail #assignment-transfer-form > .panel { margin: 0 0 20px; padding: 20px; border: 1px solid #dde7e1; box-shadow: none; }
 .reception-page .reception-transfer-detail .transfer-confirm-actions button.secondary { background: white; border-color: #008349; color: #008349; }
 .reception-page .reception-transfer-detail .transfer-confirm-actions button.secondary:is(:hover, :focus-visible, :active) { background: #008349; color: white; }
+
+.reception-transfer-detail #transfer-form > label:has(select[name="appointment_time"]) {
+  width: 50%;
+}
+@media (max-width: 640px) {
+  .reception-transfer-detail #transfer-form > label:has(select[name="appointment_time"]) {
+    width: 100%;
+  }
+}
+
+.reception-transfer-detail #doctor-change-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.reception-transfer-detail #doctor-change-form > label:first-child {
+  grid-column: 2;
+  grid-row: 1;
+}
+.reception-transfer-detail #doctor-change-form > :is(#replacement-picker, #swap-picker, #room-change-picker) {
+  grid-column: 1;
+  grid-row: 1;
+}
+.reception-transfer-detail #doctor-change-form > label:has(textarea),
+.reception-transfer-detail #doctor-change-form > p {
+  grid-column: 1 / -1;
+}
+.reception-transfer-detail #doctor-change-form > button {
+  justify-self: start;
+}
+@media (max-width: 640px) {
+  .reception-transfer-detail #doctor-change-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .reception-transfer-detail #doctor-change-form > label:first-child {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}

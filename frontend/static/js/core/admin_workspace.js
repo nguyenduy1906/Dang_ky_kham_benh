@@ -1,3 +1,5 @@
+import "./date_inputs.js";
+import "./table_layout.js";
 import {initAdminStatistics} from "./admin_statistics.js";
 import {replaceAdminRegion} from "./admin_render.js";
 import {initAdminPayments} from "./admin_payments.js";
@@ -32,7 +34,7 @@ import {patientDetails} from "./admin_patient_detail.js";
 import {patientEditForm,patientCreateForm} from "./admin_patient_form.js";
 import {openBulkAssignment} from "./admin_bulk_assignment.js";
 import {openScheduleBuilder} from "./admin_schedule_builder.js";
-import {chronologicalPage} from "./clinical_list_order.js";
+import {searchAdminDoctors,searchAdminAssignments} from "./admin_staff_date_search.js";
 import {leaveRequestDetails} from "./admin_leave_detail.js";
 import {openScheduleDetail} from "./admin_schedule_detail.js";
 import {initAdminOverview} from "./admin_overview.js";
@@ -165,13 +167,21 @@ export async function initAdminWorkspace(key) {
       else if(key==="schedule"){ctx.cancelLoad();openScheduleBuilder({body,trigger:event.currentTarget,ctx,onSaved:()=>reload()}).catch(error=>ctx.handle(error));}
       else editResource();
     });
-    body.innerHTML=panel("Danh sách",'<div id="admin-filters"></div><div id="admin-results"></div><div id="admin-pager"></div>')+(key==="schedule"?panel("Đơn xin nghỉ",'<form id="leave-filter" class="admin-toolbar"><label>Trạng thái<select name="status">'+options(["PENDING","APPROVED","REJECTED","CANCELLED"],"PENDING")+'</select></label><label>Mã nhân viên<input type="text" name="user_id"></label><button type="submit">Xem đơn</button></form><div id="leave-results"></div><div id="leave-pager"></div>'):"");
+    const listTitle={users:"Danh sách tài khoản",patients:"Danh sách bệnh nhân",doctors:"Danh sách bác sĩ",departments:"Danh sách chuyên khoa",rooms:"Danh sách phòng khám",schedule:"Danh sách ca làm việc",assignments:"Danh sách phân công y tá",articles:"Danh sách tin tức",encounters:"Danh sách lượt khám"}[key];
+    body.innerHTML=panel(listTitle,'<div id="admin-filters"></div><div id="admin-results"></div><div id="admin-pager"></div>')+(key==="schedule"?panel("Đơn xin nghỉ",'<form id="leave-filter" class="admin-toolbar"><label>Trạng thái<select name="status">'+options(["PENDING","APPROVED","REJECTED","CANCELLED"],"PENDING")+'</select></label><label>Mã nhân viên<input type="text" name="user_id"></label><button type="submit">Xem đơn</button></form><div id="leave-results"></div><div id="leave-pager"></div>'):"");
     reload=async()=>ctx.load(async signal=>{
-      const params=codeParams(Object.fromEntries(new FormData($("#resource-filter"))));
+      const form=$("#resource-filter"), raw=Object.fromEntries(new FormData(form));
+      for(const input of form.querySelectorAll('[data-reference-filter]')) {
+        const text=input.value.trim(), match=(refs[input.dataset.referenceFilter]||[]).find(([,name])=>name===text);
+        if(text&&!match)throw new Error(`Vui lòng chọn ${input.closest('label').querySelector('span').textContent.toLocaleLowerCase('vi')} từ danh sách gợi ý.`);
+        raw[input.name]=match?match[0]:"";
+      }
+      const params=codeParams(raw);
       if(params.from_date&&params.to_date&&params.to_date<params.from_date)throw new Error("Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.");
       if(key==="schedule")return searchAdminSchedules(params,page,pageSize,signal);
       if(key==="encounters")return searchAdminEncounters(params,page,pageSize,signal);
-      if(key==="assignments")return chronologicalPage(await allPages(config.list,{...config.params,...params},signal),page,pageSize);
+      if(key==="doctors")return searchAdminDoctors({...config.params,...params},page,pageSize,signal);
+      if(key==="assignments")return searchAdminAssignments({...config.params,...params},page,pageSize,signal);
       const result=await config.list({...config.params,...params,page,page_size:pageSize},{signal});
       if(config.local){
         let items=result.items;
@@ -184,14 +194,15 @@ export async function initAdminWorkspace(key) {
     },result=>{
       listResult=result;page=result.page;for(const row of result.items)records.set(String(row[config.id]),row);
       if(key==="departments")$("#department-name-suggestions").innerHTML=result.departmentNames.map(name=>`<option value="${esc(name)}"></option>`).join("");
-      const columns=key==="schedule"?[...config.columns.slice(0,-1),"Thao tác","Xem chi tiết"]:[...config.columns,"Thao tác"];
-      const cells=row=>key==="schedule"?[...config.cells(row).slice(0,-1),rowActions(key,row),button("schedule-view",row.schedule_id,"Xem chi tiết")]:[...config.cells(row),rowActions(key,row)];
+      const columns=key==="schedule"?[...config.columns,"Thao tác","Xem chi tiết"]:[...config.columns,"Thao tác"];
+      const cells=row=>key==="schedule"?[...config.cells(row),rowActions(key,row),button("schedule-view",row.schedule_id,"Xem chi tiết")]:[...config.cells(row),rowActions(key,row)];
       replaceAdminRegion($("#admin-results"),table(columns,result.items.map(cells),config.title || "Danh sách quản trị"));
       replaceAdminRegion($("#admin-pager"),paginationMarkup(result));
     });
     await ctx.load(signal=>references(config.filters.map(f=>f.reference).filter(Boolean),signal),result=>{
       refs=result;
-      $("#admin-filters").innerHTML=`<form id="resource-filter" class="admin-toolbar">${config.filters.map(f=>fieldMarkup(f,{},refs,false,true)).join("")}<button type="submit">Lọc danh sách</button></form>`;
+      const initialFilters=["assignments","encounters"].includes(key)?{work_date:today()}:key==="schedule"?{from_date:today(),to_date:today()}:{};
+      $("#admin-filters").innerHTML=`<form id="resource-filter" class="admin-toolbar ${config.filters.length===3&&config.filters[0].type==='search'?'admin-toolbar-three':''}">${config.filters.map(f=>fieldMarkup(f,initialFilters,refs,false,true)).join("")}<button type="submit">Lọc danh sách</button></form>`;
     });
     if(!ctx.active||!$("#resource-filter"))return;
     if(key==="departments") {
@@ -320,7 +331,7 @@ export async function initAdminWorkspace(key) {
       memberCandidates=candidates;
       memberVersion=members.version;
       memberDraft=members.items;
-      return `<h3>${esc(department.department.name)}</h3><section class="admin-department-section"><div class="admin-member-section-heading"><h3>Thành viên khoa</h3></div><div id="department-members">${departmentMemberGroups(memberDraft,id)}</div><form class="admin-member-add-form"><div class="admin-contact-fields"><label>Thêm bác sĩ<input type="text" name="member_doctor" list="department-doctor-suggestions" placeholder="Nhập tên hoặc mã bác sĩ để tìm" autocomplete="off" required><datalist id="department-doctor-suggestions">${candidates.map(r=>`<option value="${esc(`${r.full_name} (${code("BS",r.doctor_profile_id)})`)}">${esc(r.department_name||"Chưa có khoa")}</option>`).join("")}</datalist></label><label>Chức vụ<select name="position"><option value="HEAD" ${memberDraft.some(r=>r.position==="HEAD")?"disabled":""}>Trưởng khoa${memberDraft.some(r=>r.position==="HEAD")?" (đã có)":""}</option><option value="DEPUTY" ${memberDraft.filter(r=>r.position==="DEPUTY").length>=departmentDeputyLimit(memberDraft.length+1)?"disabled":""}>Phó khoa</option><option value="DOCTOR" selected>Bác sĩ</option></select></label></div><div class="actions"><button type="submit">Thêm thành viên</button></div><p class="form-feedback" role="status"></p></form></section>`
+      return `<h3>${esc(department.department.name)}</h3><section class="admin-department-section"><div class="admin-member-section-heading"><h3>Thành viên khoa</h3></div><div id="department-members">${departmentMemberGroups(memberDraft,id)}</div><form class="admin-member-add-form"><div class="admin-contact-fields"><label>Thêm bác sĩ<input type="text" name="member_doctor" list="department-doctor-suggestions" placeholder="Tên hoặc mã bác sĩ" autocomplete="off" required><datalist id="department-doctor-suggestions">${candidates.map(r=>`<option value="${esc(`${r.full_name} (${code("BS",r.doctor_profile_id)})`)}">${esc(r.department_name||"Chưa có khoa")}</option>`).join("")}</datalist></label><label>Chức vụ<select name="position"><option value="HEAD" ${memberDraft.some(r=>r.position==="HEAD")?"disabled":""}>Trưởng khoa${memberDraft.some(r=>r.position==="HEAD")?" (đã có)":""}</option><option value="DEPUTY" ${memberDraft.filter(r=>r.position==="DEPUTY").length>=departmentDeputyLimit(memberDraft.length+1)?"disabled":""}>Phó khoa</option><option value="DOCTOR" selected>Bác sĩ</option></select></label></div><div class="actions"><button type="submit">Thêm thành viên</button></div><p class="form-feedback" role="status"></p></form></section>`
         +'<div class="admin-department-history">'+panel("Lịch sử phân công",table(["Bác sĩ","Chức vụ","Bắt đầu","Kết thúc"],history.items.map(r=>[esc(r.full_name),r.position==="HEAD"?"Trưởng khoa":"Phó khoa",stamp(r.appointed_at),stamp(r.ended_at)])))+'</div>';
     });
   }
@@ -366,8 +377,18 @@ export async function initAdminWorkspace(key) {
     if(name==="collection-add") {target.closest("[data-collection]").querySelector("[data-collection-items]").insertAdjacentHTML("beforeend",collectionItemMarkup(target.dataset.name,{},key==="departments"||Boolean(target.closest("form")?.dataset.id)));return;}
     if(name==="collection-remove") {target.closest("[data-item]").remove();return;}
     if(name==="close-dialog"){close();return;}
-    if(name==="previous"||name==="next"){page+=name==="next"?1:-1;await reload();return;}
-    if(name==="leave-prev"||name==="leave-next"){leavePage+=name==="leave-next"?1:-1;await leaveList();return;}
+    if(name==="previous"||name==="next"){
+      page+=name==="next"?1:-1;
+      await reload();
+      if(ctx.active)$("#admin-results")?.scrollIntoView({block:"start",behavior:"instant"});
+      return;
+    }
+    if(name==="leave-prev"||name==="leave-next"){
+      leavePage+=name==="leave-next"?1:-1;
+      await leaveList();
+      if(ctx.active)$("#leave-results")?.scrollIntoView({block:"start",behavior:"instant"});
+      return;
+    }
     if(name==="detail")await showDetail(id);
     if(name==="edit")await editResource(id);
     if(name==="archive")await confirmation(name,id);

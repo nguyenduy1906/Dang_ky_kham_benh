@@ -3,7 +3,7 @@ import {readAdminNotifications,openNotification} from "./admin_notification_data
 import {startAutoRefresh} from "./auto_refresh.js";
 import {readAdminReviews, readAdminReview, setReviewVisibility} from "./admin_review_data.js";
 import {notificationTypes as baseTypes} from "../data/admin_notification_templates.js";
-import { esc, table, facts, stamp, options } from "./admin_ui.js";
+import { esc, table, facts, stamp, options, today } from "./admin_ui.js";
 import { code } from "./business_codes.js";
 
 const types={...baseTypes};
@@ -37,11 +37,11 @@ export function notificationDetail(row) {
 
 
 function filtersMarkup(reviews, showType=true) {
-  return `<form id="feedback-filters" class="admin-toolbar" role="search" aria-label="${reviews?"Lọc đánh giá":"Lọc thông báo"}"><label>Tìm kiếm<input type="search" name="q" placeholder="${reviews?"Mã đánh giá, bác sĩ, nội dung…":"Mã thông báo, tiêu đề, nội dung…"}"></label>${reviews?`<label>Số sao<select name="rating">${options([["5","5 sao"],["4","4 sao"],["3","3 sao"],["2","2 sao"],["1","1 sao"],["low","1–2 sao"]])}</select></label>`:`${showType?`<label>Loại thông báo<select name="type">${options(Object.entries(types))}</select></label>`:""}<label>Trạng thái<select name="read">${options([["unread","Chưa đọc"],["read","Đã đọc"]])}</select></label>`}<label>Từ ngày<input type="date" name="from_date"></label><label>Đến ngày<input type="date" name="to_date"></label></form>`;
+  return `<form id="feedback-filters" class="admin-toolbar" role="search" aria-label="${reviews?"Lọc đánh giá":"Lọc thông báo"}"><label>Tìm kiếm<input type="search" name="q" placeholder="${reviews?"Mã đánh giá, bác sĩ, nội dung…":"Mã thông báo, tiêu đề, nội dung…"}"></label>${reviews?`<label>Số sao<select name="rating">${options([["5","5 sao"],["4","4 sao"],["3","3 sao"],["2","2 sao"],["1","1 sao"],["low","1–2 sao"]])}</select></label>`:`${showType?`<label>Loại thông báo<select name="type">${options(Object.entries(types))}</select></label>`:""}<label>Trạng thái<select name="read">${options([["unread","Chưa đọc"],["read","Đã đọc"]])}</select></label>`}<label>Từ ngày<input type="date" name="from_date" value="${reviews?today():''}"></label><label>Đến ngày<input type="date" name="to_date" value="${reviews?today():''}"></label></form>`;
 }
 
 export function feedbackMarkup(reviews, {showType=true, personal=false}={}) {
-  return `  <section class="admin-card feedback-list"><div class="admin-panel-heading"><div><h2>${reviews?"Danh sách đánh giá":personal?"Thông báo của bạn":"Thông báo toàn hệ thống"}</h2><p>${reviews?"Tra cứu phản hồi và theo dõi chất lượng trải nghiệm sau khám.":personal?"Theo dõi các thông báo về lịch làm việc và hoạt động liên quan đến bạn.":"Theo dõi đặt lịch, thanh toán, nhân sự, bài viết và các sự kiện hệ thống."}</p></div></div>${filtersMarkup(reviews,showType)}<p id="feedback-error" class="feedback-filter-error" role="status" aria-live="polite" hidden></p><div id="feedback-results"></div><div id="feedback-pager" class="admin-pagination"></div></section><p id="feedback-status" class="feedback-status" role="status" aria-live="polite"></p>`;
+  return `  <section class="admin-card feedback-list"><div class="admin-panel-heading"><div><h2>${reviews?"Danh sách đánh giá":personal?"Thông báo của bạn":"Thông báo toàn hệ thống"}</h2></div></div>${filtersMarkup(reviews,showType)}<p id="feedback-error" class="feedback-filter-error" role="status" aria-live="polite" hidden></p><div id="feedback-results"></div><div id="feedback-pager" class="admin-pagination"></div></section><p id="feedback-status" class="feedback-status" role="status" aria-live="polite"></p>`;
 }
 
 export async function initFeedbackPresentation(key, {presentationOnly=false, staffRole=null, readNotifications=readAdminNotifications, readNotification=openNotification}={}) {

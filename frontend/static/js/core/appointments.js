@@ -1,7 +1,7 @@
 import { bookingUrl } from "./session.js";
 
 export const statusLabels = Object.freeze({
-  HOLDING: "Đang giữ chỗ", CONFIRMED: "Đã xác nhận", CHECKED_IN: "Đã check-in",
+  HOLDING: "Đang giữ chỗ", CONFIRMED: "Đã thanh toán", CHECKED_IN: "Đã check in",
   IN_PROGRESS: "Đang khám", COMPLETED: "Đã khám xong", EXPIRED: "Hết hạn giữ chỗ",
   CANCELLED: "Đã hủy", NO_SHOW: "Không tới khám",
 });

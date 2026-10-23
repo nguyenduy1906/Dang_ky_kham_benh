@@ -31,7 +31,7 @@ export const adminPages = {
   audit:{title:"Nhật ký hoạt động",description:"Theo dõi người thực hiện, thời điểm và nội dung thay đổi trong hệ thống."},
   configuration:{title:"Cấu hình hệ thống",description:"Quản lý thông tin cơ sở và các cài đặt được phép thay đổi."},
 };
-const f=(name,title,type="text",extra={})=>({name,title,type,...extra});
+const f=(name,title,type="text",extra={})=>({name,title:type==="search"?"Tìm kiếm":title,type,...(type==="search"?{placeholder:title}:{}),...extra});
 const active=f("is_active","Trạng thái","select",{choices:[[true,"Đang hoạt động"],[false,"Ngừng hoạt động"]],boolean:true,default:true});
 const dept=f("department_id","Chuyên khoa","select",{reference:"departments",required:true,number:true});
 const choice=(name,title,values)=>f(name,title,"select",{choices:values});
@@ -39,7 +39,7 @@ const id=(name,title)=>f(name,title,"text",{businessId:true,required:true});
 export const resources = {
   users:{id:"user_id",list:auth.listUsers,get:async(id,opt)=>(await auth.getUser(id,opt)).user,create:auth.createUser,update:auth.updateUser,add:"Tạo tài khoản",columns:["Mã","Người dùng","Liên hệ","Vai trò","Trạng thái","Phê duyệt"],
     cells:r=>[esc(code("TK", r.user_id)),esc(r.full_name),esc([r.email,r.phone].filter(Boolean).join(" · ")),badge(r.role_name),badge(r.account_status),badge(r.approval_status)],
-    filters:[f("q","Tên / email / điện thoại","search"),f("role","Vai trò","select",{reference:"roles"}),choice("account_status","Trạng thái",["ACTIVE","LOCKED"]),choice("approval_status","Phê duyệt",["PENDING","APPROVED","REJECTED"])],
+    filters:[f("q","Tên tài khoản, email hoặc số điện thoại","search"),f("role","Vai trò","select",{reference:"roles"}),choice("account_status","Trạng thái",["ACTIVE","LOCKED"])],
     fields:[f("full_name","Họ và tên","text",{required:true,max:150}),f("email","Email","email",{max:254,omitEmpty:true}),f("phone","Điện thoại","tel",{max:20,omitEmpty:true}),f("password","Mật khẩu ban đầu","password",{required:true,minLength:12,max:128,createOnly:true}),f("role","Vai trò","select",{reference:"roles",required:true}),{...choice("account_status","Trạng thái tài khoản",[["ACTIVE","Hoạt động"],["LOCKED","Đã khóa"]]),editOnly:true,required:true},
       f("dob","Ngày sinh","date",{editOnly:true}),{...choice("gender","Giới tính",["Nam","Nữ","Khác"]),editOnly:true},
       f("id_card","CCCD","text",{editOnly:true,max:12,pattern:"[0-9]{12}"}),f("address","Địa chỉ","text",{editOnly:true,max:255}),
@@ -47,7 +47,7 @@ export const resources = {
   },
   patients:{id:"patient_id",list:listAdminPatients,get:async(id,opt)=>(await patients.getPatient(id,opt)).patient,create:patients.createPatient,update:patients.updatePatient,add:"Thêm bệnh nhân",columns:["Mã BN","Họ và tên","Ngày sinh","Điện thoại","CCCD","Trạng thái"],
     cells:r=>[esc(code("BN", r.patient_id)),esc(r.full_name),date(r.dob),esc(r.phone),esc(r.id_card || "—"),`<span class="badge ${r.is_archived?"red":"green"}">${r.is_archived?"Không hoạt động":"Đang hoạt động"}</span>`],
-    filters:[f("q","Họ tên / CCCD","search"),f("phone","Số điện thoại","tel"),f("patient_status","Trạng thái","select",{choices:[["ACTIVE","Đang hoạt động"],["INACTIVE","Không hoạt động"]],default:"ACTIVE"})],
+    filters:[f("q","Họ tên, số điện thoại hoặc CCCD","search"),f("patient_status","Trạng thái","select",{choices:[["ACTIVE","Đang hoạt động"],["INACTIVE","Không hoạt động"]],default:"ACTIVE"})],
     fields:[f("full_name","Họ tên","text",{required:true,max:150}),f("dob","Ngày sinh","date"),f("phone","Điện thoại","tel",{required:true,max:20,readOnEdit:true}),choice("gender","Giới tính",["Nam","Nữ","Khác"]),f("id_card","CCCD / mã định danh","text",{max:12,pattern:"([0-9]{9}|[0-9]{12})"}),f("address","Địa chỉ","text",{max:255}),f("health_insurance","Mã thẻ BHYT","text",{max:15,pattern:"[A-Za-z0-9]{10,15}"}),f("email","Email","email",{max:254}),f("emergency_contact_name","Họ và tên","text",{max:150}),f("emergency_contact_phone","Số điện thoại","tel",{max:20,pattern:"[+]?[0-9]{9,15}"}),f("emergency_contact_relationship","Quan hệ với bệnh nhân","text",{max:50})],
   },
   doctors:{id:"doctor_profile_id",list:doctors.listDoctors,get:async(id,opt)=>(await doctors.getDoctor(id,opt)).doctor,create:doctors.createDoctor,update:doctors.updateDoctor,add:"Thêm hồ sơ bác sĩ",params:{include_inactive:true},columns:["Mã BS","Bác sĩ","Chuyên khoa","Học vị","Kinh nghiệm","Phí khám","Trạng thái"],
@@ -68,7 +68,7 @@ export const resources = {
   },
   assignments:{id:"assignment_id",params:{include_revoked:true},list:schedules.listNurseAssignments,get:async(id,opt)=>(await schedules.getNurseAssignment(id,opt)).assignment,create:schedules.createNurseAssignment,add:"Phân công y tá",columns:["Mã","Y tá","Mã ca","Phòng","Ngày","Thời gian","Trạng thái"],
     cells:r=>[esc(code("PC", r.assignment_id)),esc(r.nurse_name),esc(code("CA", r.schedule_id)),esc(r.room_name),date(r.work_date),esc(`${r.start_time?.slice(0,5)} – ${r.end_time?.slice(0,5)}`),`<span class="badge ${r.revoked_at?"assignment-revoked":"green"}">${r.revoked_at?"Thu hồi":"Đang phân công"}</span>`],
-    filters:[f("nurse_id","Y tá","select",{reference:"nurses"}),f("schedule_id","Mã ca","text",{businessId:true})],
+    filters:[f("nurse_id","Y tá","select",{reference:"nurses"}),f("schedule_id","Mã ca","text",{businessId:true}),f("work_date","Ngày làm việc","date")],
     fields:[f("nurse_id","Y tá","select",{reference:"nurses",required:true,number:true}),f("schedule_id","Ca làm việc","select",{reference:"schedules",required:true,number:true}),f("note","Ghi chú","textarea",{max:1000})],
   },
   articles:{id:"article_id",list:articles.listAdminArticles,get:async(id,opt)=>(await articles.listAdminArticles({article_id:id,page_size:1},opt)).items[0],create:articles.createArticle,update:articles.updateArticle,add:"Viết bài mới",columns:["Mã bài","Tiêu đề","Danh mục","Tác giả","Ngày đăng","Trạng thái"],
@@ -100,14 +100,17 @@ export function fieldMarkup(field, row={}, references={}, edit=false, filter=fal
   let input;
   if(field.type==="select") {
     const choices=field.reference?references[field.reference] || []:field.choices;
-    input=`<select ${attrs}>${options(choices,value,filter?"Tất cả":"Chọn…")}</select>`;
+    if(filter&&["departments","nurses","doctors","rooms","schedules"].includes(field.reference)) {
+      const listId=`filter-options-${field.name}`;
+      input=`<input type="search" ${attrs} data-reference-filter="${esc(field.reference)}" list="${listId}" autocomplete="off" placeholder="${esc({departments:"Tên chuyên khoa",nurses:"Tên y tá",doctors:"Tên bác sĩ",rooms:"Tên phòng khám",schedules:"Mã ca"}[field.reference])}" value="${esc(choices.find(([id])=>String(id)===String(value))?.[1]||'')}"><datalist id="${listId}">${choices.map(([,name])=>`<option value="${esc(name)}"></option>`).join('')}</datalist>`;
+    } else input=`<select ${attrs}>${options(choices,value,filter?"Tất cả":"Chọn…")}</select>`;
   } else if(field.type==="checkbox") input=`<input type="checkbox" ${attrs} ${value?"checked":""}>`;
   else if(["textarea","lines","json"].includes(field.type)) {
     const text=field.type==="json"?JSON.stringify(value || [],null,2):field.type==="lines"?(Array.isArray(value)?value.join("\n"):value):value;
     input=`<textarea ${attrs} rows="${field.name==="content"?12:4}">${esc(text)}</textarea>`;
   } else {
     const text=field.type==="datetime-local"&&value?new Intl.DateTimeFormat("sv-SE",{timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}).format(new Date(value)).replace(" ","T"):field.type==="time"?String(value).slice(0,5):value;
-    input=`<input type="${field.type}" ${attrs} value="${esc(text)}" ${field.businessId?`placeholder="${prefixes[field.name]}_001"`:""} ${field.name==="dob"?`max="${new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())}"`:""}>`;
+    input=`<input type="${field.type}" ${attrs} value="${esc(text)}" ${field.placeholder?`placeholder="${esc(field.placeholder)}"`:field.businessId?`placeholder="${esc(filter?field.title:prefixes[field.name]+'_001')}"`:""} ${field.name==="dob"?`max="${new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date())}"`:""}>`;
   }
   if(field.clearable&&!locked&&!["select","checkbox"].includes(field.type)) {
     input=`<span class="admin-clearable-input">${input}<button type="button" class="admin-input-clear" data-action="clear-input" aria-label="Xóa nội dung ${esc(field.title)}" title="Xóa nội dung">×</button></span>`;

@@ -4,6 +4,7 @@ import { staffReady, sessionError } from "../core/staff_workspace.js";
 import { hasSession } from "../core/session.js";
 import * as api from "../api/staff_leave.js";
 import { enhanceDialogDismiss } from "../core/dialog_dismiss.js";
+import { staffLeavePayload } from "../core/staff_leave_form.js";
 
 const $ = selector => document.querySelector(selector);
 const escape = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -17,12 +18,12 @@ const weekdays = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sá
 const periods = { MORNING: "Ca sáng", AFTERNOON: "Ca chiều", FULL_DAY: "Cả ngày" };
 const periodValues = { full: "FULL_DAY", morning: "MORNING", afternoon: "AFTERNOON" };
 const statuses = { PENDING: "Chờ duyệt", APPROVED: "Đã duyệt", REJECTED: "Từ chối", CANCELLED: "Đã rút" };
-const clinicalStatuses = { OPEN: "Đang mở", FULL: "Đã đủ chỗ", CLOSED: "Đã đóng", UNAVAILABLE: "Bác sĩ nghỉ" };
+const clinicalStatuses = { OPEN: "Đang hoạt động", FULL: "Đã đầy", CLOSED: "Đã đóng", UNAVAILABLE: "Báo nghỉ" };
 
 const user = await staffReady;
-if (user) await initialize();
+if (user) await initWorkCalendar(user);
 
-async function initialize() {
+export async function initWorkCalendar(user) {
   const currentDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   let weekStart = mondayOf(currentDate), calendar = [], shifts = [], requestPage = 1;
   let active = true, weekVersion = 0, listVersion = 0, detailVersion = 0, selectedShift, selectedRequest;
@@ -37,7 +38,14 @@ async function initialize() {
   }
   function reportError(node, error) {
     if (!active || error.code === "CLIENT_ABORTED") return;
-    message(node, sessionError(error), true);
+    const text = sessionError(error);
+    if (error.status === 401 || error.status === 403) {
+      suspend();
+      const access = $("#staff-access");
+      access.hidden = false; access.textContent = text;
+      return;
+    }
+    message(node, text, true);
   }
   function suspend() {
     if (!active) return;
@@ -88,7 +96,7 @@ async function initialize() {
     try {
       const result = await api.getWorkSchedules({ from_date: weekStart, to_date: addDays(weekStart, 6) }, { signal: weekRequest.signal });
       if (!active || version !== weekVersion) return;
-      if (result?.user_id !== user.user_id || !Array.isArray(result.items)) throw new Error("Không nhận được lịch hợp lệ của tài khoản hiện tại.");
+      if (result?.user_id !== user.user_id || result?.role_name !== user.role_name || !Array.isArray(result.items)) throw new Error("Không nhận được lịch hợp lệ của tài khoản hiện tại.");
       calendar = user.role_name === "DOCTOR" ? result.items.map(day => {
         const assigned = (day.clinical_schedules || []).filter(s => ["OPEN", "FULL"].includes(s.schedule_status));
         const actualShifts = ["MORNING", "AFTERNOON"].flatMap(period => {
@@ -142,7 +150,8 @@ async function initialize() {
     $("#leave-section").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
     form.elements.reason.focus({ preventScroll: true });
   });
-  $("#calendar-dialog-close").addEventListener("click", () => dialog.close());
+  $("#calendar-dialog-close").addEventListener("click", () => { if (!cancelling) dialog.close(); });
+  dialog.addEventListener("cancel", event => { if (cancelling) event.preventDefault(); });
   dialog.addEventListener("close", () => { detailVersion++; detailRequest?.abort(); selectedRequest = null; });
 
   async function loadRequests(page = 1) {
@@ -154,9 +163,11 @@ async function initialize() {
     try {
       const result = await api.listLeaveRequests({ page, page_size: 10, status: $("#leave-status-filter").value }, { signal: listRequest.signal });
       if (!active || version !== listVersion) return;
-      if (!Array.isArray(result?.items) || result.items.some(r => r.user_id !== user.user_id)) throw new Error("Danh sách đơn nghỉ không hợp lệ.");
-      $("#leave-requests").innerHTML = result.items.length ? `<div class="table-wrapper"><table><thead><tr><th>Ngày nghỉ</th><th>Buổi</th><th>Lý do</th><th>Trạng thái</th><th><span class="leave-detail-title">Chi tiết</span></th></tr></thead><tbody>${result.items.map(r => `<tr><td>${formatDate(r.from_date)} – ${formatDate(r.to_date)}</td><td>${escape(periods[r.period] || r.period)}</td><td class="leave-reason">${escape(r.reason)}</td><td><span class="leave-state state-${escape(r.status)}">${escape(statuses[r.status] || r.status)}</span></td><td><div class="leave-row-actions"><button type="button" class="secondary" data-request="${escape(r.request_id)}">Chi tiết</button>${r.status === "PENDING" ? `<button type="button" class="secondary" data-request="${escape(r.request_id)}" data-action="cancel">Rút đơn</button>` : ""}</div></td></tr>`).join("")}</tbody></table></div>` : '<p class="calendar-empty">Chưa có đơn xin nghỉ phù hợp.</p>';
+      if (!Array.isArray(result?.items) || result.items.some(r => r.user_id !== user.user_id)
+        || !Number.isInteger(result.total) || result.total < 0 || !Number.isInteger(result.page_size) || result.page_size < 1) throw new Error("Danh sách đơn nghỉ không hợp lệ.");
       const pages = Math.max(1, Math.ceil(result.total / result.page_size));
+      if (page > pages) return await loadRequests(pages);
+      $("#leave-requests").innerHTML = result.items.length ? `<div class="table-wrapper"><table><thead><tr><th>Ngày nghỉ</th><th>Buổi</th><th>Lý do</th><th>Trạng thái</th><th><span class="leave-detail-title">Chi tiết</span></th></tr></thead><tbody>${result.items.map(r => `<tr><td>${formatDate(r.from_date)} – ${formatDate(r.to_date)}</td><td>${escape(periods[r.period] || r.period)}</td><td class="leave-reason">${escape(r.reason)}</td><td><span class="leave-state state-${escape(r.status)}">${escape(statuses[r.status] || r.status)}</span></td><td><div class="leave-row-actions"><button type="button" class="secondary" data-request="${escape(r.request_id)}">Chi tiết</button>${r.status === "PENDING" ? `<button type="button" class="secondary" data-request="${escape(r.request_id)}" data-action="cancel">Rút đơn</button>` : ""}</div></td></tr>`).join("")}</tbody></table></div>` : '<p class="calendar-empty">Chưa có đơn xin nghỉ phù hợp.</p>';
       $("#requests-page").textContent = `Trang ${result.page}/${pages}`;
       $("#requests-previous").disabled = result.page <= 1; $("#requests-next").disabled = result.page >= pages;
       message($("#leave-list-status"));
@@ -170,7 +181,7 @@ async function initialize() {
       const result = await api.getLeaveRequest(requestId, { signal: detailRequest.signal });
       if (!active || version !== detailVersion) return;
       const r = result.leave_request;
-      if (!r || r.user_id !== user.user_id) throw new Error("Không nhận được đơn nghỉ hợp lệ của tài khoản hiện tại.");
+      if (!r || String(r.request_id) !== String(requestId) || r.user_id !== user.user_id) throw new Error("Không nhận được đơn nghỉ hợp lệ của tài khoản hiện tại.");
       selectedRequest = r;
       showDialog(withdrawing && r.status === "PENDING" ? "Xác nhận rút đơn xin nghỉ" : "Chi tiết đơn xin nghỉ", [
         ["Mã đơn", code("NP", r.request_id)], ["Từ ngày", formatDate(r.from_date)], ["Đến ngày", formatDate(r.to_date)],
@@ -203,7 +214,7 @@ async function initialize() {
   $("#requests-next").addEventListener("click", () => loadRequests(requestPage + 1));
 
   function clearValidation() {
-    for (const key of ["start_date", "end_date", "reason", "handover"]) form.elements[key].setCustomValidity("");
+    for (const key of ["start_date", "end_date", "period", "reason", "handover"]) form.elements[key].setCustomValidity("");
     message(feedback);
   }
   function updateDateRange() {
@@ -222,20 +233,21 @@ async function initialize() {
     event.preventDefault();
     if (!active || form.dataset.busy === "true" || cancelling) return;
     clearValidation();
-    const from = form.elements.start_date.value, to = form.elements.end_date.value;
-    const handover = form.elements.handover.value.trim();
-    const reason = form.elements.reason.value.trim() + (handover ? `\n\nGhi chú bàn giao: ${handover}` : "");
-    if (from < currentDate) form.elements.start_date.setCustomValidity("Không thể xin nghỉ cho ngày đã qua.");
-    if (to < from || (parseDate(to) - parseDate(from)) / 86400000 > 30) form.elements.end_date.setCustomValidity("Ngày kết thúc phải bằng hoặc sau ngày bắt đầu; tối đa 31 ngày.");
-    if (!form.elements.reason.value.trim()) form.elements.reason.setCustomValidity("Vui lòng nhập lý do xin nghỉ.");
-    if (reason.length > 1000) form.elements.handover.setCustomValidity("Tổng lý do và ghi chú bàn giao tối đa 1.000 ký tự.");
-    if (!form.reportValidity()) { message(feedback, "Vui lòng kiểm tra ngày nghỉ và nội dung đã nhập.", true); return; }
+    let payload;
+    try {
+      payload = staffLeavePayload(Object.fromEntries(["start_date", "end_date", "period", "reason", "handover"].map(key => [key, form.elements[key].value])),
+        new Intl.DateTimeFormat("en-CA", {timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date()));
+    } catch (error) {
+      if (error.field) form.elements[error.field].setCustomValidity(error.message);
+      form.reportValidity(); message(feedback, error.message, true); return;
+    }
+    if (!form.reportValidity()) return;
     form.dataset.busy = "true"; form.setAttribute("aria-busy", "true");
     const controls = [...form.querySelectorAll("input, select, textarea, button")];
     const states = controls.map(el => el.disabled); controls.forEach(el => el.disabled = true);
     submitButton.textContent = "Đang gửi…"; message(feedback, "Đang gửi đơn xin nghỉ…"); createRequest = new AbortController();
     try {
-      const result = await api.createLeaveRequest({ from_date: from, to_date: to, period: periodValues[form.elements.period.value], reason }, { signal: createRequest.signal });
+      const result = await api.createLeaveRequest(payload, { signal: createRequest.signal });
       if (!active) return;
       const r = result.leave_request;
       if (!r?.request_id || r.user_id !== user.user_id || r.status !== "PENDING") throw new Error("Chưa nhận được xác nhận đơn nghỉ từ hệ thống.");

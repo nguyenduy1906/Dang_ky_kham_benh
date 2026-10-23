@@ -472,3 +472,150 @@ input[list] { border-radius: 5px !important; }
 }
 
 body.staff-page[data-role="reception"] dialog button[data-dialog-dismiss]:is(:hover, :focus-visible, :active):not(:disabled) { background: #c73535; border-color: #c73535; color: white; }
+
+/* Shared encounter origin badges across staff and admin pages. */
+.staff-page .badge.encounter-type-online { background: #e7f3eb; color: #287043; }
+.staff-page .badge.encounter-type-direct { background: #fce9eb; color: #b33e48; }
+
+/* Status palette shared across staff and administrator encounter views. */
+.staff-page :is(.badge,.status) { border-radius: 5px !important; }
+.staff-page .encounter-status[data-encounter-status="HOLDING"] { background: #fff5df; color: #a65b00; }
+.staff-page .encounter-status[data-encounter-status="CONFIRMED"] { background: #e8f1ff; color: #0759b5; }
+.staff-page .encounter-status[data-encounter-status="CHECKED_IN"] { background: #e3f5ec; color: #047857; }
+.staff-page .encounter-status[data-encounter-status="IN_PROGRESS"] { background: #f1e8fc; color: #6b2eaa; }
+.staff-page .encounter-status[data-encounter-status="COMPLETED"] { background: #e3f5ec; color: #047857; }
+.staff-page .encounter-status[data-encounter-status="CANCELLED"] { background: #fde5eb; color: #c62850; }
+.staff-page .encounter-status[data-encounter-status="NO_SHOW"] { background: #edf2f7; color: #49657d; }
+.staff-page .encounter-status[data-encounter-status="EXPIRED"] { background: #fff0e2; color: #c65308; }
+
+/* Equivalent generic results use the same semantic palette. */
+.staff-page:is(.admin-page,body) .badge.green { background: #e3f5ec; color: #047857; }
+.staff-page:is(.admin-page,body) .badge.blue { background: #e8f1ff; color: #0759b5; }
+.staff-page:is(.admin-page,body) .badge.amber { background: #fff5df; color: #a65b00; }
+.staff-page:is(.admin-page,body) .badge.purple { background: #f1e8fc; color: #6b2eaa; }
+.staff-page:is(.admin-page,body) .badge.red { background: #fde5eb; color: #c62850; }
+
+.staff-page .badge.encounter-status-all { background: #eaf2f1; color: #3f6868; }
+
+/* Page introductions are omitted throughout the four staff workspaces. Keep action controls. */
+.staff-page:is([data-role="admin"],[data-role="doctor"],[data-role="nurse"],[data-role="reception"]) .staff-content > .page-header p { display: none; }
+.staff-page:is([data-role="admin"],[data-role="doctor"],[data-role="nurse"],[data-role="reception"]) .staff-content > .page-header:not(:has(button,a,input,select,textarea)) { display: none; margin: 0; }
+.staff-page:is([data-role="admin"],[data-role="doctor"],[data-role="nurse"],[data-role="reception"]) .staff-content > .page-header:has(button,a,input,select,textarea) { justify-content: flex-end; }
+.staff-page:is([data-role="admin"],[data-role="doctor"],[data-role="nurse"],[data-role="reception"]) .staff-content > .page-header > div:not(:has(h1,button,a,input,select,textarea)) { display: none; }
+
+/* Shared statistic-card titles match the workspace navigation color. */
+.staff-page .admin-metric > div > span,
+.staff-page .summary-card > span { color: #008349; font-size: 16px; font-weight: 600; line-height: 1.5; }
+
+/* Consistent headings for main content cards, outside modal details. */
+.staff-page .staff-content :is(.admin-panel-heading,.admin-support-heading,.admin-daily-chart-heading,.section-heading) h2,
+.staff-page .staff-content .admin-chart > h2 { font-size: 22px; font-weight: 600; line-height: 1.4; }
+
+/* Card-header navigation links share the approved Manage schedule appearance. */
+.staff-page .staff-content :is(.admin-panel-heading,.admin-support-heading,.section-heading) > a:not(.button-link) {
+  color: #008349;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-decoration: none;
+}
+.staff-page .staff-content :is(.admin-panel-heading,.admin-support-heading,.section-heading) > a:not(.button-link):is(:hover,:focus-visible) { color: #006c3d; text-decoration: underline; text-underline-offset: 3px; }
+
+/* Uniform table columns and boxed row actions across staff roles. */
+body.staff-page table :is(th,td).table-align-left { text-align: left !important; }
+body.staff-page table :is(th,td):is(.table-align-center,.table-align-actions) { text-align: center !important; }
+body.staff-page table td.table-align-actions .actions { justify-content: center; }
+body.staff-page table td.table-align-actions :is(a,button),
+body.staff-page table td .row-action.row-action {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 34px; padding: 7px 14px; margin: 3px 4px;
+  border: 1px solid #c6ded1; border-radius: 5px !important;
+  background: #fff; color: #28664a; font-size: 12px; font-weight: 600;
+  line-height: 1.4; text-decoration: none !important; white-space: nowrap;
+}
+body.staff-page table td.table-align-actions :is(a,button):is(:hover,:focus-visible):not(:disabled),
+body.staff-page table td .row-action.row-action:is(:hover,:focus-visible):not(:disabled) {
+  background: #dff2e8; border-color: #75b995; color: #006c3d;
+}
+body.staff-page .admin-overview-encounters table :is(th,td):last-child { padding-inline: 12px 24px; }
+
+/* Reserve real button width instead of squeezing text into legacy link columns. */
+body.staff-page table :is(th,td).table-align-actions { min-width: 210px; width: 210px; padding-inline: 16px; }
+body.staff-page table td.table-align-actions .admin-row-actions { display: flex; justify-content: center; align-items: center; flex-wrap: nowrap; gap: 10px; }
+body.staff-page table td .admin-row-actions .row-action.row-action { flex: 0 0 auto; width: auto; min-width: max-content; padding: 8px 14px; margin: 0; }
+body.staff-page table td.table-align-center:has(.badge,.status) { min-width: 120px; padding-inline: 16px; }
+
+/* Keep list content close to its heading across staff workspaces. */
+body.staff-page .staff-content { padding-top: 20px; }
+body.staff-page .staff-content > .page-header:has(button,a,input,select,textarea) { margin-bottom: 16px; }
+body.staff-page .staff-content .panel > .section-heading { margin-bottom: 14px; }
+body.staff-page .staff-content .admin-card > .admin-panel-heading { padding-top: 20px; padding-bottom: 12px; }
+body.staff-page .staff-content .admin-card > .admin-toolbar,
+body.staff-page .staff-content .admin-card > #admin-filters > .admin-toolbar { padding-top: 8px; }
+
+/* Date values remain ISO for forms and APIs; visible entry is day/month/year. */
+.staff-page .date-field-control { display: flex; position: relative; align-items: center; width: 100%; min-width: 0; }
+.staff-page .date-field-control .date-field-native { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; padding: 0; border: 0; }
+.staff-page .date-field-control .date-field-display { width: 100%; padding-right: 44px; }
+.staff-page .date-field-control .date-field-picker { position: absolute; right: 4px; bottom: 5px; min-height: 32px; width: 34px; padding: 0; border: 0; background: transparent; color: var(--staff-deep); font-size: 22px; }
+
+.staff-page .date-field-control .date-field-picker { display: grid; place-items: center; color: #171717; }
+
+.staff-page .badge.role-badge { background: #e3f5ec; color: #047857; border-radius: 5px; }
+
+.staff-page .badge.account-locked { background: #fde5eb; color: #c62850; border-radius: 5px; }
+
+.staff-page .badge[data-payment-status] { border-radius: 5px; }
+.staff-page .badge[data-payment-status="PENDING"] { background: #fff5df; color: #a65b00; }
+.staff-page .badge[data-payment-status="SUCCESS"] { background: #e3f5ec; color: #047857; }
+.staff-page .badge[data-payment-status="FAILED"] { background: #fde5eb; color: #c62850; }
+.staff-page .badge[data-payment-status="REFUNDED"] { background: #e8f1ff; color: #0759b5; }
+
+.staff-page .badge[data-article-status] { border-radius: 5px; }
+.staff-page .badge[data-article-status="draft"] { background: #edf2f7; color: #49657d; }
+.staff-page .badge[data-article-status="scheduled"] { background: #fff5df; color: #a65b00; }
+.staff-page .badge[data-article-status="published"] { background: #e3f5ec; color: #047857; }
+
+/* Shared card titles, including nested titles and report-specific cards. */
+body.staff-page .staff-content :is(.admin-panel-heading,.admin-support-heading,.admin-daily-chart-heading,.section-heading) :is(h2,h3),
+body.staff-page .staff-content :is(.panel,.admin-card,.statistics-card) > :is(h2,h3),
+body.staff-page .staff-content :is(.panel,.admin-card,.statistics-card) > header :is(h2,h3) {
+  font-size: 22px !important; font-weight: 600; line-height: 1.4;
+}
+/* Only explanatory subtitles in card headers; retain live counters and identity data. */
+body.staff-page .staff-content :is(.admin-panel-heading,.admin-support-heading) > div > p:not([role]):not([id]):not([class]),
+body.staff-page .staff-content .panel > .section-heading > div > h2 + p:not([role]):not([id]):not([class]) { display: none; }
+
+/* Reception notices and decorative accents. */
+body.reception-page .scope-note {
+  color: #b42318;
+  background: #fff1f0;
+  border: 0;
+  border-radius: 5px;
+}
+body.reception-page .staff-shell .staff-sidebar nav a[aria-current="page"] {
+  border-left: 0;
+}
+body.reception-page .summary-card::before { display: none; }
+body.reception-page :is(.reception-checkin-note, .feedback-detail blockquote, .feedback-notification-content) {
+  border-left: 0;
+}
+body.reception-page.work-calendar-page button.calendar-shift {
+  border-left-width: 1px;
+  border-left-color: inherit;
+}
+
+/* Larger field text across employee workspaces and dialogs. */
+body.staff-page :is(.staff-content, #staff-dialog, #admin-dialog) label:has(input, select, textarea) {
+  font-size: 15px;
+  line-height: 1.5;
+}
+body.staff-page:is([data-role="doctor"], [data-role="nurse"], [data-role="reception"]) :is(.staff-content, #staff-dialog) :is(input, select, textarea) {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Consistent column-heading size in employee tables, including dialogs. */
+body.staff-page :is(.staff-content, #staff-dialog, #admin-dialog) table thead th {
+  font-size: 14px;
+}

@@ -38,7 +38,7 @@ function relativesForm(row, fields, references) {
   return `<section class="admin-patient-section admin-patient-relatives"><h3>Hồ sơ người thân</h3>${row.family_scope === "same-account" ? '<p class="admin-patient-field-note">Hiển thị các hồ sơ người thân cùng tài khoản.</p>' : ""}${cards || '<p class="admin-patient-field-note">Chưa có hồ sơ người thân trong tài khoản này.</p>'}</section>`;
 }
 
-function patientForm(row, fields, references, actions, {showAccountStatus=true, phoneEditable=false}={}) {
+function patientForm(row, fields, references, actions, {showAccountStatus=true, phoneEditable=false, showRelatives=true}={}) {
   const edit = Boolean(row), values = row || {};
   const render = names => names.map(name => fields.find(field => field.name === name))
     .filter(Boolean).map(field => fieldMarkup({ ...field, readOnEdit: field.readOnEdit || edit && Boolean(row.is_archived || row.archived_at), clearable: ["text", "email", "tel"].includes(field.type) && !(edit && (field.readOnEdit || row.is_archived || row.archived_at)) }, values, references, edit)).join("");
@@ -51,7 +51,7 @@ function patientForm(row, fields, references, actions, {showAccountStatus=true, 
       ["Mã tài khoản", row.user_id ? code("TK", row.user_id) : "Chưa liên kết tài khoản"],
       ["Ngày tạo hồ sơ", row.created_at ? stamp(row.created_at) : "Chưa cập nhật"],
       ["Cập nhật gần nhất", row.updated_at ? stamp(row.updated_at) : "Chưa cập nhật"],
-    ])}</section>${relativesForm(row, fields, references)}` : ""}
+    ])}</section>${showRelatives ? relativesForm(row, fields, references) : ""}` : ""}
     <div class="admin-patient-form-footer">${actions}</div>
   </form>`;
 }

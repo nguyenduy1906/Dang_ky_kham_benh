@@ -80,3 +80,6 @@
 .statistics-report-reviews .admin-table :is(th,td):nth-child(n+2) { text-align: center; }
 @media(max-width:700px) { .statistics-grid-reviews { grid-template-columns: minmax(0, 1fr); } }
 
+
+.statistics-report-doctors .admin-table { table-layout: fixed; }
+.statistics-report-doctors .admin-table :is(th,td) { width: 16.6667%; overflow-wrap: anywhere; }

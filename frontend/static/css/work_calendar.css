@@ -97,3 +97,18 @@
 .work-calendar-page #leave-requests .leave-row-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .work-calendar-page #leave-requests .leave-row-actions button { width: 100%; }
 .work-calendar-page #leave-requests .leave-detail-title { display: inline-block; width: calc((100% - 8px) / 2); text-align: center; }
+
+/* Shared state colors for doctor, nurse and reception calendars. */
+.work-calendar-page button.calendar-shift.is-afternoon { background: #edf7f0; border-color: #cce5d6; color: #22583e; }
+.work-calendar-page button.calendar-shift.is-afternoon:hover { background: #dcefe3; border-color: #6caf89; }
+.work-calendar-page button.calendar-shift.is-pending { background: #fff3e6; border-color: #e4be89; color: #76501f; border-style: dashed; }
+.work-calendar-page button.calendar-shift.is-pending:hover { background: #f9e8d2; border-color: #a16b27; }
+.work-calendar-page button.calendar-shift.is-leave { background: #fdecec; border-color: #efb4b4; color: #9b3030; border-style: solid; }
+.work-calendar-page button.calendar-shift.is-leave:hover { background: #fadada; border-color: #c74444; }
+.work-calendar-page .calendar-day.is-weekend { background: #fff; }
+.calendar-legend .legend-afternoon { background: #19975f; }
+.calendar-legend .legend-pending { background: #a16b27; }
+.calendar-legend .legend-leave { background: #c74444; }
+.calendar-legend .legend-free { background: #fff; }
+.work-calendar-page .leave-state.state-PENDING { color: #76501f; background: #fff3e6; }
+.work-calendar-page .leave-state.state-APPROVED { color: #9b3030; background: #fdecec; }

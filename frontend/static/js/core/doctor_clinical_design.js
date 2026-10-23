@@ -37,7 +37,7 @@ export function renderClinicalDesign(options = {}) {
     <section class="panel clinical-lookup" aria-labelledby="clinical-lookup-title">
       <div class="section-heading"><div><h2 id="clinical-lookup-title">Tìm người bệnh</h2></div></div>
       <div class="clinical-search-toolbar"><div class="clinical-search-half"><label for="clinical-profile-search">Tên bệnh nhân, mã hồ sơ, mã lượt khám hoặc số điện thoại</label>
-      <input id="clinical-profile-search" type="search" placeholder="Nhập để tìm hồ sơ bệnh nhân…" autocomplete="off" aria-controls="clinical-profile-results"></div><label class="clinical-date-field">Ngày khám<input id="clinical-work-date" type="date" value="${shiftDay}" aria-controls="clinical-profile-results"></label><label class="clinical-period-field">Ca làm việc<select id="clinical-period"><option value="morning">Ca sáng</option><option value="afternoon">Ca chiều</option><option value="all">Cả ngày</option></select></label></div>
+      <input id="clinical-profile-search" type="search" placeholder="Tên hoặc mã hồ sơ bệnh nhân" autocomplete="off" aria-controls="clinical-profile-results"></div><label class="clinical-date-field">Ngày khám<input id="clinical-work-date" type="date" value="${shiftDay}" aria-controls="clinical-profile-results"></label><label class="clinical-period-field">Ca làm việc<select id="clinical-period"><option value="morning">Ca sáng</option><option value="afternoon">Ca chiều</option><option value="all">Cả ngày</option></select></label></div>
       <div id="clinical-profile-results" class="clinical-patient-list"></div>
       <p id="clinical-search-feedback" class="muted" role="status"></p>
     </section>

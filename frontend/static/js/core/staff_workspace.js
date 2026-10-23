@@ -1,3 +1,5 @@
+import "./date_inputs.js";
+import "./table_layout.js";
 import { initAdminNotificationBadge } from "./admin_notification_badge.js";
 import { getSessionUser, loginUrl, workspaceUrl, signOut, clearSession, hasSession } from "./session.js";
 import { renderAccountAvatar } from "./avatar.js";

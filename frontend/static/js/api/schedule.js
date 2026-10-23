@@ -1,5 +1,10 @@
 import { apiRequest, pathSegment } from "../core/api.js";
 
+export const listStaffSchedules = (params = {}, options = {}) => apiRequest('/staff/schedules', {...options, method:'GET', params});
+export const getStaffSchedule = (id, options = {}) => apiRequest(`/staff/schedules/${pathSegment(id)}`, {...options, method:'GET'});
+export const getStaffRoomOptions = (id, options = {}) => apiRequest(`/staff/schedules/${pathSegment(id)}/room-options`, {...options, method:'GET'});
+export const assignStaffRoom = (id, data, options = {}) => apiRequest(`/staff/schedules/${pathSegment(id)}/room`, {...options, method:'PATCH', data});
+
 /** Bộ lọc ca: doctor_profile_id, room_id, department_id, from_date, to_date, status, page, page_size. Phân công: nurse_id, schedule_id, include_revoked, page, page_size. */
 
 /** GET /doctors/<int:doctor_profile_id>/schedules */

@@ -99,6 +99,18 @@ def validate_move(data):
             'reason':text_field(data,'reason',required=True,max_len=500)}
 
 
+def validate_room_assignment(data):
+    data = ensure_object(data)
+    if set(data) - {'room_id', 'reason', 'expected_version'}:
+        raise bad_request('Chỉ chấp nhận room_id, reason và expected_version')
+    version = text_field(data, 'expected_version', required=True, max_len=64)
+    if len(version) != 64 or any(c not in '0123456789abcdef' for c in version):
+        raise bad_request('expected_version không hợp lệ')
+    return {'room_id': int_field(data, 'room_id', required=True, minimum=1),
+            'reason': text_field(data, 'reason', required=True, max_len=500),
+            'expected_version': version}
+
+
 def validate_assignment_update(data):
     data = ensure_object(data)
     if set(data)-{'nurse_id','schedule_id','note','assignment_status','expected_version'}:

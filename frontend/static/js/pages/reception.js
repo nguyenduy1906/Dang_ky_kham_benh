@@ -1,3 +1,4 @@
+import {encounterTypeBadge} from "../core/encounter_type.js";
 import { patientDetails } from "../core/admin_patient_detail.js";
 import { patientEditForm } from "../core/admin_patient_form.js";
 import { resources } from "../core/admin_resources.js";
@@ -5,6 +6,8 @@ import { receptionShiftVisits } from "../core/reception_shift_visits.js";
 import { receptionScheduleOverview } from "../core/reception_schedule_overview.js";
 import { receptionOverviewCounts } from "../core/reception_overview.js";
 import { loadReceptionOverview } from "../core/reception_overview_data.js";
+import { createReceptionWalkIn } from "../core/reception_intake_data.js";
+import {searchReceptionPatients,readReceptionPatient,readReceptionPatientHistory,saveReceptionPatient} from "../core/reception_patient_search.js";
 import { code, parseCode } from "../core/business_codes.js";
 import { startAutoRefresh } from "../core/auto_refresh.js";
 import { initTodayOverview } from "../core/staff_overview.js";
@@ -25,10 +28,9 @@ if (user) {
   if (page === "patients") await patientPage();
   if (page === "walk_in") {
     const { initReceptionPatientForm } = await import("./reception_patient_form.js");
-    initReceptionPatientForm();
-    $("#page-body").innerHTML = '<div id="reception-encounters"></div><div id="walkin-body"></div>';
-    await initEncounterList({ role: "reception", target: "#reception-encounters" });
-    await run(walkInPage);
+    $("#page-body").innerHTML = '<div id="reception-encounters"></div>';
+    const list = await initEncounterList({ role: "reception", target: "#reception-encounters" });
+    initReceptionPatientForm({onCreated: () => list.refresh()});
   }
   if (page === "coordination") await run(coordinationPage);
 }
@@ -63,102 +65,79 @@ function patientPayload(form) {
   if (!data.full_name) { feedback.textContent = "Vui lòng nhập họ tên người bệnh."; feedback.dataset.error = "true"; return null; }
   return data;
 }
-async function patientPage() {
+export async function patientPage() {
   $("#page-body").innerHTML = panel("Danh sách hồ sơ", '<form id="patient-search-form" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tên, số điện thoại hoặc CCCD<input name="q" type="search" maxlength="100" placeholder="Nhập thông tin để tìm hồ sơ" aria-controls="patient-list"></label><label>Ngày khám<input name="work_date" type="date" aria-controls="patient-list"></label></form><div id="patient-list"></div><div id="list-pagination" class="list-pagination"></div>');
   const searchForm = $("#patient-search-form");
-  let currentPage = 1, version = 0, request;
+  searchForm.elements.work_date.value = today();
+  let currentPage = 1, version = 0, request, active = true, detailVersion = 0, detailRequest;
+  const stop = () => {active=false;version++;detailVersion++;request?.abort();detailRequest?.abort();};
+  window.addEventListener("pagehide",stop,{once:true});
+  window.addEventListener("neu:auth-change",()=>{stop();$("#staff-dialog").close();$("#staff-dialog-content").innerHTML="";$("#page-body").innerHTML="";},{once:true});
+  $("#staff-dialog").addEventListener("close",()=>{detailVersion++;detailRequest?.abort();});
+  $("#staff-dialog").addEventListener("cancel",event=>{if($("#staff-dialog form")?.dataset.busy==="true")event.preventDefault();});
   async function load(page = 1) {
+    if(!active)return;
     currentPage = page;
     const current = ++version;
     request?.abort(); request = new AbortController();
     await run(async () => {
       let result;
-      try { result = await patients.listPatients({ q: searchForm.elements.q.value.trim(), page, page_size: 10 }, { signal: request.signal }); }
-      catch (error) { if (current !== version) return; throw error; }
-      if (current !== version) return;
+      try { result = await searchReceptionPatients({ q: searchForm.elements.q.value, work_date:searchForm.elements.work_date.value }, page, 10, { signal: request.signal }); }
+      catch (error) { if (!active || current !== version) return;$("#patient-list").innerHTML="";$("#list-pagination").innerHTML="";throw error; }
+      if (!active || current !== version) return;
+      currentPage = result.page;
       $("#patient-list").innerHTML = table(["Hồ sơ", "Ngày sinh / CCCD", "Liên hệ", "Thao tác"], result.items.map(p => `<tr><td><strong>${esc(p.full_name)}</strong><small class="cell-subtitle">Hồ sơ ${code("BN", p.patient_id)}</small></td><td>${date(p.dob)}<small class="cell-subtitle">${esc(p.id_card || "—")}</small></td><td>${esc(p.phone || "—")}</td><td><div class="actions"><button data-patient="${p.patient_id}" data-mode="view" class="secondary">Xem</button><button data-patient="${p.patient_id}" data-mode="edit" class="secondary">Chỉnh sửa</button></div></td></tr>`));
       pagination(result, load);
       $("#patient-list").querySelectorAll("[data-patient]").forEach(button => button.addEventListener("click", () => run(async () => {
-        const p = (await patients.getPatient(button.dataset.patient)).patient;
+        const detailCurrent=++detailVersion;detailRequest?.abort();detailRequest=new AbortController();
+        const detailOptions={signal:detailRequest.signal};
+        const p = await readReceptionPatient(button.dataset.patient,detailOptions);
+        if(!active || detailCurrent!==detailVersion)return;
         const edit = button.dataset.mode === "edit";
-        const row = { ...p, relatives: [] };
+        const row = { ...p };
         const wrapper = html => `<div class="admin-page reception-patient-view">${html}</div>`;
         if (edit) {
-          dialog("Chỉnh sửa thông tin bệnh nhân", wrapper(patientEditForm(row, resources.patients.fields.map(field => field.name === "phone" ? { ...field, readOnEdit: false } : field), {}, '<div class="actions"><button type="button" class="secondary" data-patient-edit-cancel>Hủy</button><button type="submit">Lưu thay đổi</button></div><p role="status" class="form-feedback"></p>', {showAccountStatus: false, phoneEditable: true})));
+          if(p.is_archived || p.archived_at)throw new Error("Hồ sơ đã lưu trữ, chỉ được tra cứu và xem lịch sử.");
+          dialog("Chỉnh sửa thông tin bệnh nhân", wrapper(patientEditForm(row, resources.patients.fields, {}, '<div class="actions"><button type="button" class="secondary" data-patient-edit-cancel>Hủy</button><button type="submit">Lưu thay đổi</button></div><p role="status" class="form-feedback"></p>', {showAccountStatus: false, showRelatives:false})));
           const form = $("#staff-dialog-content form");
           form.addEventListener("click", event => {
+            if(form.dataset.busy==="true")return;
             if (event.target.closest("[data-patient-edit-cancel]")) { $("#staff-dialog").close(); return; }
             const clear = event.target.closest('[data-action="clear-input"]');
             if (clear) { const input = clear.parentElement.querySelector("input"); input.value = ""; input.focus(); }
           });
-          form.addEventListener("submit", event => {
-            event.preventDefault(); const data = patientPayload(form); if (!data) return;
-            submit(form, async () => { await patients.updatePatient(p.patient_id, data); $("#staff-dialog").close(); await load(currentPage); });
+          form.elements.dob.max=today();
+          form.addEventListener("submit", async event => {
+            event.preventDefault(); if(!active || form.dataset.busy==="true" || !form.reportValidity())return;
+            const data = patientPayload(form); if (!data) return;
+            $("#staff-dialog-close").disabled=true;
+            await submit(form, async () => { await saveReceptionPatient(p.patient_id, data,detailOptions); if(!active || detailCurrent!==detailVersion)return;$("#staff-dialog").close(); await load(currentPage); });
+            $("#staff-dialog-close").disabled=false;
           });
         } else {
-          dialog("Thông tin bệnh nhân", wrapper(patientDetails(row) + '<section class="admin-patient-section"><h3>Lịch sử khám bệnh</h3><div id="reception-patient-history" role="status">Đang tải lịch sử khám…</div></section>'));
+          dialog("Thông tin bệnh nhân", wrapper(patientDetails(row,{showRelatives:false,showAccountStatus:false}) + '<section class="admin-patient-section"><h3>Lịch sử khám bệnh</h3><div id="reception-patient-history" role="status">Đang tải lịch sử khám…</div></section>'));
           const historyNode = $("#reception-patient-history");
           try {
-            const visits = []; let page = 1, result;
-            do { result = await patients.listEncounters(p.patient_id, { page, page_size: 100 }); visits.push(...result.items); page++; }
-            while (result.items.length && visits.length < result.total);
-            visits.sort((a, b) => String(b.work_date || "").localeCompare(String(a.work_date || "")) || String(b.estimated_exam_at || b.created_at || "").localeCompare(String(a.estimated_exam_at || a.created_at || "")) || Number(b.encounter_id) - Number(a.encounter_id));
+            const visits = await readReceptionPatientHistory(p.patient_id,detailOptions);
+            if(!active || detailCurrent!==detailVersion)return;
             historyNode.tabIndex = 0;
             historyNode.setAttribute("role", "region");
             historyNode.setAttribute("aria-label", "Lịch sử khám bệnh, cuộn để xem thêm");
-            if (historyNode.isConnected) historyNode.innerHTML = table(["Mã lượt khám", "Bệnh nhân", "Ngày khám", "Bác sĩ / phòng", "Hình thức", "Trạng thái"], visits.map(visit => `<tr><td>${esc(code("LK", visit.encounter_id))}</td><td>${esc(visit.patient_name || (String(visit.patient_id) === String(p.patient_id) ? p.full_name : "Chưa cập nhật"))}</td><td>${date(visit.work_date)}</td><td>${esc(visit.doctor_name || "—")}<small class="cell-subtitle">${esc(visit.room_name || "—")}</small></td><td><span class="reception-history-type ${visit.encounter_type === "ONLINE" ? "is-online" : "is-direct"}">${visit.encounter_type === "ONLINE" ? "Online" : "Trực tiếp"}</span></td><td>${badge(visit.encounter_status)}</td></tr>`));
-          } catch (error) { if (historyNode.isConnected) historyNode.textContent = error.message || "Không tải được lịch sử khám."; }
+            if (historyNode.isConnected) historyNode.innerHTML = table(["Mã lượt khám", "Bệnh nhân", "Ngày khám", "Bác sĩ / phòng", "Hình thức", "Trạng thái"], visits.map(visit => `<tr><td>${esc(code("LK", visit.encounter_id))}</td><td>${esc(visit.patient_name || (String(visit.patient_id) === String(p.patient_id) ? p.full_name : "Chưa cập nhật"))}</td><td>${date(visit.work_date)}</td><td>${esc(visit.doctor_name || "—")}<small class="cell-subtitle">${esc(visit.room_name || "—")}</small></td><td>${encounterTypeBadge(visit.encounter_type)}</td><td>${badge(visit.encounter_status)}</td></tr>`));
+          } catch (error) { if (active && detailCurrent===detailVersion && historyNode.isConnected) {historyNode.textContent = error.message || "Không tải được lịch sử khám.";if([401,403].includes(error.status))throw error;} }
         }
       })));
     });
   }
   const refreshSearch = bindLiveSearch(searchForm.elements.q, () => load(), { invalidate() {
     version++; request?.abort();
+    if(!active)return;
     $("#patient-list").innerHTML = '<p role="status">Đang tìm hồ sơ…</p>'; $("#list-pagination").innerHTML = "";
   } });
   searchForm.addEventListener("submit", event => { event.preventDefault(); refreshSearch(); });
+  searchForm.elements.work_date.addEventListener("change",()=>refreshSearch());
   await load();
-  startAutoRefresh(() => load(currentPage));
-}
-async function allDoctors() {
-  const first = await doctors.listDoctors({ page_size: 100 }); const items = [...first.items];
-  for (let page = 2; (page - 1) * first.page_size < first.total; page++) items.push(...(await doctors.listDoctors({ page, page_size: first.page_size })).items);
-  return items;
-}
-async function walkInPage() {
-  const id = new URLSearchParams(location.search).get("patient_id");
-  let selectedPatient = id && /^\d+$/.test(id) ? (await patients.getPatient(id)).patient : null;
-  const doctorList = await allDoctors();
-  $("#walkin-body").innerHTML = panel("01 / Chọn đúng người bệnh", '<form id="walkin-search" class="staff-toolbar" role="search" aria-label="Tìm người bệnh"><label>Tìm hồ sơ theo tên, điện thoại hoặc CCCD<input type="search" name="q" maxlength="100" aria-controls="walkin-results"></label><a href="patients.html">Tạo hồ sơ mới →</a></form><div id="walkin-results"></div><div id="walkin-pagination" class="list-pagination"></div><div id="walkin-selected"></div>') + panel("02 / Tiếp nhận khám", `<form id="walkin-form"><div class="form-grid"><label class="full-width">Bác sĩ *<select name="doctor_profile_id" required><option value="">Chọn bác sĩ tiếp nhận</option>${doctorList.map(d => `<option value="${d.doctor_profile_id}">${esc(d.full_name)} · ${esc(d.department_name)}</option>`).join("")}</select></label><label class="full-width">Triệu chứng<textarea name="symptoms" rows="4" maxlength="5000"></textarea></label></div><p class="scope-note">Hệ thống chọn ca còn tiếp nhận và khung giờ phù hợp, chốt phí khám và phát mã phiếu. Khách khám trực tiếp được check-in khi tiếp nhận.</p><button type="submit">Tiếp nhận và phát phiếu</button><p role="status" class="form-feedback"></p><div id="walkin-created"></div></form>`);
-  function renderSelected() { $("#walkin-selected").innerHTML = selectedPatient ? `<div class="staff-confirm"><strong>Hồ sơ đã chọn</strong>${patientFacts(selectedPatient)}</div>` : '<p class="scope-note">Chọn hồ sơ người bệnh trước khi tiếp nhận.</p>'; }
-  renderSelected();
-  let searchVersion = 0, searchRequest;
-  async function search(page = 1) {
-    const current = ++searchVersion;
-    searchRequest?.abort(); searchRequest = new AbortController();
-    await run(async () => {
-      let result;
-      try { result = await patients.listPatients({ q: $("#walkin-search").elements.q.value.trim(), page, page_size: 10 }, { signal: searchRequest.signal }); }
-      catch (error) { if (current !== searchVersion) return; throw error; }
-      if (current !== searchVersion) return;
-      $("#walkin-results").innerHTML = table(["Họ tên", "Ngày sinh", "CCCD", "Điện thoại", "Chọn hồ sơ"], result.items.map(p => `<tr><td>${esc(p.full_name)}</td><td>${date(p.dob)}</td><td>${esc(p.id_card || "—")}</td><td>${esc(p.phone)}</td><td><button class="secondary" data-use-patient="${p.patient_id}">Dùng hồ sơ ${code("BN", p.patient_id)}</button></td></tr>`));
-      pagination(result, search, $("#walkin-pagination"));
-      $("#walkin-results").querySelectorAll("[data-use-patient]").forEach(button => button.addEventListener("click", () => { selectedPatient = result.items.find(p => p.patient_id === Number(button.dataset.usePatient)); renderSelected(); $("#walkin-created").innerHTML = ""; }));
-    });
-  }
-  const refreshSearch = bindLiveSearch($("#walkin-search").elements.q, () => search(), { invalidate() {
-    searchVersion++; searchRequest?.abort();
-    $("#walkin-results").innerHTML = '<p role="status">Đang tìm hồ sơ…</p>'; $("#walkin-pagination").innerHTML = "";
-  } });
-  $("#walkin-search").addEventListener("submit", event => { event.preventDefault(); refreshSearch(); });
-  $("#walkin-form").addEventListener("submit", event => {
-    event.preventDefault(); if (!selectedPatient || selectedPatient.is_archived) { status("Vui lòng chọn hồ sơ đang sử dụng của đúng người bệnh.", true); return; }
-    const form = event.currentTarget; const data = Object.fromEntries(new FormData(form)); data.patient_id = selectedPatient.patient_id; data.doctor_profile_id = Number(data.doctor_profile_id);
-    submit(form, async () => {
-      const e = (await encounters.createWalkIn(data)).encounter;
-      $("#walkin-created").innerHTML = `<div class="staff-confirm"><h3>Đã tiếp nhận và phát phiếu</h3>${encounterSummary(e)}<a href="walk_in.html?schedule_id=${e.schedule_id}">Xem lượt khám trong ca →</a></div>`;
-    }, "Đã tiếp nhận khám trực tiếp.");
-  });
+  startAutoRefresh(() => load(currentPage),{canRefresh:()=>active});
 }
 async function coordinationPage() {
   const { initReceptionCoordination } = await import("./reception_coordination.js");

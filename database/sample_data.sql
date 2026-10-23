@@ -2125,7 +2125,7 @@ INSERT INTO review(record_id,rating,comment,created_at)
 SELECT m.record_id,3+(e.doctor_profile_id%3),
  CASE e.doctor_profile_id%3 WHEN 0 THEN 'Dữ liệu mẫu: cần cải thiện thời gian chờ'
  WHEN 1 THEN 'Dữ liệu mẫu: được hướng dẫn đầy đủ' ELSE 'Dữ liệu mẫu: bác sĩ giải thích rõ ràng, tiếp đón chu đáo' END,m.examined_at+interval '1 hour'
-FROM medical_record m JOIN encounter e USING(encounter_id) JOIN work_schedule s USING(schedule_id)
+FROM medical_record m JOIN encounter e USING(encounter_id) JOIN work_schedule s ON s.schedule_id=e.schedule_id
 WHERE e.encounter_id>10 AND e.encounter_status='COMPLETED' AND s.start_time='08:00';
 
 INSERT INTO notification(user_id,event_key,notification_type,title,content,reference_type,reference_id,created_at)
@@ -2135,7 +2135,7 @@ SELECT p.user_id,'sample-encounter:'||e.encounter_id,'ENCOUNTER','Cập nhật l
 INSERT INTO notification(user_id,event_key,notification_type,title,content,reference_type,reference_id)
 SELECT DISTINCT a.nurse_id,'sample-assignment:'||a.nurse_id,'NURSE_ASSIGNMENT','Đã có ca khám được phân công',
  'Dữ liệu mẫu: mở Lịch làm việc và Bệnh nhân sắp khám để xem các ca có người bệnh.',NULL::text,NULL::integer
-FROM nurse_assignment a JOIN work_schedule s USING(schedule_id)
+FROM nurse_assignment a JOIN work_schedule s ON s.schedule_id=a.schedule_id
 WHERE s.work_date=(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date;
 
 DROP TABLE pg_temp.demo_visit_scenarios;
@@ -2834,7 +2834,7 @@ BEGIN
         END IF;
 
         -- Chỉ sử dụng ca riêng 13:30–17:00.
-        IF EXISTS (
+        WHILE EXISTS (
             SELECT 1 FROM work_schedule
             WHERE work_date=work_day
               AND (
@@ -2843,11 +2843,9 @@ BEGIN
               )
               AND start_time<TIME '17:00'
               AND end_time>TIME '13:30'
-        ) THEN
-            RAISE EXCEPTION
-                'Trùng lịch bác sĩ/phòng ngày %, bác sĩ %',
-                work_day,doctor_id;
-        END IF;
+        ) LOOP
+            work_day := work_day + 1;
+        END LOOP;
 
         SELECT consultation_fee INTO STRICT fee
         FROM doctor_profile
@@ -3448,7 +3446,7 @@ BEGIN
     -- Tổng ca khám mới.
     SELECT count(*) INTO bad_count
     FROM extra_seed_visits x
-    JOIN work_schedule s USING(schedule_id)
+    JOIN work_schedule s ON s.schedule_id=x.schedule_id
     WHERE s.booked_count<>(
         SELECT count(*)
         FROM encounter e
@@ -3479,7 +3477,7 @@ BEGIN
     SELECT count(*) INTO bad_count
     FROM extra_seed_visits x
     JOIN encounter e USING(encounter_id)
-    JOIN work_schedule s USING(schedule_id)
+    JOIN work_schedule s ON s.schedule_id=e.schedule_id
     WHERE e.estimated_exam_at::date<>s.work_date
        OR e.estimated_exam_at AT TIME ZONE 'Asia/Saigon'
           < s.work_date+s.start_time
@@ -3685,5 +3683,22 @@ ORDER BY table_name;
 -- ============================================================================
 -- XI. KẾT THÚC TRANSACTION SAU KHI KIỂM TRA VÀ THỐNG KÊ
 -- ============================================================================
+
+
+-- Dữ liệu mẫu không được giả lập bệnh nhân đã có mặt hoặc đang khám.
+-- Giữ lịch sử mẫu đã hoàn tất; trạng thái tiếp diễn phải phát sinh từ thao tác thật.
+WITH corrected AS (
+ UPDATE encounter e SET encounter_status=CASE
+   WHEN EXISTS(SELECT 1 FROM work_schedule s WHERE s.schedule_id=e.schedule_id AND s.work_date<(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')::date) THEN 'NO_SHOW'
+   WHEN e.encounter_type='ONLINE' AND EXISTS(SELECT 1 FROM payment p WHERE p.encounter_id=e.encounter_id AND p.transaction_status='SUCCESS' AND p.payment_type IN ('DEPOSIT','EXAM_FEE')) THEN 'CONFIRMED'
+   ELSE 'CANCELLED' END,
+ checked_in_at=NULL
+ WHERE e.encounter_status IN ('CHECKED_IN','IN_PROGRESS') OR (e.encounter_status IN ('COMPLETED','NO_SHOW') AND e.estimated_exam_at>CURRENT_TIMESTAMP)
+ RETURNING e.encounter_id,e.encounter_status,e.created_by_id
+)
+INSERT INTO encounter_status_log(encounter_id,old_status,new_status,changed_by_id,note)
+SELECT encounter_id,NULL,encounter_status,created_by_id,'Dữ liệu mẫu: chờ thao tác check-in và bắt đầu khám thực tế; không giả lập có mặt' FROM corrected;
+UPDATE work_schedule s SET booked_count=(SELECT count(*) FROM encounter e WHERE e.schedule_id=s.schedule_id AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED'));
+UPDATE work_schedule SET schedule_status=CASE WHEN booked_count>=max_quota THEN 'FULL' ELSE 'OPEN' END WHERE schedule_status IN ('OPEN','FULL');
 
 COMMIT;

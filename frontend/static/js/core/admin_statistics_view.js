@@ -42,7 +42,7 @@ export function statisticsView(data,tab='overview') {
   } else if(tab==='doctors') {
     summary=metricsFor([['Bác sĩ trong bộ lọc',number(data.doctors.length),'Bao gồm bác sĩ chưa có lịch'],['Ca làm việc',number(data.shifts.length),'Theo khoảng ngày đã chọn'],['Tổng lượt khám',number(e.total),'Theo ngày ca khám'],['Đã hoàn thành',number(e.completed),'Lượt khám hoàn tất']]);
     panels=[];
-    title='Báo cáo bác sĩ';columns=['Bác sĩ','Chuyên khoa','Ca làm việc','Lượt khám','Hoàn thành','Đã đặt / sức chứa','Điểm đánh giá'];rows=doctorRows.map(d=>[d.name,d.department,d.shifts,d.total,d.completed,`${d.booked} / ${d.capacity}`,average(d.rating)]);
+    title='Báo cáo bác sĩ';columns=['Bác sĩ','Chuyên khoa','Ca làm việc','Lượt khám','Hoàn thành','Đã đặt / sức chứa'];rows=doctorRows.map(d=>[d.name,d.department,d.shifts,d.total,d.completed,`${d.booked} / ${d.capacity}`]);
   } else if(tab==='payments') {
     summary=metricsFor([['Thu thành công',money(cash.gross_received),'Tiền cọc và phí khám'],['Hoàn tiền thành công',money(cash.refunded_amount),'Số tiền đã hoàn thực tế'],['Thu ròng',money(cash.net_received),'Thu thành công trừ hoàn tiền'],['Chờ thanh toán',number(data.payments.filter(p=>p.transaction_status==='PENDING').length),'Giao dịch đang chờ xử lý']]);
     panels=[statisticsList('Cơ cấu giao dịch',[['Tiền đặt cọc',money(cash.deposit_received)],['Phí khám',money(cash.exam_fee_received)],['Hoàn tiền',money(cash.refunded_amount)],['Thu ròng',money(cash.net_received)]]),statisticsList('Trạng thái giao dịch',['SUCCESS','PENDING','FAILED','REFUNDED'].map(status=>[status==='PENDING'?'Chờ thanh toán':label(status),number(data.payments.filter(p=>p.transaction_status===status).length)]))];
