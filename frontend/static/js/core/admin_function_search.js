@@ -31,7 +31,6 @@ export const adminFunctions=Object.freeze([
   feature('review-visibility','reviews','Ẩn, hiện đánh giá','#feedback-results','ẩn phản hồi xác nhận'),
   feature('notification-search','notifications','Tìm kiếm và lọc thông báo','#feedback-filters','chưa đọc đã đọc loại thông báo'),
   feature('notification-detail','notifications','Chi tiết thông báo và hoạt động liên quan','#feedback-results','xem nội dung'),
-  feature('notification-read-all','notifications','Đánh dấu tất cả thông báo đã đọc','#feedback-read-all','đọc tất cả hộp thư'),
   feature('overview-chart','home','Biểu đồ lượt khám theo tuần','#admin-weekly-chart','thống kê ngày'),
   feature('overview-visits','home','Lượt khám hôm nay','#admin-overview-recent','danh sách tổng quan'),
   feature('overview-calendar','home','Lịch làm việc bác sĩ trên tổng quan','.admin-overview-schedules','lịch ngày phòng'),

@@ -18,7 +18,7 @@ const readonlyField = (label, value, multiline = false) => {
 
 let user = await staffReady;
 if (user) {
-  bindDialog({ dismissible: user.role_name === "NURSE" });
+  bindDialog({ dismissible: ["NURSE", "RECEPTIONIST"].includes(user.role_name) });
   await run(async () => {
     const role = backendRoles[user.role_name];
     let doctor = null;
@@ -147,7 +147,7 @@ function bindPasswordChange() {
   const open = $("#staff-password-open"), close = $("#staff-password-close"), save = $("#staff-password-submit");
   const current = form.elements.current_password, fresh = form.elements.new_password, confirm = form.elements.confirm_password;
   let busy = false, version = 0, controller;
-  if (user.role_name === "NURSE") enhanceDialogDismiss(modal, { closeButtons: [close], canClose: () => !busy });
+  if (["NURSE", "RECEPTIONIST"].includes(user.role_name)) enhanceDialogDismiss(modal, { closeButtons: [close], canClose: () => !busy });
   function setBusy(active) {
     busy = active;
     for (const field of [current, fresh, confirm, close, save]) field.disabled = active;

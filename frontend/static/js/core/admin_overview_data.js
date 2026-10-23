@@ -24,14 +24,10 @@ export async function overviewSection(task) {
 
 export async function loadOverviewNotifications(signal) {
   // The unread list's total is the server's complete unread count, not its page size.
-  const unread=await notifications.listNotifications({unread_only:true,page:1,page_size:5},{signal});
-  let items=[...unread.items];
-  if(unread.total<5) {
-    const recent=await notifications.listNotifications({page:1,page_size:5},{signal});
-    const seen=new Set(items.map(row=>String(row.notification_id)));
-    items.push(...recent.items.filter(row=>!seen.has(String(row.notification_id))));
-  }
-  return {items:items.slice(0,5),unreadCount:unread.total};
+  const unread=await notifications.listNotifications({unread_only:true,page:1,page_size:1},{signal});
+  const items=await allPages(notifications.listNotifications,{},signal);
+  items.sort((a,b)=>Number(Boolean(a.is_read))-Number(Boolean(b.is_read)));
+  return {items,unreadCount:unread.total};
 }
 
 export async function loadAdminOverview(day, week, signal) {

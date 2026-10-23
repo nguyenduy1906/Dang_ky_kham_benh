@@ -9,20 +9,17 @@ export function overviewCalendar(shifts, day) {
 }
 
 
-// Local presentation data only; never used as backend schedule identifiers.
-export function previewReceptionShifts(day) {
-  const [year, month] = day.split("-").map(Number);
-  const count = new Date(year, month, 0).getDate();
-  return Array.from({ length: count }, (_, i) => {
-    const work_date = `${day.slice(0, 7)}-${String(i + 1).padStart(2, "0")}`;
-    return [["morning", "08:00", "11:30"], ["afternoon", "13:30", "17:00"]].map(([period, start_time, end_time]) => ({
-      work_date, period, start_time, end_time, department_name: "Nội tổng quát", room_name: "Phòng Nội 101", schedule_status: "OPEN",
-    }));
-  }).flat();
-}
-export function receptionScheduleOverview(day, shifts = previewReceptionShifts(day)) {
-  const active = shifts.filter(s => s.schedule_status !== "UNAVAILABLE");
-  const items = active.filter(s => s.work_date === day);
-  const cards = items.length ? `<div class="doctor-overview-shifts">${items.map(s => `<article><div><strong>${esc(s.department_name)}</strong><p>${esc(s.room_name)}</p></div><div><strong>${esc(s.start_time.slice(0,5))} – ${esc(s.end_time.slice(0,5))}</strong><button type="button" class="button-link secondary" data-reception-preview-shift="${esc(s.period)}">Xem danh sách bệnh nhân</button></div></article>`).join("")}</div>` : empty("Không có ca làm việc hôm nay.");
-  return `<div class="doctor-overview-grid">${panel("Lịch làm việc", overviewCalendar(shifts, day))}${panel("Ca làm việc hôm nay", cards, '<a href="work_calendar.html">Xem lịch làm việc →</a>')}</div><p class="scope-note">Lịch và ca làm việc minh họa giao diện.</p>`;
+export function receptionScheduleOverview(day, shifts = [], error = null) {
+  const link = '<a href="work_calendar.html">Xem lịch làm việc →</a>';
+  if (error) {
+    const message = `<p class="scope-note" role="status">${esc(error)}</p>`;
+    return `<div class="doctor-overview-grid">${panel("Lịch làm việc", message, link)}${panel("Ca làm việc hôm nay", message)}</div>`;
+  }
+  const periods = {MORNING: "Ca sáng", AFTERNOON: "Ca chiều", FULL_DAY: "Cả ngày"};
+  const items = shifts.filter(s => s.work_date === day).sort((a,b) => String(a.start_time).localeCompare(String(b.start_time)));
+  const cards = items.length ? `<div class="doctor-overview-shifts">${items.map(s => {
+    const state = s.status === "ON_LEAVE" ? "Đã duyệt nghỉ" : s.pending_leave ? "Chờ duyệt nghỉ · Vẫn làm việc" : "Làm việc";
+    return `<article><div><strong>${esc(periods[s.period] || s.period)}</strong><p>${esc(state)}</p></div><div><strong>${esc(String(s.start_time || "").slice(0,5))} – ${esc(String(s.end_time || "").slice(0,5))}</strong></div></article>`;
+  }).join("")}</div>` : empty("Không có ca làm việc hôm nay.");
+  return `<div class="doctor-overview-grid">${panel("Lịch làm việc", overviewCalendar(shifts, day), link)}${panel("Ca làm việc hôm nay", cards)}</div>`;
 }

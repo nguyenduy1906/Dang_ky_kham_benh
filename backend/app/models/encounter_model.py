@@ -130,9 +130,9 @@ def add_status(db, encounter_id, old_status, new_status, actor_id, note=None):
 
 
 def add_transfer(db, encounter_id, old_doctor_id, new_doctor_id, actor_id, reason):
-    db.execute('INSERT INTO encounter_transfer_log '
-               '(encounter_id,old_doctor_id,new_doctor_id,transferred_by_id,reason) VALUES (%s,%s,%s,%s,%s)',
-               (encounter_id, old_doctor_id, new_doctor_id, actor_id, reason))
+    return db.execute('INSERT INTO encounter_transfer_log '
+               '(encounter_id,old_doctor_id,new_doctor_id,transferred_by_id,reason) VALUES (%s,%s,%s,%s,%s) RETURNING log_id',
+               (encounter_id, old_doctor_id, new_doctor_id, actor_id, reason)).fetchone()['log_id']
 
 
 def list_logs(db, encounter_id, kind, page, page_size):

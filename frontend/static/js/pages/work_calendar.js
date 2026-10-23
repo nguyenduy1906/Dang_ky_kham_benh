@@ -29,7 +29,7 @@ async function initialize() {
   let weekRequest, listRequest, detailRequest, createRequest, cancelRequest, cancelling = false;
   const dialog = $("#calendar-dialog"), form = $("#leave-form"), feedback = $("#leave-feedback");
   const submitButton = $("#leave-submit"), cancelButton = $("#dialog-cancel-request");
-  enhanceDialogDismiss(dialog, { closeButtons: [$("#calendar-dialog-close")] });
+  enhanceDialogDismiss(dialog, { closeButtons: [$("#calendar-dialog-close")], canClose: () => !cancelling });
 
   function message(node, text = "", error = false) {
     if (!active) return;

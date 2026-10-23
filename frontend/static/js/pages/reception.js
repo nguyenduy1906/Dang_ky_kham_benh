@@ -1,8 +1,13 @@
+import { patientDetails } from "../core/admin_patient_detail.js";
+import { patientEditForm } from "../core/admin_patient_form.js";
+import { resources } from "../core/admin_resources.js";
+import { receptionShiftVisits } from "../core/reception_shift_visits.js";
 import { receptionScheduleOverview } from "../core/reception_schedule_overview.js";
 import { receptionOverviewCounts } from "../core/reception_overview.js";
+import { loadReceptionOverview } from "../core/reception_overview_data.js";
 import { code, parseCode } from "../core/business_codes.js";
 import { startAutoRefresh } from "../core/auto_refresh.js";
-import { initTodayOverview, overviewRows, overviewDayParams } from "../core/staff_overview.js";
+import { initTodayOverview } from "../core/staff_overview.js";
 import { staffReady } from "../core/staff_workspace.js";
 import * as patients from "../api/patient.js";
 import * as doctors from "../api/doctor.js";
@@ -16,10 +21,15 @@ const user = await staffReady;
 if (user) {
   bindDialog();
   const page = document.body.dataset.page;
-  if (page === "overview") await run(overview);
-  if (page === "encounters") await initEncounterList({ role: "reception" });
+  if (page === "overview") await overview();
   if (page === "patients") await patientPage();
-  if (page === "walk_in") await run(walkInPage);
+  if (page === "walk_in") {
+    const { initReceptionPatientForm } = await import("./reception_patient_form.js");
+    initReceptionPatientForm();
+    $("#page-body").innerHTML = '<div id="reception-encounters"></div><div id="walkin-body"></div>';
+    await initEncounterList({ role: "reception", target: "#reception-encounters" });
+    await run(walkInPage);
+  }
   if (page === "coordination") await run(coordinationPage);
 }
 function receptionSummary(rows) {
@@ -36,19 +46,9 @@ function receptionSummary(rows) {
   ].map(([label, value, note], index) => `<article class="summary-card"><span>${label}</span><svg class="reception-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[index]}</svg><strong>${value}</strong><p>${note}</p></article>`).join("")}</div>`;
 }
 async function overview() {
-  $("#page-body").addEventListener("click", event => {
-    const button = event.target.closest("[data-reception-preview-shift]");
-    if (!button) return;
-    const morning = button.dataset.receptionPreviewShift === "morning";
-    dialog(`Danh sách bệnh nhân · ${morning ? "Ca sáng" : "Ca chiều"}`, '<p class="scope-note">Bản xem trước giao diện · Chưa có dữ liệu bệnh nhân cho ca này.</p>' + table(["Người bệnh / phiếu", "Khung giờ", "Phòng / bác sĩ", "Trạng thái"], []));
-  });
   await initTodayOverview(async (range, options) => {
-    const params = overviewDayParams(range);
-    const [all, list] = await Promise.all([
-      overviewRows(encounters.listEncounters, params, range, options),
-      overviewRows(encounters.listStaffTickets, params, range, options),
-    ]);
-    return receptionSummary(all) + receptionScheduleOverview(range.from) + panel("Phiếu khám trong thời gian đã chọn", table(["Người bệnh / phiếu", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", "Thao tác"], list.slice(0, 8).map(e => `<tr>${encounterColumns(e)}<td><a href="encounters.html?schedule_id=${e.schedule_id}" class="button-link secondary">Xem ca khám</a></td></tr>`)), '<a href="encounters.html">Tất cả lượt khám →</a>');
+    const {rows, calendar} = await loadReceptionOverview(range.from, user.user_id, options);
+    return receptionSummary(rows) + receptionScheduleOverview(range.from, calendar.shifts, calendar.error) + receptionShiftVisits(rows);
   });
 }
 function patientFacts(p) { return facts([["Mã hồ sơ", code("BN", p.patient_id)], ["Họ tên", p.full_name], ["Ngày sinh", date(p.dob)], ["Giới tính", p.gender], ["Số điện thoại", p.phone], ["CCCD / mã định danh", p.id_card], ["BHYT", p.health_insurance], ["Địa chỉ", p.address], ["Trạng thái", p.is_archived ? "Đã lưu trữ" : "Đang sử dụng"]]); }
@@ -64,7 +64,7 @@ function patientPayload(form) {
   return data;
 }
 async function patientPage() {
-  $("#page-body").innerHTML = panel("Tra cứu hồ sơ trước khi tạo mới", '<form id="patient-search-form" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tên, số điện thoại hoặc CCCD<input name="q" type="search" maxlength="100" placeholder="Nhập thông tin để tìm hồ sơ" aria-controls="patient-list"></label><button id="patient-clear" class="secondary" type="button">Bỏ tìm kiếm</button></form><div id="patient-list"></div><div id="list-pagination" class="list-pagination"></div>') + panel("Tạo hồ sơ bệnh nhân", `<form id="profile-form">${patientFields()}<div class="actions"><button type="submit">Tạo / dùng lại hồ sơ</button><button type="reset" class="secondary">Xóa nội dung nhập</button></div><p role="status" class="form-feedback"></p><div id="patient-created"></div></form>`);
+  $("#page-body").innerHTML = panel("Danh sách hồ sơ", '<form id="patient-search-form" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tên, số điện thoại hoặc CCCD<input name="q" type="search" maxlength="100" placeholder="Nhập thông tin để tìm hồ sơ" aria-controls="patient-list"></label><label>Ngày khám<input name="work_date" type="date" aria-controls="patient-list"></label></form><div id="patient-list"></div><div id="list-pagination" class="list-pagination"></div>');
   const searchForm = $("#patient-search-form");
   let currentPage = 1, version = 0, request;
   async function load(page = 1) {
@@ -73,15 +73,42 @@ async function patientPage() {
     request?.abort(); request = new AbortController();
     await run(async () => {
       let result;
-      try { result = await patients.listPatients({ q: searchForm.elements.q.value.trim(), page, page_size: 15 }, { signal: request.signal }); }
+      try { result = await patients.listPatients({ q: searchForm.elements.q.value.trim(), page, page_size: 10 }, { signal: request.signal }); }
       catch (error) { if (current !== version) return; throw error; }
       if (current !== version) return;
-      $("#patient-list").innerHTML = table(["Hồ sơ", "Ngày sinh / CCCD", "Liên hệ", "Thao tác"], result.items.map(p => `<tr><td><strong>${esc(p.full_name)}</strong><small class="cell-subtitle">Hồ sơ ${code("BN", p.patient_id)}</small></td><td>${date(p.dob)}<small class="cell-subtitle">${esc(p.id_card || "—")}</small></td><td>${esc(p.phone || "—")}</td><td><div class="actions"><button data-patient="${p.patient_id}" class="secondary">Xem / cập nhật</button><a class="button-link secondary" href="walk_in.html?patient_id=${p.patient_id}">Tiếp nhận</a></div></td></tr>`));
+      $("#patient-list").innerHTML = table(["Hồ sơ", "Ngày sinh / CCCD", "Liên hệ", "Thao tác"], result.items.map(p => `<tr><td><strong>${esc(p.full_name)}</strong><small class="cell-subtitle">Hồ sơ ${code("BN", p.patient_id)}</small></td><td>${date(p.dob)}<small class="cell-subtitle">${esc(p.id_card || "—")}</small></td><td>${esc(p.phone || "—")}</td><td><div class="actions"><button data-patient="${p.patient_id}" data-mode="view" class="secondary">Xem</button><button data-patient="${p.patient_id}" data-mode="edit" class="secondary">Chỉnh sửa</button></div></td></tr>`));
       pagination(result, load);
       $("#patient-list").querySelectorAll("[data-patient]").forEach(button => button.addEventListener("click", () => run(async () => {
         const p = (await patients.getPatient(button.dataset.patient)).patient;
-        dialog("Hồ sơ bệnh nhân", patientFacts(p) + `<form id="patient-edit-form">${patientFields(p, true)}<button type="submit">Lưu thông tin hồ sơ</button><p role="status" class="form-feedback"></p></form>`);
-        $("#patient-edit-form").addEventListener("submit", event => { event.preventDefault(); const data = patientPayload(event.currentTarget); if (!data) return; delete data.phone; submit(event.currentTarget, async () => { await patients.updatePatient(p.patient_id, data); await load(currentPage); }); });
+        const edit = button.dataset.mode === "edit";
+        const row = { ...p, relatives: [] };
+        const wrapper = html => `<div class="admin-page reception-patient-view">${html}</div>`;
+        if (edit) {
+          dialog("Chỉnh sửa thông tin bệnh nhân", wrapper(patientEditForm(row, resources.patients.fields.map(field => field.name === "phone" ? { ...field, readOnEdit: false } : field), {}, '<div class="actions"><button type="button" class="secondary" data-patient-edit-cancel>Hủy</button><button type="submit">Lưu thay đổi</button></div><p role="status" class="form-feedback"></p>', {showAccountStatus: false, phoneEditable: true})));
+          const form = $("#staff-dialog-content form");
+          form.addEventListener("click", event => {
+            if (event.target.closest("[data-patient-edit-cancel]")) { $("#staff-dialog").close(); return; }
+            const clear = event.target.closest('[data-action="clear-input"]');
+            if (clear) { const input = clear.parentElement.querySelector("input"); input.value = ""; input.focus(); }
+          });
+          form.addEventListener("submit", event => {
+            event.preventDefault(); const data = patientPayload(form); if (!data) return;
+            submit(form, async () => { await patients.updatePatient(p.patient_id, data); $("#staff-dialog").close(); await load(currentPage); });
+          });
+        } else {
+          dialog("Thông tin bệnh nhân", wrapper(patientDetails(row) + '<section class="admin-patient-section"><h3>Lịch sử khám bệnh</h3><div id="reception-patient-history" role="status">Đang tải lịch sử khám…</div></section>'));
+          const historyNode = $("#reception-patient-history");
+          try {
+            const visits = []; let page = 1, result;
+            do { result = await patients.listEncounters(p.patient_id, { page, page_size: 100 }); visits.push(...result.items); page++; }
+            while (result.items.length && visits.length < result.total);
+            visits.sort((a, b) => String(b.work_date || "").localeCompare(String(a.work_date || "")) || String(b.estimated_exam_at || b.created_at || "").localeCompare(String(a.estimated_exam_at || a.created_at || "")) || Number(b.encounter_id) - Number(a.encounter_id));
+            historyNode.tabIndex = 0;
+            historyNode.setAttribute("role", "region");
+            historyNode.setAttribute("aria-label", "Lịch sử khám bệnh, cuộn để xem thêm");
+            if (historyNode.isConnected) historyNode.innerHTML = table(["Mã lượt khám", "Bệnh nhân", "Ngày khám", "Bác sĩ / phòng", "Hình thức", "Trạng thái"], visits.map(visit => `<tr><td>${esc(code("LK", visit.encounter_id))}</td><td>${esc(visit.patient_name || (String(visit.patient_id) === String(p.patient_id) ? p.full_name : "Chưa cập nhật"))}</td><td>${date(visit.work_date)}</td><td>${esc(visit.doctor_name || "—")}<small class="cell-subtitle">${esc(visit.room_name || "—")}</small></td><td><span class="reception-history-type ${visit.encounter_type === "ONLINE" ? "is-online" : "is-direct"}">${visit.encounter_type === "ONLINE" ? "Online" : "Trực tiếp"}</span></td><td>${badge(visit.encounter_status)}</td></tr>`));
+          } catch (error) { if (historyNode.isConnected) historyNode.textContent = error.message || "Không tải được lịch sử khám."; }
+        }
       })));
     });
   }
@@ -90,15 +117,6 @@ async function patientPage() {
     $("#patient-list").innerHTML = '<p role="status">Đang tìm hồ sơ…</p>'; $("#list-pagination").innerHTML = "";
   } });
   searchForm.addEventListener("submit", event => { event.preventDefault(); refreshSearch(); });
-  $("#patient-clear").addEventListener("click", () => { searchForm.elements.q.value = ""; refreshSearch(); });
-  $("#profile-form").addEventListener("submit", event => {
-    event.preventDefault(); const form = event.currentTarget; const data = patientPayload(form); if (!data) return;
-    submit(form, async () => {
-      const result = await patients.createPatient(data); const p = result.patient;
-      $("#patient-created").innerHTML = `<div class="staff-confirm"><strong>${result.patient_reused ? "Đã dùng lại hồ sơ hiện có" : "Đã tạo hồ sơ"}: ${esc(p.full_name)} · ${code("BN", p.patient_id)}</strong><p>${esc(result.message)}</p><a class="button-link" href="walk_in.html?patient_id=${p.patient_id}">Tiếp nhận khám trực tiếp →</a></div>`;
-      await load();
-    }, "Đã xác định hồ sơ người bệnh.");
-  });
   await load();
   startAutoRefresh(() => load(currentPage));
 }
@@ -111,7 +129,7 @@ async function walkInPage() {
   const id = new URLSearchParams(location.search).get("patient_id");
   let selectedPatient = id && /^\d+$/.test(id) ? (await patients.getPatient(id)).patient : null;
   const doctorList = await allDoctors();
-  $("#page-body").innerHTML = panel("01 / Chọn đúng người bệnh", '<form id="walkin-search" class="staff-toolbar" role="search" aria-label="Tìm người bệnh"><label>Tìm hồ sơ theo tên, điện thoại hoặc CCCD<input type="search" name="q" maxlength="100" aria-controls="walkin-results"></label><a href="patients.html">Tạo hồ sơ mới →</a></form><div id="walkin-results"></div><div id="list-pagination" class="list-pagination"></div><div id="walkin-selected"></div>') + panel("02 / Tiếp nhận khám", `<form id="walkin-form"><div class="form-grid"><label class="full-width">Bác sĩ *<select name="doctor_profile_id" required><option value="">Chọn bác sĩ tiếp nhận</option>${doctorList.map(d => `<option value="${d.doctor_profile_id}">${esc(d.full_name)} · ${esc(d.department_name)}</option>`).join("")}</select></label><label class="full-width">Triệu chứng<textarea name="symptoms" rows="4" maxlength="5000"></textarea></label></div><p class="scope-note">Hệ thống chọn ca còn tiếp nhận và khung giờ phù hợp, chốt phí khám và phát mã phiếu. Khách khám trực tiếp được check-in khi tiếp nhận.</p><button type="submit">Tiếp nhận và phát phiếu</button><p role="status" class="form-feedback"></p><div id="walkin-created"></div></form>`);
+  $("#walkin-body").innerHTML = panel("01 / Chọn đúng người bệnh", '<form id="walkin-search" class="staff-toolbar" role="search" aria-label="Tìm người bệnh"><label>Tìm hồ sơ theo tên, điện thoại hoặc CCCD<input type="search" name="q" maxlength="100" aria-controls="walkin-results"></label><a href="patients.html">Tạo hồ sơ mới →</a></form><div id="walkin-results"></div><div id="walkin-pagination" class="list-pagination"></div><div id="walkin-selected"></div>') + panel("02 / Tiếp nhận khám", `<form id="walkin-form"><div class="form-grid"><label class="full-width">Bác sĩ *<select name="doctor_profile_id" required><option value="">Chọn bác sĩ tiếp nhận</option>${doctorList.map(d => `<option value="${d.doctor_profile_id}">${esc(d.full_name)} · ${esc(d.department_name)}</option>`).join("")}</select></label><label class="full-width">Triệu chứng<textarea name="symptoms" rows="4" maxlength="5000"></textarea></label></div><p class="scope-note">Hệ thống chọn ca còn tiếp nhận và khung giờ phù hợp, chốt phí khám và phát mã phiếu. Khách khám trực tiếp được check-in khi tiếp nhận.</p><button type="submit">Tiếp nhận và phát phiếu</button><p role="status" class="form-feedback"></p><div id="walkin-created"></div></form>`);
   function renderSelected() { $("#walkin-selected").innerHTML = selectedPatient ? `<div class="staff-confirm"><strong>Hồ sơ đã chọn</strong>${patientFacts(selectedPatient)}</div>` : '<p class="scope-note">Chọn hồ sơ người bệnh trước khi tiếp nhận.</p>'; }
   renderSelected();
   let searchVersion = 0, searchRequest;
@@ -124,13 +142,13 @@ async function walkInPage() {
       catch (error) { if (current !== searchVersion) return; throw error; }
       if (current !== searchVersion) return;
       $("#walkin-results").innerHTML = table(["Họ tên", "Ngày sinh", "CCCD", "Điện thoại", "Chọn hồ sơ"], result.items.map(p => `<tr><td>${esc(p.full_name)}</td><td>${date(p.dob)}</td><td>${esc(p.id_card || "—")}</td><td>${esc(p.phone)}</td><td><button class="secondary" data-use-patient="${p.patient_id}">Dùng hồ sơ ${code("BN", p.patient_id)}</button></td></tr>`));
-      pagination(result, search);
+      pagination(result, search, $("#walkin-pagination"));
       $("#walkin-results").querySelectorAll("[data-use-patient]").forEach(button => button.addEventListener("click", () => { selectedPatient = result.items.find(p => p.patient_id === Number(button.dataset.usePatient)); renderSelected(); $("#walkin-created").innerHTML = ""; }));
     });
   }
   const refreshSearch = bindLiveSearch($("#walkin-search").elements.q, () => search(), { invalidate() {
     searchVersion++; searchRequest?.abort();
-    $("#walkin-results").innerHTML = '<p role="status">Đang tìm hồ sơ…</p>'; $("#list-pagination").innerHTML = "";
+    $("#walkin-results").innerHTML = '<p role="status">Đang tìm hồ sơ…</p>'; $("#walkin-pagination").innerHTML = "";
   } });
   $("#walkin-search").addEventListener("submit", event => { event.preventDefault(); refreshSearch(); });
   $("#walkin-form").addEventListener("submit", event => {
@@ -138,73 +156,11 @@ async function walkInPage() {
     const form = event.currentTarget; const data = Object.fromEntries(new FormData(form)); data.patient_id = selectedPatient.patient_id; data.doctor_profile_id = Number(data.doctor_profile_id);
     submit(form, async () => {
       const e = (await encounters.createWalkIn(data)).encounter;
-      $("#walkin-created").innerHTML = `<div class="staff-confirm"><h3>Đã tiếp nhận và phát phiếu</h3>${encounterSummary(e)}<a href="encounters.html?schedule_id=${e.schedule_id}">Xem lượt khám trong ca →</a></div>`;
+      $("#walkin-created").innerHTML = `<div class="staff-confirm"><h3>Đã tiếp nhận và phát phiếu</h3>${encounterSummary(e)}<a href="walk_in.html?schedule_id=${e.schedule_id}">Xem lượt khám trong ca →</a></div>`;
     }, "Đã tiếp nhận khám trực tiếp.");
   });
 }
 async function coordinationPage() {
-  const id = new URLSearchParams(location.search).get("encounter_id");
-  $("#page-body").innerHTML = panel("Điều phối lượt khám", `<form id="coordination-search" class="staff-toolbar" role="search" aria-label="Tra cứu ca chuyển"><label>Mã lượt khám<input type="text" name="encounter_id" placeholder="LK_001" value="${id && /^\d+$/.test(id) ? id : ""}" aria-controls="transfer-options"></label></form><div id="transfer-context"></div><div id="transfer-options"></div><div id="list-pagination" class="list-pagination"></div>`) + panel("Lịch phòng / ca", '<form id="room-search" class="staff-toolbar"><label>Bác sĩ<select id="coordination-doctor"><option value="">Chọn bác sĩ để xem ca</option></select></label><button type="submit">Xem ca tiếp nhận</button></form><div id="room-schedules"></div><div id="schedule-pagination" class="list-pagination"></div>');
-  const doctorList = await allDoctors();
-  $("#coordination-doctor").insertAdjacentHTML("beforeend", doctorList.map(d => `<option value="${d.doctor_profile_id}">${esc(d.full_name)} · ${esc(d.department_name)}</option>`).join(""));
-  let optionsVersion = 0, optionsRequest, optionsPage = 1, schedulePage = 1, active = true;
-  const stop = () => { active = false; optionsVersion++; optionsRequest?.abort(); };
-  window.addEventListener("pagehide", stop, { once: true });
-  window.addEventListener("neu:auth-change", stop, { once: true });
-  async function options(page = 1) {
-    if (!active) return;
-    optionsPage = page;
-    const rawId = $("#coordination-search").elements.encounter_id.value.trim();
-    if (!rawId) return;
-    let encounterId;
-    try { encounterId = parseCode(rawId, "LK"); } catch (error) { status(error.message, true); return; }
-    const current = ++optionsVersion;
-    optionsRequest?.abort(); optionsRequest = new AbortController();
-    const signal = optionsRequest.signal;
-    $("#transfer-context").innerHTML = ""; $("#transfer-options").innerHTML = "";
-    await run(async () => {
-      let e, result;
-      try {
-        e = (await encounters.getEncounter(encounterId, { signal })).encounter;
-        if (!active || current !== optionsVersion) return;
-        result = await encounters.getTransferOptions(encounterId, { page, page_size: 12 }, { signal });
-      } catch (error) { if (current !== optionsVersion) return; throw error; }
-      if (!active || current !== optionsVersion) return;
-      $("#transfer-context").innerHTML = encounterSummary(e);
-      $("#transfer-options").innerHTML = result.items.length ? `<div class="shift-grid">${result.items.map(s => `<article class="shift-card"><h3>${esc(s.doctor_name)}</h3>${facts([["Phòng", s.room_name], ["Ngày", date(s.work_date)], ["Ca", `${s.start_time.slice(0,5)} – ${s.end_time.slice(0,5)}`]])}<button data-transfer="${s.schedule_id}" ${s.slots.length ? "" : "disabled"}>Chọn ca chuyển</button></article>`).join("")}</div>` : empty("Không có ca chuyển cùng chuyên khoa còn chỗ.");
-      pagination(result, options);
-      $("#transfer-options").querySelectorAll("[data-transfer]").forEach(button => button.addEventListener("click", () => {
-        const s = result.items.find(item => item.schedule_id === Number(button.dataset.transfer));
-        dialog("Xác nhận chuyển bác sĩ / ca", facts([["Người bệnh", e.patient_name], ["Bác sĩ mới", s.doctor_name], ["Phòng", s.room_name], ["Ngày", date(s.work_date)]]) + `<form id="transfer-form"><label>Khung giờ mới *<select name="appointment_time" required>${s.slots.map(slot => `<option value="${slot.appointment_time}">${time(slot.starts_at)} – ${time(slot.ends_at)}</option>`).join("")}</select></label><label>Lý do chuyển *<textarea name="reason" rows="3" maxlength="1000" required></textarea></label><button type="submit">Xác nhận chuyển ca</button><p role="status" class="form-feedback"></p></form>`);
-        $("#transfer-form").addEventListener("submit", event => { event.preventDefault(); const data = Object.fromEntries(new FormData(event.currentTarget)); data.schedule_id = s.schedule_id; submit(event.currentTarget, async () => { await encounters.transfer(e.encounter_id, data); await options(); }, "Đã chuyển bác sĩ / ca và cấp lại phiếu."); });
-      }));
-    });
-  }
-  const refreshOptions = bindLiveSearch($("#coordination-search").elements.encounter_id, () => options(), { invalidate() {
-    optionsVersion++; optionsRequest?.abort();
-    $("#transfer-context").innerHTML = ""; $("#transfer-options").innerHTML = ""; $("#list-pagination").innerHTML = "";
-  } });
-  $("#coordination-search").addEventListener("submit", event => { event.preventDefault(); refreshOptions(); });
-  async function loadSchedules(page = 1) {
-    if (!active) return;
-    schedulePage = page;
-    const doctor = $("#coordination-doctor").value; if (!doctor) return;
-    await run(async () => {
-      const result = await schedules.listDoctorSchedules(doctor, { page, page_size: 12 });
-      if (!active || doctor !== $("#coordination-doctor").value) return;
-      $("#room-schedules").innerHTML = table(["Ngày", "Phòng", "Giờ", "Đã đặt / sức chứa", "Trạng thái", "Lượt khám"], result.items.map(s => `<tr><td>${date(s.work_date)}</td><td>${esc(s.room_name)}</td><td>${esc(s.start_time.slice(0,5))} – ${esc(s.end_time.slice(0,5))}</td><td>${s.booked_count} / ${s.max_quota}</td><td>${badge(s.schedule_status)}</td><td><a href="encounters.html?schedule_id=${s.schedule_id}">Xem lượt trong ca →</a>${s.schedule_status === "UNAVAILABLE" ? `<button type="button" class="secondary" data-affected="${s.schedule_id}">Các lượt cần điều phối</button>` : ""}</td></tr>`));
-      $("#room-schedules").querySelectorAll("[data-affected]").forEach(button => button.addEventListener("click", () => run(async () => {
-        async function affected(page = 1) {
-          const response = await encounters.listAffectedEncounters(button.dataset.affected, { page, page_size: 20 });
-          dialog("Lượt khám cần điều phối", table(["Người bệnh", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", "Điều phối"], response.items.map(e => `<tr>${encounterColumns(e)}<td>${["CONFIRMED", "CHECKED_IN"].includes(e.encounter_status) ? `<a href="coordination.html?encounter_id=${e.encounter_id}">Chọn ca chuyển →</a>` : `<a href="encounters.html?schedule_id=${e.schedule_id}">Xem lượt khám →</a>`}</td></tr>`)) + '<div id="affected-pagination" class="list-pagination"></div>');
-          pagination(response, page => run(() => affected(page)), $("#affected-pagination"));
-        }
-        await affected();
-      })));
-      pagination(result, loadSchedules, $("#schedule-pagination"));
-    });
-  }
-  $("#room-search").addEventListener("submit", event => { event.preventDefault(); loadSchedules(); });
-  if (id && /^\d+$/.test(id)) await options();
-  startAutoRefresh(async () => { await options(optionsPage); await loadSchedules(schedulePage); }, { canRefresh: () => active });
+  const { initReceptionCoordination } = await import("./reception_coordination.js");
+  await initReceptionCoordination();
 }

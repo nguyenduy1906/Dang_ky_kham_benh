@@ -8,7 +8,7 @@ from backend.app.db.database import get_db_connection
 from backend.app.models import doctor_model, catalog_model, schedule_model, auth_model
 from backend.app.utils.database_helpers import jsonable
 from backend.app.models import staff_leave_model
-from backend.app.services import staff_leave_service
+from backend.app.services import staff_leave_service, staff_notification_service as staff_notifications
 
 _CHANGES_TIME_OR_ROOM = ('room_id', 'work_date', 'start_time', 'end_time', 'slot_minutes')
 
@@ -122,6 +122,7 @@ def create_schedule(fields):
         except pg_errors.UniqueViolation:
             raise conflict('Ca làm việc bị trùng', 'SCHEDULE_OVERLAP') from None
         row = schedule_model.get_schedule(db, schedule_id)
+        staff_notifications.schedule_changed(db, row, "created")
     return {'schedule': _present(row)}
 
 
@@ -175,6 +176,7 @@ def update_schedule(schedule_id, fields):
         except pg_errors.UniqueViolation:
             raise conflict('Ca làm việc bị trùng', 'SCHEDULE_OVERLAP') from None
         row = schedule_model.get_schedule(db, schedule_id)
+        staff_notifications.schedule_changed(db, row, "updated", before=current)
     return {'schedule': _present(row)}
 
 
@@ -238,6 +240,7 @@ def create_assignment(actor, fields):
         except pg_errors.UniqueViolation:
             raise conflict('Y tá đã được phân công trong ca này', 'DUPLICATE_NURSE_ASSIGNMENT') from None
         row = schedule_model.get_assignment(db, assignment_id)
+        staff_notifications.assignment_changed(db, row, "assigned")
     return {'assignment': _assignment_present(row)}
 
 
@@ -248,6 +251,7 @@ def revoke_assignment(actor, assignment_id):
                 raise not_found('Không tìm thấy phân công', 'ASSIGNMENT_NOT_FOUND')
             raise conflict('Phân công đã được thu hồi', 'ASSIGNMENT_ALREADY_REVOKED')
         row = schedule_model.get_assignment(db, assignment_id)
+        staff_notifications.assignment_changed(db, row, "revoked")
     return {'assignment': _assignment_present(row)}
 
 
@@ -274,7 +278,10 @@ def move_schedule(actor, source_id, fields):
             raise conflict('Ca cũ đã có lượt khám, cần xử lý lịch hẹn trước', 'SCHEDULE_HAS_ENCOUNTERS')
         doctor = doctor_model.get_by_id(db,target['doctor_profile_id'])
         staff_leave_service.ensure_available(db,doctor['user_id'],target['work_date'],target['start_time'],target['end_time'])
+        recipients = staff_notifications.schedule_recipients(db, source_id)
         schedule_model.record_move(db,source_id,target_id,actor['user_id'],fields['reason'])
+        staff_notifications.schedule_changed(db, schedule_model.get_schedule(db, target_id), "moved",
+            before=source, key=f'staff-schedule-move:{source_id}:{target_id}', extra_recipients=recipients)
         return {'schedule':_present(schedule_model.get_schedule(db,source_id)),
                 'target_schedule':_present(schedule_model.get_schedule(db,target_id))}
 
@@ -332,5 +339,12 @@ def update_assignment(actor, assignment_id, fields):
             schedule_model.update_assignment_note(db,assignment_id,fields['note'])
         after=_assignment_present(schedule_model.get_assignment(db,resulting_id))
         if before['version']!=after['version']:
-            schedule_model.record_assignment_change(db,assignment_id,resulting_id,actor['user_id'],before,after)
+            change_id = schedule_model.record_assignment_change(db,assignment_id,resulting_id,actor['user_id'],before,after)
+            if current['revoked_at'] is None and (changed or not active):
+                staff_notifications.assignment_changed(db, schedule_model.get_assignment(db, assignment_id), "revoked",
+                    key=f'staff-assignment-revoke:{change_id}')
+            if active:
+                staff_notifications.assignment_changed(db, schedule_model.get_assignment(db, resulting_id),
+                    "assigned" if changed or current['revoked_at'] is not None else "updated",
+                    key=f'staff-assignment-update:{change_id}')
         return {'assignment':after,'previous_assignment_id':assignment_id}

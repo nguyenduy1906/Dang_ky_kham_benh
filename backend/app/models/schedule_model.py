@@ -233,5 +233,5 @@ def update_assignment_note(db, assignment_id, note):
 
 def record_assignment_change(db, assignment_id, resulting_id, actor_id, before, after):
     from psycopg.types.json import Jsonb
-    db.execute('INSERT INTO nurse_assignment_change(assignment_id,resulting_assignment_id,changed_by_id,before_data,after_data) VALUES (%s,%s,%s,%s,%s)',
-               (assignment_id,resulting_id,actor_id,Jsonb(before),Jsonb(after)))
+    return db.execute('INSERT INTO nurse_assignment_change(assignment_id,resulting_assignment_id,changed_by_id,before_data,after_data) VALUES (%s,%s,%s,%s,%s) RETURNING change_id',
+               (assignment_id,resulting_id,actor_id,Jsonb(before),Jsonb(after))).fetchone()['change_id']

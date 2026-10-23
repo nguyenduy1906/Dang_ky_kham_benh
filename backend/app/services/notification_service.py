@@ -25,6 +25,9 @@ def notify_status(db, encounter_id, log_id, status, note):
               'EXPIRED': 'Giữ chỗ khám đã hết hạn', 'NO_SHOW': 'Lượt khám được đánh dấu vắng mặt'}
     notify_encounter(db, encounter_id, f'encounter-status:{log_id}', 'ENCOUNTER_STATUS',
                      titles[status], f'Lượt khám {business_code("LK", encounter_id)}: {note or status}')
+    if status == 'COMPLETED':
+        from backend.app.services.staff_notification_service import encounter_completed
+        encounter_completed(db, encounter_id)
     from backend.app.services.admin_notification_service import publish
     kind = 'CANCELLATION' if status=='CANCELLED' else 'APPOINTMENT' if status in ('HOLDING','CONFIRMED') else 'ENCOUNTER'
     publish(db, {'key':f'admin-encounter-status:{log_id}', 'kind':kind,

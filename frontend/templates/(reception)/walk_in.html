@@ -3,12 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Khách khám trực tiếp | NEU Medical</title>
+  <title>Tiếp nhận bệnh nhân | NEU Medical</title>
   <link rel="stylesheet" href="../../static/css/staff_workspace.css">
-  <link rel="stylesheet" href="../../static/css/reception.css">
+  <link rel="stylesheet" href="../../static/css/admin.css">
+  <link rel="stylesheet" href="../../static/css/reception.css?v=20261023-intake-radius">
   <script type="module" src="../../static/js/pages/reception.js" blocking="render"></script>
 </head>
-<body class="staff-page reception-page staff-auth-pending" data-role="reception" data-page-title="Khách khám trực tiếp" data-page="walk_in">
+<body class="staff-page reception-page staff-auth-pending" data-role="reception" data-page-title="Tiếp nhận bệnh nhân" data-page="walk_in">
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>
   <noscript>Bạn cần bật JavaScript để sử dụng khu vực nhân viên.</noscript>
   <div class="staff-shell">
@@ -17,13 +18,14 @@
       <header id="staff-topbar" class="staff-topbar"></header>
       <div id="staff-access" class="staff-access" role="status">Đang kiểm tra quyền truy cập…</div>
       <main id="main-content" class="staff-content" tabindex="-1" inert>
-        <header class="page-header"><div><p>Chọn đúng hồ sơ và bác sĩ để tiếp nhận khám trực tiếp.</p></div></header>
+        <header class="page-header"><div><p>Kiểm tra phiếu, check-in, theo dõi lượt khám và tiếp nhận bệnh nhân.</p></div><button type="button" id="reception-add-patient"><span aria-hidden="true">+</span> Thêm bệnh nhân</button></header>
         <p id="page-status" class="scope-note" role="status" hidden></p>
         <div id="page-body" aria-live="polite"></div>
       </main>
       <footer class="staff-footer">NEU Medical · Hệ thống quản lý khám bệnh</footer>
     </div>
   </div>
-  <dialog id="staff-dialog" aria-labelledby="staff-dialog-title"><div class="section-heading"><h2 id="staff-dialog-title">Thông tin</h2><button id="staff-dialog-close" class="secondary" type="button" aria-label="Đóng hộp thoại">Đóng ×</button></div><div id="staff-dialog-content"></div></dialog>
+  <dialog id="staff-dialog" aria-labelledby="staff-dialog-title"><div class="section-heading"><h2 id="staff-dialog-title">Thông tin</h2><button id="staff-dialog-close" class="secondary" type="button" aria-label="Đóng hộp thoại">Đóng</button></div><div id="staff-dialog-content"></div></dialog>
+  <dialog id="reception-patient-dialog" class="admin-page" aria-labelledby="reception-patient-title"><div class="section-heading"><h2 id="reception-patient-title">Thêm bệnh nhân</h2><button type="button" class="secondary" data-patient-close>Đóng</button></div><div data-patient-form-body></div></dialog>
 </body>
 </html>

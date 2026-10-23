@@ -482,7 +482,9 @@ def transfer(actor, encounter_id, fields):
         model.update_encounter(db, encounter_id, {'doctor_profile_id': doctor['doctor_profile_id'],
                                                 'schedule_id': target['schedule_id'], 'room_id': target['room_id'],
                                                 'appointment_end_at': finish, 'estimated_exam_at': start})
-        model.add_transfer(db, encounter_id, encounter['doctor_profile_id'], doctor['doctor_profile_id'], actor['user_id'], fields['reason'])
+        transfer_log_id = model.add_transfer(db, encounter_id, encounter['doctor_profile_id'], doctor['doctor_profile_id'], actor['user_id'], fields['reason'])
+        from backend.app.services.staff_notification_service import encounter_transferred
+        encounter_transferred(db, actor, encounter_id, transfer_log_id, old, target)
         model.add_status(db, encounter_id, encounter['encounter_status'], encounter['encounter_status'],
                         actor['user_id'], 'Chuyển khung giờ/bác sĩ; giữ giá và mã phiếu đã phát')
         result = _present(visible_encounter(db, actor, encounter_id))

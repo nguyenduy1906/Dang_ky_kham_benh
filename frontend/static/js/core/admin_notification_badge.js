@@ -7,8 +7,7 @@ export function unreadBadgeCount(value){
 export function initAdminNotificationBadge(){
   const link=document.querySelector('#staff-sidebar nav a[href$="notifications.html"]');
   if(!link)return;
-  if(link.querySelector('.admin-nav-unread'))return;
-  const badge=document.createElement('b');badge.className='admin-nav-unread';badge.hidden=true;badge.setAttribute('aria-hidden','true');link.append(badge);
+  const badge=link.querySelector('.admin-nav-unread')||document.createElement('b');badge.className='admin-nav-unread';badge.hidden=true;badge.setAttribute('aria-hidden','true');if(!badge.parentElement)link.append(badge);
   const bell=document.querySelector('.admin-topbar-bell'),bellBadge=bell?.querySelector('.admin-topbar-unread');
   let active=true,version=0;
   async function refresh(){

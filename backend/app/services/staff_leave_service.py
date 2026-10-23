@@ -8,6 +8,7 @@ from backend.app.models import (auth_model, staff_leave_model as model,
                                 encounter_model, schedule_model)
 from backend.app.utils.database_helpers import jsonable
 from backend.app.utils.date import VN_TZ
+from backend.app.services import staff_notification_service as staff_notifications
 
 STAFF_ROLES = ('DOCTOR', 'NURSE', 'RECEPTIONIST')
 SHIFTS = {'MORNING': (time(8), time(11, 30)), 'AFTERNOON': (time(13, 30), time(17))}
@@ -118,13 +119,20 @@ def review(actor, request_id, fields):
                 # Stop new bookings, preserve encounters/quota/payment for manual coordination.
                 changed = schedule_model.mark_unavailable_schedules(db, ids, f'Nghỉ theo đơn {business_code("NP", request_id)}')
                 effects['unavailable_schedule_ids'] = [s['schedule_id'] for s in changed]
+                for change in changed:
+                    staff_notifications.schedule_changed(db, schedule_model.get_schedule(db, change['schedule_id']),
+                        "unavailable", key=f'staff-leave-schedule:{request_id}:{change["schedule_id"]}')
             elif staff['role_name'] == 'NURSE':
                 changed = schedule_model.revoke_leave_assignments(db, actor['user_id'], row['user_id'], ids)
                 effects['revoked_assignment_ids'] = [a['assignment_id'] for a in changed]
+                for change in changed:
+                    staff_notifications.assignment_changed(db, schedule_model.get_assignment(db, change['assignment_id']),
+                        "revoked", key=f'staff-leave-assignment:{request_id}:{change["assignment_id"]}')
         model.review_request(db, request_id, fields, actor['user_id'], Jsonb(effects))
         row = model.get_request(db, request_id)
-        model.notify(db, row['user_id'], request_id, 'reviewed', 'Kết quả đơn xin nghỉ',
-                     f"Đơn {business_code('NP', request_id)}: {row['status']}. {fields['note']}")
+        decision_text = 'đã được duyệt' if row['status'] == 'APPROVED' else 'không được duyệt'
+        model.notify(db, row['user_id'], request_id, 'reviewed', f'Đơn xin nghỉ {decision_text}',
+                     f"Đơn {business_code('NP', request_id)} {decision_text}. {fields['note']}")
     return {'leave_request': jsonable(row)}
 
 

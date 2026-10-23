@@ -28,10 +28,10 @@ export function dialog(title, html) {
   $("#staff-dialog-title").textContent = title; $("#staff-dialog-content").innerHTML = html;
   if (!modal.open) modal.showModal();
 }
-export function bindDialog({ dismissible = document.body?.dataset?.role === "nurse" } = {}) {
+export function bindDialog({ dismissible = ["nurse", "reception"].includes(document.body?.dataset?.role) } = {}) {
   const button = $("#staff-dialog-close");
   button?.addEventListener("click", () => $("#staff-dialog").close());
-  if (dismissible) enhanceDialogDismiss($("#staff-dialog"), { closeButtons: [button] });
+  if (dismissible) enhanceDialogDismiss($("#staff-dialog"), { closeButtons: [button], canClose: () => !$("#staff-dialog").querySelector('[data-busy="true"]') });
 }
 export async function submit(form, action, message = "Đã lưu thay đổi.") {
   if (form.dataset.busy === "true") return;

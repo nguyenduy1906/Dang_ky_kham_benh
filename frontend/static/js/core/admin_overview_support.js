@@ -45,7 +45,7 @@ export function adminOverviewSupportCards({ day, calendar, notices }) {
       <div class="admin-support-heading"><div><h2 id="overview-notifications-title">Thông báo</h2><p>Thông tin gửi đến tài khoản đang đăng nhập</p></div></div>
       <div class="admin-support-notification-summary"><span class="admin-support-unread">${bell}<span>Chưa đọc</span><strong>${esc(unread)}</strong></span><span>Ưu tiên chưa đọc</span></div>
       <div class="admin-support-notification-body">${notificationBody}</div>
-      <div class="admin-support-footer"><span class="admin-support-status-dot" aria-hidden="true"></span><span>Chọn thông báo để xem nội dung đầy đủ</span></div>
+      <div class="admin-support-footer"><span class="admin-support-status-dot" aria-hidden="true"></span><span>Cuộn để xem thêm · Chọn thông báo để xem nội dung đầy đủ</span></div>
     </section>
   </div>`;
 }

@@ -1,3 +1,4 @@
+import { initAdminNotificationBadge } from "./admin_notification_badge.js";
 import { getSessionUser, loginUrl, workspaceUrl, signOut, clearSession, hasSession } from "./session.js";
 import { renderAccountAvatar } from "./avatar.js";
 import { mountStaffWorkspace, getStaffRole, staffRoles, nursePortraitUrl } from "./staff_shell.js";
@@ -59,6 +60,7 @@ export async function requireStaff() {
     document.body.classList.remove("staff-auth-pending");
     if (main) main.inert = false;
     if (status) status.hidden = true;
+    if (actualRole !== "admin") initAdminNotificationBadge();
     return user;
   } catch (error) {
     if (!active) return null;

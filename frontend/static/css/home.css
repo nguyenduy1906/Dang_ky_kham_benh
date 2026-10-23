@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Great Vibes";
+  src: url("../assets/fonts/great-vibes/GreatVibes-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 :root {
   --font-ui: Arial, "Segoe UI", sans-serif;
   --green: #008349;
@@ -135,9 +143,9 @@ button {
 }
 .motto {
   color: #ffbf16;
-  font: 400 44px/1.5 "Segoe Script", cursive;
-  -webkit-text-stroke: 0.45px currentColor;
-  letter-spacing: 0.25px;
+  font: 400 56px/1.2 "Great Vibes", "Monotype Corsiva", cursive;
+  -webkit-text-stroke: 0.2px currentColor;
+  letter-spacing: 0;
   margin: 0;
   flex: 1;
   text-align: center;
@@ -483,7 +491,7 @@ button[data-dialog-dismiss]:is(:hover, :focus-visible):not(:disabled) { color: #
 .motto {
   position: absolute;
   left: 50%;
-  transform: translateX(-50%) skewX(-8deg) scaleX(1.18);
+  transform: translateX(-50%);
   width: max-content;
   max-width: calc(100% - 32px);
   padding: 0;
@@ -495,7 +503,7 @@ button[data-dialog-dismiss]:is(:hover, :focus-visible):not(:disabled) { color: #
   }
   .motto {
     position: static;
-    transform: skewX(-8deg);
+    transform: none;
     width: 100%;
     max-width: none;
     flex-basis: 100%;
@@ -1085,7 +1093,7 @@ button[data-dialog-dismiss]:is(:hover, :focus-visible):not(:disabled) { color: #
 .site-header .identity { min-height: 76px; padding-top: 10px; padding-bottom: 10px; }
 .site-header .brand-logo { width: 52px; height: 52px; }
 .site-header .brand small { font-size: 14px; }
-.site-header .motto { font-size: 46px; }
+.site-header .motto { font-size: 56px; }
 .site-header #main-nav { min-height: 46px; }
 .site-header #main-nav > a { padding-top: 12px; padding-bottom: 12px; }
 
@@ -1137,12 +1145,12 @@ button[data-dialog-dismiss]:is(:hover, :focus-visible):not(:disabled) { color: #
 
 @media (max-width: 1100px) {
   .site-header .identity { gap: 12px; }
-  .site-header .motto { font-size: 28px; }
+  .site-header .motto { font-size: 40px; }
 
 }
 @media (max-width: 760px) {
   .site-header .brand-logo { width: 44px; height: 44px; }
-  .site-header .motto { font-size: 24px; }
+  .site-header .motto { font-size: clamp(30px, 7.5vw, 36px); }
   .home-page .hero { min-height: 140px; }
 
 }

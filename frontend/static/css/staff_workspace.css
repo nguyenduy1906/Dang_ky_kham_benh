@@ -216,6 +216,11 @@ body.staff-page table thead :is(th,td) { border-inline: 0 !important; }
 }
 @media (prefers-reduced-motion: reduce) { .staff-page *, .staff-page *::before, .staff-page *::after { transition: none !important; scroll-behavior: auto !important; } }
 /* Keep public chrome stable while /me gates private content and account details. */
+.staff-page #staff-sidebar nav a:has(.admin-nav-unread) { position: relative; }
+.staff-page .admin-nav-unread { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; width: 32px; height: 22px; margin-left: auto; border-radius: 11px; background: #ffdc70; color: #244535; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.staff-page .admin-nav-unread[hidden] { display: none; }
+.staff-page.staff-sidebar-collapsed .admin-nav-unread { position: absolute; right: 0; top: 0; width: 26px; height: 18px; font-size: 9px; }
+
 .staff-auth-pending #main-content,
 .staff-auth-pending .staff-topbar-right { visibility: hidden; }
 .staff-auth-pending :is(#staff-signout, #admin-signout) { visibility: hidden; }
@@ -465,3 +470,5 @@ input[list] { border-radius: 5px !important; }
   grid-template-rows: repeat(2, minmax(160px, 1fr));
   gap: 12px;
 }
+
+body.staff-page[data-role="reception"] dialog button[data-dialog-dismiss]:is(:hover, :focus-visible, :active):not(:disabled) { background: #c73535; border-color: #c73535; color: white; }

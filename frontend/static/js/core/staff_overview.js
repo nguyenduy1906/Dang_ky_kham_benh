@@ -39,7 +39,7 @@ export async function initTodayOverview(render) {
       if(feedback){feedback.hidden=true;feedback.textContent="";}
     } catch(error) {
       if(!active)return;
-      if(error.status===401){content.innerHTML="";clearSession();}
+      if(error.status===401||error.status===403){content.innerHTML="";if(error.status===401)clearSession();}
       if(feedback){feedback.hidden=false;feedback.textContent=error.message||"Không tải được dữ liệu tổng quan. Vui lòng tải lại trang.";}
     } finally {
       if(active)content.setAttribute("aria-busy","false");

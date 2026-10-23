@@ -38,14 +38,14 @@ function relativesForm(row, fields, references) {
   return `<section class="admin-patient-section admin-patient-relatives"><h3>Hồ sơ người thân</h3>${row.family_scope === "same-account" ? '<p class="admin-patient-field-note">Hiển thị các hồ sơ người thân cùng tài khoản.</p>' : ""}${cards || '<p class="admin-patient-field-note">Chưa có hồ sơ người thân trong tài khoản này.</p>'}</section>`;
 }
 
-function patientForm(row, fields, references, actions) {
+function patientForm(row, fields, references, actions, {showAccountStatus=true, phoneEditable=false}={}) {
   const edit = Boolean(row), values = row || {};
   const render = names => names.map(name => fields.find(field => field.name === name))
     .filter(Boolean).map(field => fieldMarkup({ ...field, readOnEdit: field.readOnEdit || edit && Boolean(row.is_archived || row.archived_at), clearable: ["text", "email", "tel"].includes(field.type) && !(edit && (field.readOnEdit || row.is_archived || row.archived_at)) }, values, references, edit)).join("");
   const section = (title, names, extra = "", controls = "") => `<section class="admin-patient-section"><h3>${title}</h3><div class="admin-patient-fields">${render(names)}${controls}</div>${extra}</section>`;
   return `<form class="admin-patient-detail admin-patient-${edit ? "edit" : "create"}" data-form="resource" data-id="${esc(row?.patient_id || "")}" autocomplete="off">
     ${edit ? patientSummary(row) : ""}
-    ${section("Thông tin cá nhân", ["full_name", "dob", "gender", "id_card", "health_insurance", "phone", "email", "address"], edit ? '<p class="admin-patient-field-note">Số điện thoại liên kết được quản lý tại tài khoản chủ hồ sơ.</p>' : '<p class="admin-patient-field-note">Nhập ngày sinh hoặc CCCD / mã định danh để phân biệt hồ sơ bệnh nhân.</p>', accountStatusField(row || {}))}
+    ${section("Thông tin cá nhân", ["full_name", "dob", "gender", "id_card", "health_insurance", "phone", "email", "address"], edit ? (phoneEditable ? "" : '<p class="admin-patient-field-note">Số điện thoại liên kết được quản lý tại tài khoản chủ hồ sơ.</p>') : '<p class="admin-patient-field-note">Nhập ngày sinh hoặc CCCD / mã định danh để phân biệt hồ sơ bệnh nhân.</p>', showAccountStatus ? accountStatusField(row || {}) : "")}
     ${section("Liên hệ khẩn cấp", ["emergency_contact_name", "emergency_contact_phone", "emergency_contact_relationship"])}
     ${edit ? `<section class="admin-patient-section admin-patient-metadata"><h3>Thông tin hồ sơ</h3>${facts([
       ["Mã tài khoản", row.user_id ? code("TK", row.user_id) : "Chưa liên kết tài khoản"],
@@ -56,5 +56,5 @@ function patientForm(row, fields, references, actions) {
   </form>`;
 }
 
-export const patientEditForm = (row, fields, references, actions) => patientForm(row, fields, references, actions);
+export const patientEditForm = (row, fields, references, actions, options) => patientForm(row, fields, references, actions, options);
 export const patientCreateForm = (fields, references, actions) => patientForm(null, fields, references, actions);
