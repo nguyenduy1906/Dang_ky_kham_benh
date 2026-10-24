@@ -2,6 +2,8 @@ import * as reports from "../api/statistics.js";
 import * as schedules from "../api/schedule.js";
 import * as encounters from "../api/encounter.js";
 import * as notifications from "../api/notification.js";
+import {listAdminLeaveRequests} from "../api/staff_leave.js";
+import {listDoctors} from "../api/doctor.js";
 import { allPages } from "./admin_ui.js";
 import { encounterWeekRange } from "./admin_encounter_chart.js";
 
@@ -44,5 +46,20 @@ export async function loadAdminOverview(day, week, signal) {
 }
 
 export function loadOverviewSchedules(day, signal) {
-  return overviewSection(async()=>({items:await allPages(schedules.listAdminSchedules,{from_date:day,to_date:day},signal)}));
+  return overviewSection(async()=>{
+    const [items,requests]=await Promise.all([
+      allPages(schedules.listAdminSchedules,{from_date:day,to_date:day},signal),
+      allPages(listAdminLeaveRequests,{status:'PENDING'},signal),
+    ]);
+    const weekday=new Date(`${day}T12:00:00+07:00`).getUTCDay();
+    const pending=requests.filter(row=>row.status==='PENDING'&&row.role_name==='DOCTOR'
+      &&row.from_date<=day&&row.to_date>=day&&weekday!==0&&weekday!==6);
+    if(!pending.length)return {items};
+    const doctors=await allPages(listDoctors,{include_inactive:true},signal);
+    const owners=new Map(doctors.map(row=>[String(row.doctor_profile_id),String(row.user_id)]));
+    return {items:items.map(row=>({...row,pending_leave:pending.some(request=>
+      owners.get(String(row.doctor_profile_id))===String(request.user_id)
+      &&(request.period==='FULL_DAY'||request.period==='MORNING'&&row.start_time<'12:00:00'
+        ||request.period==='AFTERNOON'&&row.end_time>'12:00:00'))}))};
+  });
 }

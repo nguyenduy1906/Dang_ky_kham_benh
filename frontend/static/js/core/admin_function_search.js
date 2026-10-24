@@ -14,6 +14,7 @@ export const adminFunctions=Object.freeze([
   feature('users-access','users','Khóa, mở khóa và phân quyền tài khoản','#admin-results','vai trò quyền trạng thái nhân viên'),
   feature('department-content','departments','Nội dung giới thiệu, hình ảnh chuyên khoa','#admin-results','ảnh bìa thư viện dịch vụ thiết bị thành tựu'),
   feature('department-members','departments','Thành viên và lãnh đạo chuyên khoa','#admin-results','trưởng khoa phó khoa phân công bác sĩ chức vụ'),
+  feature('reception-assignment-create','reception_assignments','Phân công lễ tân theo ca','#add-reception-assignment','thêm tạo phân công quầy sảnh'),
   feature('assignment-revoke','assignments','Thu hồi phân công y tá','#admin-results','hủy ngừng phân công'),
   feature('leave-list','schedule','Đơn xin nghỉ và xét duyệt','#leave-filter','duyệt nghỉ từ chối đơn nhân viên'),
   feature('schedule-visits','schedule','Lượt khám trong ca làm việc','#admin-results','xem chi tiết ca bác sĩ phòng'),

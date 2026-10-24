@@ -6,9 +6,11 @@ const bell = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 const empty = (icon,title,description) => `<div class="admin-support-empty"><span class="admin-support-empty-icon">${icon}</span><h3>${esc(title)}</h3><p>${esc(description)}</p></div>`;
 
 export function overviewShiftStatus(row, now = new Date()) {
+  if(row.move) return {text:"Đã chuyển ca",tone:"moved"};
+  if(row.pending_leave&&!row.move&&!['OFF','CLOSED','MOVED'].includes(row.work_status)
+    &&!['UNAVAILABLE','CLOSED'].includes(row.schedule_status))return {text:"Đang xin nghỉ",tone:"leave-pending"};
   const statuses={UPCOMING:["Chưa đến giờ làm","pending"],WORKING:["Đang làm","working"],COMPLETED:["Hoàn thành","done"],OFF:["Nghỉ làm","off"],MOVED:["Đã chuyển ca","moved"],CLOSED:["Đã đóng ca","closed"]};
   if(statuses[row.work_status]) {const [text,tone]=statuses[row.work_status];return {text,tone};}
-  if(row.move) return {text:"Đã chuyển ca",tone:"moved"};
   if(row.schedule_status === "UNAVAILABLE") return {text:"Nghỉ làm",tone:"off"};
   if(row.schedule_status === "CLOSED") return {text:"Đã đóng ca",tone:"closed"};
   const start=new Date(`${row.work_date}T${row.start_time}+07:00`);

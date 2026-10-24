@@ -1,5 +1,16 @@
-import {getDoctor,updateDoctor} from '../api/doctor.js';
-import {getUser,setAccountStatus} from '../api/auth.js';
+import {getDoctor,updateDoctor,listDoctors} from '../api/doctor.js';
+import {getUser,setAccountStatus,listUsers} from '../api/auth.js';
+import {allPages} from './admin_ui.js';
+
+export async function loadEligibleDoctorAccounts({signal}={}) {
+  const [users,profiles]=await Promise.all([
+    allPages(listUsers,{role:'DOCTOR',account_status:'ACTIVE',approval_status:'APPROVED'},signal),
+    allPages(listDoctors,{include_inactive:true},signal),
+  ]);
+  const linked=new Set(profiles.map(profile=>String(profile.user_id)));
+  return users.filter(user=>!linked.has(String(user.user_id))&&!user.is_deleted&&!user.deleted_at
+    &&user.role_name==='DOCTOR'&&user.account_status==='ACTIVE'&&user.approval_status==='APPROVED');
+}
 
 export async function loadAdminDoctor(id,{signal}={}){
   const {doctor}=await getDoctor(id,{signal});

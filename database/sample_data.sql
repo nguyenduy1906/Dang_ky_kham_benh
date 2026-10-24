@@ -3701,4 +3701,42 @@ SELECT encounter_id,NULL,encounter_status,created_by_id,'Dữ liệu mẫu: ch�
 UPDATE work_schedule s SET booked_count=(SELECT count(*) FROM encounter e WHERE e.schedule_id=s.schedule_id AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED'));
 UPDATE work_schedule SET schedule_status=CASE WHEN booked_count>=max_quota THEN 'FULL' ELSE 'OPEN' END WHERE schedule_status IN ('OPEN','FULL');
 
+-- BEGIN EXTRA_RECEPTION_SEED
+-- 20 khu vực và 5 tài khoản lễ tân mẫu bổ sung; mật khẩu: Demo-password-123!
+-- Không tạo phân công hoặc thay đổi các tài khoản đã tồn tại.
+INSERT INTO reception_workstation(name,area) VALUES
+('Sảnh A','Sảnh A'),
+('Sảnh B','Sảnh B'),
+('Sảnh C','Sảnh C'),
+('Sảnh D','Sảnh D'),
+('Sảnh E','Sảnh E'),
+('Sảnh F','Sảnh F'),
+('Sảnh G','Sảnh G'),
+('Sảnh H','Sảnh H'),
+('Sảnh I','Sảnh I'),
+('Sảnh J','Sảnh J'),
+('Sảnh K','Sảnh K'),
+('Sảnh L','Sảnh L'),
+('Sảnh M','Sảnh M'),
+('Sảnh N','Sảnh N'),
+('Sảnh O','Sảnh O'),
+('Sảnh P','Sảnh P'),
+('Sảnh Q','Sảnh Q'),
+('Sảnh R','Sảnh R'),
+('Sảnh S','Sảnh S'),
+('Sảnh T','Sảnh T')
+ON CONFLICT DO NOTHING;
+INSERT INTO users(role_id,full_name,email,password_hash,approval_status,account_status,email_verified,address)
+SELECT r.role_id,v.full_name,v.email,v.password_hash,'APPROVED','ACTIVE',1,'Dữ liệu mẫu: tài khoản lễ tân bổ sung'
+FROM (VALUES
+('Nguyễn Thị Mai','demo.reception.01@example.invalid','scrypt:32768:8:1$EYVDFrNDpMqKryGu$0479cb99a6003a1f013b3e9d07da41eaf3a2f52fd5d7c127ac44a9b42ad02d7804be177572cc6d2fd630192a545799d14ce9eb1498dbcc8a1caa52e6dc9dd796'),
+('Lê Minh Tuấn','demo.reception.02@example.invalid','scrypt:32768:8:1$mHN0XGT9r8zgTX6V$8694dc64e9bf87a7d4036c49fe7fa8eff210ff0d57a24cd68a65bfe736513ca285f29a4e9c166b4ec0a29ed1c4807d00f6a7672dbfc3f794a5d79b646d6f1de6'),
+('Phạm Ngọc Lan','demo.reception.03@example.invalid','scrypt:32768:8:1$gr3oYv4wh7Vq4ptw$94cb582f52b4979d289a0567f0ec4875dc9cacc3001b767ca78726112c851aab756e4a175f42c53a6f0c016a67d22faa6c9d1782b17bf0fb72fc14480db77370'),
+('Trần Quốc Huy','demo.reception.04@example.invalid','scrypt:32768:8:1$1Hg8yge6xYWWlRfn$b770626a28d8b02e2fc17d8e0db641eed914335d7e69fc3644f9e40fe4c9b91c4e0641d934e56484a1643b3ce97d105dcd3d15d4a56c09a8b77998d60e0fa590'),
+('Hoàng Thu Trang','demo.reception.05@example.invalid','scrypt:32768:8:1$llhkKnoxqRZuKIlZ$ab9cbb72c211679131281b98bd2da9f0444830db5ed96ff33915c5f1f5474a761fa3a74502dd1b2969a30a9377ec69fa6e56ee66e89b134cd07638615341c8bb')
+) AS v(full_name,email,password_hash)
+CROSS JOIN role r WHERE r.role_name='RECEPTIONIST'
+ON CONFLICT (email) DO NOTHING;
+-- END EXTRA_RECEPTION_SEED
+
 COMMIT;

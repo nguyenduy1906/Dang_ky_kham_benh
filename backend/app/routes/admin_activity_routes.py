@@ -9,7 +9,7 @@ from backend.app.utils.swagger_helpers import spec, path, PAGE
 
 admin_activity_bp = Blueprint('admin_activity', __name__)
 ACTIONS = {'CREATE','UPDATE','DELETE','LOCK','UNLOCK'}
-TARGETS = {'USER','PATIENT','DOCTOR','DEPARTMENT','ROOM','WORK_SCHEDULE','ASSIGNMENT','ARTICLE','CONFIGURATION','PAYMENT','REVIEW','STAFF_LEAVE'}
+TARGETS = {'USER','PATIENT','DOCTOR','DEPARTMENT','ROOM','WORK_SCHEDULE','ASSIGNMENT','ARTICLE','CONFIGURATION','PAYMENT','REVIEW','STAFF_LEAVE','RECEPTION_ASSIGNMENT','RECEPTION_WORKSTATION'}
 
 def activity_query(args):
     page, size = page_params(args)

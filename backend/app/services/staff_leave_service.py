@@ -80,7 +80,11 @@ def detail(actor, request_id, *, admin=False):
         schedules = model.affected_schedules(db, row, row['role_name'])
         ids = [s['schedule_id'] for s in schedules]
         affected = encounter_model.count_active_for_schedules(db, ids)
-    return {'leave_request': jsonable(row), 'affected_schedule_ids': ids, 'affected_encounters': affected}
+        reception_ids = []
+        if row['role_name'] == 'RECEPTIONIST':
+            from backend.app.models import reception_assignment_model
+            reception_ids = [item['assignment_id'] for item in reception_assignment_model.leave_assignments(db, row)]
+    return {'leave_request': jsonable(row), 'affected_schedule_ids': ids, 'affected_encounters': affected, 'affected_reception_assignment_ids': reception_ids}
 
 
 def cancel(actor, request_id):
@@ -128,6 +132,9 @@ def review(actor, request_id, fields):
                 for change in changed:
                     staff_notifications.assignment_changed(db, schedule_model.get_assignment(db, change['assignment_id']),
                         "revoked", key=f'staff-leave-assignment:{request_id}:{change["assignment_id"]}')
+            elif staff['role_name'] == 'RECEPTIONIST':
+                from backend.app.services.reception_assignment_service import revoke_for_leave
+                effects['revoked_reception_assignment_ids'] = revoke_for_leave(db, actor['user_id'], row)
         model.review_request(db, request_id, fields, actor['user_id'], Jsonb(effects))
         row = model.get_request(db, request_id)
         decision_text = 'đã được duyệt' if row['status'] == 'APPROVED' else 'không được duyệt'
@@ -153,7 +160,30 @@ def calendar(actor, query, user_id=None):
         user = _staff(db, target_id)
         leaves = model.calendar_leaves(db, target_id, query)
         if user['role_name'] == 'RECEPTIONIST':
-            clinical = []
+            from backend.app.models import reception_assignment_model
+            assignments = reception_assignment_model.calendar(db, target_id, query, include_revoked=True)
+            days = []
+            day = query['from_date']
+            while day <= query['to_date']:
+                shifts = []
+                for assignment in assignments:
+                    if assignment['work_date'] != day:
+                        continue
+                    period = 'MORNING' if assignment['start_time'] < time(12) else 'AFTERNOON'
+                    matching = [l for l in leaves if day.weekday()<5 and l['from_date']<=day<=l['to_date'] and l['period'] in ('FULL_DAY',period)]
+                    approved = [l for l in matching if l['status']=='APPROVED']
+                    if assignment['revoked_at'] and not any(assignment['revoke_reason']==f"Nghỉ theo đơn NP_{l['request_id']:03d}" for l in approved):
+                        continue
+                    shifts.append({'period':period,'start_time':assignment['start_time'],'end_time':assignment['end_time'],
+                        'assignment_id':assignment['assignment_id'],'workstation_id':assignment['workstation_id'],
+                        'workstation_name':assignment['workstation_name'],'area':assignment['area'],'note':assignment['note'],
+                        'status':'ON_LEAVE' if approved else 'WORKING',
+                        'leave_request_ids':[l['request_id'] for l in matching],
+                        'pending_leave':any(l['status']=='PENDING' for l in matching)})
+                days.append({'work_date':day,'is_default_workday':False,'shifts':shifts,'clinical_schedules':[]})
+                day+=timedelta(days=1)
+            return jsonable({'user_id':target_id,'full_name':user['full_name'],'role_name':user['role_name'],
+                'timezone':'Asia/Saigon','default_weekdays':[],'from_date':query['from_date'],'to_date':query['to_date'],'items':days})
         else:
             clinical = schedule_model.staff_calendar(db, target_id, user['role_name'], leaves, query)
     days = []

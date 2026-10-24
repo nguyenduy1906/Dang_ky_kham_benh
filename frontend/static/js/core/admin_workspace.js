@@ -12,7 +12,7 @@ import {thumbnailUrl} from "./articles.js";
 import { departmentDetails, departmentMemberGroups, addDepartmentMember, departmentDeputyLimit } from "./admin_department_view.js";
 import {saveDepartmentLeadership} from "./admin_department_leadership.js";
 import { userAccountDetails, saveUserAccount } from "./admin_user_account.js";
-import { loadAdminDoctor, saveAdminDoctor } from "./admin_doctor_data.js";
+import { loadAdminDoctor, saveAdminDoctor, loadEligibleDoctorAccounts } from "./admin_doctor_data.js";
 import { doctorForm, doctorDetails } from "./admin_doctor_view.js";
 import { code, codeParams } from "./business_codes.js";
 import * as auth from "../api/auth.js";
@@ -62,7 +62,8 @@ async function references(names,signal) {
     if(name==="rooms")result[name]=(await catalog.listRooms({include_inactive:true},{signal})).items.map(r=>[r.room_id,`${r.room_name} · ${r.department_name}`]);
     if(name==="doctors")result[name]=(await allPages(doctors.listDoctors,{include_inactive:true},signal)).map(r=>[r.doctor_profile_id,r.full_name]);
     if(name==="roles")result[name]=(await auth.listRoles({signal})).items.map(r=>[r.role_name,label(r.role_name)]);
-    if(name==="doctorUsers"||name==="nurses")result[name]=(await allPages(auth.listUsers,{role:name==="nurses"?"NURSE":"DOCTOR",account_status:"ACTIVE",approval_status:"APPROVED"},signal)).map(r=>[r.user_id,`${r.full_name} (${code("TK", r.user_id)})`]);
+    if(name==="doctorUsers")result[name]=(await loadEligibleDoctorAccounts({signal})).map(r=>[r.user_id,`${r.full_name} (${code("TK", r.user_id)})`]);
+    if(name==="nurses")result[name]=(await allPages(auth.listUsers,{role:"NURSE",account_status:"ACTIVE",approval_status:"APPROVED"},signal)).map(r=>[r.user_id,`${r.full_name} (${code("TK", r.user_id)})`]);
     if(name==="schedules")result[name]=(await allPages(schedules.listAdminSchedules,{from_date:today()},signal)).filter(r=>["OPEN","FULL"].includes(r.schedule_status)).map(r=>[r.schedule_id,`${code("CA", r.schedule_id)} · ${date(r.work_date)} · ${r.start_time.slice(0,5)} · ${r.room_name} · ${r.doctor_name}`]);
   }));
   return result;
@@ -85,6 +86,12 @@ function detailMarkup(key,row) {
   if(key==="encounters")return encounterDetails(row);
   if(key==="patients")return patientDetails(row);
   if(key==="doctors")return doctorDetails(row);
+  if(key==="assignments") {
+    const section=(title,entries)=>`<section class="admin-basic-detail-section"><h3>${esc(title)}</h3>${facts(entries)}</section>`;
+    return `<div class="admin-basic-detail"><div class="admin-basic-detail-summary"><div><small>${esc(code("PC",row.assignment_id))}</small><h3>${esc(row.nurse_name||"Y tá")}</h3></div><span class="badge ${row.revoked_at?"assignment-revoked":"green"}">${row.revoked_at?"Đã thu hồi":"Đang phân công"}</span></div>${section("Thông tin ca làm việc",[["Mã ca",code("CA",row.schedule_id)],["Phòng khám",row.room_name],["Ngày làm việc",date(row.work_date)],["Khung giờ",`${row.start_time?.slice(0,5)||"—"} – ${row.end_time?.slice(0,5)||"—"}`]])}<section class="admin-basic-detail-section"><h3>Ghi chú phân công</h3><p class="admin-basic-detail-note">${esc(row.note||"Chưa có ghi chú.")}</p></section>${section("Thông tin phân công",[["Ngày phân công",stamp(row.assigned_at)],["Người phân công",row.assigned_by_id?code("TK",row.assigned_by_id):"—"],["Trạng thái",row.revoked_at?"Đã thu hồi":"Đang phân công"]])}${row.revoked_at?section("Thông tin thu hồi",[["Ngày thu hồi",stamp(row.revoked_at)],["Người thu hồi",row.revoked_by_id?code("TK",row.revoked_by_id):"—"]]):""}</div>`;
+  }
+  if(key==="rooms")return `<div class="admin-basic-detail"><div class="admin-basic-detail-summary"><div><small>${esc(code("PH",row.room_id))}</small><h3>${esc(row.room_name)}</h3></div>${badge(row.is_active?"ACTIVE":"LOCKED")}</div><section class="admin-basic-detail-section"><h3>Thông tin phòng khám</h3>${facts([["Chuyên khoa",row.department_name],["Mã phòng",code("PH",row.room_id)]])}</section><section class="admin-basic-detail-section"><h3>Mô tả</h3><p class="admin-basic-detail-note">${esc(row.description||"Chưa có mô tả.")}</p></section></div>`;
+  if(key==="articles")return `<div class="admin-basic-detail"><div class="admin-basic-detail-summary"><div><small>${esc(code("BV",row.article_id))}</small><h3>${esc(row.title)}</h3></div></div><section class="admin-basic-detail-section"><h3>Thông tin bài viết</h3>${facts([["Danh mục",row.category||"—"],["Tác giả",row.author_name||row.author_id||"—"],["Ngày đăng",stamp(row.published_at)],["Trạng thái",!row.is_active?"Bản nháp / đã ẩn":!row.published_at?"Chưa xuất bản":new Date(row.published_at)>new Date()?"Hẹn giờ":"Đã xuất bản"]])}</section><section class="admin-basic-detail-section"><h3>Nội dung bài viết</h3><p class="admin-basic-detail-note">${esc(row.content||"Chưa có nội dung.")}</p></section><div class="actions">${button("article-image",row.article_id,"Tải ảnh bài viết")}</div></div>`;
   const config=resources[key];
   const extra={users:[["Đã xóa",row.is_deleted?"Có":"Không"],["Ngày tạo",stamp(row.created_at)]],patients:[["CCCD",row.id_card],["Giới tính",row.gender],["Địa chỉ",row.address],["BHYT",row.health_insurance],["Tài khoản liên kết",code("TK", row.user_id)]],doctors:[["Mã tài khoản",code("TK", row.user_id)],["Chuyên môn",row.specialization],["Giới thiệu",row.introduction]],departments:[["Mô tả",row.description],["Giới thiệu",row.overview],["Chức năng, nhiệm vụ",row.mission]],assignments:[["Ghi chú",row.note],["Ngày phân công",stamp(row.assigned_at)],["Người phân công",code("TK", row.assigned_by_id)],["Ngày thu hồi",stamp(row.revoked_at)],["Người thu hồi",code("TK", row.revoked_by_id)]]}[key] || [];
   return (key==="users"?userAccountDetails(row):facts(config.columns.map((name,index)=>[name,config.cells(row)[index].replace(/<[^>]*>/g,"").replace(/&(amp|lt|gt|quot|#39);/g,(_,name)=>({amp:"&",lt:"<",gt:">",quot:'"',"#39":"'"}[name]))]).concat(extra)))

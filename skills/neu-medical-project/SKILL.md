@@ -167,6 +167,18 @@ Thao tác trong bảng (Xem, Chi tiết, Chỉnh sửa...) dùng nút có viền
 
 ## Kiểm tra và bàn giao
 
+### Rà soát đầy đủ một giao diện theo vai trò
+
+Khi người dùng yêu cầu kiểm tra giao diện admin, bác sĩ, y tá, lễ tân hoặc vai trò khác, lập danh mục từ cả menu, template, điều hướng phụ và các hộp thoại. Rà **từng nút bấm và từng chức năng**, không kết luận từ việc trang chính tải được hoặc có API wrapper.
+
+- Lập ma trận: trang → khối nội dung → nút/chức năng → handler frontend → endpoint và quyền → dữ liệu thực tế → bằng chứng kiểm tra → phần còn thiếu. Bao gồm nút chỉ hiện theo trạng thái, form lồng, tìm kiếm/gợi ý, chọn ngày/chuyên khoa, phân trang/cuộn, chi tiết, tạo/sửa, tải/bỏ ảnh, xem trước/quay lại, xuất file, duyệt/thu hồi, đóng/hủy và các liên kết liên quan. Đối chiếu từng action được dựng với handler để phát hiện nút không xử lý hoặc không gọi API.
+- Chờ trạng thái tải hoàn tất trước khi ghi nhận kết quả. So sánh bộ lọc mặc định (đặc biệt hôm nay theo giờ Việt Nam) với truy vấn toàn phạm vi phù hợp, tổng bản ghi/phân trang và dữ liệu DB khi được phép đọc. Phân biệt rõ: chưa có dữ liệu; có dữ liệu nhưng bị bộ lọc; thiếu trường/nội dung; dữ liệu mẫu lưu DB; dữ liệu giả dựng frontend; thiếu API; đã có API nhưng frontend chưa nối; lỗi quyền/hợp đồng/kết nối; đã nối nhưng chưa kiểm chứng thao tác ghi.
+- Kiểm tra giao diện thật và đối chiếu chuỗi frontend → route → schema → service → model. GET thành công không chứng minh nút Lưu hoạt động; endpoint tồn tại không chứng minh deployed container đã dùng mã mới. Với nút ghi, thử trong môi trường tạm/rollback hoặc test có cô lập; không tự tạo/sửa/xóa dữ liệu đang dùng, đánh dấu thông báo đã đọc hay gửi thông báo chỉ để hoàn thành rà soát chỉ đọc. Nếu chưa thử ghi thực tế, ghi rõ mức bằng chứng thay vì đánh dấu đạt toàn bộ.
+- Kiểm tra dữ liệu quan trọng trong chi tiết, trạng thái rỗng/lỗi, giữ lựa chọn, phiên bản chống ghi đè, chống gửi lặp, nhật ký và đúng người nhận thông báo trong phạm vi chức năng. Phân biệt dữ liệu lịch sử được giữ theo yêu cầu với lỗi nguồn phát mới.
+- Báo cáo phải bao phủ mọi trang và nhóm nút đã kiểm kê; nêu lỗi cụ thể, nguyên nhân có bằng chứng, ảnh hưởng, vị trí nguồn/API và việc cần bổ sung. Ghi riêng các chức năng chưa thể kiểm chứng hoặc bị chặn bởi điều kiện nghiệp vụ. Không tự sửa ứng dụng, nạp dữ liệu, đổi cấu hình hoặc triển khai trong yêu cầu chỉ kiểm tra và báo cáo.
+
+Quy trình này dùng lại cho từng vai trò khi được yêu cầu; không tự mở rộng phạm vi kiểm tra sang toàn hệ thống. Kết quả từng lần rà soát không phải quy tắc cố định của skill và không thay cho việc kiểm tra lại phiên bản/dữ liệu hiện tại.
+
 - Chọn kiểm thử phù hợp thay đổi. Frontend dùng `node --test tests/*.test.mjs` trong `frontend/`; có thể chạy nhóm liên quan cho sửa nhỏ. Backend dùng Python của dự án và đọc yêu cầu môi trường của từng test; không bật test cần DB dùng một lần trên DB đang sử dụng.
 - Với nghiệp vụ ghi, kiểm tra đường thành công và lỗi có ý nghĩa: sai quyền, trùng lịch, lịch nghỉ, dữ liệu cũ, sai đối tượng, giữ snapshot và rollback khi một bước lỗi. Kiểm thử đồng thời nếu thay đổi cách khóa; không gọi kiểm thử tuần tự là bằng chứng chống race.
 - Kiểm tra giao diện thực khi thay đổi bố cục/tương tác. Với nhiều vai trò, xác minh thành phần dùng chung và các override riêng. Không đổi dữ liệu thật chỉ để chụp ảnh minh chứng.

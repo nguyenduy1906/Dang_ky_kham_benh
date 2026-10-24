@@ -10,6 +10,7 @@ const identity=row=>{
 };
 
 export function doctorForm(row,fields,refs,actions){
+  if(!row&&!refs.doctorUsers?.length)return '<div class="admin-doctor-section"><p role="status">Chưa có tài khoản bác sĩ đủ điều kiện tạo hồ sơ. Hãy tạo tài khoản bác sĩ trước, sau đó mở lại biểu mẫu này.</p><a class="button-link secondary" href="users.html">Tạo tài khoản bác sĩ</a></div>';
   const render=names=>names.map(name=>fields.find(field=>field.name===name)).filter(Boolean).map(field=>fieldMarkup({...field,clearable:Boolean(row),...(field.name==='introduction'?{title:'Giới thiệu bác sĩ'}:{})},row||{},refs,Boolean(row))).join('');
   const canChangeAccount=row?.account&&!row.account.is_deleted&&row.account.role_name==='DOCTOR';
   const account=row?`<section class="admin-doctor-section"><h3>Tài khoản</h3><div class="admin-contact-fields"><label><span>Trạng thái tài khoản</span>${canChangeAccount?`<select name="account_status" required>${options([['ACTIVE','Đang hoạt động'],['LOCKED','Đã khóa']],row.account.account_status,'Chọn trạng thái')}</select>`:`<input value="${esc(row.account?.is_deleted?'Đã ngừng sử dụng':label(row.account?.role_name))}" disabled>`}</label><div class="admin-doctor-contact"><span>Email / điện thoại</span><p>${esc([row.account?.email,row.account?.phone].filter(Boolean).join(' · ')||'Chưa cập nhật')}</p></div></div></section>`:`<section class="admin-doctor-section"><h3>Tài khoản bác sĩ</h3><div class="admin-contact-fields">${render(['user_id','is_active'])}</div></section>`;

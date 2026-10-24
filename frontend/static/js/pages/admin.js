@@ -87,7 +87,10 @@ if (administrator) {
   initAdminTopbar();
   initAdminNotificationBadge();
   $("#staff-account-name").textContent = administrator.full_name;
-  if (key === "articles") {
+  if (key === "reception_assignments") {
+    const {initReceptionAssignmentPresentation} = await import("../core/admin_reception_assignment_presentation.js");
+    await initReceptionAssignmentPresentation();
+  } else if (key === "articles") {
     const { initArticlePresentation } = await import("../core/admin_article_presentation.js");
     await initArticlePresentation(administrator);
   } else if (["reviews", "notifications"].includes(key)) {

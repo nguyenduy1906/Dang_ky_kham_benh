@@ -789,6 +789,7 @@ html:has(body.admin-page) { scrollbar-gutter: stable; }
 .admin-support-shift-status.is-done { background: #e6f4ea; color: #218849; }
 .admin-support-shift-status.is-requested { background: #f9eedb; color: #ba7b13; }
 .admin-support-shift-status.is-off { background: #f8e8e9; color: #c94c4c; }
+.admin-support-shift-status.is-leave-pending { background: #f9eedb; color: #ba7b13; }
 .admin-support-shift-status.is-moved { background: #f0eaf8; color: #8061ad; }
 .admin-support-shift-status.is-closed { background: #e8edf4; color: #637086; }
 
@@ -800,3 +801,31 @@ html:has(body.admin-page) { scrollbar-gutter: stable; }
 }
 
 .admin-page :is(#admin-results,#leave-results) { scroll-margin-top: 110px; }
+
+/* Group plain resource details without changing specialized detail forms. */
+.admin-page .admin-basic-detail { display: grid; gap: 18px; }
+.admin-page .admin-basic-detail-summary { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px 24px; background: #edf6f0; border: 1px solid #d8e8de; border-radius: 5px; }
+.admin-page .admin-basic-detail-summary h3 { margin: 5px 0 0; font-size: 22px; color: #20573c; }
+.admin-page .admin-basic-detail-summary small { font-size: 13px; color: #617d6c; }
+.admin-page .admin-basic-detail-section { padding: 20px 24px; border: 1px solid #dde8e1; border-radius: 5px; }
+.admin-page .admin-basic-detail-section h3 { margin: 0 0 18px; font-size: 17px; color: #285c42; }
+.admin-page .admin-basic-detail-section .admin-dialog-facts { margin: 0; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px 28px; }
+.admin-page .admin-basic-detail-section .admin-dialog-facts dt { font-size: 14px; color: #6b7f72; margin-bottom: 6px; }
+.admin-page .admin-basic-detail-section .admin-dialog-facts dd { margin: 0; font-size: 15px; line-height: 1.6; color: #294b39; font-weight: 500; }
+.admin-page .admin-basic-detail-note { margin: 0; font-size: 15px; color: #365641; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media(max-width:800px) { .admin-page .admin-basic-detail-section .admin-dialog-facts { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media(max-width:540px) {
+  .admin-page .admin-basic-detail-section .admin-dialog-facts { grid-template-columns: 1fr; }
+  .admin-page .admin-basic-detail-summary { align-items: flex-start; flex-direction: column; }
+  .admin-page .admin-basic-detail-section, .admin-page .admin-basic-detail-summary { padding: 16px; }
+}
+
+.admin-page[data-page="reception_assignments"] .admin-reception-empty { padding: 36px 20px; text-align: center; color: #6b7f72; }
+.admin-page[data-page="reception_assignments"] .admin-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 20px 24px; }
+.admin-page[data-page="reception_assignments"] .admin-toolbar { display: flex; gap: 18px; flex-wrap: wrap; }
+.admin-page[data-page="reception_assignments"] .admin-toolbar > label { flex: 1 1 220px; }
+.admin-page[data-page="reception_assignments"] .admin-toolbar > label:first-child { flex: 2 1 360px; }
+
+.admin-page .admin-reception-assignment-builder .admin-bulk-settings:has(.admin-assignment-nurse) { grid-template-columns: repeat(2,minmax(0,1fr)); }
+.admin-page .admin-reception-assignment-builder .admin-table { min-width: 780px; }
+@media(max-width:680px) { .admin-page .admin-reception-assignment-builder .admin-bulk-settings:has(.admin-assignment-nurse) { grid-template-columns: 1fr; } }

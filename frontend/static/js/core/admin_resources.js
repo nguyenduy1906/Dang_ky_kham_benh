@@ -18,6 +18,7 @@ export const adminPages = {
   encounters:{title:"Quản lý lượt khám",description:"Tra cứu lượt khám, khung giờ và mã phiếu của người bệnh."},
   patients:{title:"Quản lý bệnh nhân",description:"Quản lý hồ sơ người được khám, thông tin liên hệ và lịch sử khám."},
   schedule:{title:"Lịch làm việc",description:"Bố trí ca khám, phòng và theo dõi đơn xin nghỉ của nhân viên."},
+  reception_assignments:{title:"Phân công lễ tân",description:"Phân công lễ tân theo ca tại các khu vực sảnh của bệnh viện."},
   assignments:{title:"Phân công y tá",description:"Phân công y tá theo ca và lưu lịch sử thu hồi."},
   doctors:{title:"Quản lý bác sĩ",description:"Quản lý hồ sơ chuyên môn, chuyên khoa và phí khám."},
   departments:{title:"Quản lý chuyên khoa",description:"Quản lý chuyên khoa, thông tin giới thiệu và lãnh đạo khoa."},
@@ -43,7 +44,7 @@ export const resources = {
     fields:[f("full_name","Họ và tên","text",{required:true,max:150}),f("email","Email","email",{max:254,omitEmpty:true}),f("phone","Điện thoại","tel",{max:20,omitEmpty:true}),f("password","Mật khẩu ban đầu","password",{required:true,minLength:12,max:128,createOnly:true}),f("role","Vai trò","select",{reference:"roles",required:true}),{...choice("account_status","Trạng thái tài khoản",[["ACTIVE","Hoạt động"],["LOCKED","Đã khóa"]]),editOnly:true,required:true},
       f("dob","Ngày sinh","date",{editOnly:true}),{...choice("gender","Giới tính",["Nam","Nữ","Khác"]),editOnly:true},
       f("id_card","CCCD","text",{editOnly:true,max:12,pattern:"[0-9]{12}"}),f("address","Địa chỉ","text",{editOnly:true,max:255}),
-      f("emergency_contact_name","Người liên hệ khẩn cấp","text",{editOnly:true,max:150}),f("emergency_contact_phone","Số điện thoại khẩn cấp","tel",{editOnly:true,max:30})],
+      f("emergency_contact_name","Người liên hệ khẩn cấp","text",{editOnly:true,max:150}),f("emergency_contact_phone","Số điện thoại khẩn cấp","tel",{editOnly:true,max:30}),f("emergency_contact_relationship","Quan hệ với người liên hệ khẩn cấp","text",{editOnly:true,max:50})],
   },
   patients:{id:"patient_id",list:listAdminPatients,get:async(id,opt)=>(await patients.getPatient(id,opt)).patient,create:patients.createPatient,update:patients.updatePatient,add:"Thêm bệnh nhân",columns:["Mã BN","Họ và tên","Ngày sinh","Điện thoại","CCCD","Trạng thái"],
     cells:r=>[esc(code("BN", r.patient_id)),esc(r.full_name),date(r.dob),esc(r.phone),esc(r.id_card || "—"),`<span class="badge ${r.is_archived?"red":"green"}">${r.is_archived?"Không hoạt động":"Đang hoạt động"}</span>`],
@@ -133,7 +134,6 @@ export function resourcePayload(key, raw, row) {
     payload[field.name]=value;
   }
   if(key==="users"&&!payload.email&&!payload.phone&&!edit)throw new Error("Cần nhập email hoặc số điện thoại.");
-  if(key==="users"&&!edit)payload.approval_status='APPROVED';
   if(key==="patients"&&!edit&&!payload.dob&&!payload.id_card)throw new Error("Cần ngày sinh hoặc CCCD để phân biệt hồ sơ bệnh nhân.");
   if(key==="schedule"&&payload.start_time&&payload.end_time&&payload.end_time<=payload.start_time)throw new Error("Giờ kết thúc phải sau giờ bắt đầu.");
   if(key==="users"&&edit) {

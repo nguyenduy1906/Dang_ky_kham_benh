@@ -79,7 +79,7 @@ export async function initWorkCalendar(user) {
         ${["MORNING", "AFTERNOON"].map(period => {
           const shift = visible.find(s => s.date === date && s.period === period);
           const state = shift?.status === "ON_LEAVE" ? "Đã duyệt nghỉ" : shift?.pending_leave ? "Chờ duyệt nghỉ · Vẫn làm việc" : "Làm việc";
-          const rooms = shift ? [...new Set(shift.clinical.map(s => s.room_name || `Phòng ${code("PH", s.room_id)}`))].join(", ") : "";
+          const rooms = shift?.workstation_name ? shift.workstation_name : shift ? [...new Set(shift.clinical.map(s => s.room_name || `Phòng ${code("PH", s.room_id)}`))].join(", ") : "";
           return `<div class="calendar-slot"><span class="calendar-slot-label">${periods[period]}</span>${shift
             ? `<button type="button" class="calendar-shift${period === "AFTERNOON" ? " is-afternoon" : ""}${shift.status === "ON_LEAVE" ? " is-leave" : shift.pending_leave ? " is-pending" : ""}" data-shift="${escape(shift.id)}"><strong>${escape(shortTime(shift.start_time))} – ${escape(shortTime(shift.end_time))}</strong><span>${state}</span><span class="calendar-shift-place">${escape(rooms || (shift.status === "ON_LEAVE" ? "Nghỉ theo đơn đã duyệt" : user.role_name === "RECEPTIONIST" ? "Theo lịch làm việc" : "Chưa có phân công phòng"))}</span></button>`
             : `<p class="calendar-free">${filter !== "all" && periodValues[filter] !== period ? "Đã ẩn theo bộ lọc" : "Không có ca"}</p>`}</div>`;
@@ -137,9 +137,10 @@ export async function initWorkCalendar(user) {
     showDialog("Chi tiết ca làm việc", [["Ngày làm việc", formatDate(s.date)], ["Ca", periods[s.period]],
       ["Thời gian", `${shortTime(s.start_time)} – ${shortTime(s.end_time)}`],
       ["Trạng thái", s.status === "ON_LEAVE" ? "Đã duyệt nghỉ" : s.pending_leave ? "Chờ duyệt nghỉ; lịch làm việc giữ nguyên" : "Làm việc"],
-      ["Phân công phòng khám", assigned || "Chưa có phân công phòng khám"],
+      [user.role_name === "RECEPTIONIST" ? "Khu vực" : "Phân công phòng khám", s.workstation_name ? s.workstation_name : assigned || "Chưa có phân công phòng khám"],
+      ...(user.role_name === "RECEPTIONIST" ? [["Ghi chú phân công", s.note || "—"]] : []),
       ["Mã đơn nghỉ liên quan", (s.leave_request_ids || []).map(id=>code("NP", id)).join(", ") || "Không có"]],
-      user.role_name === "RECEPTIONIST" ? "Lịch đi làm mặc định từ thứ Hai đến thứ Sáu." : "Lịch làm việc được cập nhật theo phân công của quản trị viên.",
+      user.role_name === "RECEPTIONIST" ? "Lịch làm việc theo phân công thực tế của quản trị viên." : "Lịch làm việc được cập nhật theo phân công của quản trị viên.",
       canRequestShiftLeave(s));
   });
   $("#dialog-use-date").addEventListener("click", () => {

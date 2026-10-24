@@ -720,3 +720,53 @@ CREATE OR REPLACE FUNCTION protect_admin_activity() RETURNS trigger LANGUAGE plp
 BEGIN RAISE EXCEPTION 'Admin activity history is immutable'; END $$;
 DROP TRIGGER IF EXISTS admin_activity_protect ON admin_activity_log;
 CREATE TRIGGER admin_activity_protect BEFORE UPDATE OR DELETE ON admin_activity_log FOR EACH ROW EXECUTE FUNCTION protect_admin_activity();
+
+-- Additive installation: preserve all existing staff and clinical data.
+CREATE TABLE IF NOT EXISTS reception_workstation (
+ workstation_id BIGSERIAL PRIMARY KEY,
+ name VARCHAR(100) NOT NULL,
+ area VARCHAR(150) NOT NULL,
+ is_active BOOLEAN NOT NULL DEFAULT true,
+ version INTEGER NOT NULL DEFAULT 1,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX IF NOT EXISTS reception_workstation_name_unique ON reception_workstation(lower(name),lower(area));
+CREATE UNIQUE INDEX IF NOT EXISTS reception_workstation_area_name_unique ON reception_workstation(lower(name));
+CREATE TABLE IF NOT EXISTS reception_assignment (
+ assignment_id BIGSERIAL PRIMARY KEY,
+ receptionist_id BIGINT NOT NULL REFERENCES users(user_id),
+ workstation_id BIGINT NOT NULL REFERENCES reception_workstation(workstation_id),
+ work_date DATE NOT NULL,
+ start_time TIME NOT NULL,
+ end_time TIME NOT NULL,
+ note VARCHAR(1000),
+ assigned_by_id BIGINT NOT NULL REFERENCES users(user_id),
+ assigned_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ revoked_at TIMESTAMPTZ,
+ revoked_by_id BIGINT REFERENCES users(user_id),
+ revoke_reason VARCHAR(1000),
+ version INTEGER NOT NULL DEFAULT 1,
+ CHECK (start_time < end_time)
+);
+CREATE INDEX IF NOT EXISTS reception_assignment_staff_day ON reception_assignment(receptionist_id,work_date) WHERE revoked_at IS NULL;
+CREATE INDEX IF NOT EXISTS reception_assignment_station_day ON reception_assignment(workstation_id,work_date) WHERE revoked_at IS NULL;
+CREATE TABLE IF NOT EXISTS reception_assignment_change (
+ change_id BIGSERIAL PRIMARY KEY,
+ assignment_id BIGINT NOT NULL REFERENCES reception_assignment(assignment_id),
+ actor_id BIGINT NOT NULL REFERENCES users(user_id),
+ action VARCHAR(20) NOT NULL,
+ before_data JSONB,
+ after_data JSONB NOT NULL,
+ changed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+DROP TRIGGER IF EXISTS admin_activity_capture ON reception_assignment;
+CREATE TRIGGER admin_activity_capture AFTER INSERT OR UPDATE OR DELETE ON reception_assignment
+FOR EACH ROW EXECUTE FUNCTION capture_admin_activity('RECEPTION_ASSIGNMENT','assignment_id','receptionist_id,workstation_id,work_date,start_time,end_time,note,assigned_by_id,revoked_at,revoked_by_id,revoke_reason');
+DROP TRIGGER IF EXISTS admin_activity_capture ON reception_workstation;
+CREATE TRIGGER admin_activity_capture AFTER INSERT OR UPDATE OR DELETE ON reception_workstation
+FOR EACH ROW EXECUTE FUNCTION capture_admin_activity('RECEPTION_WORKSTATION','workstation_id','name,area,is_active');
+DROP TRIGGER IF EXISTS reception_assignment_change_protect ON reception_assignment_change;
+CREATE TRIGGER reception_assignment_change_protect BEFORE UPDATE OR DELETE ON reception_assignment_change
+FOR EACH ROW EXECUTE FUNCTION protect_admin_activity();

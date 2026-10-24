@@ -6,6 +6,7 @@ export function staffNotificationRow(row, role) {
   const result = notificationRow(row);
   // Use staff pages only; administrator management links are not staff shortcuts.
   const routes = {
+    RECEPTION_ASSIGNMENT: "work_calendar.html",
     WORK_SCHEDULE: "work_calendar.html", SCHEDULE: "work_calendar.html",
     STAFF_LEAVE_REQUEST: "work_calendar.html#leave-history-title",
     NURSE_ASSIGNMENT: role === "nurse" ? "assignments.html" : "work_calendar.html",

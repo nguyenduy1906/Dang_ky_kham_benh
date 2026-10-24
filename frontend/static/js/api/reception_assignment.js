@@ -1,0 +1,10 @@
+import {apiRequest, pathSegment} from '../core/api.js';
+export const listReceptionAssignments=(params={},options={})=>apiRequest('/admin/reception-assignments',{...options,params});
+export const getReceptionAssignment=(id,options={})=>apiRequest(`/admin/reception-assignments/${pathSegment(id)}`,options);
+export const createReceptionAssignments=(data,options={})=>apiRequest('/admin/reception-assignments',{...options,method:'POST',data});
+export const updateReceptionAssignment=(id,data,options={})=>apiRequest(`/admin/reception-assignments/${pathSegment(id)}`,{...options,method:'PATCH',data});
+export const revokeReceptionAssignment=(id,data,options={})=>apiRequest(`/admin/reception-assignments/${pathSegment(id)}/revoke`,{...options,method:'POST',data});
+export const listReceptionWorkstations=(params={},options={})=>apiRequest('/admin/reception-workstations',{...options,params});
+export const createReceptionWorkstation=(data,options={})=>apiRequest('/admin/reception-workstations',{...options,method:'POST',data});
+export const updateReceptionWorkstation=(id,data,options={})=>apiRequest(`/admin/reception-workstations/${pathSegment(id)}`,{...options,method:'PATCH',data});
+export const listOwnReceptionAssignments=(params={},options={})=>apiRequest('/reception/assignments',{...options,params});

@@ -19,7 +19,7 @@ export function receptionScheduleOverview(day, shifts = [], error = null) {
   const items = shifts.filter(s => s.work_date === day).sort((a,b) => String(a.start_time).localeCompare(String(b.start_time)));
   const cards = items.length ? `<div class="doctor-overview-shifts">${items.map(s => {
     const state = s.status === "ON_LEAVE" ? "Đã duyệt nghỉ" : s.pending_leave ? "Chờ duyệt nghỉ · Vẫn làm việc" : "Làm việc";
-    return `<article><div><strong>${esc(periods[s.period] || s.period)}</strong><p>${esc(state)}</p></div><div><strong>${esc(String(s.start_time || "").slice(0,5))} – ${esc(String(s.end_time || "").slice(0,5))}</strong></div></article>`;
+    return `<article><div><strong>${esc(periods[s.period] || s.period)}</strong><p>${esc(s.workstation_name ? s.workstation_name : state)}</p>${s.workstation_name?`<small>${esc(state)}</small>`:""}</div><div><strong>${esc(String(s.start_time || "").slice(0,5))} – ${esc(String(s.end_time || "").slice(0,5))}</strong></div></article>`;
   }).join("")}</div>` : empty("Không có ca làm việc hôm nay.");
   return `<div class="doctor-overview-grid">${panel("Lịch làm việc", overviewCalendar(shifts, day), link)}${panel("Ca làm việc hôm nay", cards)}</div>`;
 }

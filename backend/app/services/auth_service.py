@@ -257,14 +257,16 @@ def create_user(data):
 
 
 def update_user(admin, user_id, fields):
+    if 'approval_status' in fields:
+        raise bad_request('Không hỗ trợ thay đổi trạng thái duyệt tài khoản', 'ACCOUNT_APPROVAL_UNSUPPORTED')
     with get_db_connection() as db:
         if 'phone' in fields:
             patient_model.lock_account_links(db)
         target = _get_or_404(db, user_id)
         if target['deleted_at'] is not None:
             raise conflict('Người dùng đã bị xóa', 'USER_DELETED')
-        if target['user_id'] == admin['user_id'] and ('role' in fields or 'approval_status' in fields):
-            raise forbidden('Không thể tự đổi vai trò hoặc trạng thái duyệt của chính mình',
+        if target['user_id'] == admin['user_id'] and 'role' in fields:
+            raise forbidden('Không thể tự đổi vai trò của chính mình',
                             'SELF_CHANGE_FORBIDDEN')
         updates = {k: v for k, v in fields.items() if k != 'role'}
         if 'role' in fields:
