@@ -5,6 +5,19 @@ import {canRequestRefund} from './admin_payment_view.js';
 import {readAdminPaymentHistory,readPaymentContext,submitRefundRequest,refundOutcome} from './admin_payment_data.js';
 import {code} from './business_codes.js';
 
+// Preview only: the refund endpoint rechecks the saved policy before charging.
+export function refundPreview(payment,encounter) {
+  if(!refundablePayment(payment,encounter))return 0;
+  const amount=Number(payment.amount),policy=encounter.policy_snapshot||{};
+  if(!Number.isFinite(amount)||amount<0)return null;
+  if(encounter.cancel_origin==='HOSPITAL'||encounter.encounter_status==='NO_SHOW')return amount;
+  const reference=Date.parse(encounter.refund_reference_at||encounter.estimated_exam_at),cancelled=Date.parse(encounter.cancelled_at);
+  const hours=policy.CANCEL_HOURS_LIMIT,percent=policy.CANCEL_REFUND_PERCENT;
+  if(hours==null||percent==null||!Number.isFinite(reference)||!Number.isFinite(cancelled))return null;
+  if(reference-cancelled<Number(hours)*3600000)return 0;
+  return Math.floor(amount*Number(percent)/100);
+}
+
 export function refundablePayment(payment,encounter) {
   if(!encounter||!canRequestRefund(payment))return false;
   if(encounter.encounter_status==='NO_SHOW')return payment.payment_type==='DEPOSIT'&&encounter.policy_snapshot?.NO_SHOW_FORFEIT_DEPOSIT===false;

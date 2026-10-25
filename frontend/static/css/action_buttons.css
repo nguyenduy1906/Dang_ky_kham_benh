@@ -1,0 +1,53 @@
+/* Shared action buttons. Status-bearing calendar cells and navigation keep their own state styles. */
+body :is(button, input[type="submit"], input[type="reset"], a.button-link, a.solid-button, a.outline-button, a.btn, a.secondary, a.row-action, a.auth-home):not(:where(body > header *, .patient-header *, #main-nav *, body > footer *, .compact-footer *, .staff-footer *, .staff-sidebar *, .staff-topbar *, .calendar-shift, .date-field-picker, [aria-pressed], [role="tab"], [role="option"], .record-profile-button, .admin-support-notification-item, .notification-item, .booking-department, .appointment-day-buttons *, .time-slot-grid *, .admin-schedule-day, [type="submit"], .auth-submit, .auth-text-button, .solid-button, .primary, .btn-primary, a.button-link:not(.secondary), .page-header > button, #add-record, [data-workflow-leave])) {
+  background: #fff !important;
+  color: #28664a !important;
+  border: 1px solid #c6ded1 !important;
+  border-radius: 6px !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+body :is(button, input[type="submit"], input[type="reset"], a.button-link, a.solid-button, a.outline-button, a.btn, a.secondary, a.row-action, a.auth-home):not(:where(body > header *, .patient-header *, #main-nav *, body > footer *, .compact-footer *, .staff-footer *, .staff-sidebar *, .staff-topbar *, .calendar-shift, .date-field-picker, [aria-pressed], [role="tab"], [role="option"], .record-profile-button, .admin-support-notification-item, .notification-item, .booking-department, .appointment-day-buttons *, .time-slot-grid *, .admin-schedule-day, [type="submit"], .auth-submit, .auth-text-button, .solid-button, .primary, .btn-primary, a.button-link:not(.secondary), .page-header > button, #add-record, [data-workflow-leave])):is(:hover, :focus-visible, :active):not(:disabled):not([aria-disabled="true"]) {
+  background: #dff2e8 !important;
+  color: #006c3d !important;
+  border-color: #75b995 !important;
+}
+body :is(button, input[type="submit"], input[type="reset"], a.button-link, a.solid-button, a.outline-button, a.btn, a.secondary, a.row-action, a.auth-home):not(:where(body > header *, .patient-header *, #main-nav *, body > footer *, .compact-footer *, .staff-footer *, .staff-sidebar *, .staff-topbar *, .calendar-shift, .date-field-picker, [aria-pressed], [role="tab"], [role="option"], .record-profile-button, .admin-support-notification-item, .notification-item, .booking-department, .appointment-day-buttons *, .time-slot-grid *, .admin-schedule-day, [type="submit"], .auth-submit, .auth-text-button, .solid-button, .primary, .btn-primary, a.button-link:not(.secondary), .page-header > button, #add-record, [data-workflow-leave])):focus-visible {
+  outline: 2px solid #75b995;
+  outline-offset: 3px;
+}
+body :is(button, input[type="submit"], input[type="reset"], a.button-link, a.solid-button, a.outline-button, a.btn, a.secondary, a.row-action, a.auth-home):not(:where(body > header *, .patient-header *, #main-nav *, body > footer *, .compact-footer *, .staff-footer *, .staff-sidebar *, .staff-topbar *, .calendar-shift, .date-field-picker, [aria-pressed], [role="tab"], [role="option"], .record-profile-button, .admin-support-notification-item, .notification-item, .booking-department, .appointment-day-buttons *, .time-slot-grid *, .admin-schedule-day, [type="submit"], .auth-submit, .auth-text-button, .solid-button, .primary, .btn-primary, a.button-link:not(.secondary), .page-header > button, #add-record, [data-workflow-leave])):is(:disabled, [aria-disabled="true"]) {
+  background: #fff !important;
+  color: #829c8e !important;
+  border-color: #dce8e1 !important;
+  cursor: not-allowed;
+}
+@media (prefers-reduced-motion: reduce) {
+body :is(button, input[type="submit"], input[type="reset"], a.button-link, a.solid-button, a.outline-button, a.btn, a.secondary, a.row-action, a.auth-home):not(:where(body > header *, .patient-header *, #main-nav *, body > footer *, .compact-footer *, .staff-footer *, .staff-sidebar *, .staff-topbar *, .calendar-shift, .date-field-picker, [aria-pressed], [role="tab"], [role="option"], .record-profile-button, .admin-support-notification-item, .notification-item, .booking-department, .appointment-day-buttons *, .time-slot-grid *, .admin-schedule-day, [type="submit"], .auth-submit, .auth-text-button, .solid-button, .primary, .btn-primary, a.button-link:not(.secondary), .page-header > button, #add-record, [data-workflow-leave])) { transition: none; }
+}
+
+/* Primary actions keep their solid emphasis; text-only controls remain links. */
+body :is(button[type="submit"], input[type="submit"], .auth-submit, .solid-button, .primary, .btn-primary, a.button-link:not(.secondary), .page-header > button, #add-record, [data-workflow-leave]) {
+  background: #008349 !important;
+  color: #fff !important;
+  border: 1px solid #008349 !important;
+  border-radius: 6px !important;
+  text-decoration: none;
+}
+body :is(button[type="submit"], input[type="submit"], .auth-submit, .solid-button, .primary, .btn-primary, a.button-link:not(.secondary), .page-header > button, #add-record, [data-workflow-leave]):is(:hover,:focus-visible,:active):not(:disabled):not([aria-disabled="true"]) {
+  background: #006c3d !important;
+  border-color: #006c3d !important;
+}
+body :is(.auth-text-button, .password-toggle) {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Important rules in this layer also override older page-specific 5px action styles. */
+@layer action-button-shape {
+  body :is(button, input[type="submit"], input[type="reset"], a.button-link, a.solid-button, a.outline-button, a.btn, a.secondary, a.row-action, a.auth-home, table td.table-align-actions a) {
+    border-radius: 6px !important;
+  }
+}

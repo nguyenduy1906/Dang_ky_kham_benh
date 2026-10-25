@@ -24,11 +24,6 @@
 .doctor-page .doctor-timeline li > div { flex: 1; min-width: 0; }
 .doctor-page .doctor-timeline strong { display: block; font-size: 14px; }
 .doctor-page .doctor-timeline div > span { display: block; margin-top: 4px; color: #62756d; font-size: 12px; }
-.doctor-page .doctor-shortcuts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-.doctor-page .doctor-shortcuts > a { display: flex; flex-direction: column; padding: 22px; border: 1px solid #dce7e1; color: inherit; background: #fafcfb; text-decoration: none; }
-.doctor-page .doctor-shortcuts > a:hover { border-color: #17715c; background: #eef6f1; }
-.doctor-page .doctor-shortcuts h3 { margin: 16px 0 8px; font-size: 17px; }
-.doctor-page .doctor-shortcuts p { flex: 1; margin: 0 0 20px; color: #62756d; font-size: 14px; }
 .doctor-page #dialog-content { margin-top: 24px; overflow-wrap: anywhere; }
 .doctor-page #dialog-content > p,
 .doctor-page #dialog-content > div > p { white-space: pre-wrap; }
@@ -41,7 +36,6 @@
 }
 
 @media (max-width: 700px) {
-  .doctor-page .doctor-shortcuts { grid-template-columns: 1fr; gap: 12px; }
   .doctor-page .doctor-timeline li { flex-wrap: wrap; gap: 8px 12px; }
   .doctor-page .doctor-timeline li > div { flex-basis: calc(100% - 66px); }
   .doctor-page .doctor-timeline .status { margin-left: 52px; }
@@ -80,7 +74,7 @@
 .doctor-assigned-workspace #encounter-filters {display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) minmax(240px,2fr);align-items:end;gap:20px}
 .doctor-assigned-workspace #encounter-filters > label {min-width:0}
 .doctor-assigned-workspace #encounter-filters > input[type="hidden"] {display:none}
-@media(max-width:700px){.doctor-assigned-workspace #encounter-filters{grid-template-columns:1fr}}
+
 
 .doctor-assigned-workspace #encounter-filters {grid-template-columns:minmax(240px,2fr) minmax(160px,1fr) minmax(160px,1fr)}
 .doctor-assigned-workspace #encounter-filters .encounter-search-field {order:-1}

@@ -24,7 +24,7 @@ export async function initReceptionAssignmentPresentation() {
   const ctx=createAdminContext(),body=document.querySelector('#page-body'),header=document.querySelector('#page-header');
   const modal=document.querySelector('#admin-dialog'),modalBody=document.querySelector('#admin-dialog-body'),close=document.querySelector('#dialog-close');
   header.insertAdjacentHTML('afterend','<p id="admin-status" role="status" class="scope-note" hidden></p>');
-  header.insertAdjacentHTML('beforeend','<button type="button" id="add-reception-assignment">＋ Phân công lễ tân</button>');
+  header.insertAdjacentHTML('beforeend','<button class="primary" type="button" id="add-reception-assignment">＋ Phân công lễ tân</button>');
   const add=document.querySelector('#add-reception-assignment');
   const root=new AbortController();let active=true,viewVersion=0,detailVersion=0,read,busy=false,inList=true,page=1;
   let staff=[],stations=[],filters={q:'',work_date:today()},bulkDispose=()=>{};

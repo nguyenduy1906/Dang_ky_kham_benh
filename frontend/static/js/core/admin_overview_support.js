@@ -39,12 +39,12 @@ export function adminOverviewSupportCards({ day, calendar, notices }) {
   return `<div class="admin-overview-support-grid">
     <section class="admin-card admin-overview-schedules" aria-labelledby="overview-schedules-title">
       <div class="admin-support-heading"><div><h2 id="overview-schedules-title">Lịch làm việc bác sĩ</h2></div><a href="schedule.html">Quản lý lịch <span aria-hidden="true">→</span></a></div>
-      <div class="admin-support-schedule-summary"><label class="admin-support-day">${calendarIcon}<strong>${day===today()?"Hôm nay · ":""}${esc(date(day))}</strong><input type="date" value="${esc(day)}" data-overview-schedule-day aria-label="Chọn ngày xem lịch làm việc bác sĩ"></label><span>${calendar.error?"Chưa tải được số ca":`${doctorTotal} bác sĩ · ${roomTotal} phòng có lịch`}</span></div>
+      <div class="admin-support-schedule-summary"><span class="admin-support-day"><label class="admin-support-day-picker" title="Chọn ngày xem lịch làm việc bác sĩ">${calendarIcon}<input type="date" value="${esc(day)}" data-overview-schedule-day data-native-date-picker aria-label="Chọn ngày xem lịch làm việc bác sĩ"></label><strong>${day===today()?"Hôm nay · ":""}${esc(date(day))}</strong></span><span>${calendar.error?"Chưa tải được số ca":`${doctorTotal} bác sĩ · ${roomTotal} phòng có lịch`}</span></div>
       <div class="admin-support-schedule-body">${scheduleBody}</div>
       <div class="admin-support-footer"><span class="admin-support-status-dot" aria-hidden="true"></span><span>${calendar.error?"Dữ liệu lịch tạm thời không khả dụng":`${rows.length} ca · Sắp theo giờ bắt đầu`}</span></div>
     </section>
     <section class="admin-card admin-overview-notifications" aria-labelledby="overview-notifications-title">
-      <div class="admin-support-heading"><div><h2 id="overview-notifications-title">Thông báo</h2></div></div>
+      <div class="admin-support-heading"><div><h2 id="overview-notifications-title">Thông báo</h2></div><a href="notifications.html">Xem tất cả <span aria-hidden="true">→</span></a></div>
       <div class="admin-support-notification-summary"><span class="admin-support-unread">${bell}<span>Chưa đọc</span><strong>${esc(unread)}</strong></span><span>Ưu tiên chưa đọc</span></div>
       <div class="admin-support-notification-body">${notificationBody}</div>
       <div class="admin-support-footer"><span class="admin-support-status-dot" aria-hidden="true"></span><span>Cuộn để xem thêm · Chọn thông báo để xem nội dung đầy đủ</span></div>

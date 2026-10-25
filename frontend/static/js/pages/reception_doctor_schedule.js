@@ -4,13 +4,12 @@ import {sessionError} from "../core/staff_workspace.js";
 import {code} from "../core/business_codes.js";
 import {bindLiveSearch} from "../core/live_search.js";
 import {startAutoRefresh} from "../core/auto_refresh.js";
-import {encounterSummary} from "../core/staff_ui.js";
 import {loadReceptionDoctorSchedules,filterReceptionDoctorSchedules,readReceptionDoctorSchedule,canReceiveInSchedule,searchSchedulePatients,receiveSchedulePatient} from "../core/reception_doctor_schedule_data.js";
 
 const toView = row => ({...row,id:String(row.schedule_id),doctor:String(row.doctor_name||'').replace(/^BS\.?\s*/i,''),department:row.department_name||'',room:row.room_name||'',day:row.work_date,count:row.booked_count,capacity:row.max_quota,shift:String(row.start_time)<'12:00'?'Ca sáng':'Ca chiều',hours:`${String(row.start_time||'').slice(0,5)} – ${String(row.end_time||'').slice(0,5)}`});
 export async function initReceptionDoctorSchedule() {
   let rows=[],active=true,version=0,request,detailVersion=0,detailRequest,patientRequest,saving=false;
-  $("#page-body").innerHTML = panel("Danh sách lịch khám bác sĩ", '<form id="doctor-schedule-filter" class="staff-toolbar" role="search" aria-label="Tra cứu lịch khám bác sĩ"><label>Tên bác sĩ, chuyên khoa hoặc phòng khám<input type="search" name="q" placeholder="Nhập thông tin để tìm lịch khám"></label><label>Chuyên khoa<input type="text" name="department" list="reception-schedule-departments" placeholder="Nhập hoặc chọn chuyên khoa" autocomplete="off"><datalist id="reception-schedule-departments"></datalist></label><label>Ngày khám<input type="date" name="work_date"></label></form><div id="doctor-schedule-list"></div><div id="list-pagination" class="list-pagination"></div>');
+  $("#page-body").innerHTML = panel("Danh sách lịch khám bác sĩ", '<form id="doctor-schedule-filter" class="staff-toolbar" role="search" aria-label="Tra cứu lịch khám bác sĩ"><label>Tìm kiếm<input type="search" name="q" placeholder="Tên bác sĩ, chuyên khoa hoặc phòng khám"></label><label>Chuyên khoa<input type="text" name="department" list="reception-schedule-departments" placeholder="Tên chuyên khoa" autocomplete="off"><datalist id="reception-schedule-departments"></datalist></label><label>Ngày khám<input type="date" name="work_date"></label></form><div id="doctor-schedule-list"></div><div id="list-pagination" class="list-pagination"></div>');
   const form = $("#doctor-schedule-filter");
   form.elements.work_date.value = today();
   const feedback=$('#page-status'),modal=$('#staff-dialog');
@@ -58,7 +57,7 @@ export async function initReceptionDoctorSchedule() {
     if(!active || current!==detailVersion)return;
     if (button.hasAttribute("data-schedule-add")) {
       if(!canReceiveInSchedule(row))throw new Error('Ca đã kết thúc hoặc ngừng tiếp nhận. Vui lòng chọn ca khác.');
-      dialog("Thêm bệnh nhân vào ca khám", `<div class="reception-schedule-detail">${panel("Ca khám đã chọn", facts([["Bác sĩ", `BS. ${row.doctor}`], ["Ngày khám", date(row.day)], ["Ca / giờ khám", `${row.shift} · ${row.hours}`], ["Phòng khám", row.room], ["Số lượng", `${row.count} / ${row.capacity}`]]))}<section class="panel reception-patient-picker"><label>Tìm bệnh nhân<input type="search" id="schedule-patient-search" placeholder="Nhập họ tên, mã hồ sơ hoặc số điện thoại" aria-controls="schedule-patient-results"></label><div id="schedule-patient-results" class="reception-patient-results" aria-label="Kết quả tìm bệnh nhân"></div></section><div class="actions"><button type="button" class="secondary" data-schedule-cancel>Hủy</button><button type="button" disabled>Thêm bệnh nhân</button></div></div>`);
+      dialog("Thêm bệnh nhân vào ca khám", `<div class="reception-schedule-detail">${panel("Ca khám đã chọn", facts([["Bác sĩ", `BS. ${row.doctor}`], ["Ngày khám", date(row.day)], ["Ca / giờ khám", `${row.shift} · ${row.hours}`], ["Phòng khám", row.room], ["Số lượng", `${row.count} / ${row.capacity}`]]))}<section class="panel reception-patient-picker"><label>Tìm kiếm<input type="search" id="schedule-patient-search" placeholder="Họ tên, mã hồ sơ hoặc số điện thoại" aria-controls="schedule-patient-results"></label><div id="schedule-patient-results" class="reception-patient-results" aria-label="Kết quả tìm bệnh nhân"></div></section><div class="actions"><button type="button" class="secondary" data-schedule-cancel>Hủy</button><button type="button" disabled>Thêm bệnh nhân</button></div></div>`);
       let patients = [],patientVersion=0;
       const search = $("#schedule-patient-search"), results = $("#schedule-patient-results");
       let selected = "";
@@ -96,7 +95,7 @@ export async function initReceptionDoctorSchedule() {
         try {
           const encounter=await receiveSchedulePatient(row,patient.patient_id,options);
           if(!active||current!==detailVersion)return;
-          dialog('Đã tiếp nhận và phát phiếu',`<div class="staff-confirm">${encounterSummary(encounter)}<a href="walk_in.html?schedule_id=${encodeURIComponent(encounter.schedule_id)}&work_date=${encodeURIComponent(encounter.work_date)}">Xem lượt khám trong ca →</a></div>`);
+          modal.close();
           await load();
         } catch(error) {if(active&&current===detailVersion){note.textContent=sessionError(error);confirm.disabled=false;}}
         finally {saving=false;detail.dataset.busy='false';search.disabled=false;$('#staff-dialog-close').disabled=false;}

@@ -32,10 +32,6 @@ export function updateSchedule(scheduleId, data, options = {}) {
   return apiRequest(`/admin/schedules/${pathSegment(scheduleId)}`, { ...options, method: "PATCH", data });
 }
 
-/** POST /doctor/schedules/<int:schedule_id>/unavailability */
-export function reportUnavailable(scheduleId, data, options = {}) {
-  return apiRequest(`/doctor/schedules/${pathSegment(scheduleId)}/unavailability`, { ...options, method: "POST", data });
-}
 
 /** GET /admin/nurse-assignments */
 export function listNurseAssignments(params = {}, options = {}) {
@@ -47,10 +43,6 @@ export function createNurseAssignment(data, options = {}) {
   return apiRequest("/admin/nurse-assignments", { ...options, method: "POST", data });
 }
 
-/** POST /admin/nurse-assignments/<int:assignment_id>/revoke */
-export function revokeNurseAssignment(assignmentId, options = {}) {
-  return apiRequest(`/admin/nurse-assignments/${pathSegment(assignmentId)}/revoke`, { ...options, method: "POST" });
-}
 
 /** GET /nurse/assignments */
 export function listOwnNurseAssignments(params = {}, options = {}) {

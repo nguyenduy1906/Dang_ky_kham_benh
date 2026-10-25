@@ -1,0 +1,58 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Thanh toán lịch khám | NEU Medical</title><link rel="stylesheet" href="../../static/css/home.css"><link rel="stylesheet" href="../../static/css/public_pages.css"><link rel="stylesheet" href="../../static/css/patient_pages.css"><link rel="stylesheet" href="../../static/css/booking_page.css"><link rel="stylesheet" href="../../static/css/payment.css"><link rel="stylesheet" href="../../static/css/reception_booking.css"><script type="module" src="../../static/js/pages/reception_booking.js"></script></head><body class="reception-booking-page auth-pending payment-body" data-booking-stage="payment"><a class="skip-link" href="#main">Đến nội dung chính</a><header class="patient-header"><div class="identity"><div class="brand"><img class="brand-logo" src="../../static/assets/bieu_trung_neu.png" alt="Logo NEU Medical" width="68" height="68"><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></div><span class="reception-booking-label">Đăng ký khám tại quầy</span></div></header><div id="reception-booking-status" class="section-wrap booking-auth-status" role="status"><p>Đang tải thông tin…</p><button id="reception-booking-retry" type="button" class="outline-button" hidden>Thử lại</button><a href="walk_in.html?mode=direct" class="outline-button">Về danh sách trực tiếp</a></div><main id="main" class="payment-main">
+      <section id="payment-page" class="payment-page" aria-labelledby="payment-title" hidden>
+        
+        <h1 id="payment-title">Thanh toán lịch khám</h1>
+        <div id="payment-layout" class="payment-layout">
+          <section id="booking-payment" class="payment-panel" aria-labelledby="booking-payment-title">
+            <h2 id="booking-payment-title">Thông tin thanh toán</h2>
+            <p id="booking-countdown" class="payment-status" role="status"></p>
+            <div id="booking-qr" class="booking-qr" hidden></div>
+            <label for="booking-payment-method">Phương thức thanh toán</label>
+            <select id="booking-payment-method">
+              <option value="CASH">Tiền mặt</option>
+              <option value="BANK">Chuyển khoản</option>
+              <option value="EWALLET">Ví điện tử</option>
+              <option value="CARD">Thẻ</option>
+            </select>
+            <button id="booking-payment-create" type="button" class="solid-button">Tạo yêu cầu thanh toán</button>
+            <div id="booking-payment-result" class="payment-results">
+              <p class="payment-preview-notice">Bản xem trước giao diện · Chưa ghi nhận thanh toán hoặc xác nhận lịch khám.</p>
+              <button id="booking-payment-success" type="button" class="solid-button">Xác nhận thanh toán thành công</button>
+              <button id="booking-payment-failed" type="button" class="outline-button">Thanh toán không thành công</button>
+            </div>
+            
+          </section>
+          <aside class="payment-panel payment-summary" aria-labelledby="payment-summary-title">
+            <h2 id="payment-summary-title">Thông tin lượt khám</h2>
+            <dl id="payment-summary" class="booking-review-list"></dl>
+            <p class="payment-summary-total"><span>Tổng tiền khám</span><strong id="payment-total"></strong></p>
+          </aside>
+        </div>
+        
+        <section id="reception-payment-preview-result" class="booking-success reception-payment-preview-result" aria-labelledby="reception-payment-result-title" hidden>
+          <span id="reception-payment-result-icon" class="booking-success-icon" aria-hidden="true">✓</span>
+          <p class="payment-preview-label">BẢN XEM TRƯỚC GIAO DIỆN</p>
+          <h2 id="reception-payment-result-title"></h2>
+          <p id="reception-payment-result-description"></p>
+          <div id="reception-payment-result-summary"></div>
+          <p class="payment-preview-notice">Chưa tạo giao dịch, thu tiền hoặc cập nhật trạng thái lịch khám trong hệ thống.</p>
+          <button id="reception-payment-preview-back" type="button" class="outline-button">Quay lại thanh toán</button>
+        </section>
+        <p id="booking-payment-status" class="payment-status" role="status" aria-live="polite"></p>
+        <nav class="payment-actions" aria-label="Thao tác thanh toán">
+          <a id="payment-back" class="outline-button" href="booking_review.html">← Quay lại thông tin</a>
+          
+          
+        </nav>
+      </section>
+    </main>
+    <dialog id="reception-payment-confirm" class="reception-payment-confirm" aria-labelledby="reception-payment-confirm-title">
+      <div class="payment-confirm-heading"><h2 id="reception-payment-confirm-title">Xác nhận thanh toán</h2><button id="reception-payment-confirm-close" type="button" class="outline-button">Đóng</button></div>
+      <p class="payment-preview-notice">Bản xem trước · Thao tác này chưa lưu giao dịch vào hệ thống.</p>
+      <div id="reception-payment-confirm-summary"></div>
+      <form id="reception-payment-confirm-form">
+        <label class="payment-confirm-check"><input id="reception-payment-verified" type="checkbox" required><span>Đã kiểm tra người bệnh, ca khám, số tiền và phương thức thanh toán.</span></label>
+        <div class="payment-confirm-actions"><button id="reception-payment-confirm-cancel" type="button" class="outline-button">Quay lại</button><button type="submit" class="solid-button">Xem kết quả xác nhận</button></div>
+      </form>
+    </dialog>
+    <footer class="reception-booking-footer">© NEU Medical · Đăng ký khám tại quầy</footer></body></html>

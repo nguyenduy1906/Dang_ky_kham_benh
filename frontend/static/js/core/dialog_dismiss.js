@@ -1,5 +1,6 @@
 export function enhanceDialogDismiss(dialog, { closeButtons = [], canClose = () => true } = {}) {
   if (!dialog) return;
+  dialog.workflowCanClose=canClose;
   for (const button of closeButtons.filter(Boolean)) {
     button.textContent = "Đóng";
     button.dataset.dialogDismiss = "true";

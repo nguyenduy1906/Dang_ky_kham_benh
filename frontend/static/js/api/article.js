@@ -33,8 +33,4 @@ export function uploadImage(file, options = {}) {
   return apiRequest("/admin/articles/images", { ...options, method: "POST", data });
 }
 
-/** GET /uploads/articles/<filename> */
-export function getImage(filename, options = {}) {
-  return apiRequest(`/uploads/articles/${pathSegment(filename)}`, { ...options, method: "GET", auth: false, responseType: "blob" });
-}
 

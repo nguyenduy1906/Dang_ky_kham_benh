@@ -28,7 +28,7 @@ export async function readReceptionDoctorSchedule(row, options = {}) {
   return present(current,{doctor_profile_id:row.doctor_profile_id,full_name:row.doctor_name,department_name:row.department_name});
 }
 export function canReceiveInSchedule(row, now = Date.now()) {
-  return ['OPEN','FULL'].includes(row.schedule_status) && Date.parse(`${row.work_date}T${row.end_time}+07:00`)>now;
+  return row.work_date === new Date(now + 7 * 3600000).toISOString().slice(0,10) && ['OPEN','FULL'].includes(row.schedule_status) && Date.parse(`${row.work_date}T${row.end_time}+07:00`)>now;
 }
 export async function searchSchedulePatients(q,options = {}) {
   const value=String(q||'').trim();
@@ -41,6 +41,6 @@ export async function searchSchedulePatients(q,options = {}) {
 }
 export async function receiveSchedulePatient(row,patientId,options = {}) {
   const current=await readReceptionDoctorSchedule(row,options);
-  if(!canReceiveInSchedule(current))throw new Error("Ca đã kết thúc hoặc ngừng tiếp nhận. Vui lòng chọn ca khác.");
+  if(!canReceiveInSchedule(current))throw new Error("Chỉ tiếp nhận vào ca hôm nay còn hoạt động và chưa kết thúc.");
   return createReceptionWalkIn(patientId,{doctor_profile_id:current.doctor_profile_id},options,current.schedule_id);
 }

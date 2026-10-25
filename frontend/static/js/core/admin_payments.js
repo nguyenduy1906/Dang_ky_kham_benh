@@ -26,8 +26,7 @@ export async function initAdminPayments(ctx) {
   const modalBody = document.querySelector("#admin-dialog-body"), header = document.querySelector("#page-header");
   const linked = new URLSearchParams(location.search).get("encounter_id");
   body.classList.add("admin-payments-list");
-  document.querySelector("#page-description").textContent="Quản lý giao dịch thanh toán và yêu cầu hoàn tiền.";
-  header.insertAdjacentHTML("beforeend",'<button type="button" id="request-refund">＋ Yêu cầu hoàn tiền</button>');
+  header.insertAdjacentHTML("beforeend",'<button class="primary" type="button" id="request-refund">＋ Yêu cầu hoàn tiền</button>');
   const requestButton = document.querySelector("#request-refund");
   body.innerHTML = paymentsPageMarkup(linked && /^[1-9]\d*$/.test(linked) ? linked : "");
   const paymentForm = document.querySelector("#payment-search"), refundForm = document.querySelector("#refund-search");

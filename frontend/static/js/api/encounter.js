@@ -27,10 +27,6 @@ export function listStatusHistory(encounterId, params = {}, options = {}) {
   return apiRequest(`/encounters/${pathSegment(encounterId)}/status-history`, { ...options, method: "GET", params });
 }
 
-/** GET /encounters/<int:encounter_id>/transfer-history */
-export function listTransferHistory(encounterId, params = {}, options = {}) {
-  return apiRequest(`/encounters/${pathSegment(encounterId)}/transfer-history`, { ...options, method: "GET", params });
-}
 
 /** POST /encounters/online */
 export function createOnline(data, options = {}) {
@@ -52,15 +48,6 @@ export function checkIn(encounterId, options = {}) {
   return apiRequest(`/staff/encounters/${pathSegment(encounterId)}/check-in`, { ...options, method: "POST" });
 }
 
-/** GET /staff/appointment-tickets */
-export function listStaffTickets(params = {}, options = {}) {
-  return apiRequest("/staff/appointment-tickets", { ...options, method: "GET", params });
-}
-
-/** GET /staff/queues (alias tương thích của /staff/appointment-tickets) */
-export function listStaffQueues(params = {}, options = {}) {
-  return apiRequest("/staff/queues", { ...options, method: "GET", params });
-}
 
 /** GET /staff/encounters/<int:encounter_id>/transfer-options */
 export function getTransferOptions(encounterId, params = {}, options = {}) {
@@ -77,13 +64,13 @@ export function noShow(encounterId, data = {}, options = {}) {
   return apiRequest(`/staff/encounters/${pathSegment(encounterId)}/no-show`, { ...options, method: "POST", data });
 }
 
-/** GET /staff/schedules/<int:schedule_id>/affected-encounters */
-export function listAffectedEncounters(scheduleId, params = {}, options = {}) {
-  return apiRequest(`/staff/schedules/${pathSegment(scheduleId)}/affected-encounters`, { ...options, method: "GET", params });
-}
 
 /** POST /doctor/encounters/<int:encounter_id>/start */
 export function startExamination(encounterId, options = {}) {
   return apiRequest(`/doctor/encounters/${pathSegment(encounterId)}/start`, { ...options, method: "POST" });
 }
 
+
+/** Reception-assisted booking: pending payment, never an automatic check-in. */
+export const createStaffBooking = (data,options={}) => apiRequest('/staff/encounters/bookings',{...options,method:'POST',data});
+export const getStaffBookingOptions = (patientId,params={},options={}) => apiRequest(`/staff/patients/${pathSegment(patientId)}/booking-options`,{...options,method:'GET',params});

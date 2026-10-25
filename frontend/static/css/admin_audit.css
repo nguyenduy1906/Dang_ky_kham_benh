@@ -3,6 +3,7 @@ body[data-page="audit"] .admin-panel-heading p { margin: 8px 0 0; color: var(--s
 body[data-page="audit"] #activity-log-filter { display: grid; grid-template-columns: minmax(200px,1.6fr) repeat(2,minmax(145px,1fr)) repeat(2,minmax(135px,.85fr)); gap: 14px; }
 body[data-page="audit"] #activity-log-filter label { min-width: 0; }
 body[data-page="audit"] .admin-activity-log .admin-table { min-width: 960px; }
+body[data-page="audit"] .admin-activity-log .admin-table td:nth-child(6) { white-space: normal; overflow-wrap: anywhere; min-width: 260px; max-width: 420px; }
 body[data-page="audit"] .admin-activity-log th:first-child { width: 100px; }
 body[data-page="audit"] .admin-activity-log th:last-child { text-align: center; }
 body[data-page="audit"] .admin-activity-log td[colspan] { padding: 0; }

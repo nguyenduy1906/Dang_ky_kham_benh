@@ -189,3 +189,9 @@ def doctor_patient_history(db, actor, patient_id, cross_doctor, page, size, enco
     rows = db.execute(f'{base} ORDER BY s.work_date DESC,e.estimated_exam_at DESC,e.encounter_id DESC LIMIT %s OFFSET %s',
                       params+[size,(page-1)*size]).fetchall()
     return rows,total
+
+
+def patient_interval_conflict(db,patient_id,start,end):
+    return db.execute("""SELECT encounter_id FROM encounter WHERE patient_id=%s
+        AND encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS')
+        AND estimated_exam_at<%s AND appointment_end_at>%s LIMIT 1""",(patient_id,end,start)).fetchone() is not None

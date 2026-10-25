@@ -1,3 +1,4 @@
+import {commitForm,confirmDiscard} from "./form_workflow.js";
 import {isScheduleStatus,scheduleStatusBadge} from "./schedule_status.js";
 import {encounterStatusBadge,encounterStatusLabels} from "./encounter_status.js";
 import {encounterTypeBadge} from "./encounter_type.js";
@@ -60,6 +61,7 @@ export function createAdminContext() {
   }
   async function show(title, task) {
     if(!active)return;
+    if(!confirmDiscard(modal))throw Object.assign(new Error("Đã giữ nội dung chưa lưu."),{code:"CLIENT_ABORTED"});
     const current=++modalVersion, request=new AbortController();requests.add(request);
     const patientHistory=modal.querySelector("#patient-history-header");if(patientHistory)patientHistory.hidden=true;
     $("#admin-dialog-title").textContent=title;modalBody.innerHTML='<p role="status">Đang tải…</p>';
@@ -74,7 +76,7 @@ export function createAdminContext() {
     const current=modalVersion, request=new AbortController();requests.add(request);
     const controls=[...form.querySelectorAll("button")]; controls.forEach(b=>b.disabled=true);
     const feedback=form.querySelector('[role="status"]');if(feedback){feedback.textContent="Đang lưu…";feedback.dataset.error="false";}
-    try {const result=await task(request.signal);if(active&&current===modalVersion){if(feedback)feedback.textContent="Đã lưu.";await done?.(result);}}
+    try {const result=await task(request.signal);if(active&&current===modalVersion){await done?.(result);commitForm(form);if(feedback)feedback.textContent="Đã lưu.";}}
     catch(error){if(active&&current===modalVersion)handle(error,feedback);}
     finally{requests.delete(request);form.dataset.saving="false";controls.forEach(b=>b.disabled=false);}
   }

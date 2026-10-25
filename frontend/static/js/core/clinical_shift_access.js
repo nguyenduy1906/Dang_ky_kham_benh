@@ -7,14 +7,16 @@ export function canEditClinicalShift(shift, now = new Date()) {
   return Number.isFinite(start) && Number.isFinite(end) && start < end && now.getTime() >= start && now.getTime() < end;
 }
 
-export function currentClinicalPeriod(day, now = new Date()) {
-  for (const [period,start_time,end_time] of [["morning","08:00:00","11:30:00"],["afternoon","13:30:00","17:00:00"]]) {
-    if (canEditClinicalShift({work_date:day,start_time,end_time},now)) return period;
-  }
-  return "";
-}
 
 export function clinicalShiftEnded(shift, now = new Date()) {
   const end = Date.parse(`${shift.work_date}T${shift.end_time}+07:00`);
   return !Number.isFinite(end) || now.getTime() >= end;
+}
+
+export function canBeginClinical(visit, now = new Date()) {
+  const status=visit.encounter_status ?? visit.status;
+  const appointment=Date.parse(visit.estimated_exam_at);
+  return visit.payment_confirmed===true && status==='CHECKED_IN'
+    && !['CLOSED','UNAVAILABLE'].includes(visit.schedule_status)
+    && canEditClinicalShift(visit,now) && Number.isFinite(appointment) && now.getTime()>=appointment;
 }

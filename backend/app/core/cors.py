@@ -20,6 +20,6 @@ def register_cors(app):
             response.headers['Access-Control-Allow-Origin'] = request.headers['Origin']
             if request.method == 'OPTIONS':
                 response.headers['Access-Control-Allow-Methods'] = 'GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS'
-                response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+                response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Assignment-Batch'
                 response.headers['Access-Control-Max-Age'] = '600'
         return response

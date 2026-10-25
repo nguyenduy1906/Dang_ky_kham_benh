@@ -15,7 +15,7 @@ RULES = [
     (r'/me(?:/avatar)?|/admin/users/(\d+)/avatar', 'user', 'user_id', 'ACCOUNT', 'USER', 'thông tin tài khoản', 'TK'),
     (r'/doctor/encounters/(\d+)/medical-record|/doctor/medical-records/(\d+)/prescription-items', 'medical_record', 'encounter_id', 'MEDICAL_RECORD', 'ENCOUNTER', 'kết quả khám', 'LK'),
     (r'/admin/articles(?:/(\d+))?', 'article', 'article_id', 'ARTICLE', 'ARTICLE', 'bài viết', 'BV'),
-    (r'/(?:admin/payments/(\d+)/refund|demo/payments/(\d+)/result|staff/encounters/(\d+)/exam-fees|encounters/(\d+)/payment-intents)', 'payment', 'payment_id', 'PAYMENT', 'PAYMENT', 'giao dịch thanh toán', 'TT'),
+    (r'/(?:admin/payments/(\d+)/refund|demo/payments/(\d+)/result|staff/payments/(\d+)/result|staff/encounters/(\d+)/exam-fees|encounters/(\d+)/payment-intents)', 'payment', 'payment_id', 'PAYMENT', 'PAYMENT', 'giao dịch thanh toán', 'TT'),
     (r'/admin/leave-requests/(\d+)/review', 'leave_request', 'request_id', 'STAFF_LEAVE', 'STAFF_LEAVE_REQUEST', 'đơn xin nghỉ', 'NP'),
     (r'/(?:staff/encounters/\d+/transfer|encounters/\d+/registration)', 'encounter', 'encounter_id', 'ENCOUNTER', 'ENCOUNTER', 'lượt khám', 'LK'),
     (r'/admin/schedules(?:/(\d+)(?:/move)?)?', 'schedule', 'schedule_id', 'SCHEDULE', 'WORK_SCHEDULE', 'ca làm việc', 'CA'),
@@ -36,6 +36,11 @@ def publication_stamp(value):
     return (stamp.astimezone(timezone.utc) - datetime(1970, 1, 1, tzinfo=timezone.utc)) // timedelta(microseconds=1)
 
 def business_event(path, method, payload, actor):
+    # Booking results are emitted transactionally with the visit/payment change.
+    if re.fullmatch(r'/staff/payments/\d+/result',path) and (payload.get('payment') or {}).get('payment_type')=='DEPOSIT':
+        return None
+    if re.fullmatch(r'/encounters/\d+/(?:payment-intents|registration)|/demo/payments/\d+/result', path):
+        return None
     if actor.get('role_name') == 'ADMIN' or path.startswith('/admin/'):
         return None
     if path.startswith('/doctor/medical-records/') or re.fullmatch(r'/doctor/encounters/\d+/medical-record|/staff/encounters/\d+/transfer', path):
@@ -90,11 +95,28 @@ def publish(db, event):
     # Admin actions are audited, never echoed into the administrator inbox.
     if has_request_context() and (getattr(g, 'current_user', None) or {}).get('role_name') == 'ADMIN':
         return
+    conflict = '''ON CONFLICT(user_id,event_key) DO NOTHING'''
+    if event.get('registration_result'):
+        conflict = '''ON CONFLICT(user_id,event_key) DO UPDATE
+          SET title=EXCLUDED.title,content=EXCLUDED.content,is_read=0,created_at=CURRENT_TIMESTAMP
+          WHERE notification.title <> 'Đăng ký khám thành công'
+            AND (notification.title IS DISTINCT FROM EXCLUDED.title
+                 OR notification.content IS DISTINCT FROM EXCLUDED.content)'''
     db.execute('''INSERT INTO notification(user_id,event_key,notification_type,title,content,reference_type,reference_id)
         SELECT u.user_id,%s,%s,%s,%s,%s,%s FROM users u JOIN role r USING(role_id)
         WHERE r.role_name='ADMIN' AND u.account_status='ACTIVE' AND u.approval_status='APPROVED' AND u.deleted_at IS NULL
-        ON CONFLICT(user_id,event_key) DO NOTHING''',
+        ''' + conflict,
         (event['key'],event['kind'],event['title'],event['content'],event['reference'],event['id']))
+
+
+def notify_registration_result(db, encounter_id, *, success, reason=None):
+    title = 'Đăng ký khám thành công' if success else 'Đăng ký khám thất bại'
+    detail = ('Đã thanh toán thành công và xác nhận lịch khám.' if success else
+              'Lý do: ' + (reason or 'Thanh toán không thành công.'))
+    publish(db, {'key':f'admin-registration-result:{encounter_id}', 'kind':'APPOINTMENT',
+                 'reference':'ENCOUNTER','id':encounter_id,'title':title,
+                 'content':f'{title} — lượt khám {business_code("LK",encounter_id)}. {detail}',
+                 'registration_result':True})
 
 def register_admin_notifications(app):
     @app.after_request

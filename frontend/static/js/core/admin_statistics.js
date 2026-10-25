@@ -11,7 +11,6 @@ export async function initAdminStatistics(ctx) {
   const body=document.querySelector('#page-body');
   let range={...reportRange('today',today()),department:''},tab='overview',page=1,view,data,departments=[],loadedRange='',loading=false,requestVersion=0;
   body.innerHTML=statisticsShell(range);
-  document.querySelector('#page-description').textContent='Tổng hợp lượt khám, thanh toán, công suất và đánh giá.';
   document.querySelector('#page-header').insertAdjacentHTML('beforeend','<button type="button" class="secondary statistics-export" id="statistics-export">Xuất CSV mục hiện tại</button>');
   const form=body.querySelector('#statistics-filter');
   const render=()=>{

@@ -32,7 +32,7 @@ export function reviewDetail(row) {
 }
 
 export function notificationDetail(row) {
-  return `<div class="feedback-detail notification-detail"><div class="notification-detail-meta">${readBadge(row)}<span>${esc(types[row.type]||row.type)}</span><time>${esc(stamp(row.created_at))}</time></div><h3 class="notification-detail-title">${esc(row.title)}</h3><p class="feedback-notification-content">${esc(row.content)}</p>${facts([["Mã thông báo",code("TB",row.id)],["Đối tượng liên quan",row.reference||"Thông báo chung"]])}<div class="actions notification-detail-actions">${row.target?`<a class="button-link" href="${esc(row.target)}">Xem nội dung liên quan</a>`:""}</div></div>`;
+  return `<div class="feedback-detail notification-detail"><div class="notification-detail-meta">${readBadge(row)}<span>${esc(types[row.type]||row.type)}</span><time>${esc(stamp(row.created_at))}</time></div><h3 class="notification-detail-title">${esc(row.title)}</h3><p class="feedback-notification-content">${esc(row.content)}</p>${row.batch_items?.length?`<section class="notification-batch-details"><h3>Chi tiết phân công · ${row.batch_items.length} ca</h3><ul>${row.batch_items.map(item=>`<li>${esc(item.content)}</li>`).join('')}</ul></section>`:''}${facts([["Mã thông báo",code("TB",row.id)],["Đối tượng liên quan",row.reference||"Thông báo chung"]])}<div class="actions notification-detail-actions">${row.target?`<a class="button-link" href="${esc(row.target)}">Xem nội dung liên quan</a>`:""}</div></div>`;
 }
 
 
@@ -47,10 +47,9 @@ export function feedbackMarkup(reviews, {showType=true, personal=false}={}) {
 export async function initFeedbackPresentation(key, {presentationOnly=false, staffRole=null, readNotifications=readAdminNotifications, readNotification=openNotification}={}) {
   const reviews=key==="reviews";
   let rows=[], saving=false;
-  const body=document.querySelector("#page-body"), header=document.querySelector("#page-header");
+  const body=document.querySelector("#page-body");
   const modal=document.querySelector("#admin-dialog"), modalBody=document.querySelector("#admin-dialog-body");
   body.innerHTML=feedbackMarkup(reviews,{showType:!presentationOnly&&!staffRole,personal:presentationOnly||Boolean(staffRole)});
-  header.querySelector("#page-description").textContent=reviews?"Theo dõi phản hồi của người bệnh sau khám.":presentationOnly||staffRole?"Các thông báo dành cho bạn.":"Thông báo từ các hoạt động trong toàn hệ thống.";
   const form=document.querySelector("#feedback-filters"), error=document.querySelector("#feedback-error");
   let page=1, trigger;
   function render() {

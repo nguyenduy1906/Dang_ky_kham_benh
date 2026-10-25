@@ -5,7 +5,7 @@ import { staffTopbar } from "../core/staff_topbar.js";
 import { enhanceDialogDismiss } from "../core/dialog_dismiss.js";
 
 import { requireAdmin } from "../core/admin_access.js";
-import {initAdminNotificationBadge} from "../core/admin_notification_badge.js";
+import {initAdminNotificationBadge,initAdminActivityBadge} from "../core/admin_notification_badge.js";
 import {initAdminTopbar,focusAdminFunction} from '../core/admin_topbar.js';
 import { signOut, loginUrl, hasSession } from "../core/session.js";
 
@@ -53,10 +53,6 @@ function suspendAdmin() {
 window.addEventListener("neu:auth-change", () => {
   if (!hasSession()) { suspendAdmin(); location.replace(loginUrl(new URL(location.href)).href); }
 });
-$("#page-title").textContent = page.title;
-$("#page-title").hidden = true;
-$("#page-header .eyebrow").hidden = true;
-$("#page-description").textContent = page.description;
 document.title = `${page.title} | NEU Medical`;
 const menuButton = $(".staff-menu-toggle");
 initializeSidebarCollapse("admin");
@@ -86,6 +82,7 @@ const administrator = await requireAdmin();
 if (administrator) {
   initAdminTopbar();
   initAdminNotificationBadge();
+  initAdminActivityBadge();
   $("#staff-account-name").textContent = administrator.full_name;
   if (key === "reception_assignments") {
     const {initReceptionAssignmentPresentation} = await import("../core/admin_reception_assignment_presentation.js");

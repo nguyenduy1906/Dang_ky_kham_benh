@@ -27,12 +27,17 @@ def _staff(db, user_id):
     return user
 
 
-def _future(leave):
-    first = leave['from_date']
-    while first.weekday() > 4:
-        first += timedelta(days=1)
-    start = SHIFTS['AFTERNOON' if leave['period'] == 'AFTERNOON' else 'MORNING'][0]
-    if datetime.combine(first, start, VN_TZ) <= datetime.now(VN_TZ):
+def _future(db, leave, user):
+    scoped = {**leave, 'user_id': user['user_id']}
+    if user['role_name'] == 'RECEPTIONIST':
+        from backend.app.models import reception_assignment_model
+        shifts = reception_assignment_model.leave_assignments(db, scoped)
+    else:
+        shifts = model.affected_schedules(db, scoped, user['role_name'])
+    if not shifts:
+        raise conflict('Không có ca được phân công trong khoảng xin nghỉ', 'NO_ASSIGNED_SHIFT')
+    first = min(datetime.combine(s['work_date'], s['start_time'], VN_TZ) for s in shifts)
+    if first <= datetime.now(VN_TZ):
         raise conflict('Ca xin nghỉ đã bắt đầu; không thể gửi hoặc duyệt hồi tố', 'LEAVE_ALREADY_STARTED')
 
 
@@ -56,8 +61,8 @@ def create(actor, fields):
     _role(actor)
     with get_db_connection() as db:
         model.lock_changes(db)
-        _future(fields)
-        _staff(db, actor['user_id'])
+        staff = _staff(db, actor['user_id'])
+        _future(db, fields, staff)
         if model.overlapping(db, actor['user_id'], fields['from_date'], fields['to_date'], fields['period']):
             raise conflict('Đã có đơn nghỉ chờ duyệt hoặc được duyệt trùng ca', 'LEAVE_OVERLAP')
         request_id = model.create_request(db, actor['user_id'], fields)
@@ -114,8 +119,8 @@ def review(actor, request_id, fields):
             raise conflict('Đơn nghỉ đã được xử lý hoặc rút', 'LEAVE_NOT_PENDING')
         effects = {'unavailable_schedule_ids': [], 'revoked_assignment_ids': [], 'affected_encounters': 0}
         if fields['decision'] == 'APPROVED':
-            _future(row)
             staff = _staff(db, row['user_id'])
+            _future(db, row, staff)
             schedules = model.affected_schedules(db, row, staff['role_name'], lock=True)
             ids = [s['schedule_id'] for s in schedules]
             effects['affected_encounters'] = encounter_model.count_active_for_schedules(db, ids)
@@ -145,8 +150,6 @@ def review(actor, request_id, fields):
 
 def ensure_available(db, user_id, work_date, start, end):
     """Called under lock_changes before assigning clinical work to an absent employee."""
-    if work_date.weekday() > 4:
-        return
     for leave in model.overlapping(db, user_id, work_date, work_date, 'FULL_DAY', approved_only=True):
         if (leave['period'] == 'FULL_DAY' or (leave['period'] == 'MORNING' and start < time(12))
                 or (leave['period'] == 'AFTERNOON' and end > time(12))):
@@ -170,7 +173,7 @@ def calendar(actor, query, user_id=None):
                     if assignment['work_date'] != day:
                         continue
                     period = 'MORNING' if assignment['start_time'] < time(12) else 'AFTERNOON'
-                    matching = [l for l in leaves if day.weekday()<5 and l['from_date']<=day<=l['to_date'] and l['period'] in ('FULL_DAY',period)]
+                    matching = [l for l in leaves if l['from_date']<=day<=l['to_date'] and l['period'] in ('FULL_DAY',period)]
                     approved = [l for l in matching if l['status']=='APPROVED']
                     if assignment['revoked_at'] and not any(assignment['revoke_reason']==f"Nghỉ theo đơn NP_{l['request_id']:03d}" for l in approved):
                         continue
@@ -190,9 +193,9 @@ def calendar(actor, query, user_id=None):
     day = query['from_date']
     while day <= query['to_date']:
         shifts = []
-        daily_clinical = [s for s in clinical if s['work_date'] == day and s['schedule_status'] in ('OPEN', 'FULL')]
-        if user['role_name'] == 'NURSE':
-            # A nurse works the assigned periods, including explicitly assigned weekends.
+        daily_clinical = [s for s in clinical if s['work_date'] == day and s['schedule_status'] in ('OPEN', 'FULL', 'UNAVAILABLE')]
+        if user['role_name'] in ('NURSE', 'DOCTOR'):
+            # Staff work the assigned periods, including explicitly assigned weekends.
             periods = {period: (min(s['start_time'] for s in matching), max(s['end_time'] for s in matching))
                        for period in SHIFTS
                        if (matching := [s for s in daily_clinical if

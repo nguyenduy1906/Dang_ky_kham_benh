@@ -13,7 +13,12 @@ export function staffNotificationRow(row, role) {
     ENCOUNTER: role === "reception" ? "walk_in.html" : role === "doctor" ? "encounters.html" : "patients.html",
     PATIENT: role === "reception" ? "patients.html" : role === "doctor" ? "records.html" : "records.html",
   };
-  return { ...result, target: routes[row.reference_type] || null };
+  const id=Number(row.reference_id);
+  const encounterTarget=role==='reception'&&row.reference_type==='ENCOUNTER'&&Number.isSafeInteger(id)&&id>0
+    ? `walk_in.html?encounter_id=${id}` : null;
+  return { ...result, target: (role==='nurse'&&Number.isSafeInteger(id)&&id>0
+    ? ({ENCOUNTER:`patients.html?encounter_id=${id}`,PATIENT:`records.html?patient_id=${id}`,NURSE_ASSIGNMENT:`assignments.html?assignment_id=${id}`,WORK_SCHEDULE:`assignments.html?schedule_id=${id}`,SCHEDULE:`assignments.html?schedule_id=${id}`})[row.reference_type] : null) || encounterTarget || (role==='doctor'&&Number.isSafeInteger(id)&&id>0
+    ? row.reference_type==='ENCOUNTER'?`clinical.html?encounter_id=${id}&mode=view`:row.reference_type==='PATIENT'?`records.html?patient_id=${id}`:null : null) || routes[row.reference_type] || null };
 }
 export async function readStaffNotifications(role) {
   return (await allPages(api.listNotifications)).map(row => staffNotificationRow(row, role));

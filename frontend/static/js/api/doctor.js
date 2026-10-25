@@ -32,21 +32,4 @@ export function updateOwnProfile(data, options = {}) {
   return apiRequest("/doctor/profile", { ...options, method: "PATCH", data });
 }
 
-/** POST /doctor/profile/avatar */
-export function uploadAvatar(file, options = {}) {
-  const data = new FormData();
-  data.append("file", file);
-  return apiRequest("/doctor/profile/avatar", { ...options, method: "POST", data });
-}
-
-/** POST /admin/doctors/<int:doctor_profile_id>/avatar */
-export function uploadDoctorAvatar(doctorProfileId, file, options = {}) {
-  const data = new FormData(); data.append("file", file);
-  return apiRequest(`/admin/doctors/${pathSegment(doctorProfileId)}/avatar`, { ...options, method: "POST", data });
-}
-
-/** GET /uploads/avatars/<filename> */
-export function getAvatar(filename, options = {}) {
-  return apiRequest(`/uploads/avatars/${pathSegment(filename)}`, { ...options, method: "GET", auth: false, responseType: "blob" });
-}
 

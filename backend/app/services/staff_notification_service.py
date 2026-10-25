@@ -13,6 +13,24 @@ def send(db, recipients, key, kind, title, content, reference, identifier):
     recipients = sorted({int(user_id) for user_id in recipients if user_id is not None})
     if not recipients:
         return
+    from backend.app.utils.assignment_batch import current_batch
+    from flask import g
+    from psycopg.types.json import Jsonb
+    batch = current_batch()
+    if batch and reference in ('WORK_SCHEDULE', 'NURSE_ASSIGNMENT', 'RECEPTION_ASSIGNMENT'):
+        item = {'key': key, 'content': content, 'reference_type': reference, 'reference_id': identifier}
+        batch_key = f"assignment-batch:{g.current_user['user_id']}:{batch}:{reference}"
+        db.execute("""INSERT INTO notification(user_id,event_key,notification_type,title,content,reference_type,reference_id,batch_items)
+            SELECT u.user_id,%s,%s,'Phân công nhiều ngày','Phân công nhiều ngày · 1 ca. Xem chi tiết.',%s,%s,%s
+            FROM users u JOIN role r USING(role_id) WHERE u.user_id=ANY(%s)
+            AND r.role_name IN ('DOCTOR','NURSE','RECEPTIONIST') AND u.deleted_at IS NULL
+            AND u.account_status='ACTIVE' AND u.approval_status='APPROVED'
+            ON CONFLICT(user_id,event_key) DO UPDATE SET
+              batch_items=CASE WHEN notification.batch_items @> %s THEN notification.batch_items ELSE notification.batch_items || EXCLUDED.batch_items END,
+              content='Phân công nhiều ngày · ' || (jsonb_array_length(notification.batch_items) + CASE WHEN notification.batch_items @> %s THEN 0 ELSE 1 END)::text || ' ca. Xem chi tiết.',
+              is_read=CASE WHEN notification.batch_items @> %s THEN notification.is_read ELSE 0 END""",
+            (batch_key,kind,reference,identifier,Jsonb([item]),recipients,Jsonb([{'key':key}]),Jsonb([{'key':key}]),Jsonb([{'key':key}])))
+        return
     # The recipient set comes from the operation, never from browser input.
     db.execute('''INSERT INTO notification(user_id,event_key,notification_type,title,content,reference_type,reference_id)
         SELECT u.user_id,%s,%s,%s,%s,%s,%s FROM users u JOIN role r USING(role_id)

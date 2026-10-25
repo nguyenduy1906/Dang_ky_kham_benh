@@ -448,7 +448,6 @@ def admin_create_user():
             phone: {type: string}
             password: {type: string}
             role: {type: string, example: DOCTOR}
-            approval_status: {type: string, example: APPROVED}
             email_verified: {type: boolean}
             dob: {type: string, format: date, x-nullable: true, description: Từ 1900-01-01 đến hôm nay}
             gender: {type: string, enum: [Nam, Nữ, Khác], x-nullable: true}

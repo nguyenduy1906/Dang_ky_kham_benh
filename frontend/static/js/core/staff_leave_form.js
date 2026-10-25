@@ -11,12 +11,7 @@ export function staffLeavePayload(values, today, now = Date.now()) {
   }
   const period = periods[values.period];
   if (!period) invalid("period", "Vui lòng chọn buổi xin nghỉ hợp lệ.");
-  const first = new Date(`${from}T00:00:00Z`);
-  while ([0,6].includes(first.getUTCDay())) first.setUTCDate(first.getUTCDate()+1);
-  const workDay = first.toISOString().slice(0,10);
-  if (workDay > to) invalid("end_date", "Khoảng xin nghỉ không có ngày làm việc từ thứ Hai đến thứ Sáu.");
-  const start = Date.parse(`${workDay}T${period === "AFTERNOON" ? "13:30" : "08:00"}:00+07:00`);
-  if (start <= now) invalid("start_date", "Ca xin nghỉ đã bắt đầu. Vui lòng chọn ca hoặc ngày tiếp theo.");
+  // Exact assigned shift times are validated by the server, including weekends.
   const reason = String(values.reason || "").trim(), handover = String(values.handover || "").trim();
   if (!reason) invalid("reason", "Vui lòng nhập lý do xin nghỉ.");
   const text = reason + (handover ? `\n\nGhi chú bàn giao: ${handover}` : "");

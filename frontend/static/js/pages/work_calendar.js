@@ -1,3 +1,4 @@
+import {commitForm} from "../core/form_workflow.js";
 import { startAutoRefresh } from "../core/auto_refresh.js";
 import { code } from "../core/business_codes.js";
 import { staffReady, sessionError } from "../core/staff_workspace.js";
@@ -78,7 +79,7 @@ export async function initWorkCalendar(user) {
         <header class="calendar-day-heading"><span>${day}</span><time datetime="${date}"${date === currentDate ? ' aria-current="date"' : ""}>${shortDate(date)}</time></header>
         ${["MORNING", "AFTERNOON"].map(period => {
           const shift = visible.find(s => s.date === date && s.period === period);
-          const state = shift?.status === "ON_LEAVE" ? "Đã duyệt nghỉ" : shift?.pending_leave ? "Chờ duyệt nghỉ · Vẫn làm việc" : "Làm việc";
+          const state = shift?.status === "ON_LEAVE" ? "Đã duyệt nghỉ" : shift?.pending_leave ? "Đang xin nghỉ · Vẫn làm việc" : "Làm việc";
           const rooms = shift?.workstation_name ? shift.workstation_name : shift ? [...new Set(shift.clinical.map(s => s.room_name || `Phòng ${code("PH", s.room_id)}`))].join(", ") : "";
           return `<div class="calendar-slot"><span class="calendar-slot-label">${periods[period]}</span>${shift
             ? `<button type="button" class="calendar-shift${period === "AFTERNOON" ? " is-afternoon" : ""}${shift.status === "ON_LEAVE" ? " is-leave" : shift.pending_leave ? " is-pending" : ""}" data-shift="${escape(shift.id)}"><strong>${escape(shortTime(shift.start_time))} – ${escape(shortTime(shift.end_time))}</strong><span>${state}</span><span class="calendar-shift-place">${escape(rooms || (shift.status === "ON_LEAVE" ? "Nghỉ theo đơn đã duyệt" : user.role_name === "RECEPTIONIST" ? "Theo lịch làm việc" : "Chưa có phân công phòng"))}</span></button>`
@@ -136,7 +137,7 @@ export async function initWorkCalendar(user) {
     const assigned = s.clinical.map(c => `${c.room_name || `Phòng ${code("PH", c.room_id)}`} · ${shortTime(c.start_time)}–${shortTime(c.end_time)} · ${clinicalStatuses[c.schedule_status] || c.schedule_status}`).join("\n");
     showDialog("Chi tiết ca làm việc", [["Ngày làm việc", formatDate(s.date)], ["Ca", periods[s.period]],
       ["Thời gian", `${shortTime(s.start_time)} – ${shortTime(s.end_time)}`],
-      ["Trạng thái", s.status === "ON_LEAVE" ? "Đã duyệt nghỉ" : s.pending_leave ? "Chờ duyệt nghỉ; lịch làm việc giữ nguyên" : "Làm việc"],
+      ["Trạng thái", s.status === "ON_LEAVE" ? "Đã duyệt nghỉ" : s.pending_leave ? "Đang xin nghỉ; lịch làm việc giữ nguyên" : "Làm việc"],
       [user.role_name === "RECEPTIONIST" ? "Khu vực" : "Phân công phòng khám", s.workstation_name ? s.workstation_name : assigned || "Chưa có phân công phòng khám"],
       ...(user.role_name === "RECEPTIONIST" ? [["Ghi chú phân công", s.note || "—"]] : []),
       ["Mã đơn nghỉ liên quan", (s.leave_request_ids || []).map(id=>code("NP", id)).join(", ") || "Không có"]],
@@ -252,7 +253,7 @@ export async function initWorkCalendar(user) {
       if (!active) return;
       const r = result.leave_request;
       if (!r?.request_id || r.user_id !== user.user_id || r.status !== "PENDING") throw new Error("Chưa nhận được xác nhận đơn nghỉ từ hệ thống.");
-      resetFields(); await Promise.all([loadWeek(), loadRequests()]);
+      commitForm(form);resetFields({clearDates:true}); await Promise.all([loadWeek(), loadRequests()]);
       message(feedback, `Đã gửi đơn ${code("NP", r.request_id)}, đang chờ admin duyệt. Lịch làm việc chưa thay đổi.`);
     } catch (error) { reportError(feedback, error); }
     finally {

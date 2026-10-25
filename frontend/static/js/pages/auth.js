@@ -1,3 +1,4 @@
+import {commitForm,confirmDiscard} from "../core/form_workflow.js";
 import * as authApi from "../api/auth.js";
 import { signIn, clearSession, returnUrl } from "../core/session.js";
 
@@ -5,6 +6,8 @@ const card = document.querySelector("#auth-card");
 const params = new URLSearchParams(location.search);
 function setMode(mode, focus = true) {
   const register = mode === "register";
+  const outgoing=document.querySelector(register?'#login-form':'#register-form');
+  if(!confirmDiscard(outgoing))return;
   card.classList.toggle("is-register", register);
   for (const [id, active] of [["login-panel", !register], ["register-panel", register]]) {
     const panel = document.getElementById(id);
@@ -57,7 +60,7 @@ loginForm.addEventListener("submit", async event => {
     const user = await signIn({ identifier, password });
     document.querySelector("#login-password").value = "";
     const destination = returnUrl(params.get("next"), user.role_name);
-    location.replace(destination.href);
+    commitForm(loginForm);location.replace(destination.href);
   } catch (error) {
     message(loginStatus, error.message);
   } finally { busy(loginForm, false, "Đăng nhập"); }
@@ -81,7 +84,7 @@ registerForm.addEventListener("submit", async event => {
     registerForm.reset();
     document.querySelector("#login-identifier").value = data.phone || data.email;
     document.querySelector("#login-password").value = "";
-    setMode("login");
+    commitForm(registerForm);registerForm.reset();setMode("login");
     message(loginStatus, "Đăng ký thành công. Vui lòng đăng nhập để tiếp tục.", true);
   } catch (error) { message(status, error.message); }
   finally { busy(registerForm, false, "Đăng ký"); }

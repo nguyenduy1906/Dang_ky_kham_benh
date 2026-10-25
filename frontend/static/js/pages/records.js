@@ -1,8 +1,8 @@
+import {readPatientRecord} from '../core/patient_record_data.js';
 import { startAutoRefresh } from "../core/auto_refresh.js";
 import { hasSession } from "../core/session.js";
 import { code } from "../core/business_codes.js";
 import { listPatients, listEncounters } from "../api/patient.js";
-import { getRecord, listPrescriptionItems } from "../api/medical_record.js";
 import { allPages, dateLabel, clock } from "../core/booking.js";
 import { statusLabels } from "../core/appointments.js";
 import { protectPatientPage } from "../core/patient_access.js";
@@ -108,12 +108,9 @@ async function exportRecord(profile,encounter,button) {
   try {
     let record=null,medications=[];
     if(['IN_PROGRESS','COMPLETED'].includes(encounter.encounter_status)){
-      try{record=(await getRecord(encounter.encounter_id,{signal:controller.signal})).medical_record;}
+      try{({record,medications}=await readPatientRecord(encounter.encounter_id,{signal:controller.signal}));}
       catch(error){if(error.code!=='MEDICAL_RECORD_NOT_FOUND')throw error;}
-      if(record){
-        if(!record.record_id||String(record.encounter_id)!==String(encounter.encounter_id))throw new Error('Kết quả khám không khớp lượt khám đã chọn.');
-        medications=await allPages((params,options)=>listPrescriptionItems(record.record_id,params,options),{},{signal:controller.signal});
-      }
+
     }
     if(controller.signal.aborted||!hasSession())return;
     const blob=await createPatientRecordPdf({profile,encounter,record,medications});
@@ -128,10 +125,7 @@ async function showResult(encounter) {
   ui.resultContent.replaceChildren(); ui.resultStatus.textContent = "Đang tải kết quả khám…"; ui.resultRetry.hidden = true;
   if (!ui.result.open) ui.result.showModal();
   try {
-    const { medical_record: record } = await getRecord(encounter.encounter_id, { signal: resultController.signal });
-    if (version !== resultVersion) return;
-    if (!record?.record_id || record.encounter_id !== encounter.encounter_id) throw new Error("Kết quả khám không khớp lượt khám đã chọn.");
-    const medications = await allPages((params, options) => listPrescriptionItems(record.record_id, params, options), {}, { signal: resultController.signal });
+    const {record,medications}=await readPatientRecord(encounter.encounter_id,{signal:resultController.signal});
     if (version !== resultVersion) return;
     const profile = profiles.find(p => p.patient_id === selected);
     facts(ui.resultContent, [["Người khám", profile?.full_name], ["Bác sĩ", encounter.doctor_name], ["Ngày khám", recordDate(record.examined_at)], ["Chẩn đoán", record.diagnosis], ["Hướng điều trị", record.treatment], ["Ghi chú bác sĩ", record.doctor_notes]]);

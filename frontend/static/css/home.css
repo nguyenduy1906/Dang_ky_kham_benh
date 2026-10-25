@@ -1,3 +1,4 @@
+@import url("./action_buttons.css");
 @font-face {
   font-family: "Great Vibes";
   src: url("../assets/fonts/great-vibes/GreatVibes-Regular.ttf") format("truetype");
@@ -60,9 +61,11 @@ button {
   background: white;
   padding: 12px;
   z-index: 10;
+  transform: translateY(-200%);
 }
-.skip-link:focus {
+.skip-link:focus-visible {
   top: 8px;
+  transform: none;
 }
 .topbar {
   background: var(--green);
@@ -91,9 +94,6 @@ button {
   background: transparent;
   padding: 8px 18px;
   font-weight: 600;
-}
-.language {
-  font-size: 25px;
 }
 .topbar .topbar-signout {
   background: #c73535;
@@ -314,11 +314,6 @@ button[data-dialog-dismiss]:is(:hover, :focus-visible):not(:disabled) { color: #
 #dialog-content {
   line-height: 1.75;
   color: #536158;
-}
-#dialog-content .preview-note {
-  font-size: 13px;
-  border-top: 1px solid #ddd;
-  padding-top: 12px;
 }
 #dialog-content ul {
   padding-left: 22px;

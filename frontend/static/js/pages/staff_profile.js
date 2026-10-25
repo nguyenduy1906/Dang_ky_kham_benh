@@ -1,3 +1,4 @@
+import {commitForm} from "../core/form_workflow.js";
 import { code } from "../core/business_codes.js";
 import { staffReady, staffRoles, backendRoles } from "../core/staff_workspace.js";
 import { nursePortraitUrl } from "../core/staff_shell.js";
@@ -129,7 +130,7 @@ if (user) {
             throw error;
           }
         }
-        render();
+        commitForm(form);render();
       })
         .finally(() => { editButton.disabled = false; if (!editing) editButton.focus(); });
     });
@@ -181,6 +182,7 @@ function bindPasswordChange() {
       if (request !== version) return;
       form.reset();
       feedback.textContent = "Đã đổi mật khẩu thành công.";
+      setBusy(false);modal.close();
     } catch (error) {
       if (request !== version) return;
       feedback.dataset.error = "true";

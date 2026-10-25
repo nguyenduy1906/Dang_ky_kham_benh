@@ -75,30 +75,13 @@ body table thead :is(th,td) { border-inline: 0 !important; }
   background: white;
   min-height: 420px;
 }
-.content-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 55px;
-  align-items: center;
-  margin-bottom: 45px;
-}
-.content-split img {
-  width: 100%;
-  height: 380px;
-  object-fit: cover;
-}
-.content-split p,
+
 .text-block p {
   line-height: 1.8;
   color: #56675d;
 }
 .solid-button {
   display: inline-block;
-}
-.simple-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
 }
 .text-block {
   padding: 28px;
@@ -156,25 +139,11 @@ header .topbar a {
 }
 
 @media (max-width: 1100px) {
-
-  .simple-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .content-split {
-    gap: 30px;
-  }
   .page-content h2 {
     font-size: 34px;
   }
 }
 @media (max-width: 760px) {
-  .content-split,
-.simple-grid {
-    grid-template-columns: 1fr;
-  }
-  .content-split img {
-    height: 260px;
-  }
 
   .page-title h1 {
     font-size: 35px;
@@ -512,17 +481,6 @@ main [data-contact-field="support_phone"],
   flex-direction: column;
   align-items: flex-start;
 }
-.specialty-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: #e9f5ed;
-  color: var(--green);
-  width: 42px;
-  height: 42px;
-  font-size: 26px;
-  margin-bottom: 18px;
-}
 .specialty-label {
   font-size: 10px;
   color: #607467;
@@ -704,28 +662,6 @@ main [data-contact-field="support_phone"],
   line-height: 1.8;
   color: #617067;
   margin: 0;
-}
-.directory-support {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 15px;
-  background: white;
-  border: 1px solid #dce5df;
-  white-space: nowrap;
-  font-size: 11px;
-}
-.directory-support > span:first-child {
-  font-size: 25px;
-  color: var(--green);
-  background: #edf5ef;
-  padding: 8px;
-}
-.directory-support strong {
-  display: block;
-  color: var(--green);
-  font-size: 13px;
-  margin-top: 6px;
 }
 .directory-filter {
   background: white;

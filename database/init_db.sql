@@ -189,9 +189,8 @@ CREATE TABLE IF NOT EXISTS encounter (
     CONSTRAINT encounter_snapshot_pair CHECK ((consultation_fee_snapshot IS NULL) = (deposit_amount_snapshot IS NULL)),
     CONSTRAINT encounter_deposit_limit CHECK (deposit_amount_snapshot <= consultation_fee_snapshot),
     CONSTRAINT encounter_slot_order CHECK (appointment_end_at > estimated_exam_at),
-    CONSTRAINT encounter_hold_online_only CHECK (hold_expires_at IS NULL OR encounter_type = 'ONLINE'),
     CONSTRAINT encounter_holding_expiry CHECK (
-        encounter_status <> 'HOLDING' OR (encounter_type = 'ONLINE' AND hold_expires_at IS NOT NULL)
+        encounter_status <> 'HOLDING' OR hold_expires_at IS NOT NULL
     )
 );
 
@@ -293,6 +292,7 @@ CREATE TABLE IF NOT EXISTS notification (
     notification_code text GENERATED ALWAYS AS (business_code('TB', notification_id)) STORED UNIQUE,
     user_id              INTEGER NOT NULL REFERENCES users(user_id),
     event_key            text,
+    batch_items          jsonb NOT NULL DEFAULT '[]'::jsonb,
     notification_type    text NOT NULL CHECK (trim(notification_type) <> ''),
     title                text NOT NULL CHECK (trim(title) <> ''),
     content              text NOT NULL,
@@ -646,6 +646,7 @@ CREATE INDEX IF NOT EXISTS idx_department_membership_doctor ON department_member
 CREATE TABLE IF NOT EXISTS admin_activity_log (
     log_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     actor_id integer NOT NULL,
+    batch_key text,
     actor_name text NOT NULL,
     action text NOT NULL,
     target text NOT NULL,
@@ -654,6 +655,9 @@ CREATE TABLE IF NOT EXISTS admin_activity_log (
     after_data jsonb,
     created_at timestamptz NOT NULL DEFAULT clock_timestamp()
 );
+ALTER TABLE notification ADD COLUMN IF NOT EXISTS batch_items jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE admin_activity_log ADD COLUMN IF NOT EXISTS batch_key text;
+CREATE INDEX IF NOT EXISTS idx_admin_activity_batch ON admin_activity_log(actor_id,batch_key,target,action) WHERE batch_key IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_admin_activity_created ON admin_activity_log(created_at DESC,log_id DESC);
 CREATE OR REPLACE FUNCTION capture_admin_activity() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE
@@ -688,8 +692,10 @@ BEGIN
         INTO old_value,new_value FROM unnest(selected) AS key
         WHERE old_value->key IS DISTINCT FROM new_value->key;
     END IF;
-    INSERT INTO admin_activity_log(actor_id,actor_name,action,target,target_id,before_data,after_data)
-    VALUES(actor::integer,coalesce(current_setting('app.admin_name',true),''),operation,TG_ARGV[0],object_id,old_value,new_value);
+    INSERT INTO admin_activity_log(actor_id,actor_name,action,target,target_id,before_data,after_data,batch_key)
+    VALUES(actor::integer,coalesce(current_setting('app.admin_name',true),''),operation,TG_ARGV[0],object_id,old_value,new_value,
+      CASE WHEN TG_ARGV[0] IN ('WORK_SCHEDULE','ASSIGNMENT','RECEPTION_ASSIGNMENT') AND TG_OP='INSERT'
+        THEN nullif(current_setting('app.assignment_batch',true),'') ELSE NULL END);
     RETURN NULL;
 END $$;
 DO $$

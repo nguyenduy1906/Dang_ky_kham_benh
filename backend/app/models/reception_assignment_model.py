@@ -73,7 +73,7 @@ def calendar(db, user_id, query, include_revoked=False):
 
 def leave_assignments(db, leave):
     return db.execute(SELECT + ''' WHERE a.receptionist_id=%s AND a.revoked_at IS NULL
-      AND a.work_date BETWEEN %s AND %s AND EXTRACT(ISODOW FROM a.work_date)<=5
+      AND a.work_date BETWEEN %s AND %s
       AND (%s='FULL_DAY' OR (%s='MORNING' AND a.start_time<'12:00') OR (%s='AFTERNOON' AND a.end_time>'12:00'))
       ORDER BY a.assignment_id FOR UPDATE OF a''', (leave['user_id'], leave['from_date'], leave['to_date'],
                                                  leave['period'], leave['period'], leave['period'])).fetchall()

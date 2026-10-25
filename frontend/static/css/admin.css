@@ -24,10 +24,6 @@ body.admin-page dialog { box-sizing: border-box; width: min(1180px, calc(100% - 
 .admin-page .admin-logout > button:hover { background: #ac2424; border-color: #ef9696; }
 .admin-page .admin-logout > a:hover { background: #ffffff18; }
 .admin-page .staff-content { max-width: 1680px; padding: 38px; }
-.admin-account { display: flex; align-items: center; gap: 10px; color: inherit; }
-.admin-account .staff-initials { width: 40px; height: 40px; }
-.admin-account strong { font-size: 12px; display: block; }
-.admin-account small { font-size: 10px; }
 .admin-page .page-header { align-items: flex-start; margin-bottom: 30px; }
 .admin-page .page-header .eyebrow { margin: 0 0 12px; font-size: 11px; letter-spacing: 1.7px; }
 .admin-page .page-header h1 { font-size: 30px; margin-bottom: 12px; }
@@ -99,10 +95,9 @@ body.admin-page dialog { box-sizing: border-box; width: min(1180px, calc(100% - 
 .admin-contact-fields { display: grid; gap: 18px; margin-top: 24px; }
 @media (max-width: 1200px) { .admin-page .staff-shell { grid-template-columns: 242px minmax(0, 1fr); } .admin-page .staff-content { padding: 28px 24px; } .admin-page .staff-topbar { padding-inline: 24px; } .admin-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 960px) { .admin-page .staff-shell { display: block; } .admin-page .staff-sidebar { width: 270px; } .admin-page .staff-topbar { position: sticky; top: 0; z-index: 20; } }
-@media (max-width: 680px) { .admin-page .staff-content { padding: 26px 16px; } .admin-page .staff-topbar { padding: 12px 16px; min-height: 66px; } .admin-account > div { display: none; } .admin-page .page-header h1 { font-size: 26px; } .admin-toolbar { padding: 18px; flex-wrap: wrap; } .admin-toolbar label, .admin-toolbar label:nth-child(2) { flex: 1 1 100%; } .admin-toolbar > span { margin-left: 0; } .admin-metric { padding: 17px; } .admin-metric strong { font-size: 24px; } .admin-metric > div { flex-wrap: wrap; } .admin-page .staff-footer { flex-direction: column; } .admin-dialog-facts { grid-template-columns: 1fr; } .admin-chart { padding: 21px; } .admin-panel-heading { flex-wrap: wrap; } }
+@media (max-width: 680px) { .admin-page .staff-content { padding: 26px 16px; } .admin-page .staff-topbar { padding: 12px 16px; min-height: 66px; } .admin-page .page-header h1 { font-size: 26px; } .admin-toolbar { padding: 18px; flex-wrap: wrap; } .admin-toolbar label, .admin-toolbar label:nth-child(2) { flex: 1 1 100%; } .admin-toolbar > span { margin-left: 0; } .admin-metric { padding: 17px; } .admin-metric strong { font-size: 24px; } .admin-metric > div { flex-wrap: wrap; } .admin-page .staff-footer { flex-direction: column; } .admin-dialog-facts { grid-template-columns: 1fr; } .admin-chart { padding: 21px; } .admin-panel-heading { flex-wrap: wrap; } }
 
 .admin-page .admin-logout > button { width: 100%; text-align: left; }
-.admin-account { text-decoration: none; }
 
 /* API-backed management uses the existing cards, tables and dialogs. */
 .admin-page .admin-toolbar { flex-wrap: wrap; }
@@ -163,6 +158,11 @@ body.admin-page dialog { box-sizing: border-box; width: min(1180px, calc(100% - 
 .admin-support-day input[type="date"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .admin-support-day input[type="date"]::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; }
 .admin-support-day:focus-within { outline: 2px solid #008753; outline-offset: 4px; border-radius: 3px; }
+.admin-page .admin-support-day { cursor: default; }
+.admin-page .admin-support-day > .admin-support-day-picker { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex: 0 0 28px; margin: 0; padding: 0; line-height: 1; cursor: pointer; border-radius: 5px; }
+.admin-support-day-picker > svg { display: block; }
+.admin-support-day-picker:hover { background: #dff2e8; }
+.admin-support-day-picker input[type="date"] { padding: 0; margin: 0; min-width: 0; border: 0; }
 .admin-support-shift-status { align-self: center; flex-shrink: 0; padding: 3px 8px; border-radius: 6px; font-size: 11px; line-height: 16px; font-weight: 600; white-space: nowrap; }
 .admin-support-shift-status.is-working { background: #e7f5ed; color: #167344; }
 .admin-support-shift-status.is-done { background: #eef2f5; color: #526576; }
@@ -819,8 +819,6 @@ html:has(body.admin-page) { scrollbar-gutter: stable; }
   .admin-page .admin-basic-detail-summary { align-items: flex-start; flex-direction: column; }
   .admin-page .admin-basic-detail-section, .admin-page .admin-basic-detail-summary { padding: 16px; }
 }
-
-.admin-page[data-page="reception_assignments"] .admin-reception-empty { padding: 36px 20px; text-align: center; color: #6b7f72; }
 .admin-page[data-page="reception_assignments"] .admin-pagination { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 20px 24px; }
 .admin-page[data-page="reception_assignments"] .admin-toolbar { display: flex; gap: 18px; flex-wrap: wrap; }
 .admin-page[data-page="reception_assignments"] .admin-toolbar > label { flex: 1 1 220px; }

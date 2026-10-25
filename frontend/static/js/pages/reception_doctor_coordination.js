@@ -1,4 +1,5 @@
-import {apiRequest} from "../core/api.js";
+import {previewDoctorChange,confirmDoctorChange,doctorChangeReviewMarkup} from "../core/reception_doctor_change.js";
+import {startAutoRefresh} from "../core/auto_refresh.js";
 import {listDoctors} from "../api/doctor.js";
 import {allPages} from "../core/admin_ui.js";
 import { $, panel, esc, today, date, facts, dialog, submit, badge } from "../core/staff_ui.js";
@@ -9,7 +10,7 @@ import {loadReceptionDoctorSchedules,filterReceptionDoctorSchedules,normalizeSch
 import {getStaffRoomOptions,assignReceptionRoom} from "../core/reception_coordination_data.js";
 
 export function initDoctorCoordination() {
-  $("#page-body").insertAdjacentHTML("beforeend",panel("Điều phối bác sĩ", '<div id="doctor-assignment"><div class="coordination-search-section"><div class="doctor-assignment-filters"><label>Tìm bác sĩ<input id="assignment-doctor-query" type="search" placeholder="Họ tên hoặc mã bác sĩ" aria-controls="assignment-doctor-results"></label><label>Chuyên khoa<input id="assignment-department" list="assignment-departments"><datalist id="assignment-departments"></datalist></label><label>Ngày làm việc<input id="assignment-work-date" type="date" required></label></div><p id="assignment-status" role="status"></p><div id="assignment-doctor-results" class="coordination-choices" hidden></div></div><div class="coordination-search-section"><label>Tìm phòng khám<input id="assignment-room-query" type="search" placeholder="Tên phòng hoặc mã phòng" aria-controls="assignment-room-results"></label><div id="assignment-room-results" class="coordination-choices" hidden></div></div><div class="actions coordination-footer"><button id="assignment-confirm" type="button" disabled>Điều phối bác sĩ</button></div></div>'));
+  $("#page-body").insertAdjacentHTML("beforeend",panel("Điều phối bác sĩ", '<div id="doctor-assignment"><div class="coordination-search-section"><div class="doctor-assignment-filters"><label>Tìm kiếm<input id="assignment-doctor-query" type="search" placeholder="Họ tên hoặc mã bác sĩ" aria-controls="assignment-doctor-results"></label><label>Chuyên khoa<input id="assignment-department" list="assignment-departments" placeholder="Tên chuyên khoa"><datalist id="assignment-departments"></datalist></label><label>Ngày làm việc<input id="assignment-work-date" type="date" required></label></div><p id="assignment-status" role="status"></p><div id="assignment-doctor-results" class="coordination-choices" hidden></div></div><div class="coordination-search-section"><label>Tìm kiếm<input id="assignment-room-query" type="search" placeholder="Tên phòng hoặc mã phòng" aria-controls="assignment-room-results"></label><div id="assignment-room-results" class="coordination-choices" hidden></div></div><div class="actions coordination-footer"><button id="assignment-confirm" type="button" disabled>Điều phối bác sĩ</button></div></div>'));
   const day=$("#assignment-work-date"),status=$("#assignment-status"),results=$("#assignment-doctor-results"),confirm=$("#assignment-confirm"),modal=$("#staff-dialog");
   day.value=today();
   let rows=[],allRooms=[],rooms=[],selected=null,selectedRoom=null,version=0,controller,roomRequest,roomVersion=0,detailRequest,detailVersion=0,active=true,saving=false;
@@ -39,7 +40,7 @@ export function initDoctorCoordination() {
     target.innerHTML=matches.length?matches.map(room=>`<button type="button" class="coordination-choice${selectedRoom?.room_id===room.room_id?' is-selected':''}" data-assign-room="${esc(room.room_id)}" aria-pressed="${selectedRoom?.room_id===room.room_id}" ${selected&&room.available?'':'disabled'}><span><strong>${esc(room.room_name)}</strong><small>${esc(code('PH',room.room_id))}</small></span><span>${esc(room.department_name)}</span><span>${selected?`${esc(selected.start_time.slice(0,5))} – ${esc(selected.end_time.slice(0,5))}`:'Chọn ca bác sĩ trước'}</span><span>${!selected?'Chưa kiểm tra lịch phòng':room.available?'Phòng trống trong ca':esc(room.unavailable_reason||'Không thể chọn')}</span></button>`).join(''):'<p class="scope-note">Không tìm thấy phòng phù hợp với tìm kiếm hoặc ca đã chọn.</p>';
     if(!selected)target.insertAdjacentHTML('afterbegin','<p class="scope-note">Chọn ca bác sĩ để kiểm tra và chọn phòng còn trống.</p>');
   }
-  function clearRooms() {roomVersion++;roomRequest?.abort();rooms=[];renderRooms();updateConfirm();}
+  function clearRooms() {roomVersion++;roomRequest?.abort();rooms=[];selectedRoom=null;renderRooms();updateConfirm();}
   async function loadRooms() {
     clearRooms();if(!canAssign(selected))return;
     const row=selected,current=roomVersion;roomRequest=new AbortController();status.textContent='Đang kiểm tra phòng theo ca đã chọn…';
@@ -55,19 +56,32 @@ export function initDoctorCoordination() {
     const button=event.target.closest('[data-assign-room]');if(!button||button.disabled||saving)return;
     selectedRoom=rooms.find(room=>String(room.room_id)===button.dataset.assignRoom&&room.available);renderRooms();render();
   });
-  async function load() {
+  async function load({preserve=false}={}) {
     if(!active)return;
-    const current=++version;controller?.abort();controller=new AbortController();rows=[];selected=null;clearRooms();confirm.disabled=true;results.innerHTML="";status.textContent="Đang tải lịch phân phòng…";
+    const current=++version;controller?.abort();controller=new AbortController();
+    if(!preserve){rows=[];selected=null;clearRooms();confirm.disabled=true;results.innerHTML='';}
+    status.textContent='Đang tải lịch phân phòng…';
     try {
-      if(!day.value)throw new Error("Vui lòng chọn ngày làm việc.");
+      if(!day.value)throw new Error('Vui lòng chọn ngày làm việc.');
       const [data,catalog]=await Promise.all([loadReceptionDoctorSchedules(day.value,{signal:controller.signal}),listRooms({},{signal:controller.signal})]);
       if(!active||current!==version)return;
-      allRooms=catalog.items;renderRooms();rows=data.rows;$("#assignment-departments").innerHTML=data.departments.map(name=>`<option value="${esc(name)}"></option>`).join("");status.textContent="";render();
-    } catch(error) {if(active&&current===version)status.textContent=sessionError(error);}
+      const previous=preserve?selected:null,previousRoom=preserve?selectedRoom:null;
+      allRooms=catalog.items;rows=data.rows;
+      selected=previous&&rows.find(row=>String(row.schedule_id)===String(previous.schedule_id)&&row.version===previous.version)||null;
+      clearRooms();renderRooms();
+      $('#assignment-departments').innerHTML=data.departments.map(name=>`<option value="${esc(name)}"></option>`).join('');status.textContent='';render();
+      if(selected&&canAssign(selected)){
+        const chosenId=selected.schedule_id,expectedRoomVersion=roomVersion+1;
+        await loadRooms();
+        if(active&&current===version&&roomVersion===expectedRoomVersion&&selected?.schedule_id===chosenId&&previousRoom){selectedRoom=rooms.find(room=>String(room.room_id)===String(previousRoom.room_id)&&room.available)||null;renderRooms();updateConfirm();}
+      }
+    } catch(error) {
+      if(active&&current===version){rows=[];selected=null;clearRooms();render();status.textContent=sessionError(error);}
+    }
   }
   results.addEventListener('click',event=>{
     const button=event.target.closest('[data-assign-schedule]');if(!button || saving)return;
-    selected=rows.find(row=>String(row.schedule_id)===button.dataset.assignSchedule);render();
+    clearRooms();selected=rows.find(row=>String(row.schedule_id)===button.dataset.assignSchedule);render();
     if(canAssign(selected))void loadRooms();else {clearRooms();status.textContent='Ca này chỉ cho phép tra cứu; không thể đổi phòng khi ca đã bắt đầu, đóng, nghỉ, đã chuyển hoặc có lượt khám.';}
   });
   confirm.addEventListener('click',async()=>{
@@ -84,19 +98,27 @@ export function initDoctorCoordination() {
       const allowDoctor=allowReplace||allowSwap,allowRoom=Boolean(canAssign(row)&&validRoom());
       const roomChoice=allowRoom?selectedRoom:null;
       if(!allowDoctor&&!allowRoom)throw new Error('Ca không còn đủ điều kiện điều phối. Vui lòng chọn lại.');
-      dialog('Điều phối bác sĩ',`<div class="reception-transfer-detail">${panel('Ca cần thay đổi',facts([['Bác sĩ',row.doctor_name],['Phòng',row.room_name],['Ngày',date(row.work_date)],['Giờ',`${row.start_time} – ${row.end_time}`]]))}<form id="doctor-change-form"><label>Thao tác<select name="mode">${allowReplace?'<option value="replace">Thay thế bác sĩ</option>':''}${allowSwap?'<option value="swap">Hoán đổi hai bác sĩ</option>':''}${allowRoom?'<option value="room">Đổi phòng bác sĩ</option>':''}</select></label><label id="replacement-picker">Bác sĩ mới<select name="doctor_profile_id">${doctors.filter(d=>String(d.doctor_profile_id)!==String(row.doctor_profile_id)&&d.department_name===row.department_name).map(d=>`<option value="${esc(d.doctor_profile_id)}">${esc(d.full_name)} · ${esc(d.department_name)}</option>`).join('')}</select></label><label id="swap-picker" hidden>Ca của bác sĩ hoán đổi<select name="target_schedule_id">${schedules.rows.filter(r=>r.schedule_id!==row.schedule_id&&r.doctor_profile_id!==row.doctor_profile_id&&r.department_name===row.department_name&&!r.move&&r.schedule_status!=='CLOSED'&&Date.parse(`${r.work_date}T${r.start_time}+07:00`)>Date.now()).map(r=>`<option value="${esc(r.schedule_id)}">${esc(r.doctor_name)} · ${date(r.work_date)} · ${esc(r.start_time)} · ${esc(r.room_name)}</option>`).join('')}</select></label><label id="room-change-picker" hidden>Phòng khám mới<input value="${esc(roomChoice?.room_name||'')}" readonly></label><label>Lý do *<textarea name="reason" required maxlength="500"></textarea></label><button type="submit">Xác nhận thay đổi</button><p role="status"></p></form></div>`);
+      dialog('Điều phối bác sĩ',`<div class="reception-transfer-detail">${panel('Ca cần thay đổi',facts([['Bác sĩ',row.doctor_name],['Phòng',row.room_name],['Ngày',date(row.work_date)],['Giờ',`${row.start_time} – ${row.end_time}`]]))}<form id="doctor-change-form"><label>Thao tác<select name="mode">${allowReplace?'<option value="replace">Thay thế bác sĩ</option>':''}${allowSwap?'<option value="swap">Hoán đổi hai bác sĩ</option>':''}${allowRoom?'<option value="room">Đổi phòng bác sĩ</option>':''}</select></label><label id="replacement-picker">Bác sĩ mới<select name="doctor_profile_id">${doctors.filter(d=>String(d.doctor_profile_id)!==String(row.doctor_profile_id)&&d.department_name===row.department_name).map(d=>`<option value="${esc(d.doctor_profile_id)}">${esc(d.full_name)} · ${esc(d.department_name)}</option>`).join('')}</select></label><label id="swap-picker" hidden>Ca của bác sĩ hoán đổi<select name="target_schedule_id">${schedules.rows.filter(r=>r.schedule_id!==row.schedule_id&&r.doctor_profile_id!==row.doctor_profile_id&&r.department_name===row.department_name&&!r.move&&r.schedule_status!=='CLOSED'&&Date.parse(`${r.work_date}T${r.start_time}+07:00`)>Date.now()).map(r=>`<option value="${esc(r.schedule_id)}">${esc(r.doctor_name)} · ${date(r.work_date)} · ${esc(r.start_time)} · ${esc(r.room_name)}</option>`).join('')}</select></label><label id="room-change-picker" hidden>Phòng khám mới<input value="${esc(roomChoice?.room_name||'')}" readonly></label><label>Lý do *<textarea name="reason" required maxlength="500"></textarea></label><div data-doctor-change-review hidden></div><button type="submit">Xem trước thay đổi</button><p role="status"></p></form></div>`);
       const form=$('#doctor-change-form');
+      const reviewRegion=form.querySelector('[data-doctor-change-review]'),submitButton=form.querySelector('button[type="submit"]');
+      let reviewed=null;
+      function invalidateReview(){
+        reviewed=null;reviewRegion.hidden=true;reviewRegion.innerHTML='';
+        submitButton.textContent=form.elements.mode.value==='room'?'Xác nhận đổi phòng':'Xem trước thay đổi';
+      }
+      form.addEventListener('input',invalidateReview);form.addEventListener('change',invalidateReview);
       const showMode=()=>{
         const mode=form.elements.mode.value;
         $('#replacement-picker').hidden=mode!=='replace';
         $('#swap-picker').hidden=mode!=='swap';
         $('#room-change-picker').hidden=mode!=='room';
       };
-      form.elements.mode.addEventListener('change',showMode);showMode();
+      form.elements.mode.addEventListener('change',showMode);showMode();invalidateReview();
       form.addEventListener('submit',event=>{
         event.preventDefault();if(saving||form.dataset.busy==='true')return;
         const data=new FormData(form),key=data.get('mode')==='swap'?'target_schedule_id':'doctor_profile_id';
         const mode=data.get('mode'),payload={[key]:Number(data.get(key)),reason:String(data.get('reason')).trim()};
+        const confirming=Boolean(reviewed);
         saving=true;$('#staff-dialog-close').disabled=true;
         void submit(form,async()=>{
           if(mode==='room'){
@@ -110,13 +132,19 @@ export function initDoctorCoordination() {
           if((mode==='replace'&&!allowReplace)||(mode==='swap'&&!allowSwap)||!['replace','swap'].includes(mode))throw new Error('Thao tác không được phép với ca đã chọn.');
           if(!Number.isInteger(payload[key])||payload[key]<1)throw new Error('Vui lòng chọn bác sĩ hoặc ca hoán đổi.');
           if(!payload.reason)throw new Error('Vui lòng nhập lý do thay đổi.');
-          const preview=await apiRequest(`/staff/schedules/${row.schedule_id}/doctor-change/preview`,{...options,method:'POST',data:payload});
-          if(!active||token!==detailVersion)return;
-          const result=await apiRequest(`/staff/schedules/${row.schedule_id}/doctor-change`,{...options,method:'POST',data:{...payload,expected_version:preview.version}});
-          if(!Array.isArray(result.schedules)||result.schedules.length!==preview.schedules.length||preview.schedules.some(before=>!result.schedules.some(after=>String(after.schedule_id)===String(before.schedule_id)&&String(after.doctor_profile_id)===String(preview.replacements[before.schedule_id]))))throw new Error('Đã gửi yêu cầu nhưng phản hồi chưa khớp. Hãy tải lại để kiểm tra trước khi thao tác tiếp.');
+          if(!reviewed){
+            const next=await previewDoctorChange(row.schedule_id,payload,options);
+            if(!active||token!==detailVersion)return;
+            reviewed=next;reviewRegion.innerHTML=doctorChangeReviewMarkup(reviewed,doctors);reviewRegion.hidden=false;
+            submitButton.textContent='Xác nhận thay đổi';
+            reviewRegion.scrollIntoView({block:'nearest'});
+            return;
+          }
+          try {await confirmDoctorChange(reviewed,options);}
+          catch(error){invalidateReview();throw error;}
           if(!active||token!==detailVersion)return;
           modal.close();await load();status.textContent='Đã thay đổi bác sĩ và cập nhật các lượt khám liên quan.';
-        },'Đã lưu thay đổi.').finally(()=>{saving=false;$('#staff-dialog-close').disabled=false;});
+        },mode==='room'||confirming?'Đã lưu thay đổi.':'Đã tải bản xem trước. Kiểm tra thông tin rồi xác nhận.',{commit:mode==='room'||confirming}).finally(()=>{saving=false;$('#staff-dialog-close').disabled=false;});
       });
     }catch(error){if(active&&token===detailVersion)dialog('Điều phối bác sĩ',`<p>${esc(sessionError(error))}</p>`);}
   });
@@ -127,4 +155,5 @@ export function initDoctorCoordination() {
   const stop=()=>{active=false;version++;detailVersion++;controller?.abort();roomVersion++;roomRequest?.abort();detailRequest?.abort();allRooms=[];rooms=[];rows=[];results.innerHTML="";$("#assignment-room-results").innerHTML="";};
   window.addEventListener("pagehide",stop,{once:true});window.addEventListener("neu:auth-change",stop,{once:true});
   void load();
+  startAutoRefresh(()=>load({preserve:true}),{canRefresh:()=>active&&!saving});
 }

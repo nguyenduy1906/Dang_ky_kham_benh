@@ -1,9 +1,13 @@
 import { enhanceDialogDismiss } from "./dialog_dismiss.js";
 
+export function batchFinishedSuccessfully(results,expected,isSuccessful) {
+  return expected>0&&results.length===expected&&results.every(isSuccessful);
+}
+
 // Creation forms sit above the existing list without replacing or hiding it.
 export function openAdminFormDialog({ title, trigger, canClose = () => true, onClose = () => {} }) {
   const dialog = document.createElement("dialog");
-  dialog.className = "admin-bulk-form-dialog";
+  dialog.className = "admin-bulk-form-dialog";dialog.setAttribute("data-workflow-editor","true");
   dialog.setAttribute("aria-label", title);
   const heading = document.createElement("div");heading.className = "section-heading";
   const label = document.createElement("h2");label.textContent = title;label.tabIndex = -1;

@@ -28,3 +28,25 @@ export function initAdminNotificationBadge(){
   window.addEventListener('pagehide',stop,{once:true});window.addEventListener('neu:auth-change',stop,{once:true});
   void refresh();startAutoRefresh(refresh,{canRefresh:()=>active});
 }
+
+export function initAdminActivityBadge(){
+  const link=document.querySelector('#staff-sidebar nav a[href$="audit.html"]');
+  if(!link||link.querySelector('[data-activity-count]'))return;
+  const badge=document.createElement('b');badge.className='admin-nav-unread';badge.dataset.activityCount='true';badge.hidden=true;badge.setAttribute('aria-hidden','true');link.append(badge);
+  let active=true,version=0;
+  async function refresh(){
+    const current=++version;
+    const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+    try {
+      const {listActivities}=await import('./admin_activity.js');
+      const result=await listActivities({from_date:day,to_date:day,page:1,page_size:1});
+      if(!active||current!==version||!Number.isSafeInteger(result.total)||result.total<0)return;
+      badge.textContent=String(unreadBadgeCount(result.total));badge.hidden=false;
+      const text=`Nhật ký hoạt động: ${result.total} hoạt động hôm nay`;
+      link.setAttribute('aria-label',text);link.title=text;
+    }catch{/* Preserve the last verified count when a refresh fails. */}
+  }
+  const stop=()=>{active=false;version++;badge.remove();};
+  window.addEventListener('pagehide',stop,{once:true});window.addEventListener('neu:auth-change',stop,{once:true});
+  void refresh();startAutoRefresh(refresh,{canRefresh:()=>active});
+}

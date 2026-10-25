@@ -26,8 +26,6 @@ export function adminOverviewMarkup(data) {
 
 export async function initAdminOverview(ctx) {
   const body=$("#page-body");
-  $("#overview-period-control")?.remove();
-  $("#page-header").classList.remove("overview-period-header");
   let data, week=encounterWeekValue(today()), weekVersion=0, noticeVersion=0, scheduleVersion=0;
   let weekRequest, noticeRequest, scheduleRequest;
   const stop=()=>{weekVersion++;noticeVersion++;weekRequest?.abort();noticeRequest?.abort();scheduleVersion++;scheduleRequest?.abort();};

@@ -358,7 +358,7 @@ export async function initAdminWorkspace(key) {
         if(name==="revoke-member-role") {
       const form=modalBody.querySelector(".admin-member-add-form");
       await ctx.submit(form,signal=>catalog.revokeDepartmentMemberRole(memberDepartmentId,id,{expected_version:memberVersion},{signal}),async result=>{
-        updateDepartmentEditorVersion(result);await leadership(memberDepartmentId);await reload();
+        updateDepartmentEditorVersion(result);close();await reload();
       });return;
     }
     if(name==="toggle-department-content") {
@@ -428,7 +428,7 @@ export async function initAdminWorkspace(key) {
       }
       addDepartmentMember(memberDraft,doctor,form.elements.position.value);
       return catalog.addDepartmentMember(memberDepartmentId,{doctor_profile_id:doctor.doctor_profile_id,position:form.elements.position.value,expected_version:memberVersion,expected_source_department_id:doctor.department_id},{signal});
-    },async result=>{updateDepartmentEditorVersion(result);await leadership(memberDepartmentId);await reload();});
+    },async result=>{updateDepartmentEditorVersion(result);close();await reload();});
   });
   async function submitForm(event) {
     const form=event.target.closest("[data-form]");if(!form||!ctx.active)return;event.preventDefault();

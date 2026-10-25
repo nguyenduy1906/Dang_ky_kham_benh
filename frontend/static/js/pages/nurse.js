@@ -31,11 +31,13 @@ async function overview() {
   await initTodayOverview(renderNurseOverview);
 }
 async function assignmentsPage() {
+  const linkParams=new URLSearchParams(location.search);
+  let linkedAssignment=linkParams.get('assignment_id')||'', linkedSchedule=linkParams.get('schedule_id')||'';
   let range = nurseRange() || {from:today(),to:today()};
   $("#page-body").innerHTML = panel("Phân công còn hiệu lực", `
     <form id="nurse-assignment-search" class="staff-toolbar" role="search" aria-label="Tìm phân công">
-      <label>Mã phòng<input type="search" name="room_code" maxlength="100" placeholder="Nhập mã phòng, ví dụ PH_001" autocomplete="off" aria-controls="assignment-list"></label>
-      <label>Tên phòng<input type="search" name="room_name" maxlength="100" placeholder="Nhập tên phòng" autocomplete="off" aria-controls="assignment-list"></label>
+      <label>Mã phòng<input type="search" name="room_code" maxlength="100" placeholder="Mã phòng" autocomplete="off" aria-controls="assignment-list"></label>
+      <label>Tên phòng<input type="search" name="room_name" maxlength="100" placeholder="Tên phòng" autocomplete="off" aria-controls="assignment-list"></label>
       <label>Từ ngày<input type="date" name="from_date" aria-controls="assignment-list"></label>
       <label>Đến ngày<input type="date" name="to_date" aria-controls="assignment-list"></label>
     </form><div id="assignment-list"></div><div id="list-pagination" class="list-pagination" role="status"></div>`);
@@ -57,20 +59,22 @@ async function assignmentsPage() {
     }
     const queryCode = normalizeSearch(form.elements.room_code.value.trim()).replace(/[\s_-]/g, "");
     const queryRoom = normalizeSearch(form.elements.room_name.value.trim());
-    const matches = items.filter(a => inNurseRange(a, range) && normalizeSearch(code("PH", a.room_id)).replace(/[\s_-]/g, "").includes(queryCode)
+    const matches = items.filter(a => (!linkedAssignment||String(a.assignment_id)===linkedAssignment)&&(!linkedSchedule||String(a.schedule_id)===linkedSchedule)&&inNurseRange(a, range) && normalizeSearch(code("PH", a.room_id)).replace(/[\s_-]/g, "").includes(queryCode)
       && normalizeSearch(a.room_name).includes(queryRoom));
     const result = localPage(matches, page, 8);
     $("#assignment-list").innerHTML = nurseAssignmentTable(result.items, range);
     pagination(result, render);
   }
   form.addEventListener("submit", event => event.preventDefault());
-  for (const input of [form.elements.room_code, form.elements.room_name]) input.addEventListener("input", () => render());
+  for (const input of [form.elements.room_code, form.elements.room_name]) input.addEventListener("input", () => {linkedAssignment="";linkedSchedule="";render();});
   for (const input of [form.elements.from_date, form.elements.to_date]) {
-    input.addEventListener("input", () => render());
-    input.addEventListener("change", () => render());
+    input.addEventListener("input", () => {linkedAssignment="";linkedSchedule="";render();});
+    input.addEventListener("change", () => {linkedAssignment="";linkedSchedule="";render();});
   }
   const assignments = await allAssignments({ signal: request.signal });
   if (!active) return;
+  const linked=assignments.find(a=>(linkedAssignment&&String(a.assignment_id)===linkedAssignment)||(linkedSchedule&&String(a.schedule_id)===linkedSchedule));
+  if(linked){form.elements.from_date.value=linked.work_date;form.elements.to_date.value=linked.work_date;}
   items = assignments.sort((a, b) => `${a.work_date}${a.start_time}`.localeCompare(`${b.work_date}${b.start_time}`));
   render();
   startAutoRefresh(async () => {

@@ -6,19 +6,13 @@ import { receptionShiftVisits } from "../core/reception_shift_visits.js";
 import { receptionScheduleOverview } from "../core/reception_schedule_overview.js";
 import { receptionOverviewCounts } from "../core/reception_overview.js";
 import { loadReceptionOverview } from "../core/reception_overview_data.js";
-import { createReceptionWalkIn } from "../core/reception_intake_data.js";
 import {searchReceptionPatients,readReceptionPatient,readReceptionPatientHistory,saveReceptionPatient} from "../core/reception_patient_search.js";
-import { code, parseCode } from "../core/business_codes.js";
+import { code } from "../core/business_codes.js";
 import { startAutoRefresh } from "../core/auto_refresh.js";
 import { initTodayOverview } from "../core/staff_overview.js";
 import { staffReady } from "../core/staff_workspace.js";
-import * as patients from "../api/patient.js";
-import * as doctors from "../api/doctor.js";
-import * as schedules from "../api/schedule.js";
-import * as encounters from "../api/encounter.js";
-import { initEncounterList } from "../core/staff_encounters.js";
 import { bindLiveSearch } from "../core/live_search.js";
-import { $, esc, today, date, time, badge, panel, stats, facts, dialog, bindDialog, empty, table, pagination, run, submit, status, encounterSummary, encounterColumns } from "../core/staff_ui.js";
+import { $, esc, today, date, badge, panel, dialog, bindDialog, table, pagination, run, submit, status } from "../core/staff_ui.js";
 
 const user = await staffReady;
 if (user) {
@@ -28,9 +22,9 @@ if (user) {
   if (page === "patients") await patientPage();
   if (page === "walk_in") {
     const { initReceptionPatientForm } = await import("./reception_patient_form.js");
-    $("#page-body").innerHTML = '<div id="reception-encounters"></div>';
-    const list = await initEncounterList({ role: "reception", target: "#reception-encounters" });
-    initReceptionPatientForm({onCreated: () => list.refresh()});
+    const {initReceptionIntakeTabs} = await import("./reception_intake_tabs.js");
+    const intake = await initReceptionIntakeTabs();
+    initReceptionPatientForm({onCreated: () => intake.refresh()});
   }
   if (page === "coordination") await run(coordinationPage);
 }
@@ -53,10 +47,6 @@ async function overview() {
     return receptionSummary(rows) + receptionScheduleOverview(range.from, calendar.shifts, calendar.error) + receptionShiftVisits(rows);
   });
 }
-function patientFacts(p) { return facts([["Mã hồ sơ", code("BN", p.patient_id)], ["Họ tên", p.full_name], ["Ngày sinh", date(p.dob)], ["Giới tính", p.gender], ["Số điện thoại", p.phone], ["CCCD / mã định danh", p.id_card], ["BHYT", p.health_insurance], ["Địa chỉ", p.address], ["Trạng thái", p.is_archived ? "Đã lưu trữ" : "Đang sử dụng"]]); }
-function patientFields(p = {}, edit = false) {
-  return `<div class="form-grid"><label class="full-width">Họ và tên *<input name="full_name" value="${esc(p.full_name)}" required maxlength="150"></label><label>Số điện thoại *<input name="phone" type="tel" value="${esc(p.phone)}" required maxlength="20" ${edit ? 'readonly aria-describedby="patient-phone-note"' : ""}></label><label>Ngày sinh<input name="dob" type="date" value="${esc(p.dob)}" max="${today()}"></label><label>CCCD / mã định danh<input name="id_card" inputmode="numeric" pattern="([0-9]{9}|[0-9]{12})" value="${esc(p.id_card)}" maxlength="12"></label><label>Giới tính<select name="gender"><option value="">Chưa cập nhật</option>${["Nam", "Nữ", "Khác"].map(value => `<option ${p.gender === value ? "selected" : ""}>${value}</option>`).join("")}</select></label><label>Mã thẻ BHYT<input name="health_insurance" pattern="[A-Za-z0-9]{10,15}" value="${esc(p.health_insurance)}" maxlength="15"></label><label class="full-width">Địa chỉ<input name="address" value="${esc(p.address)}" maxlength="255"></label></div><p class="muted">Cần ngày sinh hoặc CCCD/mã định danh để phân biệt người bệnh.</p>${edit ? '<p id="patient-phone-note" class="muted">Số điện thoại liên kết được thay đổi tại tài khoản chủ hồ sơ.</p>' : ""}`;
-}
 function patientPayload(form) {
   const data = Object.fromEntries(new FormData(form));
   for (const key of Object.keys(data)) data[key] = data[key].trim() || null;
@@ -66,7 +56,7 @@ function patientPayload(form) {
   return data;
 }
 export async function patientPage() {
-  $("#page-body").innerHTML = panel("Danh sách hồ sơ", '<form id="patient-search-form" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tên, số điện thoại hoặc CCCD<input name="q" type="search" maxlength="100" placeholder="Nhập thông tin để tìm hồ sơ" aria-controls="patient-list"></label><label>Ngày khám<input name="work_date" type="date" aria-controls="patient-list"></label></form><div id="patient-list"></div><div id="list-pagination" class="list-pagination"></div>');
+  $("#page-body").innerHTML = panel("Danh sách hồ sơ", '<form id="patient-search-form" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tìm kiếm<input name="q" type="search" maxlength="100" placeholder="Họ tên, số điện thoại hoặc CCCD" aria-controls="patient-list"></label><label>Ngày khám<input name="work_date" type="date" aria-controls="patient-list"></label></form><div id="patient-list"></div><div id="list-pagination" class="list-pagination"></div>');
   const searchForm = $("#patient-search-form");
   searchForm.elements.work_date.value = today();
   let currentPage = 1, version = 0, request, active = true, detailVersion = 0, detailRequest;

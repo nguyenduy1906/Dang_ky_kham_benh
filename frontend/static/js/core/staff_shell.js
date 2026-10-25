@@ -26,6 +26,7 @@ export const staffRoles = Object.freeze({
     ["work_calendar", "Lịch làm việc", "work_calendar.html", "calendar"],
     ["walk_in", "Tiếp nhận bệnh nhân", "walk_in.html", "record"],
     ["patients", "Tra cứu hồ sơ", "patients.html", "badge"],
+    ["payments", "Thanh toán", "payments.html", "payment"],
     ["doctor_schedule", "Lịch khám bác sĩ", "doctor_schedule.html", "calendar"],
     ["coordination", "Điều phối", "coordination.html", "calendar"],
   ] },
@@ -44,6 +45,7 @@ export function getStaffRole() {
 }
 
 const iconPaths = {
+  payment: '<rect x="2" y="5" width="20" height="14" rx="1"/><path d="M2 9h20M6 14h5"/>',
   overview: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18M8 15h2M14 15h2"/>',
   people: '<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M21 21v-3a6 6 0 0 0-3-5"/>',

@@ -1,0 +1,51 @@
+.reception-payments-page .page-header { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+.reception-payments-page #request-payment { min-height: 44px; padding: 12px 20px; border-radius: 5px; background: #008653; }
+.reception-payment-card { min-width: 0; padding: 24px; border: 1px solid #dce6e0; border-radius: 5px; background: #fff; box-shadow: 0 5px 24px #123c2504; }
+.reception-payment-card h2 { margin: 0 0 24px; font-size: 22px; line-height: 1.4; }
+.reception-payment-filters { display: grid; grid-template-columns: minmax(260px, 3.1fr) repeat(3, minmax(140px, 1fr)); gap: 16px; align-items: end; margin-bottom: 24px; }
+.reception-payment-filters label { min-width: 0; color: #426452; font-weight: 600; }
+.reception-payments-page .reception-payment-filters :is(input,select) { margin: 6px 0 0; min-height: 44px; border-radius: 5px; font-weight: 400; }
+.reception-payment-table-scroll { overflow-x: auto; border-radius: 5px; }
+.reception-payment-table { width: 100%; min-width: 850px; border-collapse: collapse; }
+.reception-payments-page .reception-payment-table th { padding: 16px 14px; background: #edf4f0; color: #657d6e; text-align: left; white-space: nowrap; font-weight: 600; }
+.reception-payments-page .reception-payment-table th:last-child { text-align: center; }
+.reception-payments-page .reception-payment-table .reception-payment-empty { height: 168px; padding: 32px 20px; background: #fbfdfc; border: 0; text-align: center; color: #286b4a; font-weight: 600; }
+.reception-payment-empty p { margin: 0; }
+.reception-payment-pagination { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 44px; color: #6a7f73; font-size: 12px; }
+.reception-payment-pagination > div { display: flex; gap: 12px; }
+.reception-payment-pagination button { min-height: 48px; padding-inline: 24px; border-radius: 5px; }
+.reception-payments-page #payment-dialog { width: min(660px, calc(100% - 32px)); border-radius: 6px; }
+.reception-payments-page #payment-dialog::backdrop { background: #123b2a55; backdrop-filter: blur(2px); }
+.reception-payments-page #payment-dialog .section-heading { align-items: center; gap: 16px; margin-bottom: 12px; }
+.reception-payments-page #payment-dialog h2 { margin: 0; font-size: 22px; }
+.reception-payments-page #payment-dialog :is(label,input,textarea) { font-size: 15px; }
+.reception-payment-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.reception-payment-fields label { min-width: 0; }
+.reception-payment-fields .full-width { grid-column: 1 / -1; }
+.reception-payment-fields :is(input,textarea) { margin: 6px 0 0; border-radius: 5px; }
+.reception-payment-fields input[readonly] { background: #f4f7f5; color: #657d6e; }
+.reception-payment-amount { position: relative; display: block; }
+.reception-payment-amount > span { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #657d6e; font-size: 13px; }
+.reception-payment-amount input { padding-right: 60px; }
+#payment-amount-preview { display: block; margin-top: 5px; color: #008653; font-size: 16px; }
+.reception-payment-review { padding: 16px; margin-bottom: 20px; background: #eff7f2; border: 1px solid #cde5d7; border-radius: 5px; overflow-wrap: anywhere; }
+.reception-payment-review p { margin: 8px 0 0; }
+.reception-payment-dialog-actions { display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid #e0e9e3; margin-top: 20px; padding-top: 20px; }
+.payment-feedback { color: #b42335; }
+@media (max-width: 1250px) {
+  .reception-payment-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 680px) {
+  .reception-payments-page .staff-content { padding: 20px 16px; }
+  .reception-payment-card { padding: 20px 16px; }
+  .reception-payment-filters, .reception-payment-fields { grid-template-columns: minmax(0, 1fr); }
+  .reception-payments-page #request-payment { width: 100%; }
+  .reception-payment-pagination { align-items: flex-start; flex-direction: column; margin-top: 24px; }
+  .reception-payment-pagination > div { width: 100%; }
+  .reception-payment-pagination button { flex: 1; padding-inline: 12px; }
+  .reception-payment-dialog-actions { flex-wrap: wrap; }
+}
+
+.reception-payments-page .payment-confirm-check {display:flex;align-items:flex-start;gap:10px;margin:16px 0;line-height:1.6}.reception-payments-page .payment-confirm-check input {width:18px;height:18px;flex:none;accent-color:#008349}.reception-payments-page [hidden] {display:none!important;}
+
+.reception-payments-page .reception-payment-table .payment-channel { text-align: center; white-space: nowrap; }

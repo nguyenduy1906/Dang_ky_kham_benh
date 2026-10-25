@@ -1,8 +1,10 @@
+import {commitForm,confirmDiscard} from "../core/form_workflow.js";
+import {encounterStatusLabels} from "../core/encounter_status.js";
 import { checkInInstruction } from "../core/encounter_policy.js";
 import { listDoctors } from "../api/doctor.js";
 import { listPatients, createPatient } from "../api/patient.js";
 import { listDoctorSchedules } from "../api/schedule.js";
-import { createOnline, getEncounter, getTicket, listEncounters, cancel, updateRegistration } from "../api/encounter.js";
+import { createOnline, getEncounter, getTicket, listEncounters, updateRegistration } from "../api/encounter.js";
 import { createIntent, listEncounterPayments } from "../api/payment.js";
 import { getMe } from "../api/auth.js";
 import { verifySession, hasSession, clearSession, loginUrl } from "../core/session.js";
@@ -16,7 +18,7 @@ function el(tag, text = "", className = "") {
 }
 const ui = {
   dialog: $("#booking-review-page"), review: $("#booking-review"), dialogStatus: $("#booking-dialog-status"),
-  confirm: $("#booking-confirm"), refresh: $("#booking-refresh"), cancel: $("#booking-cancel"),
+  confirm: $("#booking-confirm"),
 };
 let doctors = [], patients = [], selectedDoctor, selectedSlot, actor, busy = false;
 let encounter, payment, ticket, reviewRequest, requestedEncounterId, submissionUncertain = false;
@@ -76,6 +78,11 @@ function renderReview() {
   const symptomsEditable = !submissionUncertain && (!encounter || encounter.encounter_status === "HOLDING");
   const autosave = { form, status, editable, symptomsEditable, patientId: patient?.patient_id, version: pageVersion, controls: [] };
   registrationForm = autosave;
+  form.addEventListener('neu:discard-changes',()=>{
+    if(draftKey&&draft&&!draft.encounter_id&&!draft.uncertain&&!submissionUncertain){
+      try{sessionStorage.removeItem('neu:booking-review:'+draftKey);}catch{}
+    }
+  });
   const keys = ["full_name", "id_card", "health_insurance", "phone", "dob", "gender", "address", "symptoms"];
   const patientValues = [
     ["Họ và tên người khám", Object.hasOwn(intake, "full_name") ? intake.full_name : encounter?.patient_name], ["Số CCCD / Mã định danh", intake.id_card],
@@ -133,7 +140,7 @@ function renderReview() {
     ["Giá khám", money(encounter?.consultation_fee_snapshot ?? doctor?.consultation_fee)],
   ];
   if (encounter) {
-    const labels = { HOLDING: "Đang giữ chỗ", CONFIRMED: "Đã thanh toán", CHECKED_IN: "Đã check in", IN_PROGRESS: "Đang khám", COMPLETED: "Đã khám xong", EXPIRED: "Đã hết hạn", CANCELLED: "Đã hủy", NO_SHOW: "Không tới khám" };
+    const labels = encounterStatusLabels;
     pairs.push(["Trạng thái", labels[encounter.encounter_status] || encounter.encounter_status], ["Mã phiếu", ticket?.ticket_code || encounter.ticket_code || "Chưa được cấp"]);
   }
   const list = el("dl", "", "booking-review-list"); details(list, pairs); ui.review.append(list);
@@ -235,7 +242,6 @@ function showBooking() {
   ui.confirm.hidden = status !== "HOLDING" && !confirmed;
   ui.confirm.textContent = confirmed ? "Xem thanh toán →" : "Thanh toán →";
   $("#booking-confirm-note").hidden = status !== "HOLDING";
-  ui.refresh.hidden = false; ui.cancel.hidden = status !== "HOLDING";
   renderReview();
   ui.dialogStatus.textContent = confirmed ? "Lịch khám đã được hệ thống xác nhận. "+checkInInstruction(encounter)
     : status === "HOLDING" ? "Thanh toán trước khi giữ chỗ hết hạn để được cấp phiếu khám."
@@ -263,7 +269,7 @@ async function recoverSubmission() {
   if (match) { await readBooking(match.encounter_id); return; }
   submissionUncertain = false;
   if (draft) { draft.uncertain = false; saveDraft(draft, draftKey); }
-  ui.confirm.disabled = false; ui.refresh.hidden = true;
+  ui.confirm.disabled = false; ui.confirm.textContent="Thanh toán →";
   ui.dialogStatus.textContent = "Hệ thống chưa có lượt khám khớp thông tin này. Bạn có thể bấm xác nhận để gửi lại.";
 }
 async function refreshBooking(id = encounter?.encounter_id || requestedEncounterId) {
@@ -278,10 +284,11 @@ async function refreshBooking(id = encounter?.encounter_id || requestedEncounter
     if (id) await readBooking(id);
     else if (submissionUncertain) await recoverSubmission();
     else throw new Error("Chưa có lượt khám để cập nhật.");
-  } catch (error) { if (active && version === pageVersion) { ui.dialogStatus.textContent = errorMessage(error); ui.refresh.hidden = false; } }
-  finally { if (active && version === pageVersion) { busyDialog(false); if (submissionUncertain) ui.confirm.disabled = true; } }
+  } catch (error) { if (active && version === pageVersion) { ui.dialogStatus.textContent = errorMessage(error); } }
+  finally { if (active && version === pageVersion) { busyDialog(false); if (submissionUncertain) {ui.confirm.disabled = false;ui.confirm.hidden=false;ui.confirm.textContent="Kiểm tra yêu cầu";} } }
 }
 function openPayment() {
+  commitForm(document.querySelector("#booking-patient-form"));
   const url = new URL("payment.html", location.href);
   if (draftKey) url.searchParams.set("draft", draftKey);
   if (encounter) url.searchParams.set("encounter", encounter.encounter_id);
@@ -305,6 +312,7 @@ async function ensureSelfPatient(version) {
   saveDraft(draft, draftKey);
 }
 ui.confirm.addEventListener("click", async () => {
+  if(submissionUncertain&&!busy){await refreshBooking();return;}
   if (busy || !active || !hasSession()) return;
   if (encounter && ["CONFIRMED", "CHECKED_IN", "IN_PROGRESS", "COMPLETED"].includes(encounter.encounter_status)) { openPayment(); return; }
   if (submissionUncertain || (!encounter && !reviewRequest && !selfPreview()) || (encounter && encounter.encounter_status !== "HOLDING")) return;
@@ -338,38 +346,24 @@ ui.confirm.addEventListener("click", async () => {
   } catch (error) {
     ui.dialogStatus.textContent = errorMessage(error);
     if (encounter) {
-      ui.confirm.hidden = true; ui.refresh.hidden = false;
-      ui.dialogStatus.textContent += " Lượt khám đã được tạo; bấm cập nhật trạng thái để tiếp tục.";
+      ui.confirm.hidden = false;
+      ui.dialogStatus.textContent += " Lượt khám đã được tạo; chọn Thanh toán để tiếp tục.";
     } else if (error.status === 0 || error.status >= 500 || error.code === "DUPLICATE_ENCOUNTER") {
-      submissionUncertain = true; ui.refresh.hidden = false;
-      ui.dialogStatus.textContent += " Bấm cập nhật trạng thái để kiểm tra yêu cầu trước khi gửi lại.";
+      submissionUncertain = true; ui.confirm.hidden=false;ui.confirm.textContent="Kiểm tra yêu cầu";
+      ui.dialogStatus.textContent += " Chọn Kiểm tra yêu cầu trước khi gửi lại.";
     } else if (error.status === 409 || error.code === "SCHEDULE_NOT_FOUND") {
       ui.confirm.hidden = true;
       ui.dialogStatus.textContent += " Hãy quay lại và chọn khung giờ khác.";
 
     }
     if (!encounter && !submissionUncertain && draft) { draft.uncertain = false; saveDraft(draft, draftKey); }
-  } finally { busyDialog(false); if (submissionUncertain) ui.confirm.disabled = true; }
+  } finally { busyDialog(false); if (submissionUncertain) {ui.confirm.disabled = false;ui.confirm.hidden=false;ui.confirm.textContent="Kiểm tra yêu cầu";} }
 });
-ui.cancel.addEventListener("click", async () => {
-  if (busy || encounter?.encounter_status !== "HOLDING") return;
-  const version = pageVersion;
-  busyDialog(true);
-  try {
-    saveRegistrationDraft();
-    if (!active || version !== pageVersion || !hasSession()) return;
-    await cancel(encounter.encounter_id, { reason: "Người đặt khám hủy giữ chỗ trên giao diện" });
-    await readBooking(encounter.encounter_id);
-  } catch (error) { if (active && version === pageVersion) ui.dialogStatus.textContent = errorMessage(error); }
-  finally { if (active && version === pageVersion) busyDialog(false); }
-});
-ui.refresh.addEventListener("click", () => refreshBooking());
 async function leaveReview(destination) {
-  if (busy) return;
+  if (busy||!confirmDiscard(registrationForm?.form)) return;
   busyDialog(true);
   const version = pageVersion;
   try {
-    saveRegistrationDraft();
     if (active && version === pageVersion && hasSession()) location.assign(destination);
   } catch (error) {
     if (active && version === pageVersion) ui.dialogStatus.textContent = `Chưa lưu được thông tin người khám. ${errorMessage(error)}`;

@@ -12,3 +12,23 @@ backups
 **/*.dump
 **/*.backup
 **/*.log
+
+# Internal reports, screenshots, agent instructions and private credentials.
+artifacts
+docs
+output
+skills/neu-medical-project
+.codex
+.agents
+AGENTS.md
+private
+**/secrets
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx
+**/*.sql.gz
+**/*.sqlite
+**/*.sqlite3
+**/credentials.json
+**/service-account*.json

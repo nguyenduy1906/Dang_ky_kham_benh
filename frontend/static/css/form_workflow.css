@@ -1,0 +1,9 @@
+body dialog.workflow-discard-dialog { width: min(480px, calc(100% - 32px)); max-width: calc(100% - 32px); height: fit-content; min-height: 0; max-height: calc(100dvh - 32px); margin: auto; overflow: auto; box-sizing: border-box; border: 1px solid #d4e2d9; border-radius: 5px; padding: 26px; color: #274637; background: #fff; box-shadow: 0 16px 50px #102f2530; }
+body dialog.workflow-discard-dialog::backdrop { background: #102f2570; }
+.workflow-discard-dialog h2 { margin: 0 0 14px; font-size: 22px; line-height: 1.4; color: #008349; }
+.workflow-discard-dialog p { font-size: 15px; line-height: 1.6; margin: 0 0 24px; }
+.workflow-discard-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; }
+.workflow-discard-actions button { min-height: 44px; border: 1px solid #c5dbcf; border-radius: 5px; padding: 11px 16px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; background: white; color: #286b4a; }
+.workflow-discard-actions [data-workflow-leave] { background: #008349; color: white; border-color: #008349; }
+.workflow-discard-actions button:hover { background: #e6f4ec; color: #17633c; }
+@media(max-width:480px){.workflow-discard-actions button{flex:1 1 100%;}}

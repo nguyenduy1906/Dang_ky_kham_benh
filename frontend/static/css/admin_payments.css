@@ -68,6 +68,10 @@ body[data-page="payments"] .admin-refund-bulk input[type="checkbox"] { width: 17
 body[data-page="payments"] .admin-refund-check-all { display: flex; align-items: center; gap: 8px; margin: 0; white-space: nowrap; font-size: 11px; }
 body[data-page="payments"] .admin-refund-bulk-actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding-top: 18px; border-top: 1px solid #e1eae5; }
 body[data-page="payments"] .admin-refund-bulk-actions > span { color: #526c5d; font-size: 12px; }
+body[data-page="payments"] .admin-refund-amount-summary { padding: 18px 20px; margin-bottom: 20px; border: 1px solid #cce4d8; border-radius: 5px; background: #eff8f3; }
+body[data-page="payments"] .admin-refund-amount-summary > span { display: block; font-size: 14px; color: #426551; }
+body[data-page="payments"] .admin-refund-amount-summary > strong { display: block; margin-top: 6px; font-size: 24px; color: #008349; }
+body[data-page="payments"] .admin-refund-amount-summary > p { margin: 8px 0 0; color: #526c5d; font-size: 14px; }
 body[data-page="payments"] .admin-refund-bulk-actions .actions { margin: 0; }
 @media (max-width: 540px) {
   body[data-page="payments"] .admin-refund-bulk-actions .actions { width: 100%; flex-wrap: wrap; }

@@ -70,3 +70,15 @@ Desktop.ini
 /docs/TONG_HOP_PHAN_TICH_NGHIEP_VU.txt
 /docs
 /output
+
+# Project-private working material (retained locally).
+/artifacts/
+/skills/neu-medical-project/
+/.codex/
+/.agents/
+/private/
+*.sql.gz
+*.sqlite
+*.sqlite3
+credentials.json
+service-account*.json

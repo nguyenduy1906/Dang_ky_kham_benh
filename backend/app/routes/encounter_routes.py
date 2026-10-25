@@ -187,3 +187,20 @@ def affected(schedule_id):
             'security': _SECURITY, 'parameters': [_ID], 'responses': _ACTION_RESPONSES})
 def start(encounter_id):
     return jsonify(encounter_service.action(current_user(), encounter_id, 'start'))
+
+
+@encounter_bp.get('/staff/patients/<int:patient_id>/booking-options')
+@login_required
+def staff_booking_options(patient_id):
+    query = encounter_schema.parse_list_query(request.args)
+    if query['work_date'] is None:
+        from backend.app.utils.date import today_vn
+        query['work_date'] = today_vn()
+    return jsonify(encounter_service.staff_booking_options(current_user(), patient_id, query))
+
+
+@encounter_bp.post('/staff/encounters/bookings')
+@login_required
+def create_staff_booking():
+    return jsonify(encounter_service.create_staff_booking(current_user(),
+        encounter_schema.validate_online(request.get_json(silent=True)))), 201

@@ -1,6 +1,6 @@
 import {getEncounter,startExamination} from "../api/encounter.js";
 import {saveRecord,savePrescriptionItems,completeEncounter} from "../api/medical_record.js";
-import {canEditClinicalShift} from "./clinical_shift_access.js";
+import {canEditClinicalShift,canBeginClinical} from "./clinical_shift_access.js";
 
 export function clinicalPayload(data, rows) {
   const diagnosis=String(data.diagnosis || "").trim();
@@ -31,15 +31,19 @@ function requireShift(e,now) {
 export async function saveClinicalProfile(profile,payload,options={},now) {
   const e=await currentEncounter(profile,options);
   requireShift(e,now || new Date());
-  if(e.encounter_status!=="IN_PROGRESS") throw new Error("Chỉ lưu bệnh án khi lượt khám đang diễn ra.");
-  const result=await saveRecord(e.encounter_id,{diagnosis:payload.diagnosis,treatment:payload.treatment,doctor_notes:payload.doctor_notes,expected_version:profile.record_version ?? 0},options);
+  const amendment=e.encounter_status==='COMPLETED';
+  if(!['IN_PROGRESS','COMPLETED'].includes(e.encounter_status)) throw new Error("Chỉ lưu bệnh án đang khám hoặc bổ sung bệnh án hoàn thành.");
+  const reason=String(payload.reason||'').trim();
+  if(amendment&&(!reason||reason.length>1000||!profile.record_id||!Number.isInteger(profile.record_version)))throw new Error('Bổ sung bệnh án cần lý do tối đa 1.000 ký tự và phiên bản đã đọc.');
+  const extra=amendment?{reason}:{};
+  const result=await saveRecord(e.encounter_id,{diagnosis:payload.diagnosis,treatment:payload.treatment,doctor_notes:payload.doctor_notes,expected_version:profile.record_version ?? 0,...extra},options);
   const record=result.medical_record;
   if(String(record?.encounter_id)!==String(e.encounter_id)||!record.record_id||!Number.isInteger(record.version)) throw new Error("Chưa xác nhận được kết quả lưu bệnh án. Đọc lại hồ sơ trước khi thử lại.");
   // Keep the committed version even if the separate prescription request fails.
   profile.record_id=record.record_id;profile.record_version=record.version;
   try {
     requireShift(e,now || new Date());
-    const prescriptions=await savePrescriptionItems(record.record_id,{items:payload.items,expected_version:record.version},options);
+    const prescriptions=await savePrescriptionItems(record.record_id,{items:payload.items,expected_version:record.version,...extra},options);
     if(!Number.isInteger(prescriptions.record_version)||!Array.isArray(prescriptions.items)) throw new Error("Phản hồi đơn thuốc không hợp lệ.");
     profile.record_version=prescriptions.record_version;
   } catch(error) {
@@ -58,7 +62,7 @@ export async function finishClinicalProfile(profile,options={},now) {
 }
 export async function beginClinicalProfile(profile,options={},now) {
   const e=await currentEncounter(profile,options);requireShift(e,now || new Date());
-  if(e.encounter_status!=="CHECKED_IN") throw new Error("Chỉ bắt đầu khám lượt đã check-in.");
+  if(!canBeginClinical(e,now || new Date())) throw new Error("Chỉ bắt đầu khám sau check-in và khi đã đến giờ hẹn trong ca đang hoạt động.");
   const {encounter}=await startExamination(e.encounter_id,options);verifyEncounter(profile,encounter);
   if(encounter.encounter_status!=="IN_PROGRESS") throw new Error("Chưa nhận được xác nhận bắt đầu khám.");
   return encounter;

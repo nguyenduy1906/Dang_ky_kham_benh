@@ -41,6 +41,7 @@ export async function loadNurseAvailability(nurseId, signal) {
 // Each existing API call commits one assignment. Keep successful results and stop
 // on uncertain network outcomes; reloading availability reconciles before retry.
 export async function saveAssignmentBatch({ nurseId, rows, note, availability, signal, onResult = () => {}, isActive = () => true }) {
+  const batchId=crypto.randomUUID();
   const results = [];
   for (const row of rows) {
     if (signal?.aborted || !isActive()) break;
@@ -49,7 +50,7 @@ export async function saveAssignmentBatch({ nurseId, rows, note, availability, s
     if (reason) result = { row, success: false, message: reason };
     else {
       try {
-        const response = await schedules.createNurseAssignment({ nurse_id: nurseId, schedule_id: row.schedule_id, note }, { signal });
+        const response = await schedules.createNurseAssignment({ nurse_id: nurseId, schedule_id: row.schedule_id, note }, { signal, headers:rows.length>1?{"X-Assignment-Batch":batchId}:{} });
         if (!response.assignment || String(response.assignment.nurse_id) !== String(nurseId) || String(response.assignment.schedule_id) !== String(row.schedule_id)) throw new Error("Phản hồi không xác định. Hãy tải lại danh sách ca để kiểm tra.");
         availability.assignments.push({ ...row, ...response.assignment });
         result = { row, success: true, assignment: response.assignment, message: "Đã phân công" };

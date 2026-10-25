@@ -29,3 +29,20 @@ export async function transferReceptionEncounter(visit,schedule,appointmentTime,
   if(!result || unchanged.some(key=>current[key]!=null && String(result[key])!==String(current[key])) || String(result.schedule_id)!==String(target.schedule_id) || String(result.doctor_profile_id)!==String(target.doctor_profile_id))throw new Error('Yêu cầu đã được gửi nhưng phản hồi chưa khớp lượt khám. Hãy tải lại để kiểm tra trước khi thao tác tiếp.');
   return result;
 }
+
+// A selected source is reusable only while its clinical identity is unchanged.
+export function sameTransferSource(before,after){
+  return Boolean(before&&after&&canTransferEncounter(after)&&['encounter_id','patient_id','schedule_id','doctor_profile_id','encounter_status','work_date','estimated_exam_at','appointment_end_at','room_id'].every(key=>String(before[key]??'')===String(after[key]??'')));
+}
+export function retainTransferTarget(selected,options){
+  return selected?options.find(row=>String(row.schedule_id)===String(selected.schedule_id)&&String(row.doctor_profile_id)===String(selected.doctor_profile_id)&&row.slots?.length)||null:null;
+}
+
+
+export const loadBookingOptions = (patientId,day,options={}) => allPages((params,opts)=>encounters.getStaffBookingOptions(patientId,{...params,work_date:day},opts),{},options.signal);
+export async function bookReceptionPatient(patient,schedule,appointmentTime,symptoms,options={}) {
+  if(!patient?.patient_id || !schedule?.schedule_id || !schedule.slots?.some(slot=>slot.appointment_time===appointmentTime))throw new Error('Vui lòng chọn ca và khung giờ hợp lệ.');
+  const {encounter:result}=await encounters.createStaffBooking({patient_id:Number(patient.patient_id),schedule_id:Number(schedule.schedule_id),appointment_time:appointmentTime,symptoms:String(symptoms||'').trim()||null},options);
+  if(!result || String(result.patient_id)!==String(patient.patient_id) || String(result.schedule_id)!==String(schedule.schedule_id) || String(result.doctor_profile_id)!==String(schedule.doctor_profile_id) || result.encounter_status!=='HOLDING' || result.checked_in_at)throw new Error('Yêu cầu đã gửi nhưng phản hồi chưa khớp lịch mới. Vui lòng tải lại để kiểm tra trước khi thao tác tiếp.');
+  return result;
+}

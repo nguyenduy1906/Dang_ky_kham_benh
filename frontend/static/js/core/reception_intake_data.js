@@ -1,11 +1,13 @@
+import {encounterStatusLabels} from "./encounter_status.js";
 import * as encounters from "../api/encounter.js";
 import * as patients from "../api/patient.js";
 import { allPages } from "./admin_ui.js";
 
-const statuses = ["CONFIRMED", "CHECKED_IN", "IN_PROGRESS", "COMPLETED", "NO_SHOW"];
+const statuses = Object.keys(encounterStatusLabels);
 export async function loadReceptionEncounters(filters = {}, options = {}) {
   const rows = await allPages((params, opts) => encounters.listEncounters(params, opts), filters, options.signal);
   return rows.filter(row => ["ONLINE", "WALK_IN"].includes(row.encounter_type) && statuses.includes(row.encounter_status)
+    && (!filters.encounter_type || row.encounter_type===filters.encounter_type)
     && (!filters.work_date || row.work_date === filters.work_date)
     && (!filters.schedule_id || String(row.schedule_id) === String(filters.schedule_id))
     && (!filters.encounter_status || row.encounter_status === filters.encounter_status));
@@ -33,7 +35,7 @@ export async function checkInReception(id, options = {}) {
   const row = (await encounters.getEncounter(id, options)).encounter;
   if (String(row?.encounter_id) !== String(id)) throw new Error("Lượt khám không khớp thông tin đã chọn.");
   if (row.encounter_status === "CHECKED_IN") return row;
-  if (row.encounter_type !== "ONLINE" || row.encounter_status !== "CONFIRMED") throw new Error("Chỉ check-in lịch online đã xác nhận. Vui lòng tải lại danh sách.");
+  if (!['ONLINE','WALK_IN'].includes(row.encounter_type) || row.encounter_status !== "CONFIRMED") throw new Error("Chỉ check-in lượt khám đã thanh toán. Vui lòng tải lại danh sách.");
   return confirmedEncounter(await encounters.checkIn(id, options), id, "CHECKED_IN");
 }
 export async function cancelReceptionEncounter(id, input, options = {}) {

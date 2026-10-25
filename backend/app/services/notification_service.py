@@ -28,8 +28,18 @@ def notify_status(db, encounter_id, log_id, status, note):
     if status == 'COMPLETED':
         from backend.app.services.staff_notification_service import encounter_completed
         encounter_completed(db, encounter_id)
-    if status in ('CHECKED_IN', 'IN_PROGRESS', 'COMPLETED'):
+    if status in ('HOLDING', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED'):
         return
+    if status in ('CONFIRMED','EXPIRED','CANCELLED'):
+        registration = db.execute('''SELECT e.encounter_type,l.old_status FROM encounter e
+            LEFT JOIN encounter_status_log l ON l.encounter_id=e.encounter_id AND l.log_id=%s
+            WHERE e.encounter_id=%s''',(log_id,encounter_id)).fetchone()
+        if registration and registration['encounter_type'] in ('ONLINE','WALK_IN') and (
+                status in ('CONFIRMED','EXPIRED') or registration['old_status']=='HOLDING'):
+            from backend.app.services.admin_notification_service import notify_registration_result
+            notify_registration_result(db,encounter_id,success=status=='CONFIRMED',
+                reason='Hết thời hạn thanh toán giữ chỗ.' if status=='EXPIRED' else note)
+            return
     from backend.app.services.admin_notification_service import publish
     kind = 'CANCELLATION' if status=='CANCELLED' else 'APPOINTMENT' if status in ('HOLDING','CONFIRMED') else 'ENCOUNTER'
     publish(db, {'key':f'admin-encounter-status:{log_id}', 'kind':kind,

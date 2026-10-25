@@ -95,3 +95,29 @@ def exam_fee(encounter_id):
             'security': SECURITY, 'parameters': [path_id('payment_id'), body_field('reason')], 'responses': RESPONSES})
 def refund(payment_id):
     return jsonify(payment_service.refund(current_user(), payment_id, payment_schema.validate_refund(request.get_json(silent=True))))
+
+
+@payment_bp.get('/staff/payments')
+@roles_required('ADMIN','RECEPTIONIST')
+def list_staff_payments():
+    return jsonify(payment_service.list_staff_payments(current_user(),payment_schema.parse_staff_list(request.args)))
+
+
+@payment_bp.post('/staff/payments/<int:payment_id>/result')
+@roles_required('ADMIN','RECEPTIONIST')
+def confirm_staff_payment(payment_id):
+    fields=payment_schema.validate_staff_result(request.get_json(silent=True))
+    return jsonify(payment_service.confirm_staff_payment(current_user(),payment_id,fields['result'],fields['note']))
+
+
+@payment_bp.post('/staff/encounters/<int:encounter_id>/payment-intents')
+@roles_required('ADMIN','RECEPTIONIST')
+def create_staff_intent(encounter_id):
+    result,created=payment_service.create_staff_intent(current_user(),encounter_id,payment_schema.validate_method(request.get_json(silent=True)))
+    return jsonify(result),201 if created else 200
+
+
+@payment_bp.get('/staff/payment-options')
+@roles_required('ADMIN','RECEPTIONIST')
+def billable_encounters():
+    return jsonify(payment_service.billable_encounters(current_user(),*page_params(request.args)))

@@ -2,7 +2,7 @@ import { doctorEncounterStatuses, loadDoctorEncounterRows, doctorEncounterTable 
 import { code } from "./business_codes.js";
 import { startAutoRefresh } from "./auto_refresh.js";
 import { loadReceptionEncounters, checkInReception, cancelReceptionEncounter } from "./reception_intake_data.js";
-import { checkInInstruction } from "./encounter_policy.js";
+import { canCheckIn, checkInInstruction } from "./encounter_policy.js";
 import * as api from "../api/encounter.js";
 import * as records from "../api/medical_record.js";
 import { getPatient } from "../api/patient.js";
@@ -28,10 +28,10 @@ export function medicalRecordMarkup(record, items = []) {
   return panel("Bệnh án", facts([["Chẩn đoán", record.diagnosis], ["Hướng điều trị", record.treatment], ["Ghi chú bác sĩ", record.doctor_notes], ["Ngày khám", date(record.examined_at)]])) + panel("Đơn thuốc", table(["Thuốc", "Liều dùng", "Số lượng", "Hướng dẫn"], items.map(item => `<tr><td>${esc(item.medication_name)}</td><td>${esc(item.dosage || "—")}</td><td>${item.quantity}</td><td>${esc(item.instructions || "—")}</td></tr>`)));
 }
 
-export async function initEncounterList({ role, completed = false, assignments = [], target = "#page-body", compact = false }) {
+export async function initEncounterList({ role, completed = false, assignments = [], target = "#page-body", compact = false, encounterType = null, initialEncounter = null }) {
   const params = new URLSearchParams(location.search);
   const scheduleId = /^\d+$/.test(params.get("schedule_id") || "") ? params.get("schedule_id") : "";
-  const initialDate = /^\d{4}-\d{2}-\d{2}$/.test(params.get("work_date") || "") ? params.get("work_date") : ["doctor", "nurse", "reception"].includes(role) ? today() : "";
+  const initialDate = initialEncounter?.work_date || (/^\d{4}-\d{2}-\d{2}$/.test(params.get("work_date") || "") ? params.get("work_date") : ["doctor", "nurse", "reception"].includes(role) ? today() : "");
   const receptionSearch = role === "reception";
   const doctorSearch = role === "doctor" && compact;
   const doctorList = doctorSearch && !completed;
@@ -44,10 +44,11 @@ export async function initEncounterList({ role, completed = false, assignments =
     ${doctorSearch || receptionSearch ? "" : searchField}
     <div id="encounter-list"></div><div id="list-pagination" class="list-pagination"></div>`);
   const form = $("#encounter-filters");
-  if (doctorList || receptionSearch) form.elements.encounter_status.querySelectorAll("option").forEach(option => {
+  if (doctorList) form.elements.encounter_status.querySelectorAll("option").forEach(option => {
     if (option.value && !visibleStatuses.has(option.value)) option.remove();
   });
-  if (receptionSearch && !completed) form.elements.encounter_status.value = scheduleId ? "" : "CONFIRMED";
+  if (receptionSearch && !completed) form.elements.encounter_status.value = scheduleId || initialEncounter ? "" : "CONFIRMED";
+  if(initialEncounter) $("#encounter-search").value=code("LK",initialEncounter.encounter_id);
   let rows = [], page = 1, version = 0, active = true, request, detailVersion = 0, detailRequest;
   const stop = () => { active = false; version++; detailVersion++; request?.abort(); detailRequest?.abort(); rows=[]; };
   window.addEventListener("pagehide", stop, { once: true });
@@ -59,6 +60,7 @@ export async function initEncounterList({ role, completed = false, assignments =
     request?.abort(); request = new AbortController();
     await run(async () => {
       const query = Object.fromEntries(new FormData(form));
+      if(encounterType)query.encounter_type=encounterType;
       if (doctorList || receptionSearch) {
         let collected;
         try {collected = await (receptionSearch ? loadReceptionEncounters : loadDoctorEncounterRows)(query, {signal:request.signal});}
@@ -89,7 +91,7 @@ export async function initEncounterList({ role, completed = false, assignments =
       matches = matches.slice((page - 1) * 10, page * 10);
       pagination({total, page, page_size:10}, next => { page = next; render(); });
     }
-    $("#encounter-list").innerHTML = doctorList ? doctorEncounterTable(matches) : table(["Người bệnh / phiếu khám", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", compact && !completed ? "Mở hồ sơ bệnh án" : "Thao tác"], matches.map(e => `<tr>${encounterColumns(e)}<td><div class="actions">${doctorList ? "" : `<button class="secondary" data-detail="${e.encounter_id}">Chi tiết</button>`}${role === "doctor" && !completed ? `<a class="button-link secondary" href="clinical.html?encounter_id=${e.encounter_id}&mode=${e.encounter_status === "IN_PROGRESS" ? "edit" : "view"}">${completed ? "Xem / bổ sung" : "Mở bệnh án"}</a>` : ""}${role === "reception" && e.encounter_status === "CONFIRMED" ? `<button data-checkin="${e.encounter_id}">Check-in</button>` : ""}</div></td></tr>`));
+    $("#encounter-list").innerHTML = doctorList ? doctorEncounterTable(matches) : table(["Người bệnh / phiếu khám", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", compact && !completed ? "Mở hồ sơ bệnh án" : "Thao tác"], matches.map(e => `<tr>${encounterColumns(e)}<td><div class="actions">${doctorList ? "" : `<button class="secondary" data-detail="${e.encounter_id}">Chi tiết</button>`}${role === "doctor" && !completed ? `<a class="button-link secondary" href="clinical.html?encounter_id=${e.encounter_id}&mode=${e.encounter_status === "IN_PROGRESS" ? "edit" : "view"}">${completed ? "Xem / bổ sung" : "Mở bệnh án"}</a>` : ""}${role === "reception" && canCheckIn(e) ? `<button data-checkin="${e.encounter_id}">Check-in</button>` : ""}</div></td></tr>`));
     $("#encounter-list").querySelectorAll("[data-detail]").forEach(button => button.addEventListener("click", () => run(async () => {
       const current = ++detailVersion;detailRequest?.abort();detailRequest=new AbortController();
       const e = (await api.getEncounter(button.dataset.detail,{signal:detailRequest.signal})).encounter;

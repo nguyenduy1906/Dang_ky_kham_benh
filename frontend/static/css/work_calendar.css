@@ -34,7 +34,6 @@
 .calendar-legend { display: flex; gap: 20px; flex-wrap: wrap; padding: 15px 22px; font-size: 11px; color: var(--staff-muted); }
 .calendar-legend span { display: inline-flex; align-items: center; gap: 7px; }
 .calendar-legend i { width: 9px; height: 9px; background: #19975f; border-radius: 2px; }
-.calendar-legend .legend-afternoon { background: #5287ba; }
 .calendar-legend .legend-leave { background: #a16b27; }
 .calendar-legend .legend-free { background: #e7ece8; border: 1px solid #becbc2; }
 .work-calendar-page .calendar-hint { font-size: 11px; padding: 0 22px 16px; color: var(--staff-muted); margin: 0; }
@@ -106,7 +105,6 @@
 .work-calendar-page button.calendar-shift.is-leave { background: #fdecec; border-color: #efb4b4; color: #9b3030; border-style: solid; }
 .work-calendar-page button.calendar-shift.is-leave:hover { background: #fadada; border-color: #c74444; }
 .work-calendar-page .calendar-day.is-weekend { background: #fff; }
-.calendar-legend .legend-afternoon { background: #19975f; }
 .calendar-legend .legend-pending { background: #a16b27; }
 .calendar-legend .legend-leave { background: #c74444; }
 .calendar-legend .legend-free { background: #fff; }
