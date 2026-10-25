@@ -4,18 +4,20 @@ import { paymentTable, refundHistoryTable, paymentDetails } from "./admin_paymen
 import { openUnifiedRefundRequest as openRefundRequest } from "./admin_refund_selection.js";
 import { startAutoRefresh } from "./auto_refresh.js";
 import { bindLiveSearch } from "./live_search.js";
-import { esc, panel, options } from "./admin_ui.js";
+import { esc, panel, options, today } from "./admin_ui.js";
 import { code } from "./business_codes.js";
 
 export function paymentsPageMarkup(encounterId = "") {
+  const linkedId=/^[1-9]\d*$/.test(String(encounterId))?encounterId:"";
+  const initialDay=linkedId?"":today();
   return panel("Danh sách thanh toán",`<form id="payment-search" class="admin-toolbar" role="search" aria-label="Tìm thanh toán">
-    <label>Mã thanh toán / giao dịch / lượt khám<input type="search" name="q" placeholder="TT_001, mã giao dịch hoặc LK_001" value="${encounterId?esc(code('LK',encounterId)):''}"></label>
-    <label>Loại giao dịch<select name="payment_type">${options(["DEPOSIT","EXAM_FEE"])}</select></label>
+    <label>Mã thanh toán / giao dịch / lượt khám<input type="search" name="q" placeholder="TT_001, mã giao dịch hoặc LK_001" value="${linkedId?esc(code('LK',linkedId)):''}"></label>
     <label>Trạng thái<select name="transaction_status">${options([["PENDING","Chờ thanh toán"],["SUCCESS","Thành công"],["FAILED","Thất bại"],["REFUNDED","Đã hoàn tiền"]])}</select></label>
+    <label>Từ ngày<input type="date" name="from_date" value="${initialDay}"></label><label>Đến ngày<input type="date" name="to_date" value="${initialDay}"></label>
     </form><p data-payment-error class="admin-search-status" role="status" hidden></p><div id="payment-results"></div><div id="payment-pager"></div>`)
-    + panel("Lịch sử hoàn tiền",`<form id="refund-search" class="admin-toolbar" role="search" aria-label="Tìm lịch sử hoàn tiền">
-      <label>Mã hoàn tiền / lý do / giao dịch gốc / lượt khám<input type="search" name="q" placeholder="Mã hoàn tiền, giao dịch gốc, LK_001 hoặc lý do"></label>
-      <label>Từ ngày<input type="date" name="from_date"></label><label>Đến ngày<input type="date" name="to_date"></label>
+    + panel("Lịch sử hoàn tiền",`<form id="refund-search" class="admin-toolbar admin-toolbar-three" role="search" aria-label="Tìm lịch sử hoàn tiền">
+      <label>Mã hoàn tiền / lý do / giao dịch gốc / lượt khám<input type="search" name="q" placeholder="Mã hoàn tiền, giao dịch gốc, LK_001 hoặc lý do" value="${linkedId?esc(code('LK',linkedId)):''}"></label>
+      <label>Từ ngày<input type="date" name="from_date" value="${initialDay}"></label><label>Đến ngày<input type="date" name="to_date" value="${initialDay}"></label>
       </form><p data-refund-error class="admin-search-status" role="status" hidden></p><div id="refund-results"></div><div id="refund-pager"></div>`);
 }
 
@@ -24,8 +26,7 @@ export async function initAdminPayments(ctx) {
   const modalBody = document.querySelector("#admin-dialog-body"), header = document.querySelector("#page-header");
   const linked = new URLSearchParams(location.search).get("encounter_id");
   body.classList.add("admin-payments-list");
-  document.querySelector("#page-description").textContent="Quản lý giao dịch thanh toán và yêu cầu hoàn tiền.";
-  header.insertAdjacentHTML("beforeend",'<button type="button" id="request-refund">＋ Yêu cầu hoàn tiền</button>');
+  header.insertAdjacentHTML("beforeend",'<button class="primary" type="button" id="request-refund">＋ Yêu cầu hoàn tiền</button>');
   const requestButton = document.querySelector("#request-refund");
   body.innerHTML = paymentsPageMarkup(linked && /^[1-9]\d*$/.test(linked) ? linked : "");
   const paymentForm = document.querySelector("#payment-search"), refundForm = document.querySelector("#refund-search");

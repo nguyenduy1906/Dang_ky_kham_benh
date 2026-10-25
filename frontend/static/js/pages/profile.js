@@ -1,3 +1,4 @@
+import {commitForm} from "../core/form_workflow.js";
 import { updateMe } from "../api/auth.js";
 import { clearSession, getSessionUser, hasSession, loginUrl, workspaceUrl } from "../core/session.js";
 import { personalFields, editableProfileKeys, todayVN, profileChanges } from "../core/profile.js";
@@ -136,6 +137,7 @@ async function save(event) {
     if (result?.user?.user_id !== expectedId || result.user.role_name !== "USER") {
       throw new Error("Phản hồi cập nhật thông tin không hợp lệ. Vui lòng thử lại.");
     }
+    commitForm(form);
     render({ ...result.user, avatar_url: user.avatar_url });
     notify("Đã lưu thông tin cá nhân.");
     editButton.focus();

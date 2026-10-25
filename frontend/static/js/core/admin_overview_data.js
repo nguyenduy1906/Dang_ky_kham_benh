@@ -2,6 +2,8 @@ import * as reports from "../api/statistics.js";
 import * as schedules from "../api/schedule.js";
 import * as encounters from "../api/encounter.js";
 import * as notifications from "../api/notification.js";
+import {listAdminLeaveRequests} from "../api/staff_leave.js";
+import {listDoctors} from "../api/doctor.js";
 import { allPages } from "./admin_ui.js";
 import { encounterWeekRange } from "./admin_encounter_chart.js";
 
@@ -24,14 +26,10 @@ export async function overviewSection(task) {
 
 export async function loadOverviewNotifications(signal) {
   // The unread list's total is the server's complete unread count, not its page size.
-  const unread=await notifications.listNotifications({unread_only:true,page:1,page_size:5},{signal});
-  let items=[...unread.items];
-  if(unread.total<5) {
-    const recent=await notifications.listNotifications({page:1,page_size:5},{signal});
-    const seen=new Set(items.map(row=>String(row.notification_id)));
-    items.push(...recent.items.filter(row=>!seen.has(String(row.notification_id))));
-  }
-  return {items:items.slice(0,5),unreadCount:unread.total};
+  const unread=await notifications.listNotifications({unread_only:true,page:1,page_size:1},{signal});
+  const items=await allPages(notifications.listNotifications,{},signal);
+  items.sort((a,b)=>Number(Boolean(a.is_read))-Number(Boolean(b.is_read)));
+  return {items,unreadCount:unread.total};
 }
 
 export async function loadAdminOverview(day, week, signal) {
@@ -48,5 +46,20 @@ export async function loadAdminOverview(day, week, signal) {
 }
 
 export function loadOverviewSchedules(day, signal) {
-  return overviewSection(async()=>({items:await allPages(schedules.listAdminSchedules,{from_date:day,to_date:day},signal)}));
+  return overviewSection(async()=>{
+    const [items,requests]=await Promise.all([
+      allPages(schedules.listAdminSchedules,{from_date:day,to_date:day},signal),
+      allPages(listAdminLeaveRequests,{status:'PENDING'},signal),
+    ]);
+    const weekday=new Date(`${day}T12:00:00+07:00`).getUTCDay();
+    const pending=requests.filter(row=>row.status==='PENDING'&&row.role_name==='DOCTOR'
+      &&row.from_date<=day&&row.to_date>=day&&weekday!==0&&weekday!==6);
+    if(!pending.length)return {items};
+    const doctors=await allPages(listDoctors,{include_inactive:true},signal);
+    const owners=new Map(doctors.map(row=>[String(row.doctor_profile_id),String(row.user_id)]));
+    return {items:items.map(row=>({...row,pending_leave:pending.some(request=>
+      owners.get(String(row.doctor_profile_id))===String(request.user_id)
+      &&(request.period==='FULL_DAY'||request.period==='MORNING'&&row.start_time<'12:00:00'
+        ||request.period==='AFTERNOON'&&row.end_time>'12:00:00'))}))};
+  });
 }

@@ -17,4 +17,8 @@ def get_db_connection(*, isolation_level=None, read_only=None):
         if actor and actor.get('role_name') == 'ADMIN':
             db.execute("SELECT set_config('app.admin_id',%s,true),set_config('app.admin_name',%s,true)",
                        (str(actor['user_id']), actor.get('full_name') or 'Admin'))
+        from backend.app.utils.assignment_batch import current_batch
+        batch = current_batch()
+        if batch:
+            db.execute("SELECT set_config('app.assignment_batch',%s,true)", (batch,))
         yield db

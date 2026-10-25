@@ -7,3 +7,4 @@
 - Cả 5 gói API dùng đường dẫn trực tiếp như `/auth/login`, `/me`, `/admin/users`, `/patients`, `/encounters`; không thêm tiền tố `/api/v1` hoặc `/v1`.
 - Giai đoạn frontend hiện tại chỉ làm giao diện và tương tác trình bày. Giữ các trang, HTML/CSS và hiệu ứng đã làm; không tự nối API, thêm API giả lập, tạo phiên đăng nhập hoặc áp dụng luồng nghiệp vụ. Chỉ làm phần đó khi người dùng giao yêu cầu riêng.
 - Theo yêu cầu ngày 17/10/2026, hiện ưu tiên làm frontend và hạn chế thay đổi backend/database. Trước mọi thao tác thêm, sửa hoặc xóa ở backend hay database (mã nguồn, API, file SQL, schema hoặc dữ liệu), phải nêu rõ lý do, phạm vi thay đổi và hỏi người dùng xác nhận; chỉ thực hiện sau khi được đồng ý. Không tự thay đổi BE/DB để phục vụ một yêu cầu frontend. Việc đọc và đối chiếu BE/DB vẫn được phép.
+   

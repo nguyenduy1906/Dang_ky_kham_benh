@@ -1,12 +1,12 @@
 import {replaceAdminRegion} from "./admin_render.js";
-import {readAdminNotifications,openNotification,readAllNotifications} from "./admin_notification_data.js";
+import {readAdminNotifications,openNotification} from "./admin_notification_data.js";
 import {startAutoRefresh} from "./auto_refresh.js";
 import {readAdminReviews, readAdminReview, setReviewVisibility} from "./admin_review_data.js";
 import {notificationTypes as baseTypes} from "../data/admin_notification_templates.js";
-import { esc, table, facts, stamp, options } from "./admin_ui.js";
+import { esc, table, facts, stamp, options, today } from "./admin_ui.js";
 import { code } from "./business_codes.js";
 
-const types={...baseTypes,ENCOUNTER_STATUS:"Trạng thái lượt khám",PAYMENT_RESULT:"Kết quả thanh toán",APPOINTMENT_REMINDER:"Nhắc lịch khám"};
+const types={...baseTypes};
 const normalize=value=>String(value??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLocaleLowerCase("vi");
 const day=value=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(value)); // Preview timestamps are explicitly in UTC+07:00.
 
@@ -32,27 +32,25 @@ export function reviewDetail(row) {
 }
 
 export function notificationDetail(row) {
-  return `<div class="feedback-detail notification-detail"><div class="notification-detail-meta">${readBadge(row)}<span>${esc(types[row.type]||row.type)}</span><time>${esc(stamp(row.created_at))}</time></div><h3 class="notification-detail-title">${esc(row.title)}</h3><p class="feedback-notification-content">${esc(row.content)}</p>${facts([["Mã thông báo",code("TB",row.id)],["Đối tượng liên quan",row.reference||"Thông báo chung"]])}<div class="actions notification-detail-actions">${row.target?`<a class="button-link" href="${esc(row.target)}">Xem nội dung liên quan</a>`:""}</div></div>`;
+  return `<div class="feedback-detail notification-detail"><div class="notification-detail-meta">${readBadge(row)}<span>${esc(types[row.type]||row.type)}</span><time>${esc(stamp(row.created_at))}</time></div><h3 class="notification-detail-title">${esc(row.title)}</h3><p class="feedback-notification-content">${esc(row.content)}</p>${row.batch_items?.length?`<section class="notification-batch-details"><h3>Chi tiết phân công · ${row.batch_items.length} ca</h3><ul>${row.batch_items.map(item=>`<li>${esc(item.content)}</li>`).join('')}</ul></section>`:''}${facts([["Mã thông báo",code("TB",row.id)],["Đối tượng liên quan",row.reference||"Thông báo chung"]])}<div class="actions notification-detail-actions">${row.target?`<a class="button-link" href="${esc(row.target)}">Xem nội dung liên quan</a>`:""}</div></div>`;
 }
 
 
-function filtersMarkup(reviews) {
-  return `<form id="feedback-filters" class="admin-toolbar" role="search" aria-label="${reviews?"Lọc đánh giá":"Lọc thông báo"}"><label>Tìm kiếm<input type="search" name="q" placeholder="${reviews?"Mã đánh giá, bác sĩ, nội dung…":"Mã thông báo, tiêu đề, nội dung…"}"></label>${reviews?`<label>Số sao<select name="rating">${options([["5","5 sao"],["4","4 sao"],["3","3 sao"],["2","2 sao"],["1","1 sao"],["low","1–2 sao"]])}</select></label>`:`<label>Loại thông báo<select name="type">${options(Object.entries(types))}</select></label><label>Trạng thái<select name="read">${options([["unread","Chưa đọc"],["read","Đã đọc"]])}</select></label>`}<label>Từ ngày<input type="date" name="from_date"></label><label>Đến ngày<input type="date" name="to_date"></label></form>`;
+function filtersMarkup(reviews, showType=true) {
+  return `<form id="feedback-filters" class="admin-toolbar" role="search" aria-label="${reviews?"Lọc đánh giá":"Lọc thông báo"}"><label>Tìm kiếm<input type="search" name="q" placeholder="${reviews?"Mã đánh giá, bác sĩ, nội dung…":"Mã thông báo, tiêu đề, nội dung…"}"></label>${reviews?`<label>Số sao<select name="rating">${options([["5","5 sao"],["4","4 sao"],["3","3 sao"],["2","2 sao"],["1","1 sao"],["low","1–2 sao"]])}</select></label>`:`${showType?`<label>Loại thông báo<select name="type">${options(Object.entries(types))}</select></label>`:""}<label>Trạng thái<select name="read">${options([["unread","Chưa đọc"],["read","Đã đọc"]])}</select></label>`}<label>Từ ngày<input type="date" name="from_date" value="${reviews?today():''}"></label><label>Đến ngày<input type="date" name="to_date" value="${reviews?today():''}"></label></form>`;
 }
 
-export function feedbackMarkup(reviews) {
-  return `  <section class="admin-card feedback-list"><div class="admin-panel-heading"><div><h2>${reviews?"Danh sách đánh giá":"Thông báo toàn hệ thống"}</h2><p>${reviews?"Tra cứu phản hồi và theo dõi chất lượng trải nghiệm sau khám.":"Theo dõi đặt lịch, thanh toán, nhân sự, bài viết và các sự kiện hệ thống."}</p></div></div>${filtersMarkup(reviews)}<p id="feedback-error" class="feedback-filter-error" role="status" aria-live="polite" hidden></p><div id="feedback-results"></div><div id="feedback-pager" class="admin-pagination"></div></section><p id="feedback-status" class="feedback-status" role="status" aria-live="polite"></p>`;
+export function feedbackMarkup(reviews, {showType=true, personal=false}={}) {
+  return `  <section class="admin-card feedback-list"><div class="admin-panel-heading"><div><h2>${reviews?"Danh sách đánh giá":personal?"Thông báo của bạn":"Thông báo toàn hệ thống"}</h2></div></div>${filtersMarkup(reviews,showType)}<p id="feedback-error" class="feedback-filter-error" role="status" aria-live="polite" hidden></p><div id="feedback-results"></div><div id="feedback-pager" class="admin-pagination"></div></section><p id="feedback-status" class="feedback-status" role="status" aria-live="polite"></p>`;
 }
 
-export async function initFeedbackPresentation(key) {
+export async function initFeedbackPresentation(key, {presentationOnly=false, staffRole=null, readNotifications=readAdminNotifications, readNotification=openNotification}={}) {
   const reviews=key==="reviews";
   let rows=[], saving=false;
-  const body=document.querySelector("#page-body"), header=document.querySelector("#page-header");
+  const body=document.querySelector("#page-body");
   const modal=document.querySelector("#admin-dialog"), modalBody=document.querySelector("#admin-dialog-body");
-  body.innerHTML=feedbackMarkup(reviews);
-  header.querySelector("#page-description").textContent=reviews?"Theo dõi phản hồi của người bệnh sau khám.":"Thông báo từ các hoạt động trong toàn hệ thống.";
-  if(!reviews)header.insertAdjacentHTML("beforeend",'<button type="button" class="secondary" id="feedback-read-all">Đánh dấu tất cả đã đọc</button>');
-  const form=document.querySelector("#feedback-filters"), error=document.querySelector("#feedback-error"), status=document.querySelector("#feedback-status");
+  body.innerHTML=feedbackMarkup(reviews,{showType:!presentationOnly&&!staffRole,personal:presentationOnly||Boolean(staffRole)});
+  const form=document.querySelector("#feedback-filters"), error=document.querySelector("#feedback-error");
   let page=1, trigger;
   function render() {
     const values=Object.fromEntries(new FormData(form));
@@ -68,7 +66,6 @@ export async function initFeedbackPresentation(key) {
       table(["Mã thông báo","Thông báo","Loại","Thời điểm","Trạng thái","Thao tác"],result.items.map(row=>[
         `<strong class="feedback-code">${esc(code("TB",row.id))}</strong>`,`<div class="feedback-notification-title ${row.is_read?"":"is-unread"}"><p>${esc(row.content)}</p></div>`,esc(types[row.type]||row.type),esc(stamp(row.created_at)),readBadge(row),`<button type="button" class="row-action" data-feedback-action="detail" data-id="${row.id}">Chi tiết</button>`]),"Danh sách thông báo"));
     replaceAdminRegion(document.querySelector("#feedback-pager"),`<span role="status">${result.total?`${(page-1)*pageSize+1}–${Math.min(page*pageSize,result.total)} / ${result.total}`:"0"} ${reviews?"đánh giá":"thông báo"}${!reviews?` · ${rows.filter(row=>!row.is_read).length} chưa đọc trong hộp thư`:""}</span><div><button type="button" class="secondary" data-feedback-action="previous" ${page<=1?"disabled":""}>Trang trước</button><button type="button" class="secondary" data-feedback-action="next" ${page>=result.pages?"disabled":""}>Trang sau</button></div>`);
-    if(!reviews)document.querySelector("#feedback-read-all").disabled=rows.every(row=>row.is_read);
   }
   function open(row) {
     document.querySelector("#admin-dialog-title").textContent=reviews?"Chi tiết đánh giá":"Chi tiết thông báo";
@@ -114,7 +111,7 @@ export async function initFeedbackPresentation(key) {
     }
     if(action==="detail") {
       button.disabled=true;
-      try {const row=reviews?await readAdminReview(button.dataset.id):await openNotification(rows.find(row=>String(row.id)===button.dataset.id));if(row){const index=rows.findIndex(item=>item.id===row.id);if(index>=0)rows[index]=row;render();open(row);}}
+      try {const selected=rows.find(row=>String(row.id)===button.dataset.id);const row=reviews?await readAdminReview(button.dataset.id):presentationOnly?selected:await readNotification(selected);if(row){const index=rows.findIndex(item=>item.id===row.id);if(index>=0)rows[index]=row;render();open(row);}}
       catch(err){error.hidden=false;error.textContent=err.message;}
       finally{button.disabled=false;}
     }
@@ -127,30 +124,24 @@ export async function initFeedbackPresentation(key) {
 
   }
   body.addEventListener("click",action);modalBody.addEventListener("click",action);
-  document.querySelector("#feedback-read-all")?.addEventListener("click",async event=>{
-    if(saving)return;saving=true;event.currentTarget.disabled=true;
-    try {await readAllNotifications();rows=await readAdminNotifications();render();status.textContent="Đã đánh dấu tất cả thông báo là đã đọc.";}
-    catch(err){error.hidden=false;error.textContent=err.message;}
-    finally{saving=false;document.querySelector("#feedback-read-all").disabled=rows.every(row=>row.is_read);}
-  });
   modal.addEventListener("close",()=>{
     document.querySelector("#notification-back")?.remove();
     const replacement=trigger?.dataset.id?body.querySelector(`[data-feedback-action="${trigger.dataset.feedbackAction || "detail"}"][data-id="${trigger.dataset.id}"]`):null;
     (trigger?.isConnected?trigger:replacement||form.elements.q).focus();
   });
   modal.addEventListener("cancel",event=>{if(saving)event.preventDefault();});
-  {
+  if(!presentationOnly) {
     document.querySelector("#feedback-results").textContent="Đang tải…";
-    try {rows=reviews?await readAdminReviews():await readAdminNotifications();
-      if(!reviews)for(const type of new Set(rows.map(row=>row.type)))if(!types[type]){types[type]=type;form.elements.type.add(new Option(type,type));}}
+    try {rows=reviews?await readAdminReviews():await readNotifications();
+      if(!reviews&&form.elements.type)for(const type of new Set(rows.map(row=>row.type)))if(!types[type]){types[type]=type;form.elements.type.add(new Option(type,type));}}
     catch(err){error.hidden=false;error.textContent=err.message;document.querySelector("#feedback-results").innerHTML='<button type="button" data-review-retry>Thử lại</button>';body.querySelector("[data-review-retry]").addEventListener("click",()=>location.reload());return;}
   }
   render();
-  if(!reviews) {
+  if(!reviews&&!presentationOnly) {
     let active=true;
     window.addEventListener('pagehide',()=>{active=false;},{once:true});
     window.addEventListener('neu:auth-change',()=>{active=false;},{once:true});
-    startAutoRefresh(async()=>{const latest=await readAdminNotifications();if(active){rows=latest;render();}}, {canRefresh:()=>active&&!saving&&!modal.open});
+    startAutoRefresh(async()=>{const latest=await readNotifications();if(active){rows=latest;render();}}, {canRefresh:()=>active&&!saving&&!modal.open});
   }
   if(reviews){const id=new URLSearchParams(location.search).get("review_id");if(id&&/^[1-9]\d*$/.test(id))try{open(await readAdminReview(id));}catch(err){error.hidden=false;error.textContent=err.message;}}
 }

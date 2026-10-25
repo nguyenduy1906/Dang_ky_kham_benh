@@ -5,7 +5,7 @@ import { listEncounters, getEncounter, getTicket, cancel } from "../api/encounte
 import { listPatients } from "../api/patient.js";
 import { listDoctors } from "../api/doctor.js";
 import { allPages, dateLabel, clock, money } from "../core/booking.js";
-import { statusLabels, isUpcoming, isDueSoon, filterAppointments, appointmentActionUrl, cancellationNotice } from "../core/appointments.js";
+import { statusLabels, isUpcoming, filterAppointments, appointmentActionUrl, cancellationNotice } from "../core/appointments.js";
 import { thumbnailUrl } from "../core/articles.js";
 import { protectPatientPage } from "../core/patient_access.js";
 
@@ -117,7 +117,7 @@ function render() {
   }
   $("#appointments-empty").hidden = filtered.length > 0;
   $("#appointments-empty").textContent = view === "upcoming"
-    ? "Không có lịch sắp tới trong hôm nay hoặc ngày mai phù hợp với bộ lọc."
+    ? "Không có lịch còn hiệu lực phù hợp với bộ lọc."
     : "Không có lịch sử khám phù hợp với bộ lọc.";
   ui.status.textContent = `${filtered.length} lịch ${view === "upcoming" ? "sắp tới" : "trong lịch sử"} · Chỉ hiển thị dữ liệu tài khoản được phép xem.`;
   $("#appointments-pagination").hidden = pages <= 1;
@@ -158,7 +158,7 @@ async function load() {
       ui.patient.add(new Option(`${profile.full_name}${profile.dob ? ` — ${dateLabel(profile.dob)}` : ""}${profile.is_archived ? " (đã lưu trữ)" : ""}`, profile.patient_id));
     }
     if ([...profiles.keys()].some(id => String(id) === preferred)) ui.patient.value = preferred;
-    if (!initialized && !params.has("view") && !items.some(item => isDueSoon(item))) view = "history";
+    if (!initialized && !params.has("view") && !items.some(item => isUpcoming(item))) view = "history";
     initialized = true;
     render();
   } catch (error) {
@@ -262,9 +262,7 @@ async function openCancellation(id) {
         // Reflect only the record confirmed by the backend, then refresh the list.
         items = items.map(item => item.encounter_id === id ? { ...item, ...result.encounter } : item);
         render();
-        ui.detail.replaceChildren();
-        ui.detail.append(el("p", "Đã hủy lịch khám. Phiếu khám này không còn hiệu lực.", "appointment-cancel-success"), el("p", "Hủy lịch chưa phải là xác nhận hoàn tiền. Bạn có thể kiểm tra lượt khám trong mục Lịch sử; việc hoàn tiền được xử lý riêng theo chính sách."));
-        ui.detailStatus.textContent = "Hệ thống đã xác nhận hủy lịch thành công.";
+        ui.dialog.close();
         await load();
       } catch (error) {
         if (current !== detailVersion) return;

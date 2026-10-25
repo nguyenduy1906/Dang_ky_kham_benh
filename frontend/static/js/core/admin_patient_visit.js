@@ -12,7 +12,10 @@ export function patientVisitStatus(status) {
 }
 
 export function patientHistoryTable(rows) {
-  return table(["Mã lượt","Ngày","Bác sĩ","Phòng","Trạng thái","Hồ sơ"],rows.map(row=>[
+  const time=row=>{const value=Date.parse(row.estimated_exam_at||`${row.work_date}T${row.start_time||'00:00:00'}+07:00`);return Number.isFinite(value)?value:0;};
+  const ordered=[...rows].sort((a,b)=>String(b.work_date||'').localeCompare(String(a.work_date||''))
+    ||time(b)-time(a)||Number(b.encounter_id)-Number(a.encounter_id));
+  return table(["Mã lượt","Ngày","Bác sĩ","Phòng","Trạng thái","Hồ sơ"],ordered.map(row=>[
     esc(code("LK",row.encounter_id)),date(row.work_date),esc(row.doctor_name),esc(row.room_name),patientVisitStatus(row.encounter_status),button("patient-visit",row.encounter_id,"Xem hồ sơ"),
   ]),"Lịch sử khám của bệnh nhân");
 }

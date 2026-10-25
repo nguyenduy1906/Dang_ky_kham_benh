@@ -3,7 +3,7 @@ export const adminPageHref = key => key === "profile" ? "../components/profile.h
 
 export const adminSections = [
   ["TỔNG QUAN", [["home", "Bảng điều khiển", "grid"]]],
-  ["NHÂN SỰ & TÀI KHOẢN", [["users", "Tài khoản & phân quyền", "people"], ["doctors", "Bác sĩ", "doctor"], ["assignments", "Phân công y tá", "person"]]],
+  ["NHÂN SỰ & TÀI KHOẢN", [["users", "Tài khoản & phân quyền", "people"], ["doctors", "Bác sĩ", "doctor"], ["assignments", "Phân công y tá", "person"], ["reception_assignments", "Phân công lễ tân", "person"]]],
   ["DANH MỤC & LỊCH KHÁM", [["departments", "Chuyên khoa", "building"], ["rooms", "Phòng khám", "door"], ["schedule", "Lịch làm việc", "calendar"]]],
   ["QUẢN LÝ KHÁM BỆNH", [["encounters", "Lượt khám", "record"], ["patients", "Bệnh nhân", "people"], ["payments", "Thanh toán", "card"]]],
   ["NỘI DUNG & TƯƠNG TÁC", [["articles", "Tin tức", "record"], ["reviews", "Đánh giá", "star"], ["notifications", "Thông báo", "bell"]]],

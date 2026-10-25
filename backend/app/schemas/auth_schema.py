@@ -139,8 +139,7 @@ def validate_admin_create(data):
         'phone': phone,
         'password': check_password(data.get('password')),
         'role': _choice(data.get('role', constants.ROLE_USER), constants.ALL_ROLES, 'role'),
-        'approval_status': _choice(data.get('approval_status', constants.APPROVAL_APPROVED),
-                                   constants.APPROVAL_STATUSES, 'approval_status'),
+        'approval_status': constants.APPROVAL_APPROVED,
         'email_verified': verified,
         **personal_fields(data),
     }
@@ -148,7 +147,7 @@ def validate_admin_create(data):
 
 def validate_admin_update(data):
     data = ensure_object(data)
-    if set(data) - {'full_name', 'email', 'phone', 'role', 'approval_status', *PROFILE_FIELDS}:
+    if set(data) - {'full_name', 'email', 'phone', 'role', *PROFILE_FIELDS}:
         raise bad_request('Hồ sơ chứa trường không được phép cập nhật')
     fields = personal_fields(data)
     if 'full_name' in data:
@@ -164,9 +163,6 @@ def validate_admin_update(data):
         fields['phone'] = phone
     if 'role' in data:
         fields['role'] = _choice(data['role'], constants.ALL_ROLES, 'role')
-    if 'approval_status' in data:
-        fields['approval_status'] = _choice(data['approval_status'],
-                                            constants.APPROVAL_STATUSES, 'approval_status')
     if not fields:
         raise bad_request('Không có trường nào để cập nhật')
     return fields

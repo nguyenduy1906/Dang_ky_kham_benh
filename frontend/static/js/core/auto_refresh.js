@@ -17,7 +17,7 @@ export function startAutoRefresh(read, {
       if (retry === undefined) retry = environment.setTimeout(() => { retry = undefined; void tick(); }, 1000);
       return;
     }
-    if (document.querySelector('dialog[open], [aria-busy="true"], [data-saving="true"], [data-busy="true"], .staff-auth-pending, main[inert]') ||
+    if (document.querySelector('dialog[open], .date-field-display[aria-invalid="true"], [aria-busy="true"], [data-saving="true"], [data-busy="true"], [data-workflow-dirty="true"], .staff-auth-pending, main[inert]') ||
         document.activeElement?.matches('input, textarea, select, [contenteditable="true"]')) return;
     environment.clearTimeout(retry);
     retry = undefined;

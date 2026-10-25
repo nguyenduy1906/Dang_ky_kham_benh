@@ -1,6 +1,6 @@
 import { checkInInstruction } from "../core/encounter_policy.js";
 import { getMe } from "../api/auth.js";
-import { getEncounter, getTicket, cancel } from "../api/encounter.js";
+import { getEncounter, getTicket } from "../api/encounter.js";
 import { startAutoRefresh } from "../core/auto_refresh.js";
 import { createIntent, listEncounterPayments, setDemoResult } from "../api/payment.js";
 import { verifySession, hasSession, clearSession, loginUrl } from "../core/session.js";
@@ -13,7 +13,7 @@ const ui = {
   page: $("#payment-page"), auth: $("#payment-auth-status"), layout: $("#payment-layout"),
   payment: $("#booking-payment"), method: $("#booking-payment-method"), qr: $("#booking-qr"),
   create: $("#booking-payment-create"), result: $("#booking-payment-result"), status: $("#booking-payment-status"),
-  success: $("#booking-success"), refresh: $("#payment-refresh"), cancel: $("#payment-cancel"), back: $("#payment-back"),
+  success: $("#booking-success"), back: $("#payment-back"),
 };
 const query = new URLSearchParams(location.search);
 const draftKey = query.get("draft");
@@ -26,6 +26,7 @@ function errorText(error) {
 }
 function setBusy(value) {
   busy = value;
+  ui.page.setAttribute("data-workflow-busy",String(value));
   ui.page.setAttribute("aria-busy", String(value));
   ui.page.querySelectorAll("button,select").forEach(node => { node.disabled = value; });
   if (!value && payment?.transaction_status === "PENDING") ui.method.disabled = true;
@@ -58,7 +59,6 @@ function showBooking() {
   const confirmed = ["CONFIRMED", "CHECKED_IN", "IN_PROGRESS", "COMPLETED"].includes(status);
   ui.layout.hidden = confirmed; ui.success.hidden = !confirmed;
   ui.payment.hidden = status !== "HOLDING";
-  ui.refresh.hidden = false; ui.cancel.hidden = status !== "HOLDING";
   renderSummary(encounter);
   renderDemoQr(ui.qr, status === "HOLDING" ? payment : null);
   ui.result.hidden = status !== "HOLDING" || payment?.transaction_status !== "PENDING";
@@ -73,14 +73,14 @@ function showBooking() {
     ui.status.textContent = payment?.transaction_status === "FAILED"
       ? "Thanh toán không thành công. Bạn có thể tạo phiên mới khi thời gian giữ chỗ còn hiệu lực."
       : payment?.transaction_status === "SUCCESS"
-        ? "Hệ thống đã nhận giao dịch nhưng lịch chưa được xác nhận. Bấm cập nhật trạng thái để đối chiếu."
+        ? "Hệ thống đã nhận giao dịch nhưng lịch chưa được xác nhận. Hệ thống sẽ tự đối chiếu trạng thái."
         : "Thanh toán trước khi giữ chỗ hết hạn để được cấp phiếu khám.";
     let checked = new Date(encounter.hold_expires_at) <= new Date();
     const tick = () => {
       const seconds = Math.max(0, Math.ceil((new Date(encounter.hold_expires_at) - Date.now()) / 1000));
       $("#booking-countdown").textContent = seconds > 0
         ? `Thời gian giữ chỗ còn lại: ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`
-        : "Đã tới thời hạn giữ chỗ. Bấm cập nhật trạng thái để đối chiếu hệ thống.";
+        : "Đã tới thời hạn giữ chỗ. Hệ thống đang tự đối chiếu trạng thái.";
       if (!seconds && !checked && !busy) { checked = true; clearInterval(timer); timer = undefined; refresh(); }
     };
     tick(); if (!checked) timer = setInterval(tick, 1000);
@@ -115,7 +115,7 @@ async function paymentAction(action) {
   } catch (error) {
     if (!current(run)) return;
     try { await readBooking(encounter.encounter_id, run); } catch { /* Read back only; never retry a mutation automatically. */ }
-    if (current(run)) ui.status.textContent = errorText(error) + " Bấm cập nhật trạng thái để đối chiếu trước khi thử lại.";
+    if (current(run)) ui.status.textContent = errorText(error) + " Hệ thống sẽ tự đối chiếu trạng thái; vui lòng chờ trước khi thử lại.";
   } finally { if (current(run)) setBusy(false); }
 }
 ui.create.addEventListener("click", () => {
@@ -130,9 +130,7 @@ $("#booking-payment-failed").addEventListener("click", () => {
   if (!active || !hasSession()) return;
   if (payment?.transaction_status === "PENDING") return paymentAction(() => setDemoResult(payment.payment_id, { result: "FAILED" }));
 });
-ui.refresh.addEventListener("click", refresh);
 startAutoRefresh(refresh, { canRefresh: () => active && hasSession() && !busy && !checking && Boolean(encounter) });
-ui.cancel.addEventListener("click", () => paymentAction(() => cancel(encounter.encounter_id, { reason: "Người đặt khám hủy giữ chỗ trên giao diện" })));
 function suspend() { active = false; version++; ui.page.hidden = true; clearInterval(timer); timer = undefined; }
 async function start() {
   if (checking) return;

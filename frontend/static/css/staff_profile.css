@@ -15,7 +15,7 @@
 .staff-profile-page #staff-profile-actions { grid-column: 1 / -1; justify-content: flex-start; align-self: end; margin: 0; }
 .staff-profile-page #staff-profile-actions[hidden] { display: flex !important; visibility: hidden; pointer-events: none; }
 .staff-profile-page #staff-profile-form > .form-feedback { grid-column: 1 / -1; margin: 0; }
-.staff-profile-page .profile-readonly-grid .full-width { grid-column: 1 / -1; }
+.staff-profile-page .profile-readonly-grid .full-width { grid-column: auto; }
 .staff-profile-page .profile-readonly-grid :is(input, textarea)[readonly] { background: #f4f7f5; border-color: #dfe7e2; color: #4b6155; cursor: default; }
 .staff-profile-page #staff-profile-form[data-editing="true"] :is(input:not([readonly]), select:not(:disabled)) { background: white; border-color: var(--staff-green); }
 .staff-profile-page .staff-profile-avatar-form { margin: 14px 0 24px; }
@@ -28,7 +28,9 @@
 .staff-profile-page .profile-emergency legend { padding: 0 8px; color: var(--staff-ink); font-size: 13px; font-weight: 600; }
 .staff-profile-page .profile-emergency-fields { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 16px; }
 .staff-profile-page #avatar-file[hidden] { display: none !important; }
-.staff-profile-page #staff-managed-fields > .full-width { grid-column: 1 / -1; }
+.staff-profile-page #staff-managed-fields > .full-width { grid-column: auto; }
+.staff-profile-page #staff-managed-fields > .profile-emergency { grid-column: 1 / -1; }
+.staff-profile-page #staff-managed-fields > .profile-introduction { grid-column: 1 / -1; }
 .staff-profile-page #avatar-feedback:empty { display: none; }
 .staff-profile-page #avatar-feedback[data-error="true"] { color: #a63434; }
 .staff-profile-page .profile-header-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
@@ -48,4 +50,12 @@
     align-self: start;
     min-height: var(--staff-profile-view-height, auto);
   }
+}
+
+/* Give the doctor's professional introduction more space. */
+.staff-profile-page[data-role="doctor"] .staff-profile-grid {align-items:start}
+.staff-profile-page[data-role="doctor"] .staff-profile-identity {align-self:start;min-height:0 !important}
+.staff-profile-page[data-role="doctor"] .staff-profile-sections textarea {min-height:240px}
+@media (min-width: 1100px) {
+  .staff-profile-page[data-role="doctor"] .staff-profile-grid {grid-template-columns:240px minmax(0,1fr)}
 }

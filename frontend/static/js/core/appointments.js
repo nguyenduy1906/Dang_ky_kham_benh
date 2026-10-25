@@ -1,28 +1,16 @@
 import { bookingUrl } from "./session.js";
 
-export const statusLabels = Object.freeze({
-  HOLDING: "Đang giữ chỗ", CONFIRMED: "Đã xác nhận", CHECKED_IN: "Đã check-in",
-  IN_PROGRESS: "Đang khám", COMPLETED: "Đã khám xong", EXPIRED: "Hết hạn giữ chỗ",
-  CANCELLED: "Đã hủy", NO_SHOW: "Không tới khám",
-});
+export {encounterStatusLabels as statusLabels} from "./encounter_status.js";
 const active = new Set(["HOLDING", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
-const calendarVN = new Intl.DateTimeFormat("en-CA", {
-  timeZone: "Asia/Ho_Chi_Minh", year: "numeric", month: "2-digit", day: "2-digit",
-});
 export function isUpcoming(encounter, now = Date.now()) {
   const end = new Date(encounter.appointment_end_at).getTime();
   const unexpiredHold = encounter.encounter_status !== "HOLDING" || new Date(encounter.hold_expires_at).getTime() > now;
   return active.has(encounter.encounter_status) && Number.isFinite(end) && end > now && unexpiredHold;
 }
-export function isDueSoon(encounter, now = Date.now()) {
-  const today = calendarVN.format(new Date(now));
-  const days = (Date.parse(`${encounter.work_date}T00:00:00+07:00`) - Date.parse(`${today}T00:00:00+07:00`)) / 86400000;
-  const unexpiredHold = encounter.encounter_status !== "HOLDING" || new Date(encounter.hold_expires_at).getTime() > now;
-  return active.has(encounter.encounter_status) && days >= 0 && days < 2 && unexpiredHold;
-}
+
 export function filterAppointments(items, { view = "upcoming", patient = "", status = "" } = {}, now = Date.now()) {
-  // The near-date list is narrower; history keeps its existing time/status rules.
-  return items.filter(item => (view === "upcoming" ? isDueSoon(item, now) : !isUpcoming(item, now)) &&
+  // Active future bookings and history partition the full authorized list.
+  return items.filter(item => (view === "upcoming" ? isUpcoming(item, now) : !isUpcoming(item, now)) &&
     (!patient || String(item.patient_id) === String(patient)) && (!status || item.encounter_status === status))
     .sort((a, b) => (view === "upcoming" ? 1 : -1) *
       (new Date(a.estimated_exam_at) - new Date(b.estimated_exam_at)) || b.encounter_id - a.encounter_id);
@@ -42,7 +30,11 @@ export function cancellationNotice(encounter, now = Date.now()) {
   if (!isUpcoming(encounter, now)) return { allowed: false, message: "Thời gian giữ chỗ hoặc khung giờ khám đã hết hạn. Vui lòng tải lại danh sách và liên hệ bộ phận tiếp nhận nếu cần hỗ trợ." };
   if (status === "HOLDING") return { allowed: true, message: "Lịch đang giữ chỗ, chưa xác nhận thanh toán. Nếu bạn đã chuyển tiền nhưng chưa có kết quả, hãy kiểm tra giao dịch; hệ thống xử lý khoản thu đến muộn theo chính sách." };
   const hours = (new Date(encounter.estimated_exam_at).getTime() - now) / 3600000;
-  return { allowed: true, message: hours >= 12
-    ? "Nếu hủy theo nhu cầu cá nhân lúc này, bạn được xét hoàn 50% tiền cọc theo chính sách. Việc hoàn tiền do bộ phận quản trị xử lý riêng, chưa được thực hiện khi bạn bấm hủy."
-    : "Đã dưới 12 giờ trước giờ hẹn. Nếu hủy theo nhu cầu cá nhân lúc này, bạn không được hoàn tiền cọc." };
+  if(encounter.schedule_status==='UNAVAILABLE')return {allowed:true,message:'Ca khám đã báo nghỉ. Khi hủy do bệnh viện, khoản thu đủ điều kiện được xét hoàn 100%; bộ phận quản trị xử lý hoàn tiền riêng.'};
+  const policy=encounter.policy_snapshot||{};
+  const limit=policy.CANCEL_HOURS_LIMIT, percent=policy.CANCEL_REFUND_PERCENT;
+  if(!Number.isFinite(limit)||limit<0||!Number.isFinite(percent)||percent<0||percent>100)return {allowed:true,message:'Mức hoàn tiền được xác định theo chính sách của lượt khám tại thời điểm hủy. Vui lòng liên hệ bộ phận tiếp nhận để đối chiếu; thao tác hủy không tự thực hiện hoàn tiền.'};
+  return {allowed:true,message:hours>=limit
+    ? `Nếu hủy theo nhu cầu cá nhân lúc này, bạn được xét hoàn ${percent}% tiền cọc theo chính sách của lượt khám (mốc ${limit} giờ trước giờ hẹn). Việc hoàn tiền do bộ phận quản trị xử lý riêng, chưa được thực hiện khi bạn bấm hủy.`
+    : `Đã dưới ${limit} giờ trước giờ hẹn. Theo chính sách của lượt khám, hủy theo nhu cầu cá nhân lúc này không được hoàn tiền cọc.`};
 }

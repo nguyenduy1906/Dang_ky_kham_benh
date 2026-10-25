@@ -31,13 +31,13 @@ function relativesDetails(row) {
   return `<section class="admin-patient-section admin-patient-relatives"><h3>Hồ sơ người thân</h3>${row.family_scope === "same-account" ? '<p class="admin-patient-field-note">Hiển thị các hồ sơ người thân cùng tài khoản.</p>' : ""}${content}</section>`;
 }
 
-export function patientDetails(row) {
+export function patientDetails(row, {showRelatives = true, showAccountStatus = true} = {}) {
   return `<div class="admin-patient-detail" data-patient-id="${esc(row.patient_id)}">
     ${patientSummary(row)}
     ${section("Thông tin cá nhân", [
       ["Ngày sinh", row.dob ? date(row.dob) : "Chưa cập nhật"], ["Giới tính", value(row.gender)],
       ["CCCD / mã định danh", value(row.id_card)], ["Mã thẻ BHYT", value(row.health_insurance)],
-      ["Trạng thái tài khoản", patientAccountStatus(row)],
+      ...(showAccountStatus ? [["Trạng thái tài khoản", patientAccountStatus(row)]] : []),
     ])}
     ${section("Thông tin liên hệ", [
       ["Số điện thoại", value(row.phone)], ["Email", value(row.email)], ["Địa chỉ", value(row.address)],
@@ -52,7 +52,7 @@ export function patientDetails(row) {
       ["Cập nhật gần nhất", row.updated_at ? stamp(row.updated_at) : "Chưa cập nhật"],
       ...(row.archived_at ? [["Thời điểm ngừng hoạt động", stamp(row.archived_at)]] : []),
     ], "admin-patient-metadata")}
-    ${relativesDetails(row)}
+    ${showRelatives ? relativesDetails(row) : ""}
   </div>`;
 }
 

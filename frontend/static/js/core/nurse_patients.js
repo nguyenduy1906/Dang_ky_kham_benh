@@ -7,23 +7,30 @@ import { readMedicalRecord } from "./staff_encounters.js";
 import { sessionError } from "./staff_workspace.js";
 import { activeStatuses, nurseEncounters, allPages, localPage, shiftEnd, normalizeSearch, nurseRange, inNurseRange, visitOrder } from "./nurse_encounter_data.js";
 import { nurseVisitTable } from "./nurse_tables.js";
-import { $, esc, date, facts, panel, pagination, dialog, encounterSummary } from "./staff_ui.js";
+import { $, esc, date, facts, panel, pagination, dialog, encounterSummary, today } from "./staff_ui.js";
 
 export async function initNursePatients({ assignments }) {
-  const initialRange = nurseRange();
+  const params=new URLSearchParams(location.search);
+  const linkedId=params.get('encounter_id');
+  const linked=/^[1-9]\d*$/.test(linkedId||'')?(await getEncounter(linkedId)).encounter:null;
+  let initialRange = linked?{from:linked.work_date,to:linked.work_date}:nurseRange();
   let inheritedRange = initialRange;
-  const requested = new URLSearchParams(location.search).get("schedule_id") || "";
+  const requested = String(linked?.schedule_id || params.get("schedule_id") || "");
   const selected = assignments.some(a => String(a.schedule_id) === requested) ? requested : "";
+  if (!initialRange) {
+    const day = assignments.find(a=>String(a.schedule_id)===selected)?.work_date || today();
+    initialRange = {from:day,to:day}; inheritedRange = initialRange;
+  }
   const shifts = [...assignments].sort((a, b) => `${a.work_date}${a.start_time}`.localeCompare(`${b.work_date}${b.start_time}`));
   $("#page-body").innerHTML = panel("Người bệnh trong ca", `
     <form id="nurse-visit-filters" class="staff-toolbar">
       <label>Phạm vi ca<select name="period"><option value="upcoming" ${!selected && !initialRange ? "selected" : ""}>Ca hiện tại và sắp tới</option><option value="past">Ca trước chưa xử lý</option><option value="all" ${selected || initialRange ? "selected" : ""}>Tất cả ca được phân công</option></select></label>
       <label>Ngày khám<input type="date" name="work_date"></label>
       <label>Ca được phân công<select name="schedule_id"><option value="">Tất cả ca</option>${shifts.map(a => `<option value="${esc(a.schedule_id)}" ${String(a.schedule_id) === selected ? "selected" : ""}>${date(a.work_date)} · ${esc(a.start_time.slice(0, 5))}–${esc(a.end_time.slice(0, 5))} · ${esc(a.room_name)}</option>`).join("")}</select></label>
-      <label>Trạng thái<select name="encounter_status"><option value="">Tất cả</option><option value="CONFIRMED">Sắp khám</option><option value="CHECKED_IN">Chờ khám</option><option value="IN_PROGRESS">Đang khám</option></select></label>
+      <label>Trạng thái<select name="encounter_status"><option value="">Tất cả</option><option value="CONFIRMED">Đã thanh toán</option><option value="CHECKED_IN">Đã check in</option><option value="IN_PROGRESS">Đang khám</option></select></label>
     </form>
     <p id="nurse-visit-range" class="muted" ${initialRange && initialRange.from !== initialRange.to ? "" : "hidden"}>Khoảng ngày từ tổng quan: ${date(initialRange?.from)} – ${date(initialRange?.to)}</p>
-    <label class="nurse-visit-search-field">Tìm người bệnh hoặc mã phiếu<input id="nurse-visit-search" type="search" maxlength="100" placeholder="Họ tên, mã phiếu hoặc mã lượt khám" autocomplete="off" aria-controls="nurse-visit-list"></label>
+    <label class="nurse-visit-search-field">Tìm kiếm<input id="nurse-visit-search" type="search" maxlength="100" placeholder="Họ tên, mã phiếu hoặc mã lượt khám" autocomplete="off" aria-controls="nurse-visit-list"></label>
     <p id="nurse-visit-status" role="status" hidden></p><div id="nurse-visit-list"></div><div id="nurse-visit-pages" class="list-pagination"></div>`);
   const form = $("#nurse-visit-filters"), search = $("#nurse-visit-search"), status = $("#nurse-visit-status");
   form.elements.schedule_id.value = selected;
@@ -85,7 +92,7 @@ export async function initNursePatients({ assignments }) {
   }
   async function showVisit(encounterId) {
     if (!active) return;
-    const row = rows.find(e => String(e.encounter_id) === String(encounterId));
+    const row = rows.find(e => String(e.encounter_id) === String(encounterId)) || (String(linked?.encounter_id)===String(encounterId)?linked:null);
     if (!row || !assigned.has(String(row.schedule_id))) return;
     const current = ++detailVersion; detailRequest?.abort(); detailRequest = new AbortController();
     status.hidden = false; status.textContent = "Đang tải thông tin…"; status.dataset.error = "false";
@@ -96,7 +103,7 @@ export async function initNursePatients({ assignments }) {
       const { patient } = await getPatient(encounter.patient_id, { signal: detailRequest.signal });
       if (!active || current !== detailVersion) return;
       if (String(patient.patient_id) !== String(encounter.patient_id)) throw new Error("Hồ sơ trả về không thuộc người bệnh đã chọn.");
-      const clinical = encounter.encounter_status === "IN_PROGRESS" ? await readMedicalRecord(encounter) : "";
+      const clinical = ["IN_PROGRESS","COMPLETED"].includes(encounter.encounter_status) ? await readMedicalRecord(encounter) : "";
       if (!active || current !== detailVersion) return;
       dialog("Chi tiết lượt khám", encounterSummary(encounter) + panel("Thông tin người bệnh", facts([["Ngày sinh", date(patient.dob)], ["Giới tính", patient.gender], ["Điện thoại", patient.phone], ["BHYT", patient.health_insurance]])) + clinical);
       status.hidden = true;

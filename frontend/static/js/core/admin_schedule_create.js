@@ -31,6 +31,7 @@ const conflictMessage=(row,conflict)=>Number(conflict.doctor_profile_id)===Numbe
 
 export async function readScheduleConflicts(rows,signal) {
   const conflicts=new Map();if(!rows.length)return conflicts;
+  const batchId=crypto.randomUUID();
   const days=rows.map(row=>row.payload.work_date).sort();
   const existing=await allPages(listAdminSchedules,{from_date:days[0],to_date:days.at(-1)},signal);
   for(const row of rows) {
@@ -43,6 +44,7 @@ export async function readScheduleConflicts(rows,signal) {
 // Successful or uncertain writes are never submitted again within this editor.
 export async function createScheduleBatch(rows,{signal,isActive=()=>true,outcomes=new Map(),onResult=()=>{}}={}) {
   if(!rows.length||signal?.aborted||!isActive()||[...outcomes.values()].some(result=>result.uncertain))return [];
+  const batchId=crypto.randomUUID();
   const days=rows.map(row=>row.payload.work_date).sort();
   const existing=await allPages(listAdminSchedules,{from_date:days[0],to_date:days.at(-1)},signal);
   const results=[];
@@ -56,7 +58,7 @@ export async function createScheduleBatch(rows,{signal,isActive=()=>true,outcome
     if(conflict)result={row,success:false,blocked:true,message:conflictMessage(row.payload,conflict)};
     else {
       try {
-        const response=await createSchedule(row.payload,{signal});
+        const response=await createSchedule(row.payload,{signal,headers:rows.length>1?{"X-Assignment-Batch":batchId}:{}});
         if(!Number.isSafeInteger(response?.schedule?.schedule_id)||response.schedule.schedule_id<1)throw new Error("Máy chủ chưa xác nhận mã ca vừa tạo.");
         result={row,success:true,schedule:response.schedule,message:"Đã tạo ca"};
         existing.push(row.payload);

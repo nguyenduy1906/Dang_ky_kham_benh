@@ -10,7 +10,7 @@ Nếu đã có `backend/.env` và database đã khởi tạo, mở PowerShell t�
 
 ```powershell
 cd "D:\Đăng ký và lên lịch khám bệnh"
-docker compose up -d --build --remove-orphans
+docker compose up -d
 docker compose ps
 npm --prefix frontend start
 ```
@@ -24,7 +24,7 @@ npm --prefix frontend start
 | Kiểm tra backend/database | http://127.0.0.1:5000/health |
 | Swagger — tài liệu và thử API | http://127.0.0.1:5000/docs/ |
 
-Đăng nhập nhanh: **`admin@medicare.vn` / `Demo-password-123!`** nếu database đã nạp dữ liệu mẫu. Các tài khoản khác xem mục 3.
+Tài khoản mẫu admin: **`admin@medicare.vn` / `Demo-password-123!`** chỉ áp dụng sau khi nạp mẫu và chưa đổi mật khẩu. Nếu tài khoản hiện tại đã đổi, dùng mật khẩu mới; không nạp lại mẫu chỉ để đăng nhập. Các tài khoản khác xem mục 3.
 
 Nếu chỉ xem giao diện, chạy riêng `npm --prefix frontend start`. Đăng nhập và các trang đã gọi API cần backend/database hoạt động; mức độ tích hợp tùy trang, không phải mọi chức năng nghiệp vụ đều đã hoàn thiện.
 
@@ -139,4 +139,11 @@ API dùng đường dẫn trực tiếp như `/auth/login`, `/me`, `/admin/users
 - [Tổng hợp phân tích nghiệp vụ](docs/TONG_HOP_PHAN_TICH_NGHIEP_VU.txt)
 - [Hướng dẫn frontend](frontend/README.md)
 
-Một số mô tả cũ trong tài liệu còn ghi 15/23 tài khoản hoặc chưa có frontend. Hướng dẫn nhanh và danh sách ở README này dựa trên cấu hình, mã nguồn và seed hiện tại. File `docs/DANH_SACH_API_VA_PHAN_CONG_BACKEND.md` được tài liệu cũ nhắc đến nhưng hiện không có trong checkout này.
+Hướng dẫn chạy đầy đủ đã được cập nhật ngày 25/10/2026 trong `docs/HUONG_DAN_CHAY_DU_AN.md`. Các báo cáo nghiệp vụ khác có thể còn ghi chú lịch sử; dùng hướng dẫn chạy hiện tại cho cổng, lệnh Docker và cách nạp mẫu.
+
+
+## 6. Các tệp đã ẩn trong VS Code
+
+Cấu hình workspace tại `.vscode/settings.json` ẩn cache, môi trường ảo, log, test, báo cáo/ảnh kiểm chứng, tài liệu nội bộ. Các tệp vẫn ở trên máy; không ảnh hưởng chạy dự án hoặc kiểm thử.
+
+Mã nguồn frontend/backend, hai file SQL, `.env`, `.env.example`, README và hướng dẫn chạy vẫn để hiển thị. Mở file cấu hình bằng `code backend/.env`; muốn sửa danh sách ẩn, dùng **Preferences: Open Workspace Settings (JSON)** trong Command Palette.

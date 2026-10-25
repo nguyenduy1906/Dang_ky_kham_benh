@@ -3,9 +3,7 @@ import { apiRequest, pathSegment } from "../core/api.js";
 export function getWorkSchedules(params = {}, options = {}) {
   return apiRequest("/staff/work-schedules", { ...options, method: "GET", params });
 }
-export function getStaffWorkSchedules(userId, params = {}, options = {}) {
-  return apiRequest(`/admin/staff/${pathSegment(userId)}/work-schedules`, { ...options, method: "GET", params });
-}
+
 export function listLeaveRequests(params = {}, options = {}) {
   return apiRequest("/staff/leave-requests", { ...options, method: "GET", params });
 }

@@ -1,104 +1,124 @@
 /* Nurse-specific content; the shared staff workspace owns navigation and controls. */
-.nurse-page :is(.badge, .status) { border-radius: 5px; }
-.nurse-page #nurse-assignment-search { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-.nurse-page #nurse-assignment-search > label { min-width: 0; }
-.nurse-page .nurse-record-table th:nth-child(1) { width: 28%; }
-.nurse-page .nurse-record-table th:nth-child(2) { width: 17%; }
-.nurse-page .nurse-record-table th:nth-child(3) { width: 23%; }
-.nurse-page .nurse-record-table th:nth-child(4) { width: 16%; }
-.nurse-page .nurse-record-table th:nth-child(5) { width: 16%; }
-.nurse-page .nurse-record-table :is(th, td):nth-child(4) { text-align: center; }
-.nurse-page.work-calendar-page button.calendar-shift { border-left-width: 1px; border-left-color: #cce5d6; }
-.nurse-page.work-calendar-page button.calendar-shift.is-afternoon { border-left-color: #d3e1f1; }
-.nurse-page.work-calendar-page button.calendar-shift.is-leave { border-left-color: #e4be89; }
-.nurse-page #leave-requests table { table-layout: fixed; min-width: 900px; }
-.nurse-page #leave-requests :is(th, td) { padding: 16px 12px; vertical-align: middle; }
-.nurse-page #leave-requests th:nth-child(1) { width: 22%; }
-.nurse-page #leave-requests th:nth-child(2) { width: 11%; }
-.nurse-page #leave-requests th:nth-child(3) { width: 27%; }
-.nurse-page #leave-requests th:nth-child(4) { width: 16%; }
-.nurse-page #leave-requests th:nth-child(5) { width: 24%; }
-.nurse-page #leave-requests .leave-reason { min-width: 0; max-width: none; }
-.nurse-page #leave-requests .leave-row-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-.nurse-page #leave-requests .leave-row-actions button { width: 100%; }
-.nurse-page #leave-requests .leave-detail-title { display: inline-block; width: calc((100% - 8px) / 2); text-align: center; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) :is(.badge, .status) { border-radius: 5px; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) #nurse-assignment-search { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) #nurse-assignment-search > label { min-width: 0; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-table th:nth-child(1) { width: 28%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-table th:nth-child(2) { width: 17%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-table th:nth-child(3) { width: 23%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-table th:nth-child(4) { width: 16%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-table th:nth-child(5) { width: 16%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-table :is(th, td):nth-child(4) { text-align: center; }
 @media (max-width: 900px) {
-  .nurse-page #nurse-assignment-search { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  :is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) #nurse-assignment-search { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 600px) {
-  .nurse-page #nurse-assignment-search { grid-template-columns: minmax(0, 1fr); }
+  :is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) #nurse-assignment-search { grid-template-columns: minmax(0, 1fr); }
 }
-.nurse-page :is(#nurse-visit-filters, #nurse-record-search) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-.nurse-page :is(#nurse-visit-filters, #nurse-record-search) > label { min-width: 0; }
-.nurse-page .nurse-visit-search-field { margin-bottom: 24px; }
-.nurse-page :is(.nurse-visit-table, .nurse-record-table) table { table-layout: fixed; min-width: 960px; }
-.nurse-page :is(.nurse-visit-table, .nurse-record-table) :is(th, td) { padding: 16px 12px; vertical-align: middle; }
-.nurse-page .nurse-visit-table th:nth-child(1) { width: 23%; }
-.nurse-page .nurse-visit-table th:nth-child(2) { width: 15%; }
-.nurse-page .nurse-visit-table th:nth-child(3) { width: 23%; }
-.nurse-page .nurse-visit-table th:nth-child(4) { width: 13%; }
-.nurse-page .nurse-visit-table th:nth-child(5) { width: 12%; }
-.nurse-page .nurse-visit-table th:nth-child(6) { width: 14%; }
-.nurse-page :is(.nurse-visit-table, .nurse-record-table) td:nth-child(1),
-.nurse-page :is(.nurse-visit-table, .nurse-record-table) td:nth-child(3) { white-space: normal; overflow-wrap: anywhere; }
-.nurse-page :is(.nurse-visit-table, .nurse-record-table) :is(th, td):last-child { text-align: center; }
-.nurse-page :is(.nurse-visit-table, .nurse-record-table) .actions { margin: 0; justify-content: center; }
-.nurse-page :is(.nurse-visit-table, .nurse-record-table) .actions > :is(button, a) { min-height: 36px; padding: 7px 12px; font-size: 12px; white-space: nowrap; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) :is(#nurse-visit-filters, #nurse-record-search) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) :is(#nurse-visit-filters, #nurse-record-search) > label { min-width: 0; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-visit-search-field { margin-bottom: 24px; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) :is(.nurse-visit-table, .nurse-record-table) table { table-layout: fixed; min-width: 960px; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) :is(.nurse-visit-table, .nurse-record-table) :is(th, td) { padding: 16px 12px; vertical-align: middle; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-visit-table th:nth-child(1) { width: 23%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-visit-table th:nth-child(2) { width: 15%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-visit-table th:nth-child(3) { width: 23%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-visit-table th:nth-child(4) { width: 13%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-visit-table th:nth-child(5) { width: 12%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-visit-table th:nth-child(6) { width: 14%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) :is(.nurse-visit-table, .nurse-record-table) td:nth-child(1),
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) :is(.nurse-visit-table, .nurse-record-table) td:nth-child(3) { white-space: normal; overflow-wrap: anywhere; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) :is(.nurse-visit-table, .nurse-record-table) :is(th, td):last-child { text-align: center; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) :is(.nurse-visit-table, .nurse-record-table) .actions { margin: 0; justify-content: center; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) :is(.nurse-visit-table, .nurse-record-table) .actions > :is(button, a) { min-height: 36px; padding: 7px 12px; font-size: 12px; white-space: nowrap; }
 @media (max-width: 1100px) {
-  .nurse-page :is(#nurse-visit-filters, #nurse-record-search) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  :is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) :is(#nurse-visit-filters, #nurse-record-search) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 700px) {
-  .nurse-page :is(#nurse-visit-filters, #nurse-record-search) { grid-template-columns: minmax(0, 1fr); }
+  :is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) :is(#nurse-visit-filters, #nurse-record-search) { grid-template-columns: minmax(0, 1fr); }
 }
-.nurse-page .nurse-compact-shifts { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: calc((100% - 36px) / 4); gap: 12px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: none; scroll-behavior: auto; padding-bottom: 8px; cursor: grab; scrollbar-color: #94b9aa #edf4ef; }
-.nurse-page .nurse-compact-shifts:focus-visible { outline: 2px solid var(--staff-green); outline-offset: 4px; }
-.nurse-page .nurse-compact-shifts.is-dragging { cursor: grabbing; user-select: none; }
-.nurse-page .nurse-compact-shifts.is-dragging * { cursor: grabbing; }
-.nurse-page .nurse-shift-scroll-hint { font-size: 12px; }
-.nurse-page .nurse-compact-shifts .shift-card { display: flex; flex-direction: column; align-items: flex-start; padding: 14px; }
-.nurse-page .nurse-compact-shifts .shift-card > .section-heading,
-.nurse-page .nurse-compact-shifts .shift-card > .doctor-facts { width: 100%; }
-.nurse-page .nurse-compact-shifts .section-heading { gap: 8px; margin-bottom: 10px; }
-.nurse-page .nurse-compact-shifts h3 { font-size: 18px; overflow-wrap: anywhere; }
-.nurse-page .nurse-compact-shifts .doctor-shift-time { margin: 8px 0; font-size: 16px; font-weight: 600; }
-.nurse-page .nurse-compact-shifts .doctor-facts { display: block; margin: 10px 0; font-size: 12px; }
-.nurse-page .nurse-compact-shifts .doctor-facts > div { gap: 8px; padding: 5px 0; }
-.nurse-page .nurse-compact-shifts .doctor-facts dd { margin: 0; }
-.nurse-page .nurse-compact-shifts .button-link { margin-top: auto; font-size: 12px; padding: 8px 10px; }
-@media (max-width: 1200px) {
-  .nurse-page .nurse-compact-shifts { grid-template-columns: none; grid-auto-columns: calc((100% - 12px) / 2); }
-}
-@media (max-width: 700px) {
-  .nurse-page .nurse-compact-shifts { grid-template-columns: none; grid-auto-columns: 100%; }
-}
-.nurse-page .nurse-record-history { border-top: 1px solid var(--staff-line); margin-top: 24px; padding-top: 24px; }
-.nurse-page #nurse-record-detail > .doctor-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 28px; }
-.nurse-page .nurse-record-history table { table-layout: fixed; min-width: 960px; }
-.nurse-page .nurse-record-history :is(th, td) { padding: 16px 12px; vertical-align: middle; }
-.nurse-page .nurse-record-history th:nth-child(1) { width: 18%; }
-.nurse-page .nurse-record-history th:nth-child(2) { width: 39%; }
-.nurse-page .nurse-record-history th:nth-child(3) { width: 18%; }
-.nurse-page .nurse-record-history th:nth-child(4) { width: 25%; }
-.nurse-page .nurse-record-history td:nth-child(2) { white-space: normal; overflow-wrap: anywhere; }
-.nurse-page .nurse-record-history :is(th, td):nth-child(n + 3) { text-align: center; }
-.nurse-page .nurse-record-history td:last-child button { white-space: nowrap; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-history { border-top: 1px solid var(--staff-line); margin-top: 24px; padding-top: 24px; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) #nurse-record-detail > .doctor-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 28px; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-history table { table-layout: fixed; min-width: 960px; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-history :is(th, td) { padding: 16px 12px; vertical-align: middle; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-history th:nth-child(1) { width: 18%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-history th:nth-child(2) { width: 39%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-history th:nth-child(3) { width: 18%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-history th:nth-child(4) { width: 25%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-history td:nth-child(2) { white-space: normal; overflow-wrap: anywhere; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-history :is(th, td):nth-child(n + 3) { text-align: center; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-record-history td:last-child button { white-space: nowrap; }
 @media (max-width: 900px) {
-  .nurse-page #nurse-record-detail > .doctor-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  :is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) #nurse-record-detail > .doctor-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 600px) {
-  .nurse-page #nurse-record-detail > .doctor-facts { grid-template-columns: minmax(0, 1fr); }
+  :is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) #nurse-record-detail > .doctor-facts { grid-template-columns: minmax(0, 1fr); }
 }
-.nurse-page #nurse-record-detail { scroll-margin-top: 100px; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) #nurse-record-detail { scroll-margin-top: 100px; }
 
-.nurse-page .nurse-assignment-table table { table-layout: fixed; min-width: 1020px; }
-.nurse-page .nurse-assignment-table :is(th, td) { padding: 18px 12px; vertical-align: middle; }
-.nurse-page .nurse-assignment-table th:nth-child(1) { width: 10%; }
-.nurse-page .nurse-assignment-table th:nth-child(2) { width: 30%; }
-.nurse-page .nurse-assignment-table th:nth-child(3) { width: 15%; }
-.nurse-page .nurse-assignment-table th:nth-child(4) { width: 15%; }
-.nurse-page .nurse-assignment-table th:nth-child(5) { width: 12%; }
-.nurse-page .nurse-assignment-table th:nth-child(6) { width: 18%; }
-.nurse-page .nurse-assignment-table :is(th, td):nth-child(n+5) { text-align: center; }
-.nurse-page .nurse-assignment-table .cell-subtitle { overflow-wrap: anywhere; }
-.nurse-page .nurse-assignment-table .button-link { white-space: nowrap; }
-.nurse-page .nurse-assignment-table .button-link:is(:hover, :focus-visible, :active) { background: var(--staff-green); border-color: var(--staff-green); color: #fff; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-assignment-table table { table-layout: fixed; min-width: 1020px; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-assignment-table :is(th, td) { padding: 18px 12px; vertical-align: middle; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-assignment-table th:nth-child(1) { width: 10%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-assignment-table th:nth-child(2) { width: 30%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-assignment-table th:nth-child(3) { width: 15%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-assignment-table th:nth-child(4) { width: 15%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-assignment-table th:nth-child(5) { width: 12%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-assignment-table th:nth-child(6) { width: 18%; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-assignment-table :is(th, td):nth-child(n+5) { text-align: center; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-assignment-table .cell-subtitle { overflow-wrap: anywhere; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-assignment-table .button-link { white-space: nowrap; }
+:is(.nurse-page, .doctor-page[data-page="records"], .doctor-page.work-calendar-page) .nurse-assignment-table .button-link:is(:hover, :focus-visible, :active) { background: var(--staff-green); border-color: var(--staff-green); color: #fff; }
+
+/* Month calendar above today’s visit list, matching the doctor calendar. */
+.nurse-page[data-page="overview"] .doctor-calendar-heading {display:flex;justify-content:space-between;gap:12px;margin-bottom:20px}
+.nurse-page[data-page="overview"] .doctor-month-grid {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;text-align:center}
+.nurse-page[data-page="overview"] .doctor-month-grid > * {padding:10px 0}
+.nurse-page[data-page="overview"] .doctor-calendar-day {position:relative;border:1px solid transparent;border-radius:8px}
+.nurse-page[data-page="overview"] .doctor-calendar-day.has-shift:after {content:"";position:absolute;width:5px;height:5px;background:#17715c;border-radius:50%;bottom:3px;left:calc(50% - 2px)}
+.nurse-page[data-page="overview"] .doctor-calendar-day.is-today {background:#e6f0e9;border-color:#17715c;font-weight:700;color:#17715c}
+.nurse-page[data-page="overview"] .doctor-calendar-heading {align-items:center;margin-bottom:16px;font-size:13px;gap:10px}
+.nurse-page[data-page="overview"] .doctor-calendar-heading > span {font-size:12px;padding:5px 9px;background:#edf6f0;color:#30664b;border-radius:5px;white-space:nowrap}
+.nurse-page[data-page="overview"] .doctor-month-grid {gap:5px;font-size:13px}
+.nurse-page[data-page="overview"] .doctor-month-grid > strong {font-size:11px;font-weight:600;color:#718579;padding:6px 0 10px}
+.nurse-page[data-page="overview"] .doctor-month-grid > .doctor-calendar-day {display:flex;align-items:center;justify-content:center;min-height:36px;padding:7px 0;border-radius:5px}
+.nurse-page[data-page="overview"] .doctor-calendar-day.has-shift {background:#f0f7f3;color:#255c43}
+.nurse-page[data-page="overview"] .doctor-calendar-day.is-today {background:#17715c;color:white;border-color:#17715c;font-weight:700}
+.nurse-page[data-page="overview"] .doctor-calendar-day.is-today:after {background:white}
+.nurse-page[data-page="overview"] .doctor-calendar-day.has-shift:after {width:4px;height:4px;bottom:3px}
+.nurse-page[data-page="overview"] .doctor-calendar-legend {display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-top:auto;padding-top:18px;color:#718579;font-size:11px}
+.nurse-page[data-page="overview"] .doctor-calendar-legend > span {display:flex;align-items:center;gap:6px}
+.nurse-page[data-page="overview"] .doctor-calendar-legend i {width:5px;height:5px;border-radius:50%;background:#17715c}
+.nurse-page[data-page="overview"] .doctor-calendar-today-label {color:#30664b}
+.nurse-page[data-page="overview"] .nurse-overview-calendar > .panel { padding:24px; border-radius:5px; }
+.nurse-page[data-page="overview"] .nurse-overview-calendar h2 { font-size:20px; }
+
+
+/* Paired calendar and assigned shifts, matching the doctor dashboard. */
+.nurse-page[data-page="overview"] .doctor-overview-shifts article {display:flex;justify-content:space-between}
+.nurse-page[data-page="overview"] .doctor-overview-shifts article > div:last-child {display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+.nurse-page[data-page="overview"] .nurse-overview-calendar {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:24px}
+.nurse-page[data-page="overview"] .nurse-overview-calendar > .panel {display:flex;flex-direction:column;min-width:0;padding:24px;border-radius:5px}
+.nurse-page[data-page="overview"] .nurse-overview-calendar > .panel > .section-heading {margin-bottom:20px}
+.nurse-page[data-page="overview"] .nurse-overview-calendar h2 {font-size:20px}
+.nurse-page[data-page="overview"] .doctor-overview-shifts {display:flex;flex-direction:column;flex:1;gap:12px}
+.nurse-page[data-page="overview"] .doctor-overview-shifts article {flex:1;align-items:center;border:1px solid #e0eae4;background:#fafcfb;border-radius:5px;padding:20px;gap:20px}
+.nurse-page[data-page="overview"] .doctor-overview-shifts article p {font-size:13px;color:#718579;margin:8px 0 0}
+.nurse-page[data-page="overview"] .doctor-overview-shifts article > div:last-child > strong {font-size:20px;color:#17684f;white-space:nowrap}
+.nurse-page[data-page="overview"] .doctor-overview-shifts .button-link {font-size:12px;padding:10px 14px;min-height:38px;border-radius:5px}
+@media(max-width:1000px){.nurse-page[data-page="overview"] .nurse-overview-calendar{grid-template-columns:1fr}.nurse-page[data-page="overview"] .doctor-month-grid > .doctor-calendar-day{min-height:36px}.nurse-page[data-page="overview"] .doctor-overview-shifts article{min-height:120px}}
+@media(max-width:550px){.nurse-page[data-page="overview"] .doctor-overview-shifts article{flex-direction:column;align-items:flex-start}.nurse-page[data-page="overview"] .doctor-overview-shifts article > div:last-child{align-items:flex-start}.nurse-page[data-page="overview"] .nurse-overview-calendar > .panel{padding:18px}}

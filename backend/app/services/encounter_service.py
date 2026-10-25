@@ -99,6 +99,15 @@ def locked_context(db, encounter_id, *, target_schedule_id=None):
     return encounter, schedules
 
 
+def require_clinical_shift(schedule, now=None):
+    start,end = schedule_bounds(schedule)
+    instant = now if now is not None else date_utils.utc_now()
+    if instant < start or instant >= end:
+        raise conflict('Chỉ thao tác bệnh án trong thời gian ca làm việc', 'CLINICAL_SHIFT_CLOSED')
+    if schedule['schedule_status'] in ('CLOSED','UNAVAILABLE'):
+        raise conflict('Ca đã đóng hoặc bác sĩ nghỉ', 'SCHEDULE_UNAVAILABLE')
+
+
 def _active_doctor(db, schedule):
     row = doctor_model.get_for_reception(db, schedule['doctor_profile_id'])
     if (row is None or not row['is_active'] or row['deleted_at'] is not None
@@ -176,30 +185,41 @@ def _reject_duplicate(db, patient_id, doctor_id, work_date):
 
 def create_online(actor, fields):
     require_role(actor, 'USER')
+    return _create_booking(actor, fields)
+
+
+def create_staff_booking(actor, fields):
+    require_role(actor, 'ADMIN', 'RECEPTIONIST')
+    return _create_booking(actor, fields, staff=True)
+
+
+def _create_booking(actor, fields, *, staff=False):
     with get_db_connection() as db:
-        _patient_for_booking(db, fields['patient_id'], actor, online=True)
+        _patient_for_booking(db, fields['patient_id'], actor, online=not staff)
         schedules = schedule_model.lock_schedules(db, [fields['schedule_id']])
         if not schedules:
             raise not_found('Không tìm thấy ca làm việc', 'SCHEDULE_NOT_FOUND')
         schedule = schedules[0]
         now = date_utils.utc_now()
-        _require_available(schedule, now, online=True)
+        _require_available(schedule, now, online=not staff)
         doctor = _active_doctor(db, schedule)
         _reject_duplicate(db, fields['patient_id'], doctor['doctor_profile_id'], schedule['work_date'])
         policy = configuration_model.policies(db)
-        start, finish = reserve_interval(db, schedule, fields['appointment_time'])
+        start, finish = reserve_interval(db, schedule, fields['appointment_time'], now=now)
+        if staff and model.patient_interval_conflict(db, fields['patient_id'], start, finish):
+            raise conflict('Bệnh nhân đã có lịch khám trùng khung giờ', 'PATIENT_APPOINTMENT_OVERLAP')
         booking_fields = {k: v for k, v in fields.items() if k != 'appointment_time'}
         if 'registration_details' in booking_fields:
             booking_fields['registration_details'] = Jsonb(booking_fields['registration_details'])
         row = model.create_encounter(db, {
-            **booking_fields, 'encounter_type': 'ONLINE', 'encounter_status': 'HOLDING',
+            **booking_fields, 'encounter_type': 'WALK_IN' if staff else 'ONLINE', 'encounter_status': 'HOLDING',
             'doctor_profile_id': doctor['doctor_profile_id'], 'room_id': schedule['room_id'],
             'created_by_id': actor['user_id'], 'consultation_fee_snapshot': doctor['consultation_fee'],
             'deposit_amount_snapshot': doctor['consultation_fee'] * policy['DEFAULT_DEPOSIT_PERCENT'] // 100,
             'policy_snapshot': Jsonb(policy),
-            'estimated_exam_at': start, 'appointment_end_at': finish, 'hold_expires_at': now + timedelta(minutes=policy['APPOINTMENT_HOLD_MINUTES'])})
+            'estimated_exam_at': start, 'appointment_end_at': finish, 'hold_expires_at': min(now + timedelta(minutes=policy['APPOINTMENT_HOLD_MINUTES']), finish) if staff else now + timedelta(minutes=policy['APPOINTMENT_HOLD_MINUTES'])})
         _change_quota(db, schedule, 1)
-        model.add_status(db, row['encounter_id'], None, 'HOLDING', actor['user_id'], f"Giữ chỗ online {policy['APPOINTMENT_HOLD_MINUTES']} phút")
+        model.add_status(db, row['encounter_id'], None, 'HOLDING', actor['user_id'], ("Lễ tân xếp lịch; " if staff else "") + f"Giữ chỗ {'trực tiếp' if staff else 'online'} {policy['APPOINTMENT_HOLD_MINUTES']} phút")
         result = _present(visible_encounter(db, actor, row['encounter_id']))
     return {'encounter': result}
 
@@ -211,8 +231,6 @@ def confirm_paid_online(db, encounter_id, actor_id):
     thanh toán muộn riêng, không rollback trạng thái hết hạn rồi tái giữ chỗ.
     """
     encounter, schedules = locked_context(db, encounter_id)
-    if encounter['encounter_type'] != 'ONLINE':
-        raise conflict('Chỉ xác nhận lượt online', 'NOT_ONLINE')
     paid = db.execute("SELECT SUM(amount) AS amount FROM payment WHERE encounter_id=%s "
                       "AND payment_type='DEPOSIT' AND transaction_status='SUCCESS'", (encounter_id,)).fetchone()['amount']
     if paid is None or paid != encounter['deposit_amount_snapshot']:
@@ -288,6 +306,10 @@ def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIEN
             deadline = encounter['estimated_exam_at'] + timedelta(minutes=policy['CHECKIN_LATE_MINUTES'] - policy['CHECKIN_EARLY_MINUTES'])
             if status != 'CONFIRMED':
                 raise conflict('Chỉ check-in lượt đã thanh toán xác nhận', 'INVALID_ENCOUNTER_STATUS')
+            if now.astimezone(VN_TZ).date() != schedule['work_date']:
+                raise conflict('Chỉ check-in trong đúng ngày khám', 'CHECK_IN_WRONG_DAY')
+            if encounter['encounter_type'] == 'WALK_IN':
+                deadline = end
             if now > deadline:
                 raise conflict('Đã quá thời hạn check-in áp dụng cho lượt khám', 'CHECK_IN_TOO_LATE')
             if schedule['schedule_status'] in ('CLOSED', 'UNAVAILABLE'):
@@ -302,6 +324,11 @@ def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIEN
         else:
             if status != 'CHECKED_IN':
                 raise conflict('Chỉ bắt đầu khám lượt đã check-in', 'INVALID_ENCOUNTER_STATUS')
+            if not encounter.get('checked_in_at') or encounter['checked_in_at'] > now:
+                raise conflict('Chưa có xác nhận bệnh nhân đã đến hợp lệ', 'CHECK_IN_REQUIRED')
+            if now < encounter['estimated_exam_at']:
+                raise conflict('Chưa đến giờ hẹn khám của người bệnh', 'APPOINTMENT_NOT_STARTED')
+            require_clinical_shift(schedule, now)
             if now < start or schedule['schedule_status'] in ('CLOSED', 'UNAVAILABLE'):
                 raise conflict('Ca chưa bắt đầu hoặc không hoạt động', 'SCHEDULE_UNAVAILABLE')
             schedule_model.lock_doctor_and_room(db,schedule['doctor_profile_id'],schedule['room_id'])
@@ -362,6 +389,11 @@ def create_walk_in(actor, fields):
             locked = locked_candidates.get(candidate['schedule_id'])
             if locked is None:raise not_found('Không tìm thấy ca','SCHEDULE_NOT_FOUND')
             if locked['doctor_profile_id']!=fields['doctor_profile_id']:raise conflict('Ca không thuộc bác sĩ đã chọn','SCHEDULE_DOCTOR_MISMATCH')
+            now = date_utils.utc_now()
+            if locked['work_date'] != now.astimezone(VN_TZ).date():
+                if fields.get('schedule_id'):
+                    raise conflict('Chỉ được tiếp nhận walk-in vào ca trong ngày hôm nay', 'WALK_IN_WRONG_DAY')
+                continue
             # Sau khi chờ khóa, ca có thể đã hết chỗ; chọn ca tiếp theo.
             if locked['schedule_status'] in ('OPEN','FULL') and (locked['booked_count']<locked['max_quota'] or _extra_walk_in_allowed(db,locked,now)):
                 try:
@@ -472,8 +504,27 @@ def transfer(actor, encounter_id, fields):
         model.update_encounter(db, encounter_id, {'doctor_profile_id': doctor['doctor_profile_id'],
                                                 'schedule_id': target['schedule_id'], 'room_id': target['room_id'],
                                                 'appointment_end_at': finish, 'estimated_exam_at': start})
-        model.add_transfer(db, encounter_id, encounter['doctor_profile_id'], doctor['doctor_profile_id'], actor['user_id'], fields['reason'])
+        transfer_log_id = model.add_transfer(db, encounter_id, encounter['doctor_profile_id'], doctor['doctor_profile_id'], actor['user_id'], fields['reason'])
+        from backend.app.services.staff_notification_service import encounter_transferred
+        encounter_transferred(db, actor, encounter_id, transfer_log_id, old, target)
         model.add_status(db, encounter_id, encounter['encounter_status'], encounter['encounter_status'],
                         actor['user_id'], 'Chuyển khung giờ/bác sĩ; giữ giá và mã phiếu đã phát')
         result = _present(visible_encounter(db, actor, encounter_id))
     return {'encounter': result}
+
+
+def staff_booking_options(actor, patient_id, query):
+    require_role(actor, 'ADMIN', 'RECEPTIONIST')
+    with get_db_connection() as db:
+        patient = patient_model.get_patient(db, patient_id)
+        if patient is None:
+            raise not_found('Không tìm thấy hồ sơ bệnh nhân', 'PATIENT_NOT_FOUND')
+        if patient['archived_at'] is not None:
+            raise conflict('Hồ sơ đã lưu trữ', 'PATIENT_ARCHIVED')
+        now = date_utils.utc_now()
+        rows, total = schedule_model.booking_options(db, now.astimezone(VN_TZ), query)
+        from backend.app.services.appointment_slot_service import available_slots
+        for row in rows:
+            row['slots'] = [{'appointment_time': start.strftime('%H:%M'), 'starts_at': start.isoformat(), 'ends_at': end.isoformat()}
+                            for start, end in available_slots(db, row) if start >= now]
+    return _page(rows, total, query)

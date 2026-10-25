@@ -1,5 +1,6 @@
+import {markFormChanged} from "./form_workflow.js";
 import { esc, date, today } from "./admin_ui.js";
-import { openAdminFormDialog } from "./admin_form_dialog.js";
+import { openAdminFormDialog,batchFinishedSuccessfully } from "./admin_form_dialog.js";
 import { allAvailableSelected, toggleAllAvailable } from "./bulk_selection.js";
 import { scheduleDepartments, scheduleNameChoices, bindScheduleSuggestions } from "./admin_schedule_choices.js";
 import {readScheduleChoices,resolveScheduleDraft,createScheduleBatch,scheduleIdentity,readScheduleConflicts} from "./admin_schedule_create.js";
@@ -48,7 +49,7 @@ export function scheduleDefaultRange(from=today()) {
   end.setUTCDate(Math.min(start.getUTCDate(),lastDay));
   return [from,end.toISOString().slice(0,10)];
 }
-const pairMarkup = () => `<div class="admin-schedule-pair"><label>Chuyên khoa<select name="draft_department"><option value="">Tất cả chuyên khoa</option></select></label>${[["doctor","Bác sĩ","tên bác sĩ"],["room","Phòng khám","tên phòng khám"]].map(([kind,title,placeholder])=>`<label>${title} *<span class="admin-schedule-autocomplete"><input type="text" name="draft_${kind}" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="draft-${kind}-suggestions" placeholder="Nhập ${placeholder}" autocomplete="off" maxlength="150" required><span id="draft-${kind}-suggestions" class="admin-schedule-suggestions" role="listbox" aria-label="Gợi ý ${title.toLocaleLowerCase('vi')}" hidden></span></span></label>`).join("")}</div>`;
+const pairMarkup = () => `<div class="admin-schedule-pair"><label>Chuyên khoa<select name="draft_department"><option value="">Tất cả chuyên khoa</option></select></label>${[["doctor","Bác sĩ","tên bác sĩ"],["room","Phòng khám","tên phòng khám"]].map(([kind,title,placeholder])=>`<label>${title} *<span class="admin-schedule-autocomplete"><input type="text" name="draft_${kind}" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="draft-${kind}-suggestions" placeholder="${placeholder.charAt(0).toUpperCase()+placeholder.slice(1)}" autocomplete="off" maxlength="150" required><span id="draft-${kind}-suggestions" class="admin-schedule-suggestions" role="listbox" aria-label="Gợi ý ${title.toLocaleLowerCase('vi')}" hidden></span></span></label>`).join("")}</div>`;
 
 export function scheduleDraftTable(rows, selected, locked = new Set(), outcomes = new Map()) {
   const groups=new Map();
@@ -71,7 +72,7 @@ export function scheduleBuilderMarkup() {
       <p data-draft-feedback role="status" aria-live="polite"></p>
     </form>
     <section class="admin-card"><div class="admin-panel-heading"><div><h3>Danh sách ca dự kiến</h3><p data-draft-summary>Chưa có ca dự kiến</p></div><button type="button" class="secondary" data-draft-select-all aria-pressed="false" disabled>Chọn tất cả</button></div><div data-draft-preview><p class="admin-bulk-hint">Chưa có ca dự kiến.</p></div></section>
-    <section class="admin-card admin-schedule-draft-footer"><div class="actions"><button type="button" data-draft-create disabled>Tạo ca</button><button type="button" class="secondary" data-draft-back>Quay lại</button></div></section>`;
+    <section class="admin-card admin-schedule-draft-footer"><div class="actions"><button class="primary" type="button" data-draft-create disabled>Tạo ca</button><button type="button" class="secondary" data-draft-back>Quay lại</button></div></section>`;
 }
 
 export async function openScheduleBuilder({body,trigger,ctx,onSaved=async()=>{}}) {
@@ -138,7 +139,7 @@ export async function openScheduleBuilder({body,trigger,ctx,onSaved=async()=>{}}
     const target=event.target.closest("button");if(!target)return;
     if(saving)return;
     if(target.hasAttribute("data-draft-back")){formDialog.close();}
-    else if(target.hasAttribute("data-draft-select-all")){toggleAllAvailable(available(),selected,row=>row.key);render();}
+    else if(target.hasAttribute("data-draft-select-all")){markFormChanged(formDialog.dialog);toggleAllAvailable(available(),selected,row=>row.key);render();}
     else if(target.hasAttribute("data-draft-create")&&!target.disabled) {
       const rows=available().filter(row=>selected.has(row.key));if(!rows.length)return;
       saving=true;controls.forEach(input=>input.disabled=true);render();view.querySelectorAll('[data-draft-row]').forEach(input=>input.disabled=true);
@@ -156,6 +157,7 @@ export async function openScheduleBuilder({body,trigger,ctx,onSaved=async()=>{}}
         const success=results.filter(result=>result.success).length,failed=results.filter(result=>!result.success);
         feedback.dataset.error=String(failed.length>0);
         feedback.textContent=`Đã tạo ${success}/${rows.length} ca.${failed.length?` ${failed[0].row.date} · ${failed[0].row.title}: ${failed[0].message}`:""}`;
+        if(batchFinishedSuccessfully(results,rows.length,item=>item.success)){saving=false;formDialog.close();await onSaved();return;}
         if(success)await onSaved();
         const denied=failed.find(result=>result.error?.status===401||result.error?.status===403);
         if(denied){formDialog.dialog.close();ctx?.handle(denied.error);}

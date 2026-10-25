@@ -71,7 +71,7 @@ body:has(> .patient-header) > .skip-link { position: fixed; z-index: 30; }
 .profile-account-facts > div + div { margin-top: 16px; }
 .profile-account-facts dt { color: var(--muted); font-size: 12px; }
 .profile-account-facts dd { margin: 5px 0 0; font-size: 14px; overflow-wrap: anywhere; }
-.profile-fields .full-width { grid-column: 1 / -1; }
+.profile-fields .full-width { grid-column: auto; }
 .profile-emergency { min-width: 0; margin: 26px 0 0; padding: 18px; border: 1px solid #dce7e0; border-radius: 5px; }
 .profile-emergency legend { padding: 0 8px; color: var(--deep); font-size: 14px; font-weight: 600; }
 .profile-emergency-fields { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 16px; margin: 0; }
@@ -222,9 +222,14 @@ body:has(> .patient-header) > .skip-link { position: fixed; z-index: 30; }
 .appointment-card-doctor { flex: 1 1 180px; }
 .appointment-card-doctor h2 { font-size: 20px; }
 .appointment-card-doctor p { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
-.appointment-status-badge { padding: 8px 12px; background: #eef4ef; color: var(--deep); font-size: 13px; font-weight: 700; }
-.appointment-status-badge[data-status="HOLDING"] { background: #fff3df; color: #8b5200; }
-.appointment-status-badge[data-status="CANCELLED"], .appointment-status-badge[data-status="EXPIRED"], .appointment-status-badge[data-status="NO_SHOW"] { background: #f8eded; color: #9f3737; }
+.appointment-status-badge { display: inline-block; padding: 8px 12px; border-radius: 5px; font-size: 13px; font-weight: 600; }
+.appointment-status-badge[data-status="HOLDING"] { background: #fff5df; color: #a65b00; }
+.appointment-status-badge[data-status="CONFIRMED"] { background: #e8f1ff; color: #0759b5; }
+.appointment-status-badge[data-status="CHECKED_IN"], .appointment-status-badge[data-status="COMPLETED"] { background: #e3f5ec; color: #047857; }
+.appointment-status-badge[data-status="IN_PROGRESS"] { background: #f1e8fc; color: #6b2eaa; }
+.appointment-status-badge[data-status="CANCELLED"] { background: #fde5eb; color: #c62850; }
+.appointment-status-badge[data-status="NO_SHOW"] { background: #edf2f7; color: #49657d; }
+.appointment-status-badge[data-status="EXPIRED"] { background: #fff0e2; color: #c65308; }
 .appointment-card .booking-review-list { margin-bottom: 0; grid-template-columns: 130px minmax(0, 1fr); font-size: 15px; }
 .appointment-card-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
 .appointment-card-actions button, .appointment-card-actions a { margin: 0; }
@@ -235,7 +240,6 @@ body:has(> .patient-header) > .skip-link { position: fixed; z-index: 30; }
 .appointment-cancel-warning { padding: 14px 16px; background: #fff0ec; border-left: 3px solid #bd3030; color: #8c2d22; line-height: 1.7; }
 .appointment-cancel-policy { padding: 14px 16px; background: #fff7e7; border: 1px solid #e8d4a8; color: #714f16; line-height: 1.7; }
 .appointment-cancel-hint { color: #607167; font-size: 13px; line-height: 1.7; }
-.appointment-cancel-success { color: #006d3f; background: #eef8f1; padding: 14px 16px; border-left: 3px solid #008349; }
 #appointment-detail-content > label { display: block; margin-top: 18px; font-weight: 600; }
 #appointment-detail-content textarea { display: block; width: 100%; margin-top: 8px; padding: 12px; border: 1px solid #cbd9cf; border-radius: 0; font: inherit; resize: vertical; }
 .appointments-pagination { display: flex; justify-content: center; align-items: center; gap: 18px; padding: 0 24px 24px; }
@@ -414,6 +418,10 @@ body:has(> .patient-header) > .skip-link { position: fixed; z-index: 30; }
 .records-page .records-illustration { width: 85px; height: 85px; }
 .records-page .records-welcome h2 { font-size: 20px; }
 .records-page .record-encounter-card { background: #fbfdfb; padding: 22px; }
+.records-page .record-encounter-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.records-page .record-encounter-heading h4 { margin: 0; flex: 1; min-width: 160px; }
+.records-page .record-export-button { flex: none; padding: 9px 16px; font-size: 14px; white-space: nowrap; }
+.records-page .record-export-button:disabled { opacity: .6; cursor: not-allowed; }
 .records-page #records-encounters { min-height: 330px; }
 .records-page #records-history-status { min-height: 24px; }
 .records-page .record-encounter-card .booking-review-list { grid-template-columns: 135px minmax(0, 1fr); gap: 9px 16px; }

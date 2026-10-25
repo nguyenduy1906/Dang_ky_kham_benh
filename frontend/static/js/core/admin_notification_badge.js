@@ -5,9 +5,10 @@ export function unreadBadgeCount(value){
   return Number.isFinite(number)?Math.min(999,Math.max(0,Math.floor(number))):0;
 }
 export function initAdminNotificationBadge(){
-  const link=document.querySelector('#staff-sidebar nav a[href="notifications.html"]');
+  const link=document.querySelector('#staff-sidebar nav a[href$="notifications.html"]');
   if(!link)return;
-  const badge=document.createElement('b');badge.className='admin-nav-unread';badge.hidden=true;badge.setAttribute('aria-hidden','true');link.append(badge);
+  const badge=link.querySelector('.admin-nav-unread')||document.createElement('b');badge.className='admin-nav-unread';badge.hidden=true;badge.setAttribute('aria-hidden','true');if(!badge.parentElement)link.append(badge);
+  const bell=document.querySelector('.admin-topbar-bell'),bellBadge=bell?.querySelector('.admin-topbar-unread');
   let active=true,version=0;
   async function refresh(){
     const current=++version;
@@ -18,11 +19,34 @@ export function initAdminNotificationBadge(){
       badge.textContent=String(unreadBadgeCount(result.unread_count));badge.hidden=false;
       const text=`Thông báo: ${result.unread_count} chưa đọc`;
       link.setAttribute('aria-label',text);link.title=text;
+      if(bell&&bellBadge){bellBadge.textContent=badge.textContent;bellBadge.hidden=false;bell.classList.toggle('has-unread',result.unread_count>0);bell.setAttribute('aria-label',text);bell.title=text;}
     }catch{/* Keep the last confirmed count until the next successful read. */}
   }
   const update=()=>{void refresh();};
   window.addEventListener('notifications-changed',update);
   const stop=()=>{active=false;version++;window.removeEventListener('notifications-changed',update);badge.remove();};
+  window.addEventListener('pagehide',stop,{once:true});window.addEventListener('neu:auth-change',stop,{once:true});
+  void refresh();startAutoRefresh(refresh,{canRefresh:()=>active});
+}
+
+export function initAdminActivityBadge(){
+  const link=document.querySelector('#staff-sidebar nav a[href$="audit.html"]');
+  if(!link||link.querySelector('[data-activity-count]'))return;
+  const badge=document.createElement('b');badge.className='admin-nav-unread';badge.dataset.activityCount='true';badge.hidden=true;badge.setAttribute('aria-hidden','true');link.append(badge);
+  let active=true,version=0;
+  async function refresh(){
+    const current=++version;
+    const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+    try {
+      const {listActivities}=await import('./admin_activity.js');
+      const result=await listActivities({from_date:day,to_date:day,page:1,page_size:1});
+      if(!active||current!==version||!Number.isSafeInteger(result.total)||result.total<0)return;
+      badge.textContent=String(unreadBadgeCount(result.total));badge.hidden=false;
+      const text=`Nhật ký hoạt động: ${result.total} hoạt động hôm nay`;
+      link.setAttribute('aria-label',text);link.title=text;
+    }catch{/* Preserve the last verified count when a refresh fails. */}
+  }
+  const stop=()=>{active=false;version++;badge.remove();};
   window.addEventListener('pagehide',stop,{once:true});window.addEventListener('neu:auth-change',stop,{once:true});
   void refresh();startAutoRefresh(refresh,{canRefresh:()=>active});
 }

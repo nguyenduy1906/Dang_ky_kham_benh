@@ -25,8 +25,6 @@ def validate_create(data):
     period = data.get('period', 'FULL_DAY')
     if period not in PERIODS:
         raise bad_request('period phải là FULL_DAY, MORNING hoặc AFTERNOON')
-    if not any((start + timedelta(days=i)).weekday() < 5 for i in range((end - start).days + 1)):
-        raise bad_request('Khoảng xin nghỉ không có ngày làm việc thứ Hai–thứ Sáu')
     return {'from_date': start, 'to_date': end, 'period': period,
             'reason': text_field(data, 'reason', required=True, max_len=1000)}
 

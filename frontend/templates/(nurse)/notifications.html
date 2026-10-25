@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thông báo | NEU Medical</title>
+  <link rel="stylesheet" href="../../static/css/staff_workspace.css">
+  <link rel="stylesheet" href="../../static/css/admin.css">
+  <link rel="stylesheet" href="../../static/css/admin_feedback.css">
+  <link rel="stylesheet" href="../../static/css/staff_notifications.css">
+  <script type="module" src="../../static/js/pages/staff_notifications.js" blocking="render"></script>
+</head>
+<body class="staff-page nurse-page staff-notifications-page staff-auth-pending" data-role="nurse" data-page-title="Thông báo" data-page="notifications">
+  <a class="skip-link" href="#main-content">Đến nội dung chính</a>
+  <noscript>Bạn cần bật JavaScript để sử dụng khu vực nhân viên.</noscript>
+  <div class="staff-shell">
+    <aside id="staff-sidebar" class="staff-sidebar"></aside>
+    <div class="staff-main">
+      <header id="staff-topbar" class="staff-topbar"></header>
+      <div id="staff-access" class="staff-access" role="status">Đang kiểm tra quyền truy cập…</div>
+      <main id="main-content" class="staff-content admin-page" tabindex="-1" inert>
+        <header class="page-header" id="page-header"></header>
+        <div id="page-body"></div>
+      </main>
+      <footer class="staff-footer">NEU Medical · Hệ thống quản lý khám bệnh</footer>
+    </div>
+  </div>
+  <dialog id="admin-dialog" class="admin-page" aria-labelledby="admin-dialog-title"><div class="section-heading"><h2 id="admin-dialog-title">Chi tiết thông báo</h2><button type="button" id="dialog-close" class="secondary" aria-label="Đóng hộp thoại">Đóng</button></div><div id="admin-dialog-body"></div></dialog>
+</body>
+</html>

@@ -11,6 +11,33 @@ from backend.app.services import schedule_service as service
 schedule_bp = Blueprint('schedule', __name__)
 
 
+@schedule_bp.get('/staff/schedules')
+@roles_required(constants.ROLE_ADMIN, constants.ROLE_RECEPTIONIST)
+def staff_schedules():
+    """Lịch đầy đủ cho lễ tân và quản trị, gồm lịch sử và ca đã đóng."""
+    return jsonify(service.list_schedules(schedule_schema.parse_list_query(request.args)))
+
+
+@schedule_bp.get('/staff/schedules/<int:schedule_id>')
+@roles_required(constants.ROLE_ADMIN, constants.ROLE_RECEPTIONIST)
+def staff_schedule(schedule_id):
+    return jsonify(service.get_staff_schedule(current_user(), schedule_id))
+
+
+@schedule_bp.get('/staff/schedules/<int:schedule_id>/room-options')
+@roles_required(constants.ROLE_ADMIN, constants.ROLE_RECEPTIONIST)
+def staff_room_options(schedule_id):
+    return jsonify(service.staff_room_options(current_user(), schedule_id))
+
+
+@schedule_bp.patch('/staff/schedules/<int:schedule_id>/room')
+@roles_required(constants.ROLE_ADMIN, constants.ROLE_RECEPTIONIST)
+def assign_staff_room(schedule_id):
+    """Chỉ đổi phòng cùng khoa của ca chưa bắt đầu, chưa có lượt khám; bảo vệ bằng expected_version."""
+    fields = schedule_schema.validate_room_assignment(request.get_json(silent=True))
+    return jsonify(service.assign_staff_room(current_user(), schedule_id, fields))
+
+
 @schedule_bp.get('/doctors/<int:doctor_profile_id>/schedules')
 def doctor_schedules(doctor_profile_id):
     """Lịch công khai: mặc định từ hôm nay; current_week=true xem thứ Hai đến Chủ nhật, không gồm ca đã đóng
@@ -283,3 +310,17 @@ def get_assignment(assignment_id):
 def update_assignment(assignment_id):
     return jsonify(service.update_assignment(current_user(),assignment_id,
                    schedule_schema.validate_assignment_update(request.get_json(silent=True))))
+
+
+@schedule_bp.post('/staff/schedules/<int:schedule_id>/doctor-change/preview')
+@roles_required(constants.ROLE_ADMIN, constants.ROLE_RECEPTIONIST)
+def preview_doctor_change(schedule_id):
+    from backend.app.services import schedule_doctor_service as change
+    return jsonify(change.preview(current_user(),schedule_id,change.validate(request.get_json(silent=True))))
+
+
+@schedule_bp.post('/staff/schedules/<int:schedule_id>/doctor-change')
+@roles_required(constants.ROLE_ADMIN, constants.ROLE_RECEPTIONIST)
+def apply_doctor_change(schedule_id):
+    from backend.app.services import schedule_doctor_service as change
+    return jsonify(change.apply(current_user(),schedule_id,change.validate(request.get_json(silent=True))))

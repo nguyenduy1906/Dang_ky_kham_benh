@@ -5,6 +5,7 @@ export const notificationTypes = {
   ASSIGNMENT: "Phân công nhân viên", ENCOUNTER: "Tiếp nhận / khám bệnh",
   ARTICLE: "Bài viết", REVIEW: "Đánh giá", ACCOUNT: "Tài khoản",
   CATALOG: "Chuyên khoa / phòng khám", SYSTEM: "Hệ thống",
+  DOCTOR: "Bác sĩ", PATIENT: "Hồ sơ bệnh nhân", MEDICAL_RECORD: "Kết quả khám", REMINDER: "Nhắc lịch khám",
 };
 export const notificationTemplates = {
   BOOKED: ["APPOINTMENT", "Đặt lịch khám thành công", "{patient} đã đặt lịch {reference} với bác sĩ {doctor}, lúc {time} ngày {date} tại {room}."],

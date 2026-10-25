@@ -1,32 +1,344 @@
+
 /* Reception-specific compositions. Shared shell and controls: staff_workspace.css. */
-.reception-page .reception-overview-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 24px; align-items: stretch; }
-.reception-page .reception-welcome { background: linear-gradient(135deg, #ffffff, #f1f8f6); }
-.reception-page .reception-overview-grid .panel { min-width: 0; }
-.reception-page .workflow-list { display: grid; gap: 22px; margin: 28px 0 0; padding: 0; list-style: none; }
-.reception-page .workflow-list li { display: flex; align-items: flex-start; gap: 14px; }
-.reception-page .workflow-list li > span { display: grid; flex: 0 0 34px; width: 34px; height: 34px; place-items: center; border-radius: 10px; background: #e5f3ee; color: #176950; font-size: .75rem; font-weight: 700; }
-.reception-page .workflow-list p { margin: 5px 0; color: #637972; font-size: .9rem; }
-.reception-page .workflow-list a { display: inline-block; margin-top: 4px; font-size: .9rem; font-weight: 600; }
-.reception-page .room-shortlist { display: grid; gap: 14px; margin-top: 24px; }
-.reception-page .room-shortcut { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 20px 16px; border: 1px solid #dce8e2; border-radius: 12px; color: inherit; text-decoration: none; background: #fff; }
-.reception-page .room-shortcut:hover { border-color: #7cafa0; background: #f7fbf9; }
-.reception-page .room-shortcut small { display: block; margin-top: 4px; color: #637972; }
-.reception-page .room-badge { display: grid; width: 52px; height: 58px; place-items: center; border-radius: 10px; background: #e9f3ef; color: #176950; font-weight: 700; }
-.reception-page .room-shortcut > span:last-child { color: #176950; }
-.reception-page .intake-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(270px, 1fr); align-items: start; gap: 24px; }
-.reception-page .intake-grid .panel { min-width: 0; }
-.reception-page .intake-guide { background: #f8fbfa; }
-.reception-page .patient-checklist { padding-left: 20px; color: #637972; }
-.reception-page .patient-checklist li { margin: 14px 0; }
-.reception-page .patient-checklist + .button-link { margin-top: 10px; }
-.reception-page .patient-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 24px; }
-.reception-page .patient-details dt { color: #637972; font-size: .85rem; }
-.reception-page .patient-details dd { margin: 6px 0 0; font-weight: 600; overflow-wrap: anywhere; }
+
 .reception-page #dialog-content { overflow-wrap: anywhere; }
 .reception-page #encounter-list td:last-child { min-width: 240px; }
 .reception-page #encounter-list td:last-child button { margin: 3px 0; }
 .reception-page #encounters .filters { row-gap: 16px; }
 .reception-page #encounters .filters label { min-width: 140px; }
 .reception-page .shift-card .button-link { margin-top: 16px; }
-@media (max-width: 1100px) { .reception-page .reception-overview-grid, .reception-page .intake-grid { grid-template-columns: 1fr; } }
-@media (max-width: 480px) { .reception-page .patient-details { grid-template-columns: 1fr; } .reception-page .room-shortcut { gap: 10px; padding: 16px 12px; } .reception-page .room-badge { width: 44px; height: 52px; } }
+
+
+
+.reception-page .reception-status-cards .summary-card { position: relative; }
+.reception-page .reception-status-cards .summary-card > span { padding-right: 30px; }
+.reception-page .reception-status-icon { position: absolute; top: 28px; right: 28px; width: 20px; height: 20px; color: #7c9f8b; }
+
+/* Monthly calendar and daily shifts match the doctor overview. */
+.doctor-overview-grid {display:grid;grid-template-columns:minmax(280px, 1fr) minmax(0, 1.4fr);gap:24px;align-items:start}
+.doctor-calendar-heading {display:flex;justify-content:space-between;gap:12px;margin-bottom:20px}
+.doctor-month-grid {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;text-align:center}
+.doctor-month-grid > * {padding:10px 0}
+.doctor-calendar-day {position:relative;border:1px solid transparent;border-radius:8px}
+.doctor-calendar-day.has-shift:after {content:"";position:absolute;width:5px;height:5px;background:#17715c;border-radius:50%;bottom:3px;left:calc(50% - 2px)}
+.doctor-calendar-day.is-today {background:#e6f0e9;border-color:#17715c;font-weight:700;color:#17715c}
+.doctor-overview-shifts article {display:flex;justify-content:space-between;gap:20px;padding:20px 0;border-bottom:1px solid #e3ece7}
+.doctor-overview-shifts article > div:last-child {display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+
+.reception-page[data-page="overview"] .doctor-overview-grid {grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;gap:24px}
+.reception-page[data-page="overview"] .doctor-overview-grid > .panel {display:flex;flex-direction:column;min-width:0;padding:24px;border-radius:5px}
+.reception-page[data-page="overview"] .doctor-overview-grid > .panel > .section-heading {margin-bottom:20px}
+.reception-page[data-page="overview"] .doctor-overview-grid h2 {font-size:20px}
+.reception-page[data-page="overview"] .doctor-calendar-heading {align-items:center;margin-bottom:16px;font-size:13px;gap:10px}
+.reception-page[data-page="overview"] .doctor-calendar-heading > span {font-size:12px;padding:5px 9px;background:#edf6f0;color:#30664b;border-radius:5px;white-space:nowrap}
+.reception-page[data-page="overview"] .doctor-month-grid {gap:5px;font-size:13px}
+.reception-page[data-page="overview"] .doctor-month-grid > strong {font-size:11px;font-weight:600;color:#718579;padding:6px 0 10px}
+.reception-page[data-page="overview"] .doctor-month-grid > .doctor-calendar-day {display:flex;align-items:center;justify-content:center;min-height:36px;padding:7px 0;border-radius:5px}
+.reception-page[data-page="overview"] .doctor-calendar-day.has-shift {background:#f0f7f3;color:#255c43}
+.reception-page[data-page="overview"] .doctor-calendar-day.is-today {background:#17715c;color:white;border-color:#17715c;font-weight:700}
+.reception-page[data-page="overview"] .doctor-calendar-day.is-today:after {background:white}
+.reception-page[data-page="overview"] .doctor-calendar-day.has-shift:after {width:4px;height:4px;bottom:3px}
+.reception-page[data-page="overview"] .doctor-calendar-legend {display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-top:auto;padding-top:18px;color:#718579;font-size:11px}
+.reception-page[data-page="overview"] .doctor-calendar-legend > span {display:flex;align-items:center;gap:6px}
+.reception-page[data-page="overview"] .doctor-calendar-legend i {width:5px;height:5px;border-radius:50%;background:#17715c}
+.reception-page[data-page="overview"] .doctor-calendar-today-label {color:#30664b}
+.reception-page[data-page="overview"] .doctor-overview-shifts {display:flex;flex-direction:column;flex:1;gap:12px}
+.reception-page[data-page="overview"] .doctor-overview-shifts article {flex:1;align-items:center;border:1px solid #e0eae4;background:#fafcfb;border-radius:5px;padding:20px;gap:20px}
+.reception-page[data-page="overview"] .doctor-overview-shifts article p {font-size:13px;color:#718579;margin:8px 0 0}
+.reception-page[data-page="overview"] .doctor-overview-shifts article > div:last-child > strong {font-size:20px;color:#17684f;white-space:nowrap}
+.reception-page[data-page="overview"] .doctor-overview-shifts .button-link {font-size:12px;padding:10px 14px;min-height:38px;border-radius:5px}
+@media(max-width:1000px){.reception-page[data-page="overview"] .doctor-overview-grid{grid-template-columns:1fr}.reception-page[data-page="overview"] .doctor-month-grid > .doctor-calendar-day{min-height:36px}.reception-page[data-page="overview"] .doctor-overview-shifts article{min-height:120px}}
+@media(max-width:550px){.reception-page[data-page="overview"] .doctor-overview-shifts article{flex-direction:column;align-items:flex-start}.reception-page[data-page="overview"] .doctor-overview-shifts article > div:last-child{align-items:flex-start}.reception-page[data-page="overview"] .doctor-overview-grid > .panel{padding:18px}}
+
+/* Keep six visits visible and retain every additional eligible visit for scrolling. */
+.reception-shift-scroll { max-height: 524px; overflow: auto; scrollbar-gutter: stable; overscroll-behavior: contain; }
+.reception-shift-scroll .table-wrap { overflow: visible; }
+.reception-shift-scroll table { min-width: 960px; }
+.reception-shift-scroll thead { height: 44px; }
+.reception-shift-scroll th { position: sticky; top: 0; z-index: 1; background: #edf4f0; height: 44px; padding: 10px 16px; }
+.reception-shift-scroll tbody tr { height: 80px; }
+.reception-shift-scroll td { height: 80px; padding: 12px 16px; vertical-align: middle; }
+.reception-shift-scroll :is(th, td):last-child { text-align: center; }
+.reception-shift-scroll td:last-child .button-link { white-space: nowrap; }
+
+.reception-shift-scroll :is(th, td):is(:nth-child(3), :nth-child(5)) { text-align: center; }
+.reception-page table .badge,
+.reception-page table .status { border-radius: 5px; }
+
+.reception-page #encounter-filters.reception-encounter-filters { display: grid; grid-template-columns: 2fr 1fr 1fr; align-items: end; gap: 16px; }
+.reception-page #encounter-filters.reception-encounter-filters > label { min-width: 0; width: 100%; margin: 0; }
+@media (max-width: 680px) {
+  .reception-page #encounter-filters.reception-encounter-filters { grid-template-columns: 1fr 1fr; }
+  .reception-page #encounter-filters.reception-encounter-filters .encounter-search-field { grid-column: 1 / -1; }
+}
+@media (max-width: 400px) {
+  .reception-page #encounter-filters.reception-encounter-filters { grid-template-columns: 1fr; }
+}
+
+.reception-page #reception-patient-dialog { width: min(1180px, calc(100% - 48px)); max-height: 90dvh; height: auto; margin: auto; padding: 28px; overflow-y: auto; border-radius: 5px; }
+.reception-page #reception-patient-dialog > .section-heading { padding-bottom: 20px; margin-bottom: 22px; border-bottom: 1px solid #dde7e1; }
+.reception-page #reception-patient-dialog > .section-heading h2 { margin: 0; }
+@media (max-width: 680px) { .reception-page #reception-patient-dialog { width: calc(100% - 16px); padding: 18px; } }
+
+.reception-page #reception-encounters #encounter-list :is(th, td):nth-child(4) { text-align: center; }
+.reception-page #reception-encounters #encounter-list :is(th, td):last-child { text-align: right; }
+.reception-page #reception-encounters #encounter-list td:last-child .actions { justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 10px; }
+.reception-page #reception-encounters #encounter-list td:last-child button { white-space: nowrap; }
+
+.reception-page #reception-add-patient { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; padding: 12px 22px; background: #008349; border: 1px solid #008349; color: white; font-size: 15px; font-weight: 600; border-radius: 5px; white-space: nowrap; }
+.reception-page #reception-add-patient > span { font-size: 24px; font-weight: 400; line-height: 1; }
+.reception-page #reception-add-patient:hover { background: #006c3d; border-color: #006c3d; }
+
+/* Reserve both action positions so Details stays aligned when Check-in is absent. */
+.reception-page #reception-encounters #encounter-list th:last-child { width: 210px; min-width: 210px; text-align: left; padding-left: 24px; }
+.reception-page #reception-encounters #encounter-list td:last-child { width: 210px; min-width: 210px; padding-inline: 16px; }
+.reception-page #reception-encounters #encounter-list td:last-child .actions { display: grid; grid-template-columns: 76px 88px; justify-content: start; gap: 10px; margin: 0; }
+.reception-page #reception-encounters #encounter-list [data-detail] { grid-column: 1; width: 76px; padding-inline: 8px; }
+.reception-page #reception-encounters #encounter-list [data-checkin] { grid-column: 2; width: 88px; padding-inline: 8px; background: #008349; border-color: #008349; color: white; }
+.reception-page #reception-encounters #encounter-list [data-checkin]:hover { background: #006c3d; border-color: #006c3d; }
+
+/* One corner radius throughout the reception intake page, including dialogs. */
+body.reception-page[data-page="walk_in"],
+body.reception-page[data-page="walk_in"] *,
+body.reception-page[data-page="walk_in"] *::before,
+body.reception-page[data-page="walk_in"] *::after { border-radius: 5px !important; }
+
+/* Balance status between the doctor information and the reserved action slots. */
+.reception-page #reception-encounters #encounter-list table { table-layout: fixed; min-width: 1000px; }
+.reception-page #reception-encounters #encounter-list th:nth-child(1) { width: 26%; }
+.reception-page #reception-encounters #encounter-list th:nth-child(2) { width: 16%; }
+.reception-page #reception-encounters #encounter-list th:nth-child(3) { width: 24%; }
+.reception-page #reception-encounters #encounter-list :is(th, td):nth-child(4) { width: auto; text-align: center; padding-inline: 12px; }
+.reception-page #reception-encounters #encounter-list td:not(:last-child) { overflow-wrap: anywhere; }
+
+.reception-page #staff-dialog:has(.reception-checkin) { width: min(1080px, calc(100% - 40px)); max-height: 90dvh; padding: 28px; overflow-y: auto; }
+.reception-page #staff-dialog:has(.reception-checkin) > .section-heading { padding-bottom: 18px; margin-bottom: 22px; border-bottom: 1px solid #dde7e1; }
+.reception-checkin { display: grid; gap: 20px; }
+.reception-checkin-heading { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 22px; background: #f0f7f3; border: 1px solid #d9e9df; }
+.reception-checkin-heading > div > span { font-size: 11px; letter-spacing: 1px; color: #547362; }
+.reception-checkin-heading h3 { margin: 6px 0; font-size: 24px; color: #174b36; }
+.reception-checkin-heading p { margin: 0; color: #64766e; font-size: 13px; }
+.reception-checkin-time { flex-shrink: 0; display: grid; gap: 5px; text-align: right; }
+.reception-checkin-time strong { color: #008349; font-size: 22px; }
+.reception-checkin-time small { color: #547362; }
+.reception-checkin-summary, .reception-checkin > .panel { margin: 0; padding: 22px; border: 1px solid #dde7e1; box-shadow: none; }
+.reception-checkin h3, .reception-checkin .panel h2 { font-size: 17px; margin: 0 0 18px; }
+.reception-checkin-heading h3 { font-size: 24px; margin: 6px 0; }
+.reception-checkin .doctor-facts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px 24px; margin: 0; }
+.reception-checkin .doctor-facts > div { min-width: 0; padding: 0; border: 0; }
+.reception-checkin .doctor-facts dt { margin-bottom: 5px; color: #718579; font-size: 12px; }
+.reception-checkin .doctor-facts dd { margin: 0; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.reception-checkin-note { margin: 0; padding: 16px 18px; border-left: 0; background: #f0f7f3; color: #486454; font-size: 13px; line-height: 1.7; }
+.reception-checkin-footer { display: flex; justify-content: flex-end; align-items: center; gap: 18px; padding-top: 20px; }
+.reception-checkin-footer .form-feedback { margin: 0; flex: 1; }
+.reception-checkin-footer button { background: #008349; border-color: #008349; min-height: 46px; padding-inline: 22px; white-space: nowrap; }
+@media (max-width: 680px) { .reception-checkin-heading { flex-direction: column; align-items: flex-start; } .reception-checkin-time { text-align: left; } .reception-checkin .doctor-facts { grid-template-columns: repeat(2,minmax(0,1fr)); } .reception-page #staff-dialog:has(.reception-checkin) { padding: 18px; width: calc(100% - 16px); } }
+@media (max-width: 420px) { .reception-checkin .doctor-facts { grid-template-columns: 1fr; } }
+
+.reception-page #staff-dialog:has(.reception-visit-detail) > .section-heading { position: sticky; top: -28px; z-index: 3; padding-top: 18px; background: white; }
+.reception-visit-detail > .panel .section-heading { margin-bottom: 18px; }
+.reception-visit-detail .table-wrap { min-width: 0; overflow-x: auto; }
+.reception-visit-detail .table-wrap table { min-width: 0; table-layout: fixed; }
+.reception-visit-detail .table-wrap :is(th, td) { padding: 12px; white-space: normal; overflow-wrap: anywhere; vertical-align: top; }
+.reception-visit-detail .table-wrap th:first-child { width: 24%; }
+.reception-visit-detail .table-wrap th:nth-child(2) { width: 24%; }
+.reception-visit-detail > .button-link { justify-self: end; background: #008349; border-color: #008349; color: white; }
+.reception-visit-detail .reception-detail-actions { justify-content: flex-end; margin: 0; padding-top: 16px; border-top: 1px solid #dde7e1; }
+.reception-visit-detail .reception-detail-actions:empty { display: none; }
+@media (max-width: 680px) { .reception-page #staff-dialog:has(.reception-visit-detail) > .section-heading { top: -18px; } }
+
+.reception-page .reception-visit-detail .reception-detail-actions { display: flex; flex-direction: row; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 12px; }
+.reception-page .reception-detail-actions > :is(a.button-link, button) { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; margin: 0; padding: 10px 18px; background: white; color: #008349; border: 1px solid #008349; border-radius: 5px; text-decoration: none; font-size: 13px; font-weight: 600; transition: background-color .15s, color .15s; }
+.reception-page .reception-detail-actions > :is(a.button-link, button):is(:hover, :focus-visible, :active):not(:disabled) { background: #008349; border-color: #008349; color: white; }
+.reception-page .reception-visit-detail .reception-detail-actions:empty { display: none; }
+
+.reception-page #reception-action-form .reception-cancel-source { display: block; margin: 20px 0 18px; max-width: 360px; }
+.reception-page #reception-action-form .reception-cancel-source select { display: block; width: 100%; margin-top: 8px; min-height: 44px; }
+
+.reception-page #patient-search-form { display: grid; grid-template-columns: minmax(0, 3fr) minmax(200px, 1fr); gap: 16px; align-items: end; }
+.reception-page #patient-search-form > label { min-width: 0; margin: 0; }
+@media (max-width: 680px) { .reception-page #patient-search-form { grid-template-columns: 1fr; } }
+
+.reception-page #patient-list table :is(th, td):last-child { width: 300px; min-width: 300px; text-align: center; }
+.reception-page #patient-list table td:last-child .actions { display: flex; justify-content: center; align-items: center; flex-wrap: nowrap; gap: 12px; margin: 0; }
+.reception-page #patient-list table td:last-child :is(button, .button-link) { white-space: nowrap; }
+
+.reception-page #staff-dialog:has(.reception-patient-view) { width: min(1180px, calc(100% - 40px)); max-height: 90dvh; padding: 28px; overflow-y: auto; }
+.reception-page #staff-dialog:has(.reception-patient-view) > .section-heading { padding-bottom: 18px; border-bottom: 1px solid #dde7e1; margin-bottom: 22px; }
+.reception-patient-view { display: grid; gap: 20px; }
+.reception-patient-view .table-wrap { overflow-x: auto; }
+.reception-patient-view .table-wrap table { min-width: 650px; }
+.reception-patient-view .admin-patient-summary h3 { margin: 0; font-size: 23px; }
+.reception-patient-view .admin-patient-relatives { display: none; }
+.reception-patient-view .actions { justify-content: flex-end; }
+body.reception-page[data-page="patients"] dialog, body.reception-page[data-page="patients"] dialog * { border-radius: 5px !important; }
+@media (max-width: 680px) { .reception-page #staff-dialog:has(.reception-patient-view) { width: calc(100% - 16px); padding: 18px; } }
+
+/* Matching, readable colors for the reception patient view and edit forms. */
+.reception-page .reception-patient-view { background: #fff; color: #243d32; }
+.reception-page .reception-patient-view .admin-patient-section { background: #fff; border-color: #dde7e1; }
+.reception-page .reception-patient-view .admin-patient-summary { background: #edf6f0; border-color: #d6e8dc; }
+.reception-page .reception-patient-view :is(h3, .admin-patient-summary h3) { color: #20573c; }
+.reception-page .reception-patient-view :is(dt, .admin-patient-code, .admin-patient-field-note) { color: #687b70; }
+.reception-page .reception-patient-view dd { color: #243d32; }
+.reception-page .reception-patient-view :is(input, select) { background: white; color: #243d32; border-color: #cbded2; }
+.reception-page .reception-patient-view :is(input, select):disabled { background: #f2f5f3; color: #687b70; }
+.reception-page .reception-patient-view button[type="submit"] { background: #008349; border-color: #008349; color: white; }
+.reception-page #reception-patient-history { max-height: 404px; overflow: auto; scrollbar-gutter: stable; overscroll-behavior: contain; }
+.reception-page #reception-patient-history .table-wrap { overflow: visible; }
+.reception-page #reception-patient-history thead { height: 44px; }
+.reception-page #reception-patient-history th { position: sticky; top: 0; z-index: 1; height: 44px; padding: 10px 14px; background: #edf4f0; color: #60796b; }
+.reception-page #reception-patient-history tbody tr { height: 72px; }
+.reception-page #reception-patient-history td { height: 72px; padding: 10px 14px; color: #243d32; vertical-align: middle; }
+.reception-page #reception-patient-history tbody tr:hover { background: #f5faf7; }
+
+.reception-page #reception-patient-history table { min-width: 850px; }
+.reception-page #reception-patient-history th:nth-child(1) { width: 12%; }
+.reception-page #reception-patient-history th:nth-child(2) { width: 20%; }
+.reception-page #reception-patient-history th:nth-child(3) { width: 14%; }
+.reception-page #reception-patient-history th:nth-child(4) { width: 26%; }
+.reception-page #reception-patient-history th:nth-child(5) { width: 13%; }
+.reception-page #reception-patient-history :is(th, td):last-child { width: 15%; text-align: center; }
+
+.reception-page #doctor-schedule-filter { display: grid; grid-template-columns: minmax(0, 3fr) minmax(200px, 1fr); gap: 16px; align-items: end; }
+.reception-page #doctor-schedule-filter > label { min-width: 0; margin: 0; }
+.reception-page #doctor-schedule-list :is(th, td):last-child { width: 180px; text-align: center; }
+.reception-page #doctor-schedule-list button { white-space: nowrap; }
+.reception-page #doctor-schedule-list button:is(:hover, :focus-visible, :active) { background: #008349; border-color: #008349; color: white; }
+body.reception-page[data-page="doctor_schedule"] *, body.reception-page[data-page="doctor_schedule"] dialog { border-radius: 5px !important; }
+.reception-page #staff-dialog:has(.reception-schedule-detail) { width: min(1000px, calc(100% - 32px)); max-height: 90dvh; }
+.reception-schedule-detail { display: grid; gap: 20px; }
+.reception-schedule-detail > .panel { margin: 0; }
+
+
+.reception-page #doctor-schedule-list :is(th, td):last-child { width: 290px; min-width: 290px; }
+.reception-schedule-actions { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.reception-page #doctor-schedule-list :is(th, td):nth-child(4) { text-align: center; white-space: nowrap; }
+.reception-schedule-count { display: inline-flex; padding: 5px 10px; background: #edf6f0; color: #236b49; font-weight: 600; border-radius: 5px; }
+
+.reception-page #doctor-schedule-filter { grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr) minmax(180px, 1fr); }
+.reception-schedule-count { padding: 0; background: transparent; color: inherit; font-weight: 400; }
+@media (max-width: 680px) { .reception-page #doctor-schedule-filter { grid-template-columns: 1fr; } }
+
+.reception-page #doctor-schedule-list :is(th, td):nth-child(4) { text-align: left; padding-left: 12px; }
+.reception-patient-picker { margin: 0; }
+.reception-patient-results { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+.reception-page .reception-patient-choice { display: grid; gap: 7px; width: 100%; padding: 18px; text-align: left; background: white; border: 1px solid #d7e3dc; color: #243d32; border-radius: 5px; }
+.reception-patient-choice strong { font-size: 15px; }
+.reception-patient-choice span { color: #687b70; font-size: 12px; font-weight: 400; }
+.reception-page .reception-patient-choice:hover { background: #f7fbf8; border-color: #73ae8d; }
+.reception-page .reception-patient-choice.is-selected { border: 2px solid #008349; padding: 17px; background: #edf7f1; }
+@media (max-width: 680px) { .reception-patient-results { grid-template-columns: 1fr; } }
+
+.reception-page .reception-patient-results { grid-template-columns: minmax(0, 1fr); }
+.reception-page .reception-patient-choice { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr); align-items: center; justify-items: start; text-align: left; gap: 16px; }
+.reception-page .reception-schedule-detail > .actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin: 0; }
+.reception-page .reception-schedule-detail > .actions [data-schedule-cancel] { order: 2; }
+@media (max-width: 600px) { .reception-page .reception-patient-choice { grid-template-columns: minmax(0, 1fr); gap: 7px; } }
+
+.reception-page .coordination-choices { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-top: 20px; max-height: 480px; overflow-y: auto; padding: 2px; }
+.reception-page button.coordination-choice { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, .8fr); align-items: center; justify-items: start; gap: 18px; width: 100%; padding: 18px; border: 1px solid #d7e3dc; border-radius: 5px; background: white; color: #243d32; text-align: left; font-weight: 400; }
+.reception-page .coordination-choice strong { display: block; font-size: 15px; }
+.reception-page .coordination-choice small { display: block; margin-top: 5px; color: #687b70; font-size: 12px; }
+.reception-page #assignment-doctor-results > .coordination-choice { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, .8fr); align-items: center; gap: 18px; padding: 16px; border: 1px solid #d7e3dc; background: white; }
+.reception-page #assignment-doctor-results > .coordination-choice.is-selected { border: 2px solid #008349; padding: 15px; background: #edf7f1; }
+@media (max-width: 680px) { .reception-page #assignment-doctor-results > .coordination-choice { grid-template-columns: 1fr; gap: 8px; } }
+.reception-page button.coordination-choice:hover:not(:disabled) { border-color: #73ae8d; background: #f7fbf8; }
+.reception-page button.coordination-choice.is-selected { border: 2px solid #008349; padding: 17px; background: #edf7f1; }
+.reception-page .coordination-footer { justify-content: flex-end; }
+.reception-page .coordination-footer button { background: #008349; border-color: #008349; }
+body.reception-page[data-page="coordination"] *, body.reception-page[data-page="coordination"] dialog { border-radius: 5px !important; }
+@media (max-width: 760px) { .reception-page button.coordination-choice { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 440px) { .reception-page button.coordination-choice { grid-template-columns: minmax(0, 1fr); } }
+
+.reception-page .coordination-search-section + .coordination-search-section { margin-top: 28px; padding-top: 24px; border-top: 1px solid #dde7e1; }
+.reception-page .coordination-footer { margin-top: 24px; }
+
+.reception-page .coordination-filter-row, .reception-page .doctor-assignment-filters { display: grid; grid-template-columns: minmax(0, 3fr) minmax(200px, 1fr); gap: 16px; align-items: end; }
+.reception-page .coordination-filter-row > label, .reception-page .doctor-assignment-filters > label { min-width: 0; margin: 0; }
+.reception-page button.coordination-choice:disabled { cursor: not-allowed; opacity: .65; background: #f2f5f3; border-color: #dde7e1; }
+@media (max-width: 680px) { .reception-page .coordination-filter-row, .reception-page .doctor-assignment-filters { grid-template-columns: 1fr; } }
+
+.reception-page .doctor-assignment-filters { grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr) minmax(180px, 1fr); }
+@media (max-width: 680px) { .reception-page .doctor-assignment-filters { grid-template-columns: 1fr; } }
+
+.reception-page #staff-dialog:has(.reception-transfer-detail) { width: min(1000px, calc(100% - 32px)); max-height: 90dvh; overflow-y: auto; }
+.reception-transfer-detail > .panel, .reception-transfer-detail #transfer-form > .panel { margin: 0 0 20px; padding: 20px; border: 1px solid #dde7e1; box-shadow: none; }
+.reception-transfer-detail .section-heading { margin-bottom: 16px; }
+.reception-transfer-detail .section-heading h2 { font-size: 18px; color: #20573c; }
+.reception-transfer-detail .doctor-facts { grid-template-columns: repeat(3,minmax(0,1fr)); margin: 0; }
+.reception-transfer-detail .transfer-reason { display: block; margin-top: 20px; }
+.reception-page .reception-transfer-detail .transfer-confirm-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
+.reception-transfer-detail .transfer-confirm-actions button { background: #008349; border-color: #008349; }
+@media (max-width: 600px) { .reception-transfer-detail .doctor-facts { grid-template-columns: 1fr; } }
+
+.reception-page .coordination-footer button.secondary { background: white; border-color: #008349; color: #008349; }
+.reception-page .coordination-footer button.secondary:is(:hover, :focus-visible, :active) { background: #008349; color: white; }
+
+.reception-transfer-detail #assignment-transfer-form > .panel { margin: 0 0 20px; padding: 20px; border: 1px solid #dde7e1; box-shadow: none; }
+.reception-page .reception-transfer-detail .transfer-confirm-actions button.secondary { background: white; border-color: #008349; color: #008349; }
+.reception-page .reception-transfer-detail .transfer-confirm-actions button.secondary:is(:hover, :focus-visible, :active) { background: #008349; color: white; }
+
+.reception-transfer-detail #transfer-form > label:has(select[name="appointment_time"]) {
+  width: 50%;
+}
+@media (max-width: 640px) {
+  .reception-transfer-detail #transfer-form > label:has(select[name="appointment_time"]) {
+    width: 100%;
+  }
+}
+
+.reception-transfer-detail #doctor-change-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.reception-transfer-detail #doctor-change-form > label:first-child {
+  grid-column: 2;
+  grid-row: 1;
+}
+.reception-transfer-detail #doctor-change-form > :is(#replacement-picker, #swap-picker, #room-change-picker) {
+  grid-column: 1;
+  grid-row: 1;
+}
+.reception-transfer-detail #doctor-change-form > label:has(textarea),
+.reception-transfer-detail #doctor-change-form > p {
+  grid-column: 1 / -1;
+}
+.reception-transfer-detail #doctor-change-form > button {
+  justify-self: start;
+}
+@media (max-width: 640px) {
+  .reception-transfer-detail #doctor-change-form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .reception-transfer-detail #doctor-change-form > label:first-child {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}
+
+.reception-page .coordination-patient-filters {grid-template-columns:minmax(0,1fr);}
+.reception-page .coordination-target-filters {grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);}
+@media(max-width:680px){.reception-page .coordination-target-filters {grid-template-columns:minmax(0,1fr);}}
+
+/* Keep the three destination filters on one row after shared layout rules. */
+body.reception-page[data-page="coordination"] .coordination-filter-row.coordination-target-filters {grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);}
+body.reception-page[data-page="coordination"] .coordination-target-filters>label {grid-column:auto;width:auto;}
+@media(max-width:680px){body.reception-page[data-page="coordination"] .coordination-filter-row.coordination-target-filters {grid-template-columns:minmax(0,1fr);}}
+
+.reception-page .reception-intake-tabs {display:flex;justify-content:flex-start;gap:8px;margin:0 0 20px;}
+.reception-page .reception-intake-tabs [role="tab"] {border:1px solid #cbded3;border-radius:5px;background:#fff;color:#29644a;padding:12px 24px;font-weight:600;}
+.reception-page .reception-intake-tabs [aria-selected="true"] {background:#008349;border-color:#008349;color:#fff;}
+.reception-page .reception-intake-tabs [role="tab"]:focus-visible {outline:3px solid #8bcbb0;outline-offset:3px;}
+.reception-page #direct-patient-filters {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+.reception-page #direct-patient-list td:last-child {min-width:240px;}
+.reception-page #direct-patient-list .direct-empty-cell {text-align:center;color:#6b7d73;}
+.reception-page [role="tabpanel"][hidden] {display:none!important;}
+
+
+.reception-page #direct-patient-filters {grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:end;}
+.reception-page #direct-patient-filters>label {min-width:0;margin:0;}
+.reception-page .direct-unregistered {background:#edf2f7;color:#49657d;border-radius:5px;padding:7px 10px;font-size:12px;font-weight:600;display:inline-block;white-space:nowrap;}
+@media(max-width:680px){.reception-page #direct-patient-filters {grid-template-columns:minmax(0,1fr);}}

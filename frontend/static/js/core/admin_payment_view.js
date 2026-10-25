@@ -11,7 +11,7 @@ export const canRequestRefund = row => ["DEPOSIT", "EXAM_FEE"].includes(row.paym
 export function paymentStatusBadge(status) {
   const title = ({ PENDING: "Chờ thanh toán", SUCCESS: "Thành công", FAILED: "Thất bại", REFUNDED: "Đã hoàn tiền" })[status] || value(status);
   const tone = status === "SUCCESS" ? "green" : status === "PENDING" ? "amber" : status === "FAILED" ? "red" : "blue";
-  return `<span class="badge ${tone}">${esc(title)}</span>`;
+  return `<span class="badge ${tone}" data-payment-status="${esc(status)}">${esc(title)}</span>`;
 }
 
 const detailButton = row => `<button type="button" class="row-action" data-payment-detail="${esc(row.payment_id)}">Chi tiết</button>`;

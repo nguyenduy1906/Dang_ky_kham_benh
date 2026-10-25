@@ -150,10 +150,13 @@ def mark_unavailable_schedules(db, ids, reason):
 
 
 _ASSIGNMENT_SELECT = '''SELECT a.*, u.full_name AS nurse_name, s.work_date, s.start_time,
- s.end_time, s.schedule_status, s.doctor_profile_id, s.room_id, r.room_name
+ s.end_time, s.schedule_status, s.doctor_profile_id, s.room_id, r.room_name,
+ doctor_user.full_name AS doctor_name
  FROM nurse_assignment a JOIN users u ON u.user_id = a.nurse_id
  JOIN work_schedule s ON s.schedule_id = a.schedule_id
- JOIN room r ON r.room_id = s.room_id'''
+ JOIN room r ON r.room_id = s.room_id
+ JOIN doctor_profile dp ON dp.doctor_profile_id = s.doctor_profile_id
+ JOIN users doctor_user ON doctor_user.user_id = dp.user_id'''
 
 
 def list_assignments(db, *, nurse_id=None, schedule_id=None, include_revoked=False,
@@ -233,5 +236,24 @@ def update_assignment_note(db, assignment_id, note):
 
 def record_assignment_change(db, assignment_id, resulting_id, actor_id, before, after):
     from psycopg.types.json import Jsonb
-    db.execute('INSERT INTO nurse_assignment_change(assignment_id,resulting_assignment_id,changed_by_id,before_data,after_data) VALUES (%s,%s,%s,%s,%s)',
-               (assignment_id,resulting_id,actor_id,Jsonb(before),Jsonb(after)))
+    return db.execute('INSERT INTO nurse_assignment_change(assignment_id,resulting_assignment_id,changed_by_id,before_data,after_data) VALUES (%s,%s,%s,%s,%s) RETURNING change_id',
+               (assignment_id,resulting_id,actor_id,Jsonb(before),Jsonb(after))).fetchone()['change_id']
+
+
+def booking_options(db, local, query):
+    base = """ FROM work_schedule s JOIN doctor_profile d USING(doctor_profile_id)
+        JOIN users u ON u.user_id=d.user_id JOIN role role ON role.role_id=u.role_id
+        JOIN room r ON r.room_id=s.room_id JOIN department dep ON dep.department_id=d.department_id
+        WHERE s.work_date=%s AND (s.work_date>%s OR s.end_time>%s)
+        AND s.schedule_status='OPEN' AND s.booked_count<s.max_quota
+        AND d.is_active=1 AND r.is_active=1 AND dep.is_active=1 AND role.role_name='DOCTOR'
+        AND u.deleted_at IS NULL AND u.account_status='ACTIVE' AND u.approval_status='APPROVED'"""
+    args = [query['work_date'], local.date(), local.time().replace(tzinfo=None)]
+    # An earlier date must never be considered by the time-only branch.
+    base += ' AND s.work_date>=%s'
+    args.append(local.date())
+    total = db.execute('SELECT COUNT(*) AS n' + base, args).fetchone()['n']
+    rows = db.execute('SELECT s.*,u.full_name AS doctor_name,r.room_name,dep.name AS department_name' + base +
+        ' ORDER BY s.work_date,s.start_time,s.schedule_id LIMIT %s OFFSET %s',
+        args + [query['page_size'],(query['page']-1)*query['page_size']]).fetchall()
+    return rows,total

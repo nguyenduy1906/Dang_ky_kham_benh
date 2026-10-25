@@ -9,9 +9,9 @@ export const staffRoles = Object.freeze({
   doctor: { label: "Bác sĩ", initials: "BS", description: "Chăm sóc tận tâm, chuyên môn vững vàng", pages: [
     ["overview", "Tổng quan", "home.html", "overview"],
     ["work_calendar", "Lịch làm việc", "work_calendar.html", "calendar"],
-    ["schedule", "Phòng được phân công", "schedule.html", "calendar"],
-    ["encounters", "Lượt khám được giao", "encounters.html", "people"],
+    ["encounters", "Danh sách lượt khám", "encounters.html", "people"],
     ["clinical", "Bệnh án & đơn thuốc", "clinical.html", "record"],
+    ["records", "Hồ sơ bệnh nhân", "records.html", "record"],
     ["history", "Lịch sử khám", "history.html", "history"],
   ] },
   nurse: { label: "Y tá", initials: "YT", description: "Đồng hành cùng bác sĩ, chăm sóc người bệnh", pages: [
@@ -24,10 +24,11 @@ export const staffRoles = Object.freeze({
   reception: { label: "Lễ tân", initials: "LT", description: "Tiếp đón chu đáo, điều phối thuận tiện", pages: [
     ["overview", "Tổng quan", "home.html", "overview"],
     ["work_calendar", "Lịch làm việc", "work_calendar.html", "calendar"],
-    ["encounters", "Tra cứu & tiếp nhận", "encounters.html", "people"],
-    ["walk_in", "Khách khám trực tiếp", "walk_in.html", "record"],
-    ["patients", "Hồ sơ bệnh nhân", "patients.html", "badge"],
-    ["coordination", "Chọn phòng / ca", "coordination.html", "calendar"],
+    ["walk_in", "Tiếp nhận bệnh nhân", "walk_in.html", "record"],
+    ["patients", "Tra cứu hồ sơ", "patients.html", "badge"],
+    ["payments", "Thanh toán", "payments.html", "payment"],
+    ["doctor_schedule", "Lịch khám bác sĩ", "doctor_schedule.html", "calendar"],
+    ["coordination", "Điều phối", "coordination.html", "calendar"],
   ] },
   admin: { label: "Quản trị viên", initials: "QT", description: "Không gian quản trị bệnh viện", pages:
     adminSections.flatMap(([, items]) => items.map(([key, label]) => [key, label, adminPageHref(key),
@@ -44,6 +45,7 @@ export function getStaffRole() {
 }
 
 const iconPaths = {
+  payment: '<rect x="2" y="5" width="20" height="14" rx="1"/><path d="M2 9h20M6 14h5"/>',
   overview: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18M8 15h2M14 15h2"/>',
   people: '<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M21 21v-3a6 6 0 0 0-3-5"/>',
@@ -51,6 +53,7 @@ const iconPaths = {
   history: '<path d="M3 11a9 9 0 1 1 2 7M3 4v7h7M12 7v5l3 2"/>',
   badge: '<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M14 11h4M14 15h4"/><circle cx="8" cy="11" r="2"/><path d="M5 18v-1a3 3 0 0 1 6 0v1"/>',
   profile: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>',
+  bell: '<path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5zM10 21h4"/>',
   logout: '<path d="M9 3H3v18h6M10 12h11M17 8l4 4-4 4"/>',
 };
 function icon(name) {
@@ -62,11 +65,21 @@ export function mountStaffWorkspace() {
   if (!sidebar || !topbar) return;
   const role = getStaffRole(), configuration = staffRoles[role];
   if (role) document.body.dataset.role = role;
+  if (role === "reception") {
+    document.querySelectorAll("dialog button").forEach(button => {
+      if (/^Đóng(?:\s*[×x✕])?$/.test(button.textContent.trim())) {
+        button.textContent = "Đóng";
+        button.dataset.dialogDismiss = "true";
+      }
+    });
+  }
   const templates = new URL("../../../templates/", import.meta.url);
   const workspaceHome = new URL(role ? `(${role})/home.html` : "components/profile.html", templates).href;
   const profileUrl = new URL("components/profile.html", templates);
   if (role) profileUrl.searchParams.set("role", role);
   const current = document.body.dataset.page;
+  const notificationUrl = role ? new URL(`(${role})/notifications.html`, templates).href : "";
+  const notificationLink = role && role !== "admin" ? `<a href="${notificationUrl}"${current === "notifications" ? ' aria-current="page"' : ""} aria-label="Thông báo: 0 chưa đọc" title="Thông báo: 0 chưa đọc">${icon("bell")}<span>Thông báo</span><b class="admin-nav-unread" aria-hidden="true">0</b></a>` : "";
   const profileLink = `<a href="${profileUrl.href}"${current === "profile" ? ' aria-current="page"' : ""}>${icon("profile")}<span>Hồ sơ cá nhân</span></a>`;
   const signout = `<button id="staff-signout" type="button" class="secondary">${icon("logout")}<span>Đăng xuất</span></button>`;
   const navigationLink = ([key, label, file, symbol]) => {
@@ -80,11 +93,11 @@ export function mountStaffWorkspace() {
     <a class="staff-brand" href="${workspaceHome}"><img src="${new URL("../../assets/bieu_trung_neu.png", import.meta.url).href}" width="44" height="44" alt="Logo NEU Medical"><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></a>
     ${role === "admin" ? "" : '<p class="staff-nav-label">KHÔNG GIAN LÀM VIỆC</p>'}
     <nav aria-label="Điều hướng ${configuration?.label.toLocaleLowerCase("vi") || "nhân viên"}">${navigation}
-      ${role === "admin" ? "" : profileLink}
+      ${notificationLink}${role === "admin" ? "" : profileLink}
     </nav>
     <div class="staff-sidebar-bottom"><p>${configuration?.description || "Thông tin cá nhân dành cho nhân viên bệnh viện"}</p>${signout}</div>`;
   const activeTitle = document.body.dataset.pageTitle || (current === "profile" ? "Hồ sơ cá nhân" : configuration?.pages.find(([key]) => key === current)?.[1] || "Không gian nhân viên");
-  topbar.innerHTML = staffTopbar({ title: activeTitle, profileHref: profileUrl.href, name: configuration?.label || "Nhân viên", initials: configuration?.initials || "NV", portrait: role === "nurse" ? nursePortraitUrl : "" });
+  topbar.innerHTML = staffTopbar({ title: activeTitle, profileHref: profileUrl.href, name: configuration?.label || "Nhân viên", initials: configuration?.initials || "NV", portrait: role === "nurse" ? nursePortraitUrl : "", notificationHref: role && role !== "admin" ? notificationUrl : "" });
   const toggle = document.querySelector("#staff-menu-toggle");
   initializeSidebarCollapse(role || "staff");
   const backdrop = document.createElement("button");

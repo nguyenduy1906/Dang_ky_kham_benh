@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thanh toán | NEU Medical</title>
+  <link rel="stylesheet" href="../../static/css/staff_workspace.css">
+  <link rel="stylesheet" href="../../static/css/admin.css">
+  <link rel="stylesheet" href="../../static/css/reception.css">
+  <link rel="stylesheet" href="../../static/css/reception_payments.css">
+  <script type="module" src="../../static/js/pages/reception_payments.js?v=20261025-workspace" blocking="render"></script>
+</head>
+<body class="staff-page reception-page reception-payments-page staff-auth-pending" data-role="reception" data-page="payments" data-page-title="Thanh toán">
+  <a class="skip-link" href="#main-content">Đến nội dung chính</a>
+  <div class="staff-shell">
+    <aside id="staff-sidebar" class="staff-sidebar"></aside>
+    <div class="staff-main">
+      <header id="staff-topbar" class="staff-topbar"></header>
+      <div id="staff-access" class="staff-access" role="status">Đang kiểm tra quyền truy cập…</div>
+      <main id="main-content" class="staff-content" tabindex="-1" inert>
+        <header class="page-header">
+          <button type="button" id="request-payment">+ Yêu cầu thanh toán</button>
+        </header>
+        <section class="reception-payment-card" aria-labelledby="payment-list-title">
+          <h2 id="payment-list-title">Danh sách thanh toán</h2>
+          <form id="payment-search" class="reception-payment-filters" role="search" aria-label="Tìm thanh toán trực tiếp">
+            <label>Tìm kiếm
+              <input type="search" name="q" placeholder="Mã thanh toán, mã lượt khám, người bệnh hoặc số điện thoại" aria-controls="payment-results">
+            </label>
+            <label>Trạng thái
+              <select name="status" aria-controls="payment-results"><option value="">Tất cả</option><option value="PENDING">Chờ thanh toán</option><option value="SUCCESS">Thành công</option><option value="FAILED">Thất bại</option><option value="REFUNDED">Đã hoàn tiền</option></select>
+            </label>
+            <label>Từ ngày<input type="date" name="from_date" aria-controls="payment-results"></label>
+            <label>Đến ngày<input type="date" name="to_date" aria-controls="payment-results"></label>
+          </form>
+          <p id="payment-filter-error" class="payment-feedback" role="status" hidden></p>
+          <div class="reception-payment-table-scroll" role="region" aria-label="Danh sách thanh toán trực tiếp" tabindex="0">
+            <table class="reception-payment-table">
+              <thead><tr><th scope="col">Mã thanh toán</th><th scope="col">Lượt khám</th><th scope="col" class="payment-channel">Hình thức</th><th scope="col">Loại giao dịch</th><th scope="col">Số tiền</th><th scope="col">Phương thức</th><th scope="col">Thời điểm</th><th scope="col">Trạng thái</th><th scope="col">Thao tác</th></tr></thead>
+              <tbody id="payment-results"><tr><td colspan="9" class="reception-payment-empty"><p id="payment-empty-message" role="status">Chưa có lượt thanh toán trực tiếp trong ngày.</p></td></tr></tbody>
+            </table>
+          </div>
+          <div class="reception-payment-pagination"><span>0 giao dịch · Trang 1 / 1</span><div><button type="button" class="secondary" disabled>Trang trước</button><button type="button" class="secondary" disabled>Trang sau</button></div></div>
+        </section>
+      </main>
+      <footer class="staff-footer">NEU Medical · Hệ thống quản lý khám bệnh</footer>
+    </div>
+  </div>
+  <dialog id="payment-dialog" aria-labelledby="payment-dialog-title">
+    <div class="section-heading"><h2 id="payment-dialog-title">Yêu cầu thanh toán</h2><button type="button" id="payment-dialog-close" class="secondary" aria-label="Đóng hộp thoại">Đóng</button></div>
+    <form id="payment-request-form">
+      <div class="reception-payment-fields"><label class="full-width">Lượt khám *<input name="encounter_code" list="payment-encounters" placeholder="Mã lượt khám" required autocomplete="off"><datalist id="payment-encounters"></datalist></label>
+        <label>Họ và tên <span aria-hidden="true">*</span><input name="full_name" placeholder="Tên người bệnh" readonly required maxlength="150" autocomplete="off"></label>
+        <label>Số điện thoại <span aria-hidden="true">*</span><input name="phone" type="tel" placeholder="Số điện thoại" readonly maxlength="20" autocomplete="off"></label>
+        <label class="full-width">Số tiền cần thanh toán <span aria-hidden="true">*</span><span class="reception-payment-amount"><input name="amount" type="text" inputmode="numeric" placeholder="Số tiền theo lượt khám" readonly required maxlength="15" aria-describedby="payment-amount-preview"><span>VND</span></span><strong id="payment-amount-preview" aria-live="polite"></strong></label>
+        <label>Loại giao dịch<input name="payment_type" value="Phí đăng ký khám" readonly></label>
+        <label>Phương thức<select name="payment_method"><option value="CASH">Tiền mặt</option><option value="BANK">Chuyển khoản</option><option value="EWALLET">Ví điện tử</option><option value="CARD">Thẻ</option></select></label>
+        <label class="full-width">Ghi chú<textarea name="note" rows="3" maxlength="500" placeholder="Nhập ghi chú (nếu có)"></textarea></label>
+      </div>
+      <label id="payment-request-check" class="payment-confirm-check" hidden><input type="checkbox" name="verified"> Đã đối chiếu đúng người bệnh, số tiền và phương thức thanh toán.</label><div id="payment-request-preview" class="reception-payment-review" role="status" hidden></div>
+      <div class="reception-payment-dialog-actions"><button type="button" id="payment-request-cancel" class="secondary">Hủy</button><button id="payment-request-failed" type="button" class="secondary" hidden>Không thành công</button><button type="submit">Tạo yêu cầu thanh toán</button></div>
+    </form>
+  </dialog>
+  <noscript><p class="scope-note">Bật JavaScript để mở yêu cầu thanh toán và sử dụng bộ lọc.</p></noscript>
+</body>
+</html>

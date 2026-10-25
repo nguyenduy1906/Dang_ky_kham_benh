@@ -1,8 +1,8 @@
 import {esc,date,stamp,money,table,label} from './admin_ui.js';
-import {openAdminFormDialog} from './admin_form_dialog.js';
+import {openAdminFormDialog,batchFinishedSuccessfully} from './admin_form_dialog.js';
 import {code} from './business_codes.js';
 import {paymentMethodLabel} from './admin_payment_view.js';
-import {readRefundSelectionData,filterRefundSelection,executeRefundBatch} from './admin_refund_selection_data.js';
+import {readRefundSelectionData,filterRefundSelection,executeRefundBatch,refundPreview} from './admin_refund_selection_data.js';
 
 export function refundSelectionMarkup() {
   return `<section class="admin-refund-bulk" data-refund-bulk>
@@ -19,13 +19,13 @@ export function refundSelectionMarkup() {
     <section class="admin-payment-section"><div class="admin-refund-selection-heading"><h3>Danh sách giao dịch phù hợp</h3><span data-bulk-count>Đã chọn 0 giao dịch</span></div>
       <div data-bulk-results><p class="admin-refund-status">Chưa có điều kiện tìm kiếm. Nhập tên, mã hoặc chọn phòng / ca khám để bắt đầu.</p></div>
     </section>
-    <section class="admin-payment-section"><h3>Nội dung yêu cầu hoàn tiền</h3><div class="admin-payment-fields">
+    <section class="admin-payment-section"><h3>Nội dung yêu cầu hoàn tiền</h3><div class="admin-refund-amount-summary" role="status" aria-live="polite"><span>Số tiền cần hoàn</span><strong data-refund-amount>Chưa chọn giao dịch</strong><p>Số tiền tính theo nguyên nhân hủy và chính sách của lượt khám. Chọn nhóm lý do bên dưới không thay đổi mức hoàn.</p></div><div class="admin-payment-fields">
       <label>Nhóm lý do<select name="bulk_reason_group"><option>Yêu cầu từ người bệnh</option><option>Phòng / ca khám bị hủy</option><option>Bác sĩ ngừng khám</option><option>Thay đổi lịch từ cơ sở khám</option><option>Khác</option></select></label>
       <label class="admin-refund-reason">Lý do hoàn tiền *<textarea name="bulk_reason" rows="3" maxlength="900" required placeholder="Nhập lý do áp dụng cho giao dịch hoặc nhóm giao dịch đã chọn"></textarea></label>
     </div></section>
     <div data-bulk-outcomes></div>
     <p class="admin-refund-status" data-bulk-feedback role="status" aria-live="polite" hidden></p>
-    <div class="admin-refund-bulk-actions"><span data-bulk-total>Chưa chọn giao dịch</span><div class="actions"><button type="button" data-bulk-confirm disabled>Xác nhận hoàn tiền</button><button type="button" class="secondary" data-bulk-close>Đóng</button></div></div>
+    <div class="admin-refund-bulk-actions"><span data-bulk-total>Chưa chọn giao dịch</span><div class="actions"><button class="primary" type="button" data-bulk-confirm disabled>Xác nhận hoàn tiền</button><button type="button" class="secondary" data-bulk-close>Đóng</button></div></div>
   </section>`;
 }
 const uncertainPayments=new Set();
@@ -47,7 +47,9 @@ export async function openUnifiedRefundRequest({ctx,paymentId=null,trigger,onSav
   }
   function count() {
     const chosen=picked();form.querySelector('[data-bulk-count]').textContent=`Đã chọn ${chosen.length} / ${rows.length} giao dịch`;
-    form.querySelector('[data-bulk-total]').textContent=chosen.length?`Đã thu: ${money(chosen.reduce((sum,row)=>sum+Number(row.payment.amount),0))}`:'Chưa chọn giao dịch';
+    const amounts=chosen.map(row=>refundPreview(row.payment,row.encounter));
+    form.querySelector('[data-refund-amount]').textContent=chosen.length?(amounts.some(value=>value===null)?'Chưa đủ dữ liệu chính sách':money(amounts.reduce((sum,value)=>sum+value,0))):'Chưa chọn giao dịch';
+    form.querySelector('[data-bulk-total]').textContent=chosen.length?`Dự kiến hoàn: ${amounts.some(value=>value===null)?'Chưa đủ dữ liệu chính sách':money(amounts.reduce((sum,value)=>sum+value,0))}`:'Chưa chọn giao dịch';
     confirm.disabled=loading||saving||!chosen.length;
     const all=results.querySelector('[data-bulk-all]'),available=rows.filter(row=>!uncertainPayments.has(String(row.payment.payment_id)));
     if(all){all.disabled=saving||!available.length;all.checked=available.length>0&&chosen.length===available.length;all.indeterminate=chosen.length>0&&chosen.length<available.length;}
@@ -56,13 +58,14 @@ export async function openUnifiedRefundRequest({ctx,paymentId=null,trigger,onSav
     const filter=filters(),hasFilter=Object.values(filter).some(Boolean);
     rows=hasFilter?filterRefundSelection(data.items,filter):[];
     status.textContent=hasFilter?`${rows.length} giao dịch phù hợp.`:'Nhập tìm kiếm hoặc chọn bộ lọc để hiển thị giao dịch.';
-    results.innerHTML=rows.length?table(['Chọn','Người bệnh / lượt khám','Phòng / ngày khám','Ca / giờ hẹn','Giao dịch / số đã thu','Trạng thái'],rows.map(({payment,encounter})=>{
+    results.innerHTML=rows.length?table(['Chọn','Người bệnh / lượt khám','Phòng / ngày khám','Ca / giờ hẹn','Giao dịch / số đã thu','Dự kiến hoàn','Trạng thái'],rows.map(({payment,encounter})=>{
       const id=String(payment.payment_id),blocked=uncertainPayments.has(id);
       return [`<input type="checkbox" data-bulk-row="${esc(id)}" aria-label="Chọn ${esc(code('TT',id))} của ${esc(encounter.patient_name)}" ${selected.has(id)&&!blocked?'checked':''} ${blocked?'disabled':''}>`,
         `<strong>${esc(encounter.patient_name||'Chưa cập nhật')}</strong><small>${esc(code('LK',payment.encounter_id))} · ${esc(encounter.doctor_name||'')}</small>`,
         `${esc(encounter.room_name||'Chưa cập nhật')}<small>${date(encounter.work_date)}</small>`,
         `${esc(encounter.start_time?.slice(0,5)||'—')} – ${esc(encounter.end_time?.slice(0,5)||'—')}<small>Giờ hẹn: ${esc(encounter.estimated_exam_at?stamp(encounter.estimated_exam_at):'—')}</small>`,
         `${esc(code('TT',id))}<small>${money(payment.amount)} · ${esc(paymentMethodLabel(payment.payment_method))}</small>`,
+        refundPreview(payment,encounter)===null?'Chưa đủ dữ liệu chính sách':money(refundPreview(payment,encounter)),
         `<span class="badge ${blocked?'amber':'blue'}">${blocked?'Chờ kiểm tra kết quả':esc(label(encounter.encounter_status))}</span>`];
     }),'Giao dịch phù hợp yêu cầu hoàn tiền').replace('<th scope="col">Chọn</th>','<th scope="col"><label class="admin-refund-check-all"><input type="checkbox" data-bulk-all aria-label="Chọn tất cả giao dịch trong danh sách đã lọc"> Chọn tất cả</label></th>'):`<p class="admin-refund-status">${hasFilter?'Không có giao dịch đủ điều kiện yêu cầu hoàn tiền phù hợp.':'Chưa có điều kiện tìm kiếm.'}</p>`;
     count();
@@ -110,6 +113,11 @@ export async function openUnifiedRefundRequest({ctx,paymentId=null,trigger,onSav
       const completed=processed.filter(item=>item.status==='success').length,failed=processed.filter(item=>item.status==='failed'||item.status==='uncertain').length;
       feedback.textContent=`Đã hoàn tiền ${completed} giao dịch. ${failed?`${failed} giao dịch chưa hoàn thành. `:''}${processed.length<batch.length?`${batch.length-processed.length} giao dịch chưa được gửi.`:''}`;
       feedback.dataset.error=String(failed>0);showOutcomes(processed);
+      if(batchFinishedSuccessfully(processed,batch.length,item=>item.status==='success'||item.status==='already')) {
+        saving=false;opened.close();
+        try {await onSaved?.();}catch(cause){ctx.handle(cause);}
+        return;
+      }
       try {await onSaved?.();}catch {feedback.textContent+=' Chưa cập nhật được danh sách thanh toán.';}
       selected.clear();await load();
     }catch(cause){if(alive())error(cause);}

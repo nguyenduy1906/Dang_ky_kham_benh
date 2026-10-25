@@ -1,9 +1,10 @@
+import {markFormChanged} from "./form_workflow.js";
 import { listUsers } from "../api/auth.js";
 import { listAdminSchedules } from "../api/schedule.js";
 import { esc, date, today, allPages } from "./admin_ui.js";
 import { code } from "./business_codes.js";
 import { assignmentBlockReason, filterAssignmentShifts, loadNurseAvailability, saveAssignmentBatch } from "./admin_bulk_assignment_data.js";
-import { openAdminFormDialog } from "./admin_form_dialog.js";
+import { openAdminFormDialog,batchFinishedSuccessfully } from "./admin_form_dialog.js";
 import { allAvailableSelected, toggleAllAvailable } from "./bulk_selection.js";
 import { scheduleDefaultRange } from "./admin_schedule_builder.js";
 import { scheduleDepartments, scheduleNameChoices, scheduleDepartmentKey, bindScheduleSuggestions } from "./admin_schedule_choices.js";
@@ -22,7 +23,7 @@ export function bulkAssignmentMarkup() {
     <section class="admin-card admin-bulk-settings"><h3><span class="admin-schedule-step">2</span> Thông tin phân công</h3><div class="admin-assignment-nurse">${choiceInput("nurse","Y tá *","Nhập tên hoặc mã y tá")}</div><div class="admin-schedule-pair"><label>Chuyên khoa<select name="department"><option value="">Tất cả chuyên khoa</option></select></label>${choiceInput("room","Phòng khám","Nhập tên phòng khám")}</div><p data-bulk-feedback role="status" aria-live="polite"></p><button type="button" class="secondary" data-bulk-reload hidden>Tải lại danh sách ca</button><button type="button" class="secondary" data-bulk-nurses hidden>Tải lại danh sách y tá</button></section>
   </fieldset></form>
   <section class="admin-card"><div class="admin-panel-heading"><div><h3>Danh sách ca làm việc</h3><p data-bulk-summary role="status">Chưa chọn ca nào</p></div><div class="admin-bulk-select-actions"><button type="button" class="secondary" data-bulk-all aria-pressed="false" disabled>Chọn tất cả</button></div></div><div data-bulk-results><p class="admin-bulk-hint">Chưa có ca phù hợp.</p></div></section>
-  <section class="admin-card admin-bulk-footer"><label>Ghi chú<textarea data-bulk-note rows="2" maxlength="1000"></textarea></label><div class="admin-bulk-confirm"><div class="actions"><button type="button" data-bulk-save disabled>Phân công</button><button type="button" class="secondary" data-bulk-back>Hủy</button></div></div><p data-bulk-outcome role="status" aria-live="polite"></p></section>`;
+  <section class="admin-card admin-bulk-footer"><label>Ghi chú<textarea data-bulk-note rows="2" maxlength="1000"></textarea></label><div class="admin-bulk-confirm"><div class="actions"><button class="primary" type="button" data-bulk-save disabled>Phân công</button><button type="button" class="secondary" data-bulk-back>Hủy</button></div></div><p data-bulk-outcome role="status" aria-live="polite"></p></section>`;
 }
 
 export function assignmentPreviewTable(rows,{selected,blocked,outcomes,busy}) {
@@ -127,6 +128,7 @@ export function openBulkAssignment({ ctx, body, trigger, onBack }) {
       }});
       if(!valid())return;
       const success=results.filter(item=>item.success).length,stopped=results.find(item=>item.stop);
+      if(batchFinishedSuccessfully(results,candidates.length,item=>item.success)){busy=false;formDialog.close();return;}
       find("[data-bulk-outcome]").textContent=`Đã phân công ${success}/${candidates.length} ca. ${selected.size?`Còn ${selected.size} ca chưa phân công; xem lý do trong bảng.`:"Tất cả ca đã chọn đã được phân công."}${stopped?" Bấm Tải lại danh sách ca để kiểm tra dữ liệu mới nhất trước khi tiếp tục.":""}`;
       if(stopped){ready=false;find("[data-bulk-reload]").hidden=false;ctx.handle(stopped.error,feedback);}
     }catch(error){if(valid()){ready=false;find("[data-bulk-reload]").hidden=false;tell(error.message,true);ctx.handle(error,feedback);find("[data-bulk-outcome]").textContent="Chưa kiểm tra được lịch. Bấm Tải lại danh sách ca để tải lại trước khi tiếp tục.";}}
@@ -139,7 +141,7 @@ export function openBulkAssignment({ ctx, body, trigger, onBack }) {
     }else if(target.hasAttribute("data-bulk-reload")){load();}
     else if(target.hasAttribute("data-bulk-nurses")){loadNurses();}
     else if(target.hasAttribute("data-bulk-all")){
-      toggleAllAvailable(visible(),selected,row=>String(row.schedule_id),row=>!blocked(row));render();
+      markFormChanged(formDialog.dialog);toggleAllAvailable(visible(),selected,row=>String(row.schedule_id),row=>!blocked(row));render();
     }
     else if(target.hasAttribute("data-bulk-save"))save();
   });

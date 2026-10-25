@@ -1,0 +1,14 @@
+/* Keep the staff shell and share the administrator's notification content styles. */
+.staff-notifications-page .staff-content { max-width: 1680px; padding: 38px; }
+.staff-notifications-page #feedback-filters { grid-template-columns: minmax(200px, 1.5fr) minmax(150px, 1fr) repeat(2, minmax(135px, .85fr)); }
+.staff-notifications-page #admin-dialog { box-sizing: border-box; width: min(760px, calc(100% - 32px)); height: fit-content; min-height: 0; max-height: calc(100dvh - 32px); margin: auto; inset: 0; overflow-y: auto; }
+@media (max-width: 1200px) {
+  .staff-notifications-page #feedback-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 680px) {
+  .staff-notifications-page .staff-content { padding: 24px 16px; }
+  .staff-notifications-page #feedback-filters label:first-child { grid-column: 1 / -1; }
+}
+@media (max-width: 380px) {
+  .staff-notifications-page #feedback-filters { grid-template-columns: minmax(0, 1fr); }
+}

@@ -32,15 +32,6 @@ export function resetPassword(data, options = {}) {
   return apiRequest("/auth/reset-password", { ...options, method: "POST", data, auth: false });
 }
 
-/** POST /auth/email-verification/request */
-export function requestEmailVerification(options = {}) {
-  return apiRequest("/auth/email-verification/request", { ...options, method: "POST" });
-}
-
-/** POST /auth/email-verification/confirm */
-export function confirmEmailVerification(data, options = {}) {
-  return apiRequest("/auth/email-verification/confirm", { ...options, method: "POST", data, auth: false });
-}
 
 /** GET /me */
 export function getMe(options = {}) {
@@ -59,22 +50,6 @@ export function uploadMyAvatar(file, options = {}) {
   return apiRequest("/me/avatar", { ...options, method: "POST", data });
 }
 
-/** DELETE /me/avatar */
-export function deleteMyAvatar(options = {}) {
-  return apiRequest("/me/avatar", { ...options, method: "DELETE" });
-}
-
-/** POST /admin/users/<int:user_id>/avatar */
-export function uploadUserAvatar(userId, file, options = {}) {
-  const data = new FormData();
-  data.append("file", file);
-  return apiRequest(`/admin/users/${pathSegment(userId)}/avatar`, { ...options, method: "POST", data });
-}
-
-/** DELETE /admin/users/<int:user_id>/avatar */
-export function deleteUserAvatar(userId, options = {}) {
-  return apiRequest(`/admin/users/${pathSegment(userId)}/avatar`, { ...options, method: "DELETE" });
-}
 
 /** POST /me/change-password */
 export function changePassword(data, options = {}) {
@@ -111,8 +86,4 @@ export function setAccountStatus(userId, data, options = {}) {
   return apiRequest(`/admin/users/${pathSegment(userId)}/account-status`, { ...options, method: "PATCH", data });
 }
 
-/** DELETE /admin/users/<int:user_id> */
-export function deleteUser(userId, options = {}) {
-  return apiRequest(`/admin/users/${pathSegment(userId)}`, { ...options, method: "DELETE" });
-}
 

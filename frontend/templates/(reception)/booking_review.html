@@ -1,0 +1,32 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Xem lại thông tin đăng ký | NEU Medical</title><link rel="stylesheet" href="../../static/css/home.css"><link rel="stylesheet" href="../../static/css/public_pages.css"><link rel="stylesheet" href="../../static/css/patient_pages.css"><link rel="stylesheet" href="../../static/css/booking_page.css"><link rel="stylesheet" href="../../static/css/reception_booking.css"><script type="module" src="../../static/js/pages/reception_booking.js"></script></head><body class="reception-booking-page auth-pending booking-review-body" data-booking-stage="booking_review"><a class="skip-link" href="#main">Đến nội dung chính</a><header class="patient-header"><div class="identity"><div class="brand"><img class="brand-logo" src="../../static/assets/bieu_trung_neu.png" alt="Logo NEU Medical" width="68" height="68"><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></div><span class="reception-booking-label">Đăng ký khám tại quầy</span></div></header><div id="reception-booking-status" class="section-wrap booking-auth-status" role="status"><p>Đang tải thông tin…</p><button id="reception-booking-retry" type="button" class="outline-button" hidden>Thử lại</button><a href="walk_in.html?mode=direct" class="outline-button">Về danh sách trực tiếp</a></div><main id="main" class="booking-review-main">
+      
+    <section id="booking-review-page" class="booking-confirm-dialog booking-review-page" aria-labelledby="booking-dialog-title" hidden>
+      <div class="dialog-heading">
+        <h1 id="booking-dialog-title">Xem lại thông tin đặt khám</h1>
+      </div>
+      <div class="booking-review-grid">
+        <section class="booking-review-panel" aria-labelledby="booking-patient-title">
+          <h3 id="booking-patient-title"><span>1</span> Thông tin người khám &amp; triệu chứng</h3>
+          <div id="booking-review-patient"></div>
+        </section>
+        <div class="booking-review-right">
+          <section class="booking-review-panel" aria-labelledby="booking-visit-title">
+            <h3 id="booking-visit-title"><span>2</span> Thông tin lượt khám</h3>
+            <div id="booking-review"></div>
+          </section>
+
+        </div>
+      </div>
+      <p id="booking-dialog-status" role="status"></p>
+      <footer class="booking-review-footer">
+        <div class="booking-dialog-actions">
+          <button id="booking-back" type="button" class="outline-button">← Quay lại chọn lịch</button>
+        </div>
+        <div class="booking-review-checkout">
+          <div><span>Tổng tiền khám</span><strong id="booking-review-total"></strong></div>
+          <button id="booking-confirm" type="button" class="solid-button">Thanh toán →</button>
+        </div>
+        <p id="booking-confirm-note">Kiểm tra người bệnh và ca khám trước khi chuyển sang bước thanh toán.</p>
+      </footer>
+    </section>
+    </main><footer class="reception-booking-footer">© NEU Medical · Đăng ký khám tại quầy</footer></body></html>

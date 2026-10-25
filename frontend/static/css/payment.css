@@ -4,12 +4,14 @@
 .payment-page > h1 { margin: 24px 0; color: var(--deep); font-size: 28px; }
 .payment-layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px; align-items: start; }
 .payment-panel { min-width: 0; padding: 26px; border: 1px solid #d6e4de; border-radius: 5px; background: white; }
-.payment-panel h2 { margin: 0 0 20px; padding-bottom: 16px; border-bottom: 1px solid #dce5df; color: var(--deep); font-size: 21px; }
+.payment-panel h2 { margin: 0 0 20px; padding-bottom: 16px; border-bottom: 1px solid #dce5df; color: var(--deep); font-size: 22px; }
 .payment-panel .booking-qr { flex-direction: column; text-align: center; padding: 22px 16px; border-radius: 5px; }
 .payment-panel .booking-qr svg { width: 190px; flex-basis: auto; }
 .payment-panel label { display: block; margin: 22px 0 8px; font-weight: 600; }
 .payment-panel select { display: block; width: 100%; min-height: 44px; padding: 11px 12px; border: 1px solid #cbd9cf; border-radius: 5px; background: white; color: var(--ink); font: inherit; }
-.payment-panel button { min-height: 44px; border-radius: 5px; }
+.payment-page :is(.solid-button, .outline-button) { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: 44px; padding: 12px 18px; border-radius: 5px; font: inherit; font-size: 14px; font-weight: 600; line-height: 1.4; text-align: center; text-decoration: none; gap: 8px; }
+.payment-page .outline-button { border: 1px solid #c5dbcf; background: #fff; color: #286b4a; }
+.payment-page .outline-button:not(:disabled):hover, .payment-page .outline-button:not(:disabled):focus-visible { background: #e6f4ec; color: #17633c; border-color: #8dbba3; }
 #booking-payment-create { width: 100%; margin-top: 18px; }
 .payment-results { display: grid; gap: 12px; margin-top: 20px; }
 .payment-results p, .payment-status { color: var(--muted); font-size: 13px; line-height: 1.6; }
@@ -18,8 +20,9 @@
 .payment-summary dd { text-align: right; }
 .payment-summary-total { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin: 22px 0 0; padding-top: 20px; border-top: 1px solid #dce5df; }
 .payment-summary-total strong { color: var(--green); font-size: 24px; white-space: nowrap; }
-.payment-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
-.payment-actions a, .payment-actions button { min-height: 44px; padding: 12px 18px; border-radius: 5px; font: inherit; font-size: 14px; }
+/* Payment controls must not inherit the main navigation's stretched layout. */
+.payment-actions { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 12px; max-width: none; min-height: 0; padding: 0; margin: 24px 0 0; }
+.payment-actions a, .payment-actions button { flex: 0 0 auto; min-height: 44px; margin: 0; }
 .payment-page > .booking-success { background: white; border: 1px solid #d6e4de; border-radius: 5px; padding: 36px 24px; }
 .payment-page button:disabled { opacity: .6; cursor: wait; }
 @media (max-width: 760px) {
@@ -29,4 +32,5 @@
   .payment-summary { grid-row: 1; }
   .payment-panel { padding: 20px; }
   .payment-actions { gap: 10px; }
+  .payment-actions :is(a,button) { flex: 1 1 180px; white-space: normal; }
 }

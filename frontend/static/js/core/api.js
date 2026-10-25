@@ -1,3 +1,4 @@
+import "./form_workflow.js";
 import { API_CONFIG } from "../config.js";
 
 // Chỉ giữ token trong bộ nhớ khi bên gọi chủ động cung cấp. Không tạo/lưu phiên.
@@ -103,7 +104,7 @@ export async function apiRequest(path, {
   } catch (cause) {
     if (cause instanceof ApiError) throw cause;
     const code = timedOut ? "CLIENT_TIMEOUT" : controller.signal.aborted ? "CLIENT_ABORTED" : "CLIENT_NETWORK_ERROR";
-    const message = timedOut ? "Máy chủ phản hồi quá lâu." : controller.signal.aborted ? "Yêu cầu đã được hủy." : "Không thể kết nối tới backend.";
+    const message = timedOut ? "Máy chủ phản hồi quá lâu." : controller.signal.aborted ? "Yêu cầu đã được hủy." : "Hệ thống chưa sẵn sàng hoạt động.";
     throw new ApiError(message, { code, cause });
   } finally {
     pendingRequests--;

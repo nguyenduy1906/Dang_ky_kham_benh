@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Lịch làm việc | NEU Medical</title>
   <link rel="stylesheet" href="../../static/css/staff_workspace.css">
-  <link rel="stylesheet" href="../../static/css/work_calendar.css?v=20261017-api">
-  <script type="module" src="../../static/js/pages/work_calendar.js?v=20261017-api" blocking="render"></script>
+  <link rel="stylesheet" href="../../static/css/work_calendar.css?v=20261023-state-colors">
+  <script type="module" src="../../static/js/pages/work_calendar.js?v=20261023-reception-api" blocking="render"></script>
 </head>
 <body class="staff-page work-calendar-page reception-page staff-auth-pending" data-role="reception" data-page-title="Lịch làm việc" data-page="work_calendar">
   <a class="skip-link" href="#main-content">Đến nội dung chính</a>
@@ -29,7 +29,7 @@
           <p id="calendar-status" class="calendar-status" role="status"></p>
           <p id="calendar-announcement" class="visually-hidden" role="status"></p>
           <div class="calendar-scroll" role="region" aria-label="Lịch từ thứ Hai đến Chủ nhật" tabindex="0"><div id="calendar-grid" class="calendar-grid"></div></div>
-          <div class="calendar-legend" aria-label="Chú thích"><span><i aria-hidden="true"></i>Ca sáng</span><span><i class="legend-afternoon" aria-hidden="true"></i>Ca chiều</span><span><i class="legend-leave" aria-hidden="true"></i>Đã duyệt nghỉ</span><span><i class="legend-free" aria-hidden="true"></i>Không có ca</span></div>
+          <div class="calendar-legend" aria-label="Chú thích"><span><i aria-hidden="true"></i>Làm việc</span><span><i class="legend-pending" aria-hidden="true"></i>Đang xin nghỉ</span><span><i class="legend-leave" aria-hidden="true"></i>Đã duyệt nghỉ</span><span><i class="legend-free" aria-hidden="true"></i>Không có ca</span></div>
           <p class="calendar-hint">Chọn một ca để xem chi tiết hoặc điền ngày, buổi nghỉ vào biểu mẫu bên dưới.</p>
         </section>
         <section id="leave-section" class="panel" aria-labelledby="leave-title" style="scroll-margin-top: 100px">
@@ -61,7 +61,7 @@
     </div>
   </div>
   <dialog id="calendar-dialog" aria-labelledby="calendar-dialog-title">
-    <div class="section-heading"><h2 id="calendar-dialog-title">Chi tiết</h2><button id="calendar-dialog-close" class="secondary" type="button" aria-label="Đóng hộp thoại">Đóng ×</button></div>
+    <div class="section-heading"><h2 id="calendar-dialog-title">Chi tiết</h2><button id="calendar-dialog-close" class="secondary" type="button" aria-label="Đóng hộp thoại">Đóng</button></div>
     <div id="calendar-dialog-body"></div>
     <div class="actions"><button id="dialog-use-date" type="button" hidden>Xin nghỉ ca này</button><button id="dialog-cancel-request" type="button" class="secondary" hidden>Xác nhận rút đơn</button></div>
     <p id="dialog-feedback" class="leave-feedback" role="status"></p>

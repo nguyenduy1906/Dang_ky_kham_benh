@@ -1,10 +1,11 @@
+import {markFormChanged} from "./form_workflow.js";
 import { readAdminArticles, readAdminArticle, saveAdminArticle } from "./admin_article_data.js";
 import { thumbnailUrl } from "./articles.js";
 import { articleContent } from "./articles.js";
 import { esc, table, facts, stamp } from "./admin_ui.js";
 
 const modes = { draft: "Bản nháp", scheduled: "Hẹn đăng", published: "Đã xuất bản" };
-const stateBadge = mode => `<span class="badge ${mode === "draft" ? "blue" : mode === "scheduled" ? "amber" : "green"}">${modes[mode] || modes.draft}</span>`;
+const stateBadge = mode => `<span class="badge ${mode === "draft" ? "blue" : mode === "scheduled" ? "amber" : "green"}" data-article-status="${Object.hasOwn(modes,mode)?mode:'draft'}">${modes[mode] || modes.draft}</span>`;
 const field = (name, title, value = "", type = "text", extra = "") => ["slug", "thumbnail_url", "section_image"].includes(name) ? `<input type="hidden" name="${name}" value="${esc(value)}" ${extra}>` : `<label>${title}<input name="${name}" type="${type}" value="${esc(value)}" ${extra}></label>`;
 const safeImage = value => {
   try { const url = new URL(value.startsWith("/uploads/") ? thumbnailUrl(value) : value, location.href); return ["http:", "https:", "blob:"].includes(url.protocol) && !url.username && !url.password ? url.href : ""; } catch { return ""; }
@@ -73,8 +74,8 @@ export async function initArticlePresentation(administrator) {
   new MutationObserver(syncHeaderBack).observe(modalBody, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden"] });
   const objectUrls = new Set();
   const heading = document.querySelector("#page-header");
-  heading.insertAdjacentHTML("beforeend", '<button type="button" data-article-action="create">+ Viết bài mới</button>');
-  body.innerHTML = `<section class="admin-card admin-articles-list"><form id="article-filters" class="admin-toolbar"><label>Tiêu đề / nội dung<input type="search" name="q" placeholder="Tìm bài viết…"></label><label>Danh mục<select name="category"><option value="">Tất cả danh mục</option>${[...new Set(rows.map(row => row.category))].map(item => `<option>${esc(item)}</option>`).join("")}</select></label><label>Trạng thái<select name="mode"><option value="">Tất cả trạng thái</option>${Object.entries(modes).map(([value, label]) => `<option value="${value}">${label}</option>`).join("")}</select></label></form><div id="article-results"></div><div class="admin-pagination" id="article-count" role="status"></div></section>`;
+  heading.insertAdjacentHTML("beforeend", '<button class="primary" type="button" data-article-action="create">+ Viết bài mới</button>');
+  body.innerHTML = `<section class="admin-card admin-articles-list"><div class="admin-panel-heading"><h2>Danh sách tin tức</h2></div><form id="article-filters" class="admin-toolbar"><label>Tiêu đề / nội dung<input type="search" name="q" placeholder="Tìm bài viết…"></label><label>Danh mục<select name="category"><option value="">Tất cả danh mục</option>${[...new Set(rows.map(row => row.category))].map(item => `<option>${esc(item)}</option>`).join("")}</select></label><label>Trạng thái<select name="mode"><option value="">Tất cả trạng thái</option>${Object.entries(modes).map(([value, label]) => `<option value="${value}">${label}</option>`).join("")}</select></label></form><div id="article-results"></div><div class="admin-pagination" id="article-count" role="status"></div></section>`;
   const filters = document.querySelector("#article-filters");
   let articlePage=1;
   const pageSize=10;
@@ -209,6 +210,7 @@ export async function initArticlePresentation(administrator) {
     if (action === "close") modal.close();
     if (action === "back-editor" && editorNodes) { modalBody.replaceChildren(...editorNodes); title.textContent = !modalBody.querySelector("#article-content-editor").hidden ? "Nội dung bài viết" : currentRow.id ? "Chỉnh sửa bài viết" : "Viết bài mới"; modal.scrollTop = 0; modalBody.querySelector('button[type="submit"]').focus(); return; }
     if (!form) return;
+    if (["add-section","remove-section","remove-section-image","remove-cover"].includes(action))markFormChanged(form);
     if (action === "add-section") {
       const container = form.querySelector("[data-article-sections]");
       container.insertAdjacentHTML("beforeend", articleSectionMarkup({}, container.children.length));
@@ -256,9 +258,9 @@ export async function initArticlePresentation(administrator) {
     if (form.elements.mode.value === "scheduled" && new Date(published) <= new Date()) { feedback.textContent = "Chọn thời điểm hẹn đăng sau thời gian hiện tại."; return; }
     const row = { ...currentRow, ...Object.fromEntries(new FormData(form)), sections, published_at: published };
     pendingRow = row;
-    editorNodes = [...modalBody.childNodes];
+    form.dataset.workflowRetain="true";editorNodes = [...modalBody.childNodes];
     const confirmation = row.mode === "scheduled" ? "Xác nhận hẹn đăng" : row.mode === "published" ? currentRow.mode === "published" ? "Xác nhận cập nhật" : "Xác nhận đăng tin" : "Lưu bản nháp";
-    open("Xem trước bài viết", '<div class="admin-article-preview"><button type="button" class="secondary" data-article-action="back-editor">← Quay lại chỉnh sửa</button>' + articleDetailMarkup(row) + '<div class="actions admin-article-preview-footer"><button type="button" data-article-action="confirm-article">' + confirmation + '</button></div></div>');
+    open("Xem trước bài viết", '<div class="admin-article-preview"><button type="button" class="secondary" data-article-action="back-editor">← Quay lại chỉnh sửa</button>' + articleDetailMarkup(row) + '<div class="actions admin-article-preview-footer"><button class="primary" type="button" data-article-action="confirm-article">' + confirmation + '</button></div></div>');
     modalBody.querySelector(".admin-article-metadata")?.remove();
     renderContent(row);
   });

@@ -1,3 +1,6 @@
+import {commitForm} from "../core/form_workflow.js";
+import {reviewChoices,selectedReview} from '../core/patient_review.js';
+import {code} from '../core/business_codes.js';
 import { startAutoRefresh } from "../core/auto_refresh.js";
 import { getDoctor } from "../api/doctor.js";
 import { listDoctorSchedules } from "../api/schedule.js";
@@ -16,7 +19,9 @@ const reviewForm = $("#doctor-review-form"), reviewList = $("#doctor-reviews");
 let request, scheduleRequest, reviewRequest, accessRequest;
 let version = 0, scheduleVersion = 0, reviewVersion = 0, accessVersion = 0;
 let reviewPage = 0, reviewTotal = 0, reviewsLoading = false, submitting = false;
-let eligibleEncounter;
+let eligibleEncounter, eligibleRows=[];
+const reviewEncounter=$("#review-encounter");
+reviewEncounter.addEventListener("change",()=>{eligibleEncounter=eligibleRows.find(row=>String(row.encounter_id)===reviewEncounter.value)?.encounter_id;});
 
 async function loadSchedules() {
   const current = ++scheduleVersion;
@@ -80,7 +85,8 @@ async function refreshReviewAccess() {
   const current = ++accessVersion;
   accessRequest?.abort(); accessRequest = new AbortController();
   reviewForm.hidden = true; $("#review-fields").disabled = true; $("#review-fields").hidden = true;
-  eligibleEncounter = undefined;
+  const preferred=reviewEncounter.value;
+  eligibleEncounter = undefined;eligibleRows=[];reviewEncounter.replaceChildren();
   if (!hasSession()) return;
   try {
     if (!await verifySession() || current !== accessVersion) return;
@@ -88,12 +94,18 @@ async function refreshReviewAccess() {
     $("#review-access-retry").hidden = true;
     const rows = await allPages(listEncounters, { doctor_profile_id: id, encounter_status: "COMPLETED" }, { signal: accessRequest.signal });
     if (current !== accessVersion || !hasSession()) return;
-    const choices = rows.sort((a, b) =>
-      `${b.work_date} ${b.estimated_exam_at || ""}`.localeCompare(`${a.work_date} ${a.estimated_exam_at || ""}`) || b.encounter_id - a.encounter_id);
-    eligibleEncounter = choices[0]?.encounter_id;
-    $("#review-fields").hidden = !eligibleEncounter;
-    $("#review-fields").disabled = !eligibleEncounter || submitting;
-    $("#review-eligibility").textContent = eligibleEncounter ? "" : "Bạn có thể đánh giá sau khi hoàn tất lượt khám với bác sĩ.";
+    const choices = reviewChoices(rows,id);eligibleRows=choices;
+    const placeholder=element('option','Chọn lượt khám');placeholder.value='';reviewEncounter.append(placeholder);
+    for(const row of choices){
+      const option=element('option',`${row.patient_name} · ${dateLabel(row.work_date)} · ${code('LK',row.encounter_id)}`);
+      option.value=String(row.encounter_id);reviewEncounter.append(option);
+    }
+    reviewEncounter.value=choices.some(row=>String(row.encounter_id)===preferred)?preferred:'';
+    eligibleEncounter=choices.find(row=>String(row.encounter_id)===reviewEncounter.value)?.encounter_id;
+    $('#review-fields').hidden=!choices.length;
+    $('#review-fields').disabled=!choices.length||submitting;
+    $('#review-eligibility').textContent=choices.length?'Chọn đúng người bệnh và lượt khám để gửi đánh giá.':'Bạn có thể đánh giá sau khi hoàn tất lượt khám với bác sĩ.';
+
   } catch (error) {
     if (current !== accessVersion || error.code === "CLIENT_ABORTED") return;
     if (!hasSession()) { reviewForm.hidden = true; return; }
@@ -103,13 +115,14 @@ async function refreshReviewAccess() {
 }
 reviewForm.addEventListener("submit", async event => {
   event.preventDefault();
-  if (submitting || !hasSession() || !eligibleEncounter || !reviewForm.reportValidity()) return;
+  if (submitting || !hasSession() || !reviewForm.reportValidity()) return;
+  try{eligibleEncounter=selectedReview(eligibleRows,reviewEncounter.value,id).encounter_id;}catch(error){$("#review-submit-status").textContent=error.message;return;}
   const data = new FormData(reviewForm), encounterId = eligibleEncounter;
   submitting = true; $("#review-fields").disabled = true;
   $("#review-submit-status").textContent = "Đang gửi đánh giá…";
   try {
     await createReview(encounterId, { rating: Number(data.get("rating")), comment: $("#review-comment").value.trim() || null });
-    reviewForm.reset();
+    commitForm(reviewForm);reviewForm.reset();
     $("#review-submit-status").textContent = "Đã gửi đánh giá. Cảm ơn bạn đã chia sẻ.";
     loadReviews(true); refreshReviewAccess();
   } catch (error) {
@@ -117,7 +130,7 @@ reviewForm.addEventListener("submit", async event => {
     if ([401, 403, 409].includes(error.status)) refreshReviewAccess();
   } finally {
     submitting = false;
-    $("#review-fields").disabled = !eligibleEncounter || !hasSession();
+    $("#review-fields").disabled = !eligibleRows.length || !hasSession();
   }
 });
 $("#review-more").addEventListener("click", () => loadReviews());

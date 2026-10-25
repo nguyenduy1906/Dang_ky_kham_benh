@@ -50,14 +50,11 @@ def review_request(db, request_id, fields, actor_id, effects):
 
 
 def overlapping(db, user_id, start, end, period, *, approved_only=False):
-    # Calendar intersection must contain a weekday (Fri and Mon requests may share a weekend).
     return db.execute('''SELECT l.* FROM staff_leave_request l WHERE user_id=%s
         AND status=ANY(%s) AND from_date<=%s AND to_date>=%s
         AND (period='FULL_DAY' OR %s='FULL_DAY' OR period=%s)
-        AND EXISTS(SELECT 1 FROM generate_series(GREATEST(l.from_date,%s::date),
-            LEAST(l.to_date,%s::date),'1 day'::interval) d WHERE EXTRACT(ISODOW FROM d)<=5)
         ORDER BY request_id''', (user_id, ['APPROVED'] if approved_only else ['PENDING', 'APPROVED'],
-                                end, start, period, period, start, end)).fetchall()
+                                end, start, period, period)).fetchall()
 
 
 def notify(db, user_id, request_id, event, title, content):
@@ -79,7 +76,7 @@ def affected_schedules(db, leave, role, *, lock=False):
     scope = ('d.user_id=%s' if role == 'DOCTOR' else '''EXISTS(SELECT 1 FROM nurse_assignment a
         WHERE a.schedule_id=s.schedule_id AND a.nurse_id=%s AND a.revoked_at IS NULL)''')
     return db.execute('''SELECT s.* FROM work_schedule s JOIN doctor_profile d USING(doctor_profile_id)
-        WHERE ''' + scope + ''' AND s.work_date BETWEEN %s AND %s AND EXTRACT(ISODOW FROM s.work_date)<=5
+        WHERE ''' + scope + ''' AND s.work_date BETWEEN %s AND %s
         AND (%s='FULL_DAY' OR (%s='MORNING' AND s.start_time<'12:00')
              OR (%s='AFTERNOON' AND s.end_time>'12:00'))
         ORDER BY s.schedule_id''' + (' FOR UPDATE OF s' if lock else ''),

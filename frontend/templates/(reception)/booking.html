@@ -1,0 +1,57 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Đăng ký khám | NEU Medical</title><link rel="stylesheet" href="../../static/css/home.css"><link rel="stylesheet" href="../../static/css/public_pages.css"><link rel="stylesheet" href="../../static/css/patient_pages.css"><link rel="stylesheet" href="../../static/css/booking_page.css"><link rel="stylesheet" href="../../static/css/reception_booking.css"><script type="module" src="../../static/js/pages/reception_booking.js"></script></head><body class="reception-booking-page auth-pending" data-booking-stage="booking"><a class="skip-link" href="#main">Đến nội dung chính</a><header class="patient-header"><div class="identity"><div class="brand"><img class="brand-logo" src="../../static/assets/bieu_trung_neu.png" alt="Logo NEU Medical" width="68" height="68"><span><strong>NEU MEDICAL</strong><small>BỆNH VIỆN NEU MEDICAL</small></span></div><span class="reception-booking-label">Đăng ký khám tại quầy</span></div></header><div id="reception-booking-status" class="section-wrap booking-auth-status" role="status"><p>Đang tải thông tin…</p><button id="reception-booking-retry" type="button" class="outline-button" hidden>Thử lại</button><a href="walk_in.html?mode=direct" class="outline-button">Về danh sách trực tiếp</a></div><main id="main" class="appointment-page booking-workspace" inert>
+      <div class="patient-heading">
+        
+        <div class="booking-heading-row"><h1>Đăng ký khám</h1></div>
+      </div>
+      
+      <form id="appointment-form">
+        <div class="booking-columns">
+          <div class="booking-choice-column">
+            <section class="booking-step" aria-labelledby="booking-department-title">
+              <div class="booking-step-heading"><h2 id="booking-department-title">Chọn chuyên khoa khám</h2></div>
+              <label class="visually-hidden" for="department-search">Tìm chuyên khoa</label>
+              <input id="department-search" class="booking-search-input" type="search" placeholder="Tìm chuyên khoa..." />
+              <div id="appointment-department-field" class="visually-hidden" hidden><label for="appointment-department">Chuyên khoa</label><select id="appointment-department" tabindex="-1"><option value="">Tất cả chuyên khoa</option></select></div>
+              <div id="booking-departments" class="booking-departments" role="group" aria-label="Chọn chuyên khoa"></div>
+              <p id="department-empty" class="field-note" hidden>Không tìm thấy chuyên khoa phù hợp.</p>
+            </section>
+            <section class="booking-step booking-doctors-step" aria-labelledby="booking-doctors-title">
+              <div class="booking-step-heading"><h2 id="booking-doctors-title">Chọn bác sĩ phụ trách</h2><span id="appointment-count" role="status"></span></div>
+              <label class="visually-hidden" for="appointment-search">Tìm theo tên bác sĩ</label><input id="appointment-search" class="booking-search-input" type="search" placeholder="Tìm kiếm theo tên bác sĩ..." />
+              <div class="booking-data-status" role="status"><p id="booking-data-status">Đang tải bác sĩ và hồ sơ người khám…</p><button id="booking-data-retry" type="button" class="add-relative-button" hidden>Tải lại dữ liệu</button></div>
+              <div class="booking-doctor-list" aria-busy="true"></div>
+              <p id="appointment-empty" class="field-note" hidden>Không tìm thấy bác sĩ phù hợp. Hãy thay đổi từ khóa hoặc chuyên khoa.</p>
+            </section>
+          </div>
+          <div class="booking-calendar-column">
+            <div id="chosen-schedule" class="booking-calendar" aria-busy="false">
+              <section class="booking-step" aria-labelledby="chosen-schedule-title">
+                <div class="booking-step-heading"><h2 id="chosen-schedule-title">Chọn ngày khám</h2><div class="booking-day-navigation"><button type="button" id="booking-day-prev" aria-label="Xem các ngày trước">‹</button><button type="button" id="booking-day-next" aria-label="Xem các ngày tiếp theo">›</button></div></div>
+                <div hidden><input id="schedule-from" type="hidden" /><input id="schedule-to" type="hidden" /><p id="schedule-range-error"></p></div>
+                <p id="schedule-status" role="status">Chọn bác sĩ để xem lịch khám còn trống.</p><button id="schedule-retry" type="button" class="add-relative-button" hidden>Tải lại lịch khám</button>
+                <div id="appointment-day-buttons" class="appointment-day-buttons" role="group" aria-label="Chọn ngày khám"></div>
+                <div hidden><label for="appointment-date">Ngày khám</label><select id="appointment-date" tabindex="-1"><option value="">Chọn ngày khám</option></select><label for="appointment-shift">Ca khám</label><select id="appointment-shift" tabindex="-1"><option value="">Chọn ca khám</option></select></div>
+              </section>
+              <section class="booking-step" aria-labelledby="booking-slots-title">
+                <div class="booking-step-heading"><h2 id="booking-slots-title">Chọn ca khám còn trống</h2><div class="booking-slot-legend"><span>● Đang chọn</span><span>○ Còn trống</span></div></div>
+                <div id="booking-slots"><p class="field-note">Các khung giờ có thể đặt sẽ hiển thị sau khi chọn bác sĩ.</p></div>
+                <div class="booking-selection" aria-live="polite"><p class="booking-selection-label">LỊCH KHÁM ĐANG CHỌN</p><p id="booking-selection-summary">Bạn chưa chọn khung giờ khám.</p><p id="booking-selection-fee"></p></div>
+              </section>
+            </div>
+            <section class="booking-step booking-patient-step" aria-labelledby="booking-patient-title">
+              <div class="booking-step-heading"><h2 id="booking-patient-title">Thông tin người khám</h2></div>
+              <div class="booking-patient-grid">
+                <div class="appointment-field"><label for="appointment-patient">Người tới khám *</label><input id="appointment-patient" readonly aria-readonly="true"><input id="reception-patient-id" type="hidden"><p class="field-note" id="relative-status" role="status"></p></div>
+                <div class="appointment-field"><label for="appointment-location">Cơ sở khám</label><select id="appointment-location"><option>NEU Medical — 207 Giải Phóng</option></select></div>
+                <div class="appointment-field booking-patient-full"><label for="appointment-symptoms">Vấn đề sức khỏe gặp phải *</label><textarea id="appointment-symptoms" required rows="3" maxlength="2000" placeholder="Mô tả ngắn gọn triệu chứng..."></textarea></div>
+              </div>
+            </section>
+          </div>
+        </div>
+        <div class="booking-workspace-footer">
+          <a href="walk_in.html?mode=direct" class="outline-button">← Về danh sách trực tiếp</a>
+          <div class="booking-footer-checkout"><div><span>Phí khám · Thanh toán ở bước tiếp theo</span><strong id="booking-total-fee">Chưa chọn bác sĩ</strong></div><button id="appointment-review-submit" class="solid-button" type="submit">Kiểm tra thông tin →</button></div>
+          <p id="appointment-status" role="status"></p>
+        </div>
+      </form>
+    </main><footer class="reception-booking-footer">© NEU Medical · Đăng ký khám tại quầy</footer></body></html>

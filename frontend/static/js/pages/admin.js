@@ -5,7 +5,8 @@ import { staffTopbar } from "../core/staff_topbar.js";
 import { enhanceDialogDismiss } from "../core/dialog_dismiss.js";
 
 import { requireAdmin } from "../core/admin_access.js";
-import {initAdminNotificationBadge} from "../core/admin_notification_badge.js";
+import {initAdminNotificationBadge,initAdminActivityBadge} from "../core/admin_notification_badge.js";
+import {initAdminTopbar,focusAdminFunction} from '../core/admin_topbar.js';
 import { signOut, loginUrl, hasSession } from "../core/session.js";
 
 // Verify the existing administrator session before loading management data.
@@ -33,7 +34,6 @@ const shapes = {
 const icon = key => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${shapes[key] || shapes.record}</svg>`;
 const key = Object.hasOwn(pages, document.body.dataset.page) ? document.body.dataset.page : "home";
 const page = pages[key];
-const presentationPage = false;
 const profileHref = adminPageHref("profile");
 const dialog = $("#admin-dialog");
 enhanceDialogDismiss(dialog, {canClose: () => dialog.getAttribute("aria-busy") !== "true"});
@@ -41,7 +41,6 @@ $("#dialog-close").addEventListener("click", () => dialog.close());
 $("#staff-sidebar").innerHTML = `<a class="staff-brand" href="home.html"><img src="../../static/assets/bieu_trung_neu.png" alt="Biểu trưng NEU"><span><strong>NEU Medical</strong><small>KHÔNG GIAN QUẢN TRỊ</small></span></a><nav aria-label="Điều hướng quản trị">${sections.map(([title, items]) => `<p class="staff-nav-label">${title}</p>${items.map(([id, label, symbol]) => `<a href="${adminPageHref(id)}" ${key === id ? 'aria-current="page"' : ""}>${icon(symbol)}<span>${label}</span></a>`).join("")}`).join("")}</nav><div class="staff-sidebar-bottom admin-logout"><button type="button" id="admin-signout" title="Đăng xuất"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M9 3H3v18h6M10 12h11M17 8l4 4-4 4"/></svg><span>Đăng xuất</span></button></div>`;
 $("#staff-topbar").innerHTML = staffTopbar({ title: page.title, profileHref, name: "Quản trị viên", initials: "QT" });
 $("#admin-signout").addEventListener("click", async event => {
-  if (presentationPage) { location.href = "../public/home.html"; return; }
   event.currentTarget.disabled = true;
   try { await signOut(); }
   catch { /* The local session is cleared even if the backend is unavailable. */ }
@@ -52,13 +51,8 @@ function suspendAdmin() {
   $("#main-content").inert = true;
 }
 window.addEventListener("neu:auth-change", () => {
-  if (presentationPage) return;
   if (!hasSession()) { suspendAdmin(); location.replace(loginUrl(new URL(location.href)).href); }
 });
-$("#page-title").textContent = page.title;
-$("#page-title").hidden = true;
-$("#page-header .eyebrow").hidden = true;
-$("#page-description").textContent = page.description;
 document.title = `${page.title} | NEU Medical`;
 const menuButton = $(".staff-menu-toggle");
 initializeSidebarCollapse("admin");
@@ -84,29 +78,21 @@ document.addEventListener("keydown", event => {
 });
 matchMedia("(max-width: 960px)").addEventListener("change", event => { if (!event.matches) setMenu(false); });
 
-// Presentation pages stay standalone while their API integration is deferred.
-if (presentationPage) {
-  document.body.classList.remove("staff-auth-pending");
-  $("#main-content").inert = false;
-  $("#staff-access").hidden = true;
-  if (key === "articles") {
+const administrator = await requireAdmin();
+if (administrator) {
+  initAdminTopbar();
+  initAdminNotificationBadge();
+  initAdminActivityBadge();
+  $("#staff-account-name").textContent = administrator.full_name;
+  if (key === "reception_assignments") {
+    const {initReceptionAssignmentPresentation} = await import("../core/admin_reception_assignment_presentation.js");
+    await initReceptionAssignmentPresentation();
+  } else if (key === "articles") {
     const { initArticlePresentation } = await import("../core/admin_article_presentation.js");
-    initArticlePresentation();
-  } else {
-    const { initFeedbackPresentation } = await import("../core/admin_feedback_presentation.js");
-    initFeedbackPresentation(key);
-  }
-} else {
-  const administrator = await requireAdmin();
-  if (administrator) {
-    initAdminNotificationBadge();
-    $("#staff-account-name").textContent = administrator.full_name;
-    if (key === "articles") {
-      const { initArticlePresentation } = await import("../core/admin_article_presentation.js");
-      await initArticlePresentation(administrator);
-    } else if (["reviews", "notifications"].includes(key)) {
-      const {initFeedbackPresentation} = await import("../core/admin_feedback_presentation.js");
-      await initFeedbackPresentation(key);
-    } else if (!page.placeholder) await initAdminWorkspace(key);
-  }
+    await initArticlePresentation(administrator);
+  } else if (["reviews", "notifications"].includes(key)) {
+    const {initFeedbackPresentation} = await import("../core/admin_feedback_presentation.js");
+    await initFeedbackPresentation(key);
+  } else if (!page.placeholder) await initAdminWorkspace(key);
+  focusAdminFunction();
 }

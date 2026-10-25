@@ -37,3 +37,11 @@ export function refund(paymentId, data, options = {}) {
   return apiRequest(`/admin/payments/${pathSegment(paymentId)}/refund`, { ...options, method: "POST", data });
 }
 
+
+
+export const listStaffPayments=(params={},options={})=>apiRequest('/staff/payments',{...options,method:'GET',params});
+export const confirmStaffPayment=(id,data,options={})=>apiRequest(`/staff/payments/${pathSegment(id)}/result`,{...options,method:'POST',data});
+
+export const createStaffIntent=(id,data,options={})=>apiRequest(`/staff/encounters/${pathSegment(id)}/payment-intents`,{...options,method:'POST',data});
+
+export const listPaymentOptions=(params={},options={})=>apiRequest('/staff/payment-options',{...options,method:'GET',params});

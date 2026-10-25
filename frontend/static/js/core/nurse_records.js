@@ -1,19 +1,24 @@
+import { doctorEncounterStatuses as registeredEncounterStatuses } from "./doctor_encounter_list.js";
+import { recordDetailView } from "./record_detail_view.js";
 import { startAutoRefresh } from "./auto_refresh.js";
 import { code } from "./business_codes.js";
 import { listPatients, getPatient } from "../api/patient.js";
 import { allPages, nurseEncounters, historyStatuses, localPage, nurseRange, nurseFormRange, recentNursePatients } from "./nurse_encounter_data.js";
 import { nurseRecordTable } from "./nurse_tables.js";
 import { getEncounter } from "../api/encounter.js";
-import { readMedicalRecord } from "./staff_encounters.js";
+import { listDoctorPatientHistory,getDoctorPatientHistory } from "../api/medical_record.js";
+import { readMedicalRecord,medicalRecordMarkup } from "./staff_encounters.js";
 import { sessionError } from "./staff_workspace.js";
 import { bindLiveSearch } from "./live_search.js";
-import { $, esc, date, facts, panel, empty, table, pagination, badge, dialog, encounterSummary } from "./staff_ui.js";
+import { $, esc, date, facts, panel, empty, table, pagination, badge, dialog, time, money, today } from "./staff_ui.js";
 
-// All reads use the existing server-side nurse scope. There are no patient or clinical writes here.
+// Shared read-only records screen. Existing endpoints enforce the signed-in staff role and encounter scope; no patient or clinical writes.
 export async function initNurseRecords() {
-  const initialRange = nurseRange();
+  const initialRange = nurseRange() || {from:today(),to:today()};
+  const doctorView = document.body?.dataset?.role === "doctor";
+  const recordStatuses = historyStatuses.filter(status => registeredEncounterStatuses.includes(status));
   $("#page-body").innerHTML = panel("Tra cứu hồ sơ", `
-    <form id="nurse-record-search" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tên, số điện thoại hoặc CCCD<input type="search" name="q" maxlength="100" placeholder="Nhập thông tin người bệnh…" autocomplete="off" aria-controls="nurse-record-list"></label><label>Trạng thái<select name="encounter_status"><option value="">Tất cả</option><option value="COMPLETED">Đã khám xong</option><option value="NO_SHOW">Không đến khám</option></select></label><label>Từ ngày<input type="date" name="from_date" value="${esc(initialRange?.from || "")}"></label><label>Đến ngày<input type="date" name="to_date" value="${esc(initialRange?.to || "")}"></label></form>
+    <form id="nurse-record-search" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tìm kiếm<input type="search" name="q" maxlength="100" placeholder="Tên, số điện thoại hoặc CCCD" autocomplete="off" aria-controls="nurse-record-list"></label><label>Trạng thái<select name="encounter_status"><option value="">Tất cả</option><option value="COMPLETED">Hoàn thành</option><option value="NO_SHOW">Không đến</option></select></label><label>Từ ngày<input type="date" name="from_date" value="${esc(initialRange?.from || "")}"></label><label>Đến ngày<input type="date" name="to_date" value="${esc(initialRange?.to || "")}"></label></form>
     <p id="nurse-record-status" class="scope-note" role="status" hidden></p><div id="nurse-record-list"></div><div id="nurse-record-pages" class="list-pagination"></div>`)
     + '<section id="nurse-record-detail" class="panel" tabindex="-1" aria-label="Hồ sơ đang xem" hidden></section>';
   const search = $("#nurse-record-search"), detail = $("#nurse-record-detail");
@@ -49,13 +54,13 @@ export async function initNurseRecords() {
       const range = nurseFormRange(search);
       const options = { signal: listRequest.signal };
       const state = search.elements.encounter_status.value;
-      if (state && !historyStatuses.includes(state)) throw new Error("Trạng thái lọc không hợp lệ.");
+      if (state && !recordStatuses.includes(state)) throw new Error("Trạng thái lọc không hợp lệ.");
       const [patients, visits] = await Promise.all([
         allPages((paging, request) => listPatients({ q: search.elements.q.value.trim(), include_archived: true, ...paging }, request), options),
-        nurseEncounters(state ? [state] : historyStatuses, range?.from && range.from === range.to ? { work_date: range.from } : {}, options),
+        nurseEncounters(state ? [state] : recordStatuses, range?.from && range.from === range.to ? { work_date: range.from } : {}, options),
       ]);
       if (!active || version !== listVersion) return;
-      const { items: matching, latest } = recentNursePatients(patients, visits, range);
+      const { items: matching, latest } = recentNursePatients(patients, visits.filter(v=>v.payment_confirmed===true), range);
       matchingPatients = matching;
       const result = localPage(matching, page);
       $("#nurse-record-list").innerHTML = nurseRecordTable(result.items, latest);
@@ -77,7 +82,7 @@ export async function initNurseRecords() {
     try {
       const [{ patient }, history] = await Promise.all([
         getPatient(patientId, { signal: detailRequest.signal }),
-        nurseEncounters(historyStatuses, { patient_id: patientId }, { signal: detailRequest.signal }),
+        doctorView ? allPages((paging,request)=>listDoctorPatientHistory(patientId,paging,request), {signal:detailRequest.signal}) : nurseEncounters(recordStatuses, { patient_id: patientId }, { signal: detailRequest.signal }),
       ]);
       if (!active || version !== detailVersion) return;
       if (Number(patient.patient_id) !== Number(patientId) || history.some(e => Number(e.patient_id) !== Number(patientId))) throw new Error("Không nhận được hồ sơ hợp lệ của người bệnh đã chọn.");
@@ -86,8 +91,8 @@ export async function initNurseRecords() {
       selectedPatient = patient; historyRows = historyPage.items;
       detail.innerHTML = `<div class="section-heading"><div><p class="eyebrow">HỒ SƠ ${esc(code("BN", patient.patient_id))} · CHỈ XEM</p><h2>${esc(patient.full_name)}</h2></div><button type="button" class="secondary" data-profile-close>Đóng hồ sơ</button></div>
         ${facts([["Ngày sinh", date(patient.dob)], ["Giới tính", patient.gender], ["Điện thoại", patient.phone], ["CCCD / mã định danh", patient.id_card], ["Địa chỉ", patient.address], ["BHYT", patient.health_insurance]])}
-        <div class="nurse-record-history"><h3>Các lượt đã khám xong hoặc không đến</h3>
-        ${historyPage.items.length ? table(["Ngày khám", "Bác sĩ / phòng", "Trạng thái", "Kết quả"], historyPage.items.map(e => `<tr><td>${date(e.work_date)}<small class="cell-subtitle">Lượt ${esc(code("LK", e.encounter_id))}</small></td><td>${esc(e.doctor_name || "—")}<small class="cell-subtitle">${esc(e.room_name || "—")}</small></td><td>${badge(e.encounter_status)}</td><td><button type="button" class="secondary" data-record="${esc(e.encounter_id)}">${e.encounter_status === "COMPLETED" ? "Xem bệnh án / đơn thuốc" : "Xem lượt khám"}</button></td></tr>`)) : empty("Chưa có lượt đã khám xong hoặc không đến được phép xem.")}
+        <div class="nurse-record-history"><h3>Các lượt hoàn thành hoặc không đến</h3>
+        ${historyPage.items.length ? table(["Ngày khám", "Bác sĩ / phòng", "Trạng thái", "Kết quả"], historyPage.items.map(e => `<tr><td>${date(e.work_date)}<small class="cell-subtitle">Lượt ${esc(code("LK", e.encounter_id))}</small></td><td>${esc(e.doctor_name || "—")}<small class="cell-subtitle">${esc(e.room_name || "—")}</small></td><td>${badge(e.encounter_status)}</td><td><button type="button" class="secondary" data-record="${esc(e.encounter_id)}">${e.encounter_status === "COMPLETED" ? "Xem bệnh án / đơn thuốc" : "Xem lượt khám"}</button></td></tr>`)) : empty("Chưa có lượt hoàn thành hoặc không đến được phép xem.")}
         <div id="nurse-history-pages" class="list-pagination"></div><p id="nurse-history-status" class="scope-note" role="status" hidden></p></div>`;
       pagination(historyPage, next => showPatient(patientId, next), $("#nurse-history-pages"));
       if (!silent) {
@@ -114,13 +119,19 @@ export async function initNurseRecords() {
     recordRequest?.abort(); recordRequest = new AbortController();
     const status = $("#nurse-history-status"); status.hidden = false; status.textContent = "Đang tải bệnh án…";
     try {
-      const { encounter } = await getEncounter(row.encounter_id, { signal: recordRequest.signal });
+      const historyDetail = doctorView ? await getDoctorPatientHistory(patientId,row.encounter_id,{signal:recordRequest.signal}) : await getEncounter(row.encounter_id,{signal:recordRequest.signal});
+      const {encounter} = historyDetail;
       if (!active || version !== recordVersion) return;
       if (Number(encounter.patient_id) !== Number(patientId)) throw new Error("Lượt khám không thuộc hồ sơ đang xem.");
-      if (!historyStatuses.includes(encounter.encounter_status)) throw new Error("Lượt khám không còn thuộc danh sách hồ sơ đã kết thúc.");
-      const clinical = encounter.encounter_status === "COMPLETED" ? await readMedicalRecord(encounter) : '<p class="scope-note">Người bệnh không đến khám.</p>';
+      if (!recordStatuses.includes(encounter.encounter_status)) throw new Error("Lượt khám không còn thuộc danh sách hồ sơ đã kết thúc.");
+      const clinical = encounter.encounter_status === "COMPLETED" ? (doctorView ? medicalRecordMarkup(historyDetail.medical_record,historyDetail.items) : await readMedicalRecord(encounter)) : '<p class="scope-note">Người bệnh không đến khám.</p>';
       if (!active || version !== recordVersion) return;
-      dialog(encounter.encounter_status === "COMPLETED" ? "Bệnh án & đơn thuốc · Chỉ xem" : "Lượt không đến khám", encounterSummary(encounter) + clinical); status.hidden = true;
+      dialog(encounter.encounter_status === "COMPLETED" ? "Bệnh án & đơn thuốc · Chỉ xem" : "Lượt không đến khám", recordDetailView({
+        name:selectedPatient.full_name,patientCode:code("BN",selectedPatient.patient_id),status:encounter.encounter_status,
+        patientFields:[["Ngày sinh",date(selectedPatient.dob)],["Giới tính",selectedPatient.gender],["Điện thoại",selectedPatient.phone],["CCCD / mã định danh",selectedPatient.id_card],["Địa chỉ",selectedPatient.address],["BHYT",selectedPatient.health_insurance]],
+        visitFields:[["Mã lượt khám",code("LK",encounter.encounter_id)],["Mã phiếu",encounter.ticket_code],["Ngày khám",date(encounter.work_date)],["Khung giờ",`${time(encounter.estimated_exam_at)} – ${time(encounter.appointment_end_at)}`],["Bác sĩ",encounter.doctor_name],["Chuyên khoa",encounter.department_name],["Phòng",encounter.room_name],["Hình thức",encounter.encounter_type === "ONLINE" ? "Đặt trực tuyến" : "Khám trực tiếp"],["Phí khám",encounter.consultation_fee_snapshot == null ? "Chưa cập nhật" : money(encounter.consultation_fee_snapshot)]],
+        symptoms:encounter.symptoms,clinical,
+      })); status.hidden = true;
     } catch (error) {
       if (active && version === recordVersion) { status.textContent = sessionError(error); status.hidden = false; }
     }
@@ -138,6 +149,6 @@ export async function initNurseRecords() {
   search.addEventListener("reset", event => { event.preventDefault(); for (const key of ["q", "encounter_status", "from_date", "to_date"]) if (search.elements[key]) search.elements[key].value = ""; refreshSearch(); });
   await load();
   const patientId = new URLSearchParams(globalThis.location?.search || "").get("patient_id");
-  if (patientId && matchingPatients.some(p => String(p.patient_id) === patientId)) await showPatient(patientId);
+  if (patientId && /^[1-9]\d*$/.test(patientId)) await showPatient(patientId);
   startAutoRefresh(() => selectedPatient ? showPatient(selectedPatient.patient_id, historyPageNumber, true) : load(currentPage), { canRefresh: () => active });
 }

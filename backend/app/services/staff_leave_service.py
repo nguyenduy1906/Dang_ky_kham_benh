@@ -8,6 +8,7 @@ from backend.app.models import (auth_model, staff_leave_model as model,
                                 encounter_model, schedule_model)
 from backend.app.utils.database_helpers import jsonable
 from backend.app.utils.date import VN_TZ
+from backend.app.services import staff_notification_service as staff_notifications
 
 STAFF_ROLES = ('DOCTOR', 'NURSE', 'RECEPTIONIST')
 SHIFTS = {'MORNING': (time(8), time(11, 30)), 'AFTERNOON': (time(13, 30), time(17))}
@@ -26,12 +27,17 @@ def _staff(db, user_id):
     return user
 
 
-def _future(leave):
-    first = leave['from_date']
-    while first.weekday() > 4:
-        first += timedelta(days=1)
-    start = SHIFTS['AFTERNOON' if leave['period'] == 'AFTERNOON' else 'MORNING'][0]
-    if datetime.combine(first, start, VN_TZ) <= datetime.now(VN_TZ):
+def _future(db, leave, user):
+    scoped = {**leave, 'user_id': user['user_id']}
+    if user['role_name'] == 'RECEPTIONIST':
+        from backend.app.models import reception_assignment_model
+        shifts = reception_assignment_model.leave_assignments(db, scoped)
+    else:
+        shifts = model.affected_schedules(db, scoped, user['role_name'])
+    if not shifts:
+        raise conflict('Không có ca được phân công trong khoảng xin nghỉ', 'NO_ASSIGNED_SHIFT')
+    first = min(datetime.combine(s['work_date'], s['start_time'], VN_TZ) for s in shifts)
+    if first <= datetime.now(VN_TZ):
         raise conflict('Ca xin nghỉ đã bắt đầu; không thể gửi hoặc duyệt hồi tố', 'LEAVE_ALREADY_STARTED')
 
 
@@ -55,8 +61,8 @@ def create(actor, fields):
     _role(actor)
     with get_db_connection() as db:
         model.lock_changes(db)
-        _future(fields)
-        _staff(db, actor['user_id'])
+        staff = _staff(db, actor['user_id'])
+        _future(db, fields, staff)
         if model.overlapping(db, actor['user_id'], fields['from_date'], fields['to_date'], fields['period']):
             raise conflict('Đã có đơn nghỉ chờ duyệt hoặc được duyệt trùng ca', 'LEAVE_OVERLAP')
         request_id = model.create_request(db, actor['user_id'], fields)
@@ -79,7 +85,11 @@ def detail(actor, request_id, *, admin=False):
         schedules = model.affected_schedules(db, row, row['role_name'])
         ids = [s['schedule_id'] for s in schedules]
         affected = encounter_model.count_active_for_schedules(db, ids)
-    return {'leave_request': jsonable(row), 'affected_schedule_ids': ids, 'affected_encounters': affected}
+        reception_ids = []
+        if row['role_name'] == 'RECEPTIONIST':
+            from backend.app.models import reception_assignment_model
+            reception_ids = [item['assignment_id'] for item in reception_assignment_model.leave_assignments(db, row)]
+    return {'leave_request': jsonable(row), 'affected_schedule_ids': ids, 'affected_encounters': affected, 'affected_reception_assignment_ids': reception_ids}
 
 
 def cancel(actor, request_id):
@@ -109,8 +119,8 @@ def review(actor, request_id, fields):
             raise conflict('Đơn nghỉ đã được xử lý hoặc rút', 'LEAVE_NOT_PENDING')
         effects = {'unavailable_schedule_ids': [], 'revoked_assignment_ids': [], 'affected_encounters': 0}
         if fields['decision'] == 'APPROVED':
-            _future(row)
             staff = _staff(db, row['user_id'])
+            _future(db, row, staff)
             schedules = model.affected_schedules(db, row, staff['role_name'], lock=True)
             ids = [s['schedule_id'] for s in schedules]
             effects['affected_encounters'] = encounter_model.count_active_for_schedules(db, ids)
@@ -118,20 +128,28 @@ def review(actor, request_id, fields):
                 # Stop new bookings, preserve encounters/quota/payment for manual coordination.
                 changed = schedule_model.mark_unavailable_schedules(db, ids, f'Nghỉ theo đơn {business_code("NP", request_id)}')
                 effects['unavailable_schedule_ids'] = [s['schedule_id'] for s in changed]
+                for change in changed:
+                    staff_notifications.schedule_changed(db, schedule_model.get_schedule(db, change['schedule_id']),
+                        "unavailable", key=f'staff-leave-schedule:{request_id}:{change["schedule_id"]}')
             elif staff['role_name'] == 'NURSE':
                 changed = schedule_model.revoke_leave_assignments(db, actor['user_id'], row['user_id'], ids)
                 effects['revoked_assignment_ids'] = [a['assignment_id'] for a in changed]
+                for change in changed:
+                    staff_notifications.assignment_changed(db, schedule_model.get_assignment(db, change['assignment_id']),
+                        "revoked", key=f'staff-leave-assignment:{request_id}:{change["assignment_id"]}')
+            elif staff['role_name'] == 'RECEPTIONIST':
+                from backend.app.services.reception_assignment_service import revoke_for_leave
+                effects['revoked_reception_assignment_ids'] = revoke_for_leave(db, actor['user_id'], row)
         model.review_request(db, request_id, fields, actor['user_id'], Jsonb(effects))
         row = model.get_request(db, request_id)
-        model.notify(db, row['user_id'], request_id, 'reviewed', 'Kết quả đơn xin nghỉ',
-                     f"Đơn {business_code('NP', request_id)}: {row['status']}. {fields['note']}")
+        decision_text = 'đã được duyệt' if row['status'] == 'APPROVED' else 'không được duyệt'
+        model.notify(db, row['user_id'], request_id, 'reviewed', f'Đơn xin nghỉ {decision_text}',
+                     f"Đơn {business_code('NP', request_id)} {decision_text}. {fields['note']}")
     return {'leave_request': jsonable(row)}
 
 
 def ensure_available(db, user_id, work_date, start, end):
     """Called under lock_changes before assigning clinical work to an absent employee."""
-    if work_date.weekday() > 4:
-        return
     for leave in model.overlapping(db, user_id, work_date, work_date, 'FULL_DAY', approved_only=True):
         if (leave['period'] == 'FULL_DAY' or (leave['period'] == 'MORNING' and start < time(12))
                 or (leave['period'] == 'AFTERNOON' and end > time(12))):
@@ -145,16 +163,39 @@ def calendar(actor, query, user_id=None):
         user = _staff(db, target_id)
         leaves = model.calendar_leaves(db, target_id, query)
         if user['role_name'] == 'RECEPTIONIST':
-            clinical = []
+            from backend.app.models import reception_assignment_model
+            assignments = reception_assignment_model.calendar(db, target_id, query, include_revoked=True)
+            days = []
+            day = query['from_date']
+            while day <= query['to_date']:
+                shifts = []
+                for assignment in assignments:
+                    if assignment['work_date'] != day:
+                        continue
+                    period = 'MORNING' if assignment['start_time'] < time(12) else 'AFTERNOON'
+                    matching = [l for l in leaves if l['from_date']<=day<=l['to_date'] and l['period'] in ('FULL_DAY',period)]
+                    approved = [l for l in matching if l['status']=='APPROVED']
+                    if assignment['revoked_at'] and not any(assignment['revoke_reason']==f"Nghỉ theo đơn NP_{l['request_id']:03d}" for l in approved):
+                        continue
+                    shifts.append({'period':period,'start_time':assignment['start_time'],'end_time':assignment['end_time'],
+                        'assignment_id':assignment['assignment_id'],'workstation_id':assignment['workstation_id'],
+                        'workstation_name':assignment['workstation_name'],'area':assignment['area'],'note':assignment['note'],
+                        'status':'ON_LEAVE' if approved else 'WORKING',
+                        'leave_request_ids':[l['request_id'] for l in matching],
+                        'pending_leave':any(l['status']=='PENDING' for l in matching)})
+                days.append({'work_date':day,'is_default_workday':False,'shifts':shifts,'clinical_schedules':[]})
+                day+=timedelta(days=1)
+            return jsonable({'user_id':target_id,'full_name':user['full_name'],'role_name':user['role_name'],
+                'timezone':'Asia/Saigon','default_weekdays':[],'from_date':query['from_date'],'to_date':query['to_date'],'items':days})
         else:
             clinical = schedule_model.staff_calendar(db, target_id, user['role_name'], leaves, query)
     days = []
     day = query['from_date']
     while day <= query['to_date']:
         shifts = []
-        daily_clinical = [s for s in clinical if s['work_date'] == day and s['schedule_status'] in ('OPEN', 'FULL')]
-        if user['role_name'] == 'NURSE':
-            # A nurse works the assigned periods, including explicitly assigned weekends.
+        daily_clinical = [s for s in clinical if s['work_date'] == day and s['schedule_status'] in ('OPEN', 'FULL', 'UNAVAILABLE')]
+        if user['role_name'] in ('NURSE', 'DOCTOR'):
+            # Staff work the assigned periods, including explicitly assigned weekends.
             periods = {period: (min(s['start_time'] for s in matching), max(s['end_time'] for s in matching))
                        for period in SHIFTS
                        if (matching := [s for s in daily_clinical if
