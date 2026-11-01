@@ -22,6 +22,7 @@ from backend.app.routes.schedule_routes import schedule_bp, nurse_assignment_bp
 from backend.app.routes.staff_leave_routes import staff_leave_bp
 from backend.app.routes.reception_assignment_routes import reception_assignment_bp
 from backend.app.routes.admin_activity_routes import admin_activity_bp
+from backend.app.routes.chatbot_routes import chatbot_bp
 
 
 def create_app():
@@ -39,7 +40,7 @@ def create_app():
     app.register_blueprint(health_routes)
     for blueprint in (auth_bp, user_admin_bp, department_bp, room_bp, doctor_bp,
                       patient_bp, schedule_bp, nurse_assignment_bp, reception_assignment_bp, staff_leave_bp, encounter_bp, payment_bp, notification_bp,
-                      medical_record_bp, review_bp, article_bp, configuration_bp, statistics_bp, admin_activity_bp):
+                      medical_record_bp, review_bp, article_bp, configuration_bp, statistics_bp, admin_activity_bp, chatbot_bp):
         app.register_blueprint(blueprint)
     app.config['SWAGGER'] = {'title': 'Medical Booking API', 'uiversion': 3}
     Swagger(app, config={'specs_route': '/docs/'}, merge=True, template={
