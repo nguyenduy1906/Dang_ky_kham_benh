@@ -2,6 +2,30 @@
 
 Frontend HTML/CSS/JavaScript chạy bằng Node.js; backend Flask/Gunicorn và PostgreSQL 17 chạy bằng Docker Compose. Compose có hai dịch vụ `db`, `backend`; tác vụ nền chạy cùng container backend.
 
+## Chatbot AI demo trên trang chủ
+
+Chatbot ở góc dưới bên phải trang chủ gọi `POST /chatbot/message`. Backend lấy danh mục công khai từ PostgreSQL rồi gửi câu hỏi, tối đa 6 tin nhắn trước đó và phần danh mục liên quan đến OpenAI Responses API. Không truy vấn hồ sơ bệnh nhân, lịch hẹn hoặc thanh toán; không cần đổi schema database.
+
+Thêm vào **file cấu hình hiện có** `backend/.env` (không ghi đè thông tin database):
+
+```dotenv
+OPENAI_API_KEY=thay_bang_khoa_cua_ban
+OPENAI_MODEL=gpt-4.1-mini
+```
+
+Khóa phải có quyền gọi Responses API và tài khoản API cần còn hạn mức sử dụng. Không đặt khóa trong frontend, commit Git hoặc gửi qua chat. Sau khi thêm khóa/cập nhật code:
+
+```powershell
+docker compose up -d --build --no-deps backend
+npm.cmd --prefix frontend start
+```
+
+Tải lại trang chủ bằng Ctrl+F5. Thử “Cho tôi biết các chuyên khoa”, sau đó hỏi tiếp “Bác sĩ và phí khám của khoa đó?”. Nhãn **NEU Medical · AI** chỉ xuất hiện khi OpenAI trả lời thành công; khi thiếu khóa hoặc AI lỗi, chatbot ghi rõ **Tra cứu cơ bản**. “Xóa hội thoại” xóa lịch sử trong tab và bắt đầu hội thoại mới.
+
+Demo không lưu hội thoại vào database và gọi API với `store: false` (không đồng nghĩa không có log an toàn ở phía nhà cung cấp). Không gửi thông tin cá nhân, bệnh án, mật khẩu hoặc OTP. AI có thể sai; đây là trợ lý thông tin khám bệnh, không chẩn đoán/kê thuốc. Chế độ giới hạn 12 yêu cầu/phút/địa chỉ và 60 yêu cầu/phút là **theo từng tiến trình**, phù hợp demo local; cần bộ giới hạn dùng chung và kiểm soát truy cập trước khi triển khai công khai.
+
+Tài liệu tích hợp: [OpenAI text generation](https://developers.openai.com/api/docs/guides/text), [API key setup](https://developers.openai.com/api/docs/quickstart).
+
 ## 1. Chạy nhanh hằng ngày
 
 Cần **Docker Desktop đang chạy** và **Node.js 20 trở lên**. Các lệnh bên dưới dùng PowerShell.
