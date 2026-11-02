@@ -151,6 +151,10 @@ CREATE TABLE IF NOT EXISTS work_schedule (
     created_at            TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at            TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT schedule_time_order CHECK (end_time > start_time),
+    CONSTRAINT schedule_standard_shift CHECK (
+        (start_time = TIME '08:00' AND end_time = TIME '11:30')
+        OR (start_time = TIME '13:30' AND end_time = TIME '17:00')
+    ),
     CONSTRAINT schedule_quota CHECK (booked_count BETWEEN 0 AND max_quota),
     CONSTRAINT schedule_doctor_start_unique UNIQUE (doctor_profile_id, work_date, start_time) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT schedule_room_start_unique UNIQUE (room_id, work_date, start_time)
@@ -753,9 +757,15 @@ CREATE TABLE IF NOT EXISTS reception_assignment (
  revoked_by_id BIGINT REFERENCES users(user_id),
  revoke_reason VARCHAR(1000),
  version INTEGER NOT NULL DEFAULT 1,
- CHECK (start_time < end_time)
+    CHECK (start_time < end_time),
+    CONSTRAINT reception_assignment_standard_shift CHECK (
+        (start_time = TIME '08:00' AND end_time = TIME '11:30')
+        OR (start_time = TIME '13:30' AND end_time = TIME '17:00')
+    )
 );
 CREATE INDEX IF NOT EXISTS reception_assignment_staff_day ON reception_assignment(receptionist_id,work_date) WHERE revoked_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS reception_assignment_staff_shift_active
+    ON reception_assignment(receptionist_id, work_date, start_time) WHERE revoked_at IS NULL;
 CREATE INDEX IF NOT EXISTS reception_assignment_station_day ON reception_assignment(workstation_id,work_date) WHERE revoked_at IS NULL;
 CREATE TABLE IF NOT EXISTS reception_assignment_change (
  change_id BIGSERIAL PRIMARY KEY,

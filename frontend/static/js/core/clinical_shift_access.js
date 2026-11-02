@@ -1,4 +1,9 @@
 // Shift bounds are Vietnam local time. Missing/invalid bounds never allow editing.
+export function canEditClinicalRecord(visit) {
+  // Check-in is the clinical hand-off; completion is the only edit lock.
+  return ['CHECKED_IN', 'IN_PROGRESS'].includes(visit.encounter_status ?? visit.status);
+}
+
 export function canEditClinicalShift(shift, now = new Date()) {
   const day = shift.work_date;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day || "") || !/^\d{2}:\d{2}(:\d{2})?$/.test(shift.start_time || "") || !/^\d{2}:\d{2}(:\d{2})?$/.test(shift.end_time || "")) return false;

@@ -183,6 +183,19 @@ def calendar(actor, query, user_id=None):
                         'status':'ON_LEAVE' if approved else 'WORKING',
                         'leave_request_ids':[l['request_id'] for l in matching],
                         'pending_leave':any(l['status']=='PENDING' for l in matching)})
+                grouped = {}
+                for shift in shifts:
+                    period = shift['period']
+                    if period not in grouped:
+                        grouped[period] = {**shift, 'start_time': SHIFTS[period][0],
+                                           'end_time': SHIFTS[period][1]}
+                    else:
+                        current = grouped[period]
+                        current['pending_leave'] |= shift['pending_leave']
+                        current['leave_request_ids'] = sorted(set(current['leave_request_ids'] + shift['leave_request_ids']))
+                        if shift['workstation_name'] not in current['workstation_name'].split(', '):
+                            current['workstation_name'] += ', ' + shift['workstation_name']
+                shifts = [grouped[period] for period in SHIFTS if period in grouped]
                 days.append({'work_date':day,'is_default_workday':False,'shifts':shifts,'clinical_schedules':[]})
                 day+=timedelta(days=1)
             return jsonable({'user_id':target_id,'full_name':user['full_name'],'role_name':user['role_name'],
@@ -196,7 +209,7 @@ def calendar(actor, query, user_id=None):
         daily_clinical = [s for s in clinical if s['work_date'] == day and s['schedule_status'] in ('OPEN', 'FULL', 'UNAVAILABLE')]
         if user['role_name'] in ('NURSE', 'DOCTOR'):
             # Staff work the assigned periods, including explicitly assigned weekends.
-            periods = {period: (min(s['start_time'] for s in matching), max(s['end_time'] for s in matching))
+            periods = {period: SHIFTS[period]
                        for period in SHIFTS
                        if (matching := [s for s in daily_clinical if
                            (s['start_time'] < time(12) if period == 'MORNING' else s['end_time'] > time(12))])}

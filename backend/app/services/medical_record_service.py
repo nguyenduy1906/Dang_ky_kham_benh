@@ -36,15 +36,12 @@ def get_record(actor, encounter_id):
 
 
 def _editable(encounter, record, fields):
-    if encounter['encounter_status'] not in ('IN_PROGRESS', 'COMPLETED'):
-        raise conflict('Chỉ ghi bệnh án khi đang khám hoặc bổ sung sau hoàn tất', 'INVALID_ENCOUNTER_STATUS')
     if encounter['encounter_status'] == 'COMPLETED':
-        if record is None:
-            raise conflict('Lượt hoàn tất thiếu bệnh án; cần đối soát dữ liệu', 'MEDICAL_RECORD_REQUIRED')
-        if not fields['reason']:
-            raise conflict('Sửa sau hoàn tất phải có lý do', 'AMENDMENT_REASON_REQUIRED')
-        if fields['expected_version'] is None:
-            raise conflict('Sửa sau hoàn tất cần expected_version hiện tại', 'RECORD_VERSION_REQUIRED')
+        raise conflict('Lượt khám đã hoàn tất; bệnh án và đơn thuốc chỉ được xem', 'MEDICAL_RECORD_READ_ONLY')
+    if encounter['encounter_status'] not in ('CHECKED_IN', 'IN_PROGRESS'):
+        raise conflict('Chỉ chỉnh sửa bệnh án sau khi người bệnh đã check-in', 'INVALID_ENCOUNTER_STATUS')
+    if not encounter.get('checked_in_at') or encounter['checked_in_at'] > date_utils.utc_now():
+        raise conflict('Chưa có xác nhận check-in hợp lệ', 'CHECK_IN_REQUIRED')
     if fields['expected_version'] is not None and fields['expected_version'] != (record['version'] if record else 0):
         raise conflict('Bệnh án đã thay đổi, đọc lại version trước khi ghi', 'RECORD_VERSION_CONFLICT')
 
@@ -54,7 +51,6 @@ def put_record(actor, encounter_id, fields):
     with get_db_connection() as db:
         encounter, schedules = encounters.locked_context(db, encounter_id)
         encounters.visible_encounter(db, actor, encounter_id)
-        encounters.require_clinical_shift(schedules[encounter["schedule_id"]])
         record = records.get(db, encounter_id, lock=True)
         _editable(encounter, record, fields)
         before = _snapshot(db, record) if record else None
@@ -94,7 +90,6 @@ def put_items(actor, record_id, fields):
         encounter_id = _record_encounter_id(db, record_id)
         encounter, schedules = encounters.locked_context(db, encounter_id)
         encounters.visible_encounter(db, actor, encounter_id)
-        encounters.require_clinical_shift(schedules[encounter["schedule_id"]])
         record = records.get(db, encounter_id, lock=True)
         _editable(encounter, record, fields)
         before = _snapshot(db, record)

@@ -3888,7 +3888,7 @@ UPDATE work_schedule SET schedule_status=CASE WHEN booked_count>=max_quota THEN 
 INSERT INTO nurse_assignment(nurse_id,schedule_id,assigned_by_id,note)
 SELECT 3,s.schedule_id,1,'Phân công demo hỗ trợ bác sĩ Nguyễn Hoàng Minh' FROM work_schedule s WHERE s.doctor_profile_id=1 AND s.work_date BETWEEN DATE '2026-11-01' AND DATE '2026-11-08' AND NOT EXISTS(SELECT 1 FROM nurse_assignment a JOIN work_schedule w USING(schedule_id) WHERE a.nurse_id=3 AND a.revoked_at IS NULL AND w.work_date=s.work_date AND w.start_time<s.end_time AND w.end_time>s.start_time);
 INSERT INTO reception_assignment(receptionist_id,workstation_id,work_date,start_time,end_time,assigned_by_id,note)
-SELECT 2,(SELECT min(workstation_id) FROM reception_workstation WHERE is_active), DATE '2026-11-01'+day,'07:00','17:30',1,'Phân công lễ tân minh họa đồ án' FROM generate_series(0,7) day WHERE NOT EXISTS(SELECT 1 FROM reception_assignment a WHERE a.receptionist_id=2 AND a.work_date=DATE '2026-11-01'+day AND a.revoked_at IS NULL);
+SELECT 2,(SELECT min(workstation_id) FROM reception_workstation WHERE is_active), DATE '2026-11-01'+day,shift.start_time,shift.end_time,1,'Phân công lễ tân minh họa đồ án' FROM generate_series(0,7) day CROSS JOIN (VALUES(time '08:00',time '11:30'),(time '13:30',time '17:00')) shift(start_time,end_time) WHERE NOT EXISTS(SELECT 1 FROM reception_assignment a WHERE a.receptionist_id=2 AND a.work_date=DATE '2026-11-01'+day AND a.start_time<shift.end_time AND a.end_time>shift.start_time AND a.revoked_at IS NULL);
 INSERT INTO notification(user_id,notification_type,title,content,event_key)
 SELECT u.user_id,'DEMO','Dữ liệu trình bày đồ án','Lịch khám, lịch sử khám và phân công minh họa đã được bổ sung.','ROLE_DEMO_20261102' FROM users u WHERE u.user_id IN(1,2,3,4,6) AND NOT EXISTS(SELECT 1 FROM notification n WHERE n.user_id=u.user_id AND n.event_key='ROLE_DEMO_20261102');
 SELECT count(*) AS added_demo_encounters FROM role_demo_new;
@@ -3896,9 +3896,9 @@ SELECT count(*) AS added_demo_encounters FROM role_demo_new;
 
 
 -- BEGIN COMPLETED_RECORDS_DEMO_20261102
--- Ca hư cấu đã hoàn tất sáng sớm 01–02/11; không đánh dấu hoàn tất ca tương lai.
+-- Bệnh án demo chỉ nằm trong ca chuẩn 08:00–11:30; không tạo ca phụ hoặc hoàn tất lịch tương lai.
 DO $demo$
-DECLARE d record; s record; pat record; day date; exam timestamptz; eid integer; rid integer; n integer; actor integer;
+DECLARE d record; s record; pat record; offset_minutes integer; day date; exam timestamptz; eid integer; rid integer; n integer; actor integer;
 BEGIN
 PERFORM pg_advisory_xact_lock(20261103);
 INSERT INTO patient(full_name,dob,gender,address) SELECT 'Người bệnh demo hồ sơ '||g.num,DATE '1990-01-01','Khác','Hồ sơ hư cấu phục vụ đồ án' FROM generate_series(1,48) AS g(num) WHERE NOT EXISTS(SELECT 1 FROM patient WHERE full_name='Người bệnh demo hồ sơ '||g.num);
@@ -3907,22 +3907,27 @@ FOR d IN SELECT dp.*,u.full_name FROM doctor_profile dp JOIN users u USING(user_
  INSERT INTO room(department_id,room_name,description) VALUES(d.department_id,'Phòng demo hồ sơ BS '||d.doctor_profile_id,'Không gian hư cấu phục vụ trình bày bệnh án demo');
  END IF;
  FOR day IN SELECT generate_series(DATE '2026-11-01',DATE '2026-11-02',interval '1 day')::date LOOP
- IF (day+time '07:00') AT TIME ZONE 'Asia/Saigon'>CURRENT_TIMESTAMP THEN CONTINUE; END IF;
- IF NOT EXISTS(SELECT 1 FROM work_schedule WHERE doctor_profile_id=d.doctor_profile_id AND work_date=day AND start_time<time '07:00' AND end_time>time '06:00') THEN
+ IF (day+time '08:00') AT TIME ZONE 'Asia/Saigon'>CURRENT_TIMESTAMP THEN CONTINUE; END IF;
+ IF NOT EXISTS(SELECT 1 FROM work_schedule WHERE doctor_profile_id=d.doctor_profile_id AND work_date=day AND start_time<time '11:30' AND end_time>time '08:00') THEN
  INSERT INTO work_schedule(doctor_profile_id,room_id,work_date,start_time,end_time,max_quota,slot_minutes)
- SELECT d.doctor_profile_id,room_id,day,'06:00','07:00',2,30 FROM room WHERE room_name='Phòng demo hồ sơ BS '||d.doctor_profile_id;
+ SELECT d.doctor_profile_id,room_id,day,'08:00','11:30',7,30 FROM room WHERE room_name='Phòng demo hồ sơ BS '||d.doctor_profile_id;
  END IF;
- SELECT * INTO s FROM work_schedule WHERE doctor_profile_id=d.doctor_profile_id AND work_date=day AND start_time='06:00' AND end_time='07:00';
+ SELECT * INTO s FROM work_schedule WHERE doctor_profile_id=d.doctor_profile_id AND work_date=day AND start_time='08:00' AND end_time='11:30';
  IF NOT FOUND THEN CONTINUE; END IF;
  FOR n IN 0..1 LOOP
- exam:=((day+time '06:00') AT TIME ZONE 'Asia/Saigon')+make_interval(mins=>n*30);
+ exam:=NULL;
+ FOR offset_minutes IN 0..(210/s.slot_minutes-1) LOOP
+ IF ((day+s.start_time) AT TIME ZONE 'Asia/Saigon')+make_interval(mins=>(offset_minutes+1)*s.slot_minutes)>CURRENT_TIMESTAMP THEN EXIT; END IF;
+ IF NOT EXISTS(SELECT 1 FROM encounter e WHERE e.schedule_id=s.schedule_id AND e.estimated_exam_at=((day+s.start_time) AT TIME ZONE 'Asia/Saigon')+make_interval(mins=>offset_minutes*s.slot_minutes) AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED')) THEN exam:=((day+s.start_time) AT TIME ZONE 'Asia/Saigon')+make_interval(mins=>offset_minutes*s.slot_minutes);EXIT; END IF;
+ END LOOP;
+ IF exam IS NULL THEN CONTINUE; END IF;
  IF EXISTS(SELECT 1 FROM encounter WHERE schedule_id=s.schedule_id AND estimated_exam_at=exam AND encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED')) THEN CONTINUE; END IF;
  SELECT p.* INTO pat FROM patient p WHERE archived_at IS NULL
- AND NOT EXISTS(SELECT 1 FROM encounter e WHERE e.patient_id=p.patient_id AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED') AND e.estimated_exam_at<exam+interval '30 minutes' AND e.appointment_end_at>exam)
+ AND NOT EXISTS(SELECT 1 FROM encounter e WHERE e.patient_id=p.patient_id AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED') AND e.estimated_exam_at<exam+make_interval(mins=>s.slot_minutes) AND e.appointment_end_at>exam)
  ORDER BY CASE WHEN p.user_id=4 THEN 0 WHEN p.user_id=5 THEN 1 ELSE 2 END,p.patient_id LIMIT 1;
  IF NOT FOUND THEN RAISE EXCEPTION 'No free demo patient'; END IF;
  INSERT INTO encounter(encounter_type,patient_id,doctor_profile_id,schedule_id,room_id,created_by_id,consultation_fee_snapshot,deposit_amount_snapshot,symptoms,registration_details,encounter_status,estimated_exam_at,appointment_end_at,checked_in_at,created_at)
- VALUES(CASE WHEN pat.user_id IS NULL THEN 'WALK_IN' ELSE 'ONLINE' END,pat.patient_id,d.doctor_profile_id,s.schedule_id,s.room_id,coalesce(pat.user_id,2),d.consultation_fee,CASE WHEN pat.user_id IS NULL THEN 0 ELSE d.consultation_fee END,'DEMO_RECORDS_20261102: khám sức khỏe và tư vấn minh họa',jsonb_build_object('full_name',pat.full_name,'phone',pat.phone,'dob',pat.dob,'gender',pat.gender),'COMPLETED',exam,exam+interval '30 minutes',exam-interval '30 minutes',exam-interval '1 day') RETURNING encounter_id INTO eid;
+ VALUES(CASE WHEN pat.user_id IS NULL THEN 'WALK_IN' ELSE 'ONLINE' END,pat.patient_id,d.doctor_profile_id,s.schedule_id,s.room_id,coalesce(pat.user_id,2),d.consultation_fee,CASE WHEN pat.user_id IS NULL THEN 0 ELSE d.consultation_fee END,'DEMO_RECORDS_20261102: khám sức khỏe và tư vấn minh họa',jsonb_build_object('full_name',pat.full_name,'phone',pat.phone,'dob',pat.dob,'gender',pat.gender),'COMPLETED',exam,exam+make_interval(mins=>s.slot_minutes),exam-interval '30 minutes',exam-interval '1 day') RETURNING encounter_id INTO eid;
  INSERT INTO payment(encounter_id,payment_type,amount,payment_method,transaction_status,created_by_id,paid_at,created_at) VALUES(eid,CASE WHEN pat.user_id IS NULL THEN 'EXAM_FEE' ELSE 'DEPOSIT' END,d.consultation_fee,CASE WHEN pat.user_id IS NULL THEN 'CASH' ELSE 'BANK' END,'SUCCESS',coalesce(pat.user_id,2),exam-interval '23 hours',exam-interval '1 day');
  INSERT INTO medical_record(encounter_id,diagnosis,treatment,doctor_notes,examined_at,created_at) VALUES(eid,'Khám sức khỏe tổng quát — kết quả minh họa của đồ án','Đã trao đổi kết quả khám; không kê thuốc trong tình huống demo này.','Bệnh án hư cấu phục vụ demo, không sử dụng làm chỉ định y khoa. Bác sĩ phụ trách: '||d.full_name,exam+interval '5 minutes',exam+interval '5 minutes') RETURNING record_id INTO rid;
  INSERT INTO encounter_status_log(encounter_id,old_status,new_status,changed_by_id,note,changed_at) VALUES
@@ -3932,7 +3937,7 @@ FOR d IN SELECT dp.*,u.full_name FROM doctor_profile dp JOIN users u USING(user_
  (eid,'CHECKED_IN','IN_PROGRESS',d.user_id,'Demo: bắt đầu khám',exam),
  (eid,'IN_PROGRESS','COMPLETED',d.user_id,'Demo: hoàn tất khám và bệnh án',exam+interval '25 minutes');
  END LOOP;
- UPDATE work_schedule SET booked_count=(SELECT count(*) FROM encounter WHERE schedule_id=s.schedule_id AND encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED')),schedule_status='FULL' WHERE schedule_id=s.schedule_id;
+ UPDATE work_schedule SET booked_count=(SELECT count(*) FROM encounter WHERE schedule_id=s.schedule_id AND encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED')),schedule_status='OPEN' WHERE schedule_id=s.schedule_id;
  SELECT u.user_id INTO actor FROM users u JOIN role r USING(role_id) WHERE r.role_name='NURSE' AND u.account_status='ACTIVE' AND NOT EXISTS(SELECT 1 FROM nurse_assignment a JOIN work_schedule w USING(schedule_id) WHERE a.nurse_id=u.user_id AND a.revoked_at IS NULL AND w.work_date=day AND w.start_time<s.end_time AND w.end_time>s.start_time) ORDER BY CASE WHEN u.user_id=3 THEN 0 ELSE 1 END,u.user_id LIMIT 1;
  IF actor IS NOT NULL THEN INSERT INTO nurse_assignment(nurse_id,schedule_id,assigned_by_id,assigned_at,note) VALUES(actor,s.schedule_id,1,((day+time '05:00') AT TIME ZONE 'Asia/Saigon'),'DEMO_RECORDS_20261102: hỗ trợ ca khám đã hoàn tất'); END IF;
  END LOOP;
@@ -3973,19 +3978,16 @@ BEGIN
 PERFORM pg_advisory_xact_lock(20261105);
 PERFORM set_config('app.admin_id','1',true);
 PERFORM set_config('app.admin_name','Quản trị dữ liệu demo',true);
-IF NOT EXISTS(SELECT 1 FROM work_schedule WHERE doctor_profile_id=1 AND work_date=DATE '2026-11-02' AND start_time<time '08:00' AND end_time>time '07:00') THEN
- INSERT INTO work_schedule(doctor_profile_id,room_id,work_date,start_time,end_time,max_quota,slot_minutes) SELECT 1,room_id,DATE '2026-11-02','07:00','08:00',4,15 FROM room WHERE room_name='Phòng demo hồ sơ BS 1';
-END IF;
-SELECT * INTO sch FROM work_schedule WHERE doctor_profile_id=1 AND work_date=DATE '2026-11-02' AND start_time='07:00' AND end_time='08:00';
+SELECT * INTO sch FROM work_schedule WHERE doctor_profile_id=1 AND work_date=DATE '2026-11-01' AND start_time='08:00' AND end_time='11:30';
 IF FOUND THEN
  FOR n IN 0..3 LOOP
- at_time:=TIMESTAMPTZ '2026-11-02 07:00+07'+make_interval(mins=>15*n);
- IF at_time+interval '15 minutes'>CURRENT_TIMESTAMP THEN CONTINUE; END IF;
+ at_time:=TIMESTAMPTZ '2026-11-01 08:00+07'+make_interval(mins=>sch.slot_minutes*n);
+ IF at_time+make_interval(mins=>sch.slot_minutes)>CURRENT_TIMESTAMP THEN CONTINUE; END IF;
  IF EXISTS(SELECT 1 FROM encounter WHERE symptoms='DEMO_COVERAGE_20261102: lịch sử người bệnh '||n) THEN CONTINUE; END IF;
- SELECT * INTO pat FROM patient p WHERE p.archived_at IS NULL AND p.patient_id=2+n AND NOT EXISTS(SELECT 1 FROM encounter e WHERE e.patient_id=p.patient_id AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED') AND e.estimated_exam_at<at_time+interval '15 minutes' AND e.appointment_end_at>at_time);
+ SELECT * INTO pat FROM patient p WHERE p.archived_at IS NULL AND p.patient_id=2+n AND NOT EXISTS(SELECT 1 FROM encounter e WHERE e.patient_id=p.patient_id AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED') AND e.estimated_exam_at<at_time+make_interval(mins=>sch.slot_minutes) AND e.appointment_end_at>at_time);
  IF NOT FOUND THEN CONTINUE; END IF;
  INSERT INTO encounter(encounter_type,patient_id,doctor_profile_id,schedule_id,room_id,created_by_id,consultation_fee_snapshot,deposit_amount_snapshot,symptoms,encounter_status,estimated_exam_at,appointment_end_at,checked_in_at,created_at)
- VALUES('ONLINE',pat.patient_id,1,sch.schedule_id,sch.room_id,pat.user_id,250000,250000,'DEMO_COVERAGE_20261102: lịch sử người bệnh '||n,'COMPLETED',at_time,at_time+interval '15 minutes',at_time-interval '30 minutes',at_time-interval '1 day') RETURNING encounter_id INTO eid;
+ VALUES('ONLINE',pat.patient_id,1,sch.schedule_id,sch.room_id,pat.user_id,250000,250000,'DEMO_COVERAGE_20261102: lịch sử người bệnh '||n,'COMPLETED',at_time,at_time+make_interval(mins=>sch.slot_minutes),at_time-interval '30 minutes',at_time-interval '1 day') RETURNING encounter_id INTO eid;
  INSERT INTO payment(encounter_id,payment_type,amount,payment_method,transaction_status,created_by_id,paid_at,created_at) VALUES(eid,'DEPOSIT',250000,'BANK','SUCCESS',pat.user_id,at_time-interval '23 hours',at_time-interval '1 day');
  INSERT INTO medical_record(encounter_id,diagnosis,treatment,doctor_notes,examined_at,created_at) VALUES(eid,'Kết quả khám nội khoa minh họa số '||(n+1),'Theo dõi và hẹn tái khám theo hồ sơ minh họa.','Hồ sơ và đơn thuốc hư cấu phục vụ demo đồ án; không sử dụng để điều trị.',at_time+interval '3 minutes',at_time+interval '3 minutes') RETURNING record_id INTO rec;
  INSERT INTO prescription_item(record_id,medication_name,dosage,quantity,instructions) VALUES(rec,'Thuốc minh họa A — không dùng điều trị','Liều dùng minh họa',10,'Dữ liệu đồ án, không phải chỉ định sử dụng thuốc');

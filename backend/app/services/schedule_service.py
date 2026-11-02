@@ -234,6 +234,8 @@ def update_schedule(schedule_id, fields):
                   ('room_id', 'work_date', 'start_time', 'end_time', 'max_quota')}
         if merged['end_time'] <= merged['start_time']:
             raise bad_request('end_time phải sau start_time')
+        from backend.app.schemas.schedule_schema import validate_shift_hours
+        validate_shift_hours(merged['start_time'], merged['end_time'])
         if merged['work_date'] < today_vn():
             raise bad_request('Không thể dời ca về quá khứ', 'DATE_IN_PAST')
         doctor = doctor_model.get_by_id(db, current['doctor_profile_id'])

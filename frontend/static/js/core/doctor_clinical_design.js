@@ -2,7 +2,7 @@ import {commitForm,markFormChanged} from "./form_workflow.js";
 import {startAutoRefresh} from './auto_refresh.js';
 import { clinicalPayload,saveClinicalProfile,finishClinicalProfile,beginClinicalProfile } from "./doctor_clinical_workflow.js";
 import { recordDetailView } from "./record_detail_view.js";
-import { canEditClinicalShift, clinicalShiftEnded, canBeginClinical } from "./clinical_shift_access.js";
+import { canEditClinicalShift, clinicalShiftEnded, canBeginClinical, canEditClinicalRecord } from "./clinical_shift_access.js";
 import { $, esc, date, today, panel, facts, dialog, table, badge, money } from "./staff_ui.js";
 
 const normalize = value => String(value || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[đĐ]/g,"d").toLowerCase().trim();
@@ -30,10 +30,10 @@ export function renderClinicalDesign(options = {}) {
   const shiftDay = today();
   const periodFor = p => Number(String(p.start_time || "").slice(0,2)) < 12 ? "morning" : "afternoon";
   const shiftFor = p => p;
-  const canEdit = p => p.payment_confirmed === true && !["CLOSED","UNAVAILABLE"].includes(p.schedule_status) && ["IN_PROGRESS","COMPLETED"].includes(p.status) && canEditClinicalShift(p);
+  const canEdit = canEditClinicalRecord;
   const initiallySelected = profiles.find(p=>p.id === options.initialId);
   const pinnedReadOnlyId = initiallySelected && (options.mode === "view" || !canEdit(initiallySelected)) ? initiallySelected.id : null;
-  const visible = p => p.id === pinnedReadOnlyId || p.id === selected?.id || !clinicalShiftEnded(shiftFor(p));
+  const visible = p => p.id === pinnedReadOnlyId || p.id === selected?.id || canEdit(p) || !clinicalShiftEnded(shiftFor(p));
   let selected = null, dirty = false, editing = false;
   $("#page-body").innerHTML = `<div class="clinical-design">
     <section class="panel clinical-lookup" aria-labelledby="clinical-lookup-title">
@@ -117,7 +117,6 @@ export function renderClinicalDesign(options = {}) {
       <div class="clinical-symptom"><strong>Lý do đến khám / triệu chứng đã khai</strong><p>${esc(p.symptom)}</p></div>
     </section>
     <form id="clinical-design-form">
-      ${p.status==='COMPLETED'?'<label>Lý do bổ sung / chỉnh sửa *<textarea name="reason" maxlength="1000" required rows="2"></textarea></label>':""}
       <section class="panel clinical-results-panel" aria-labelledby="clinical-result-title">
         <div class="section-heading"><div><h2 id="clinical-result-title">Kết quả khám bệnh</h2></div></div>
         <label>Chẩn đoán <span aria-hidden="true">*</span><textarea name="diagnosis" required maxlength="10000" rows="3" placeholder="Nhập kết luận chẩn đoán sau thăm khám…">${esc(p.diagnosis)}</textarea></label>
@@ -180,10 +179,6 @@ export function renderClinicalDesign(options = {}) {
       try {
         payload=clinicalPayload(Object.fromEntries(new FormData(form)),Array.from($("#clinical-medicine-rows").children).map(row=>Array.from(row.querySelectorAll("input")).map(input=>input.value)));
       } catch(error) {feedback.textContent=error.message;return;}
-      if(p.status==='COMPLETED'){
-        payload.reason=String(form.elements.reason.value||'').trim();
-        if(!payload.reason){feedback.textContent='Vui lòng nhập lý do bổ sung / chỉnh sửa.';return;}
-      }
       feedback.textContent="Đang lưu bệnh án và đơn thuốc…";
       const ok=await performAction(async()=>{
         const saved=await saveClinicalProfile(p,payload);if(!active)return;
@@ -191,7 +186,7 @@ export function renderClinicalDesign(options = {}) {
       },feedback);
       if(!ok)return;
       feedback.textContent="Đã lưu bệnh án và đơn thuốc.";
-      if(p.status==='COMPLETED'){editing=false;renderResults();renderEditor();$('#clinical-save-feedback').textContent='Đã lưu bổ sung bệnh án; lượt khám vẫn Hoàn thành.';return;}
+      if(p.status==='CHECKED_IN'){renderResults();feedback.textContent='Đã lưu bệnh án và đơn thuốc. Lượt khám vẫn ở trạng thái Đã check-in.';return;}
       dialog("Xác nhận hoàn thành lượt khám", `<p>Xác nhận hoàn thành lượt khám cho <strong>${esc(p.name)}</strong>?</p>${facts([["Mã hồ sơ",p.patient],["Mã lượt khám",p.id],["Ngày khám",date(p.work_date)],["Khung giờ",p.clock],["Chẩn đoán",payload.diagnosis],["Số thuốc",String(payload.items.length)]])}<div class="actions"><button class="primary" id="clinical-confirm-complete" type="button">Xác nhận</button><button id="clinical-complete-later" type="button" class="secondary">Để sau</button></div><p id="clinical-completion-feedback" role="status"></p>`);
       $("#clinical-complete-later").addEventListener("click",()=>{if(!saving)$("#staff-dialog").close();});
       $("#clinical-confirm-complete").addEventListener("click",async event=>{
@@ -222,11 +217,6 @@ export function renderClinicalDesign(options = {}) {
   const accessSignature = () => profiles.map(p => `${visible(p)}:${canEdit(p)}`).join(",");
   let eligibility = accessSignature();
   const shiftTimer = setInterval(() => {
-    if (!saving && selected && clinicalShiftEnded(selected)) {
-      editing=false;lockEditor();
-      const feedback=$('#clinical-save-feedback');
-      if(feedback)feedback.textContent=dirty?'Ca đã kết thúc. Nội dung chưa lưu được giữ trên màn hình; không thể ghi ngoài giờ ca.':'Ca đã kết thúc; hồ sơ chỉ xem.';
-    }
     const begin=$('#clinical-begin');if(begin&&selected)begin.hidden=!canBeginClinical(selected);
     const next = accessSignature();
     if (next !== eligibility) {eligibility = next;renderResults();lockEditor();}
