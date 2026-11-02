@@ -1,4 +1,5 @@
 import {commitForm,confirmDiscard} from "../core/form_workflow.js";
+import { startOtpAutofill } from "../core/recovery_otp.js";
 import * as authApi from "../api/auth.js";
 import { signIn, clearSession, returnUrl } from "../core/session.js";
 
@@ -98,6 +99,31 @@ let recoveryIdentity = "";
 let resetToken = null;
 let recoveryRequest;
 let recoveryVersion = 0;
+let cancelOtpAutofill;
+const demoOtp = document.querySelector('#recovery-demo');
+function clearDemoOtp() {
+  cancelOtpAutofill?.(); cancelOtpAutofill = undefined;
+  demoOtp.hidden = true;
+  document.querySelector('#recovery-demo-code').textContent = '';
+  document.querySelector('#recovery-demo-countdown').textContent = '';
+}
+function showDemoOtp(result, version) {
+  if (result.demo_mode !== true || !/^\d{6}$/.test(result.demo_otp)) return;
+  demoOtp.hidden = false;
+  document.querySelector('#recovery-demo-code').textContent = result.demo_otp;
+  cancelOtpAutofill = startOtpAutofill({
+    code: result.demo_otp,
+    onTick: seconds => {
+      document.querySelector('#recovery-demo-countdown').textContent = seconds ? `Tự điền mã sau ${seconds} giây…` : 'Đã sẵn sàng xác minh mã.';
+    },
+    onFill: code => {
+      if (version !== recoveryVersion || recoveryStep !== 'otp' || !recoveryDialog.open) return;
+      const field = document.querySelector('#recovery-otp');
+      if (!field.value) field.value = code;
+      message(recoveryStatus, 'Mã OTP đã sẵn sàng. Bấm “Xác minh mã” để tiếp tục.', true);
+    },
+  });
+}
 const stepLabels = { identity: "Gửi mã xác minh", otp: "Xác minh mã", password: "Đặt lại mật khẩu" };
 function recoveryMode(step, focus = true) {
   recoveryStep = step;
@@ -107,17 +133,23 @@ function recoveryMode(step, focus = true) {
     input.required = name === step;
     input.disabled = name !== step;
   }
+  const confirmation = document.querySelector('#recovery-password-confirm');
+  document.querySelector('#recovery-password-confirm-field').hidden = step !== 'password';
+  confirmation.required = step === 'password';
+  confirmation.disabled = step !== 'password';
   document.querySelector("#recovery-restart").hidden = step === "identity";
   recoveryForm.querySelector('[type="submit"]').textContent = stepLabels[step];
   if (focus) document.querySelector(`#recovery-${step === "identity" ? "identifier" : step}`).focus();
 }
 function resetRecovery() {
+  clearDemoOtp();
   recoveryVersion++;
   recoveryRequest?.abort();
   recoveryRequest = undefined;
   resetToken = null;
   recoveryIdentity = "";
   recoveryForm.reset();
+  document.querySelector('#recovery-password-confirm').removeAttribute('aria-invalid');
   busy(recoveryForm, false, stepLabels.identity);
   recoveryMode("identity", false);
   message(recoveryStatus, "");
@@ -145,6 +177,14 @@ recoveryForm.addEventListener("submit", async event => {
   if (step === "identity" && !validIdentity(identifier)) { message(recoveryStatus, "Vui lòng nhập số điện thoại hoặc email hợp lệ."); return; }
   if (step === "otp" && !/^\d{6}$/.test(otp)) { message(recoveryStatus, "Mã xác minh cần đúng 6 chữ số."); return; }
   if (step === "password" && !validPassword(password)) { message(recoveryStatus, "Mật khẩu cần từ 8 đến 128 ký tự, gồm chữ và số."); return; }
+  if (step === 'password' && password !== document.querySelector('#recovery-password-confirm').value) {
+    message(recoveryStatus, 'Mật khẩu xác nhận chưa khớp. Vui lòng nhập lại.');
+    document.querySelector('#recovery-password-confirm').setAttribute('aria-invalid', 'true');
+    document.querySelector('#recovery-password-confirm').focus();
+    return;
+  }
+  document.querySelector('#recovery-password-confirm').removeAttribute('aria-invalid');
+  cancelOtpAutofill?.();
   const version = ++recoveryVersion;
   recoveryRequest = new AbortController();
   const options = { signal: recoveryRequest.signal };
@@ -158,10 +198,12 @@ recoveryForm.addEventListener("submit", async event => {
       recoveryIdentity = identifier;
       recoveryMode("otp", false);
       message(recoveryStatus, result.message, true);
+      showDemoOtp(result, version);
     } else if (step === "otp") {
       const result = await authApi.verifyOtp({ identifier: recoveryIdentity, otp }, options);
       if (version !== recoveryVersion) return;
       if (!result?.reset_token) throw new Error("Phản hồi xác minh không hợp lệ.");
+      clearDemoOtp();
       resetToken = result.reset_token;
       document.querySelector("#recovery-otp").value = "";
       recoveryMode("password", false);
@@ -182,6 +224,7 @@ recoveryForm.addEventListener("submit", async event => {
     if (error.code === "INVALID_RESET_TOKEN") {
       resetToken = null;
       document.querySelector("#recovery-password").value = "";
+      document.querySelector("#recovery-password-confirm").value = "";
       recoveryMode("identity", false);
     }
     message(recoveryStatus, error.message);

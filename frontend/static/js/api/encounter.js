@@ -1,5 +1,9 @@
 import { apiRequest, pathSegment } from "../core/api.js";
 
+export function checkBookingEligibility(options = {}) {
+  return apiRequest('/encounters/booking-eligibility', { ...options, method: 'GET' });
+}
+
 /** Bộ lọc: patient_id, schedule_id, doctor_profile_id, encounter_status, encounter_type, work_date, page, page_size. Online nhận patient_id/schedule_id/appointment_time/symptoms; chuyển bác sĩ nhận schedule_id/appointment_time/reason. Giờ dùng HH:MM, giá và mã phiếu do backend chốt. */
 
 /** GET /encounters */

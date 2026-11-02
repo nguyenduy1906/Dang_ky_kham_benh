@@ -63,28 +63,51 @@ export function renderClinicalDesign(options = {}) {
     const period = $("#clinical-period").value;
     const selectedDay = $("#clinical-work-date").value;
     const matches = profiles.filter(p => (!selectedDay || selectedDay === (p.work_date || shiftDay)) && visible(p) && (period === "all" || periodFor(p) === period) && normalize(`${p.name} ${p.patient} ${p.id} ${p.phone} ${p.phone.replace(/ /g,"")}`).includes(query));
-    $("#clinical-profile-results").innerHTML = table(["Người bệnh / phiếu khám", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", "Thao tác"], matches.map(p => `<tr${selected?.id === p.id ? ' class="is-selected"' : ''}><td><strong>${esc(p.name)}</strong><small class="cell-subtitle">${p.patient} · ${p.id}</small></td><td>${date(p.work_date || shiftDay)}<small class="cell-subtitle">${p.clock}</small></td><td>${esc(p.room)}<small class="cell-subtitle">${esc(p.doctor || "Chưa cập nhật")}</small></td><td>${badge(savedProfiles.get(p.id)?.status || p.status || "IN_PROGRESS")}</td><td><button type="button" class="clinical-detail-link" data-profile="${p.id}">Chi tiết</button>${canEdit(p) ? `<button type="button" class="clinical-detail-link" data-profile="${p.id}" data-edit>Chỉnh sửa</button>` : ""}</td></tr>`));
+    $("#clinical-profile-results").innerHTML = table(["Người bệnh / phiếu khám", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", "Thao tác"], matches.map(p => `<tr data-profile-row="${p.id}"${selected?.id === p.id ? ' class="is-selected"' : ''}><td><strong>${esc(p.name)}</strong><small class="cell-subtitle">${p.patient} · ${p.id}</small></td><td>${date(p.work_date || shiftDay)}<small class="cell-subtitle">${p.clock}</small></td><td>${esc(p.room)}<small class="cell-subtitle">${esc(p.doctor || "Chưa cập nhật")}</small></td><td>${badge(savedProfiles.get(p.id)?.status || p.status || "IN_PROGRESS")}</td><td><button type="button" class="clinical-detail-link" data-profile="${p.id}">Chi tiết</button>${canEdit(p) ? `<button type="button" class="clinical-detail-link" data-profile="${p.id}" data-edit>Chỉnh sửa</button>` : ""}</td></tr>`));
     sizePatientList();
     $("#clinical-search-feedback").textContent = matches.length ? "" : !period ? "Hiện không trong ca làm việc. Chọn ca để xem danh sách." : "Không tìm thấy hồ sơ phù hợp trong ca đã chọn.";
-    $("#clinical-profile-results").querySelectorAll("[data-profile]").forEach(button => button.addEventListener("click", async () => {
-      if (saving) return;
-      const nextEditing = button.hasAttribute("data-edit");
-      let nextProfile = profiles.find(p => p.id === button.dataset.profile);
-      if (!visible(nextProfile) || (nextEditing && !canEdit(nextProfile))) { renderResults(); return; }
-      if (button.dataset.profile === selected?.id && editing === nextEditing) { $("#clinical-design-body").scrollIntoView({behavior:"smooth",block:"start"}); return; }
-      if (dirty && !confirm("Nội dung đang nhập chưa lưu. Chuyển sang hồ sơ khác?")) return;
-      const requestVersion = ++selectionVersion;
+  }
+  // Delegate once: row refreshes must not detach the click being handled.
+  $('#clinical-profile-results').addEventListener('click', event => {
+    const target = event.target.closest('[data-profile],tr[data-profile-row]');
+    if (!target) return;
+    return selectProfile(target.dataset.profile || target.dataset.profileRow, target.hasAttribute('data-edit'));
+  });
+  async function selectProfile(id, nextEditing = false) {
+    if (saving || !active) return;
+    let nextProfile = profiles.find(p => p.id === id);
+    if (!nextProfile || !visible(nextProfile) || (nextEditing && !canEdit(nextProfile))) { renderResults(); return; }
+    if (id === selected?.id && editing === nextEditing) {
+      // Cancel an earlier in-flight selection if the user comes back to this row.
+      selectionVersion++;
+      $('#clinical-profile-results').setAttribute('aria-busy','false');
+      $('#clinical-search-feedback').textContent='';
+      $('#clinical-design-body').scrollIntoView({behavior:'smooth',block:'start'});
+      return;
+    }
+    if (dirty && !confirm('Nội dung đang nhập chưa lưu. Chuyển sang hồ sơ khác?')) return;
+    const requestVersion = ++selectionVersion;
+    $('#clinical-search-feedback').textContent = `Đang tải hồ sơ ${nextProfile.name}…`;
+    $('#clinical-profile-results').setAttribute('aria-busy','true');
+    try {
       if (nextProfile.needsDetail && options.loadProfile) {
-        try {
-          const loaded = await options.loadProfile(nextProfile.encounter_id);
-          if (!active || requestVersion !== selectionVersion) return;
-          const index = profiles.findIndex(p=>p.id === loaded.id);
-          if (index < 0) return;
-          profiles[index] = loaded; nextProfile = loaded;
-        } catch {if (active) $("#clinical-search-feedback").textContent = "Không tải được hồ sơ đã chọn. Vui lòng thử lại.";return;}
+        const loaded = await options.loadProfile(nextProfile.encounter_id);
+        if (!active || requestVersion !== selectionVersion) return;
+        if (loaded.id !== id || String(loaded.encounter_id) !== String(nextProfile.encounter_id)) throw new Error('Không nhận được đúng hồ sơ đã chọn.');
+        const index = profiles.findIndex(p => p.id === id);
+        if (index < 0) return;
+        profiles[index] = loaded; nextProfile = loaded;
       }
-      selected = nextProfile; editing = nextEditing && canEdit(nextProfile); dirty = false; renderResults(); renderEditor(); $("#clinical-design-body").scrollIntoView({behavior:"smooth",block:"start"});
-    }));
+      if (!active || requestVersion !== selectionVersion) return;
+      commitForm($('#clinical-design-form'));
+      selected = nextProfile; editing = nextEditing && canEdit(nextProfile); dirty = false;
+      renderResults(); renderEditor();
+      $('#clinical-design-body').scrollIntoView({behavior:'smooth',block:'start'});
+    } catch (error) {
+      if (active && requestVersion === selectionVersion) $('#clinical-search-feedback').textContent = error.message || 'Không tải được hồ sơ đã chọn. Vui lòng thử lại.';
+    } finally {
+      if (active && requestVersion === selectionVersion) $('#clinical-profile-results').setAttribute('aria-busy','false');
+    }
   }
   function renderEditor() {
     const p = savedProfiles.get(selected.id) || selected;
@@ -108,7 +131,7 @@ export function renderClinicalDesign(options = {}) {
         <p id="clinical-no-medicine" class="clinical-no-medicine" hidden>Không kê thuốc cho lượt khám này. Bạn vẫn có thể lưu bệnh án không kèm thuốc.</p>
       </section>
       ${historyMarkup(p)}
-      <div class="clinical-editor-footer"><p id="clinical-save-feedback" role="status"></p><div class="actions"><button id="clinical-reload" type="button" class="secondary">Đọc lại hồ sơ</button><button type="submit">Lưu bệnh án và đơn thuốc</button></div></div>
+      <div class="clinical-editor-footer"><p id="clinical-save-feedback" role="status"></p><div class="actions"><button type="submit">Lưu bệnh án và đơn thuốc</button></div></div>
     </form>`;
     function updateCount() {
       const rows = Array.from($("#clinical-medicine-rows").children);
@@ -140,16 +163,6 @@ export function renderClinicalDesign(options = {}) {
       catch(error) {if(active) feedback.textContent=error.message || "Không thực hiện được thao tác. Vui lòng thử lại.";return false;}
       finally {saving=false;form.dataset.busy="false";if(active){$("#clinical-work-date").disabled=false;$("#clinical-period").disabled=false;lockEditor();}}
     }
-    $("#clinical-reload").addEventListener("click", async()=>{
-      if(saving || (dirty && !confirm("Đọc lại hồ sơ sẽ bỏ nội dung chưa lưu. Tiếp tục?"))) return;
-      const ok=await performAction(async()=>{
-        const loaded=await options.loadProfile(p.encounter_id);
-        if(!active)return;
-        const index=profiles.findIndex(row=>row.id===p.id);if(index>=0)profiles[index]=loaded;
-        selected=loaded;savedProfiles.delete(p.id);dirty=false;editing=editing&&canEdit(loaded);
-      },$("#clinical-save-feedback"));
-      if(ok){renderResults();renderEditor();}
-    });
     $("#clinical-begin")?.addEventListener("click",async()=>{
       if(saving || !confirm(`Bắt đầu khám cho ${p.name}?`))return;
       const feedback=$("#clinical-save-feedback");feedback.textContent="Đang bắt đầu khám…";
@@ -203,7 +216,6 @@ export function renderClinicalDesign(options = {}) {
     const allowed = editing && canEdit(selected);
     if (!allowed) editing = false;
     form.querySelectorAll("input,textarea").forEach(input => {input.readOnly = !allowed || saving;});
-    const reload=$("#clinical-reload");if(reload)reload.disabled=saving;
     const begin=$("#clinical-begin");if(begin){begin.disabled=saving;begin.hidden=!canBeginClinical(selected);}
     form.querySelectorAll(".clinical-remove,#clinical-add-medicine,button[type=submit]").forEach(button => {button.hidden = !allowed;button.disabled = !allowed || saving;});
   }
@@ -235,7 +247,7 @@ export function renderClinicalDesign(options = {}) {
         const cached=savedProfiles.get(selected.id);if(cached)Object.assign(cached,{status:selected.status,schedule_status:selected.schedule_status});
       }else{
         selected.schedule_status='CLOSED';
-        $('#clinical-save-feedback').textContent='Lượt khám không còn trong danh sách được giao. Vui lòng đọc lại hồ sơ.';
+        $('#clinical-save-feedback').textContent='Lượt khám không còn trong danh sách được giao. Vui lòng chọn lại hồ sơ hoặc tải lại trang.';
       }
       profiles=rows.map(row=>row.id===selected.id?selected:row);
       if(!fresh)profiles.push(selected);

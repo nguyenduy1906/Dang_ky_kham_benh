@@ -76,6 +76,12 @@ _ACTION_RESPONSES = {200: {'description': 'Thành công; gọi lại cùng trạ
 _REASON = _body({'reason': {'type': 'string', 'example': 'Bệnh nhân đổi kế hoạch'}})
 
 
+@encounter_bp.get('/encounters/booking-eligibility')
+@login_required
+def booking_eligibility():
+    return jsonify(encounter_service.booking_eligibility(current_user()))
+
+
 @encounter_bp.post('/encounters/online')
 @login_required
 @swag_from({'tags': ['Encounters'], 'summary': 'USER giữ chỗ và chốt tiền cọc theo cấu hình; chưa phát phiếu',

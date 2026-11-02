@@ -1,6 +1,6 @@
 -- Schema PostgreSQL cuối cùng cho khởi tạo mới (23 bảng).
 -- Mọi thay đổi cấu trúc được cập nhật trực tiếp trong file này.
--- IF NOT EXISTS chỉ cho phép khởi động lại cùng schema; không nâng cấp database cũ.
+-- IF NOT EXISTS giữ bảng hiện có; phần cuối gộp nâng cấp hồ sơ/avatar cũ đã hỗ trợ.
 
 -- Mã nghiệp vụ được sinh từ ID: ổn định, duy nhất và không cắt số khi vượt 999.
 -- Các ID số vẫn là khóa nội bộ; không dùng mã này cho OTP/token hay phân quyền.
@@ -776,3 +776,51 @@ FOR EACH ROW EXECUTE FUNCTION capture_admin_activity('RECEPTION_WORKSTATION','wo
 DROP TRIGGER IF EXISTS reception_assignment_change_protect ON reception_assignment_change;
 CREATE TRIGGER reception_assignment_change_protect BEFORE UPDATE OR DELETE ON reception_assignment_change
 FOR EACH ROW EXECUTE FUNCTION protect_admin_activity();
+
+-- BEGIN MERGED_LEGACY_PROFILE_UPGRADES
+-- Gộp nâng cấp hồ sơ và avatar từ hai file 20261101; chạy lặp không thay dữ liệu đã có.
+ALTER TABLE users
+  ADD COLUMN IF NOT EXISTS dob date CHECK (dob BETWEEN DATE '1900-01-01' AND (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date),
+  ADD COLUMN IF NOT EXISTS gender text CHECK (gender IN ('Nam','Nữ','Khác')),
+  ADD COLUMN IF NOT EXISTS id_card text UNIQUE CHECK (id_card ~ '^[0-9]{12}$'),
+  ADD COLUMN IF NOT EXISTS address text,
+  ADD COLUMN IF NOT EXISTS emergency_contact_name text,
+  ADD COLUMN IF NOT EXISTS emergency_contact_phone text CHECK (emergency_contact_phone ~ '^\+?[0-9]{9,15}$'),
+  ADD COLUMN IF NOT EXISTS emergency_contact_relationship text;
+ALTER TABLE patient
+  ADD COLUMN IF NOT EXISTS email text,
+  ADD COLUMN IF NOT EXISTS emergency_contact_name text,
+  ADD COLUMN IF NOT EXISTS emergency_contact_phone text CHECK (emergency_contact_phone ~ '^\+?[0-9]{9,15}$'),
+  ADD COLUMN IF NOT EXISTS emergency_contact_relationship text;
+ALTER TABLE encounter ADD COLUMN IF NOT EXISTS registration_details jsonb
+  CHECK (registration_details IS NULL OR jsonb_typeof(registration_details) = 'object');
+
+ALTER TABLE role ADD COLUMN IF NOT EXISTS role_code text GENERATED ALWAYS AS (business_code('VT', role_id)) STORED UNIQUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS user_code text GENERATED ALWAYS AS (business_code('TK', user_id)) STORED UNIQUE;
+ALTER TABLE patient ADD COLUMN IF NOT EXISTS patient_code text GENERATED ALWAYS AS (business_code('BN', patient_id)) STORED UNIQUE;
+ALTER TABLE department ADD COLUMN IF NOT EXISTS department_code text GENERATED ALWAYS AS (business_code('CK', department_id)) STORED UNIQUE;
+ALTER TABLE doctor_profile ADD COLUMN IF NOT EXISTS doctor_code text GENERATED ALWAYS AS (business_code('BS', doctor_profile_id)) STORED UNIQUE;
+ALTER TABLE room ADD COLUMN IF NOT EXISTS room_code text GENERATED ALWAYS AS (business_code('PH', room_id)) STORED UNIQUE;
+ALTER TABLE work_schedule ADD COLUMN IF NOT EXISTS schedule_code text GENERATED ALWAYS AS (business_code('CA', schedule_id)) STORED UNIQUE;
+ALTER TABLE encounter ADD COLUMN IF NOT EXISTS encounter_code text GENERATED ALWAYS AS (business_code('LK', encounter_id)) STORED UNIQUE;
+ALTER TABLE encounter_status_log ADD COLUMN IF NOT EXISTS log_code text GENERATED ALWAYS AS (business_code('NKTT', log_id)) STORED UNIQUE;
+ALTER TABLE encounter_transfer_log ADD COLUMN IF NOT EXISTS log_code text GENERATED ALWAYS AS (business_code('NKCD', log_id)) STORED UNIQUE;
+ALTER TABLE payment ADD COLUMN IF NOT EXISTS payment_code text GENERATED ALWAYS AS (business_code('TT', payment_id)) STORED UNIQUE;
+ALTER TABLE medical_record ADD COLUMN IF NOT EXISTS record_code text GENERATED ALWAYS AS (business_code('BA', record_id)) STORED UNIQUE;
+ALTER TABLE prescription_item ADD COLUMN IF NOT EXISTS item_code text GENERATED ALWAYS AS (business_code('DT', item_id)) STORED UNIQUE;
+ALTER TABLE review ADD COLUMN IF NOT EXISTS review_code text GENERATED ALWAYS AS (business_code('DG', review_id)) STORED UNIQUE;
+ALTER TABLE notification ADD COLUMN IF NOT EXISTS notification_code text GENERATED ALWAYS AS (business_code('TB', notification_id)) STORED UNIQUE;
+ALTER TABLE article ADD COLUMN IF NOT EXISTS article_code text GENERATED ALWAYS AS (business_code('BV', article_id)) STORED UNIQUE;
+ALTER TABLE role_request ADD COLUMN IF NOT EXISTS request_code text GENERATED ALWAYS AS (business_code('YCVT', request_id)) STORED UNIQUE;
+ALTER TABLE nurse_assignment ADD COLUMN IF NOT EXISTS assignment_code text GENERATED ALWAYS AS (business_code('PC', assignment_id)) STORED UNIQUE;
+ALTER TABLE department_leadership ADD COLUMN IF NOT EXISTS leadership_code text GENERATED ALWAYS AS (business_code('LDK', leadership_id)) STORED UNIQUE;
+ALTER TABLE staff_leave_request ADD COLUMN IF NOT EXISTS request_code text GENERATED ALWAYS AS (business_code('NP', request_id)) STORED UNIQUE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url text;
+
+UPDATE users AS u
+SET avatar_url = to_jsonb(d)->>'avatar_url'
+FROM doctor_profile AS d
+WHERE d.user_id = u.user_id
+  AND NULLIF(trim(u.avatar_url), '') IS NULL
+  AND NULLIF(trim(to_jsonb(d)->>'avatar_url'), '') IS NOT NULL;
+-- END MERGED_LEGACY_PROFILE_UPGRADES

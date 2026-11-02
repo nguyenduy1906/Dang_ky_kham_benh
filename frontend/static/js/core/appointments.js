@@ -3,13 +3,12 @@ import { bookingUrl } from "./session.js";
 export {encounterStatusLabels as statusLabels} from "./encounter_status.js";
 const active = new Set(["HOLDING", "CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
 export function isUpcoming(encounter, now = Date.now()) {
-  const end = new Date(encounter.appointment_end_at).getTime();
   const unexpiredHold = encounter.encounter_status !== "HOLDING" || new Date(encounter.hold_expires_at).getTime() > now;
-  return active.has(encounter.encounter_status) && Number.isFinite(end) && end > now && unexpiredHold;
+  return active.has(encounter.encounter_status) && unexpiredHold;
 }
 
 export function filterAppointments(items, { view = "upcoming", patient = "", status = "" } = {}, now = Date.now()) {
-  // Active future bookings and history partition the full authorized list.
+  // Unfinished visits stay visible until the backend records a terminal status.
   return items.filter(item => (view === "upcoming" ? isUpcoming(item, now) : !isUpcoming(item, now)) &&
     (!patient || String(item.patient_id) === String(patient)) && (!status || item.encounter_status === status))
     .sort((a, b) => (view === "upcoming" ? 1 : -1) *
@@ -28,6 +27,8 @@ export function cancellationNotice(encounter, now = Date.now()) {
   if (status === "EXPIRED") return { allowed: false, message: "Lịch đã hết hạn giữ chỗ, không còn lịch đang hiệu lực để hủy." };
   if (!["HOLDING", "CONFIRMED"].includes(status)) return { allowed: false, message: "Lịch không còn ở trạng thái bệnh nhân được tự hủy. Vui lòng liên hệ bộ phận tiếp nhận để được hỗ trợ." };
   if (!isUpcoming(encounter, now)) return { allowed: false, message: "Thời gian giữ chỗ hoặc khung giờ khám đã hết hạn. Vui lòng tải lại danh sách và liên hệ bộ phận tiếp nhận nếu cần hỗ trợ." };
+  const appointment = new Date(encounter.estimated_exam_at).getTime();
+  if (!Number.isFinite(appointment) || now >= appointment) return { allowed: false, message: 'Đã đến hoặc quá giờ hẹn. Bạn không thể tự hủy lịch; vui lòng liên hệ bộ phận tiếp nhận.' };
   if (status === "HOLDING") return { allowed: true, message: "Lịch đang giữ chỗ, chưa xác nhận thanh toán. Nếu bạn đã chuyển tiền nhưng chưa có kết quả, hãy kiểm tra giao dịch; hệ thống xử lý khoản thu đến muộn theo chính sách." };
   const hours = (new Date(encounter.estimated_exam_at).getTime() - now) / 3600000;
   if(encounter.schedule_status==='UNAVAILABLE')return {allowed:true,message:'Ca khám đã báo nghỉ. Khi hủy do bệnh viện, khoản thu đủ điều kiện được xét hoàn 100%; bộ phận quản trị xử lý hoàn tiền riêng.'};

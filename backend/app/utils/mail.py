@@ -2,7 +2,7 @@
 
 Chưa có nhà cung cấp email thật. Khi SEND_EMAIL=1, nội dung thư được in ra log của
 backend (docker compose logs backend) để thử nghiệm. Khi SEND_EMAIL khác 1, adapter
-không làm lộ mã ở bất kỳ đâu. API public không bao giờ trả OTP hay mã xác minh email.
+không làm lộ mã ở bất kỳ đâu. Chế độ thường không trả OTP qua API; DEMO_PASSWORD_RECOVERY=1 cho phép trình diễn OTP điện thoại.
 """
 import os
 
@@ -23,7 +23,7 @@ def send_otp(to_email, otp):
 
 
 def send_sms_otp(phone, otp):
-    """SMS giả lập cho đồ án; không gửi SMS thật hoặc trả OTP qua API."""
+    """SMS giả lập cho đồ án; không gửi SMS thật. OTP trình diễn do auth_service kiểm soát riêng."""
     if os.environ.get('SEND_SMS', '0') == '1':
         print(f'[SEND SMS] to={phone} | Mã OTP đặt lại mật khẩu: {otp}', flush=True)
     else:

@@ -188,6 +188,20 @@ def create_online(actor, fields):
     return _create_booking(actor, fields)
 
 
+def _require_booking_eligibility(db, actor, now):
+    start = now.astimezone(VN_TZ).replace(hour=0, minute=0, second=0, microsecond=0)
+    if model.count_personal_cancellations(db, actor['user_id'], start, start + timedelta(days=1)) > 3:
+        raise conflict('Bạn đã hủy lịch quá 3 lần trong hôm nay. Vui lòng quay lại đặt lịch vào ngày mai.',
+                       'DAILY_CANCELLATION_LIMIT')
+
+
+def booking_eligibility(actor):
+    require_role(actor, 'USER')
+    with get_db_connection() as db:
+        _require_booking_eligibility(db, actor, date_utils.utc_now())
+    return {'allowed': True}
+
+
 def create_staff_booking(actor, fields):
     require_role(actor, 'ADMIN', 'RECEPTIONIST')
     return _create_booking(actor, fields, staff=True)
@@ -195,6 +209,9 @@ def create_staff_booking(actor, fields):
 
 def _create_booking(actor, fields, *, staff=False):
     with get_db_connection() as db:
+        if not staff:
+            model.lock_booking_account(db, actor['user_id'])
+            _require_booking_eligibility(db, actor, date_utils.utc_now())
         _patient_for_booking(db, fields['patient_id'], actor, online=not staff)
         schedules = schedule_model.lock_schedules(db, [fields['schedule_id']])
         if not schedules:
@@ -281,6 +298,10 @@ def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIEN
     if operation == 'cancel' and cancel_origin == 'HOSPITAL':
         require_role(actor, 'ADMIN', 'RECEPTIONIST')
     with get_db_connection() as db:
+        if operation == 'cancel':
+            visible = visible_encounter(db, actor, encounter_id)
+            if visible['encounter_type'] == 'ONLINE':
+                model.lock_booking_account(db, visible['created_by_id'])
         if operation == 'check-in':
             visible = visible_encounter(db, actor, encounter_id)
             _patient_for_booking(db, visible['patient_id'], actor, online=False)
@@ -297,6 +318,8 @@ def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIEN
             allowed = ('HOLDING', 'CONFIRMED') if actor['role_name'] == 'USER' else ('HOLDING', 'CONFIRMED', 'CHECKED_IN')
             if status not in allowed:
                 raise conflict('Không thể hủy ở trạng thái hiện tại', 'INVALID_ENCOUNTER_STATUS')
+            if actor['role_name'] == 'USER' and now >= encounter['estimated_exam_at']:
+                raise conflict('Đã đến hoặc quá giờ hẹn, bệnh nhân không thể tự hủy lịch. Vui lòng liên hệ tiếp nhận.', 'CANCELLATION_DEADLINE_PASSED')
             origin = 'HOSPITAL' if schedule['schedule_status'] == 'UNAVAILABLE' else cancel_origin
             fields.update(cancelled_by_id=actor['user_id'], cancelled_at=now, cancel_reason=reason,
                           cancel_origin=origin, refund_reference_at=encounter['estimated_exam_at'])

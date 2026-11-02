@@ -69,7 +69,9 @@
       <form id="recovery-form" method="post">
         <div class="auth-field" id="recovery-identity-field"><label for="recovery-identifier">Số điện thoại hoặc email</label><input id="recovery-identifier" autocomplete="username" maxlength="255" required /></div>
         <div class="auth-field" id="recovery-otp-field" hidden><label for="recovery-otp">Mã xác minh</label><input id="recovery-otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="Nhập 6 chữ số" /></div>
+        <div class="recovery-demo" id="recovery-demo" hidden><p>Mã OTP mô phỏng</p><output id="recovery-demo-code" aria-label="Mã OTP mô phỏng"></output><p id="recovery-demo-countdown" role="status"></p></div>
         <div class="auth-field" id="recovery-password-field" hidden><label for="recovery-password">Mật khẩu mới</label><input id="recovery-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" aria-describedby="recovery-password-hint" /><p class="auth-field-note" id="recovery-password-hint">Từ 8 đến 128 ký tự, gồm chữ và số.</p></div>
+        <div class="auth-field" id="recovery-password-confirm-field" hidden><label for="recovery-password-confirm">Xác nhận mật khẩu mới</label><input id="recovery-password-confirm" type="password" autocomplete="new-password" minlength="8" maxlength="128" aria-describedby="recovery-status" /></div>
         <p class="auth-status" id="recovery-status" role="status" aria-live="polite"></p>
         <button type="submit" class="auth-submit" disabled>Tiếp tục</button>
         <button type="button" class="auth-text-button" id="recovery-restart" hidden>Nhập lại thông tin / Gửi lại mã</button>

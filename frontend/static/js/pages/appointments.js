@@ -68,6 +68,9 @@ function render() {
     tab.tabIndex = selected ? 0 : -1;
     if (selected) $("#appointments-panel").setAttribute("aria-labelledby", tab.id);
   });
+  $('#appointments-view-help').textContent = view === 'upcoming'
+    ? 'Các lượt còn hiệu lực: chờ thanh toán, đã thanh toán, đã check-in hoặc đang khám. Đến giờ hẹn sẽ không còn được tự hủy.'
+    : 'Các lượt đã hoàn thành, đã hủy, hết hạn giữ chỗ hoặc được ghi nhận không đến khám.';
   const filtered = filterAppointments(items, { view, patient: ui.patient.value, status: ui.filter.value });
   const pages = Math.max(1, Math.ceil(filtered.length / perPage));
   page = Math.min(page, pages);
@@ -105,12 +108,15 @@ function render() {
       link.href = appointmentActionUrl({ ...item, encounter_status: "COMPLETED" });
       actions.append(link);
     }
-    if (isUpcoming(item) && ["HOLDING", "CONFIRMED"].includes(item.encounter_status)) {
+    if (cancellationNotice(item).allowed) {
       const cancelButton = el("button", "Hủy lịch", "appointment-cancel-button");
       cancelButton.type = "button";
       cancelButton.setAttribute("aria-label", `Hủy lịch của ${item.patient_name} ngày ${dateLabel(item.work_date)}`);
       cancelButton.addEventListener("click", () => openCancellation(item.encounter_id));
       actions.append(cancelButton);
+    }
+    if (isUpcoming(item) && new Date(item.estimated_exam_at).getTime() <= Date.now() && ['HOLDING','CONFIRMED'].includes(item.encounter_status)) {
+      card.append(el('p', 'Đã đến giờ hẹn · Vui lòng liên hệ tiếp nhận. Không còn được tự hủy lịch.', 'appointments-notice'));
     }
     card.append(metadata, actions);
     ui.list.append(card);
@@ -314,3 +320,15 @@ const errorText = protectPatientPage({
   },
 });
 startAutoRefresh(load, { canRefresh: () => hasSession() && initialized && !loading });
+
+// Remove cancellation actions at the appointment boundary even if the page stays open.
+function refreshCancellationActions() {
+  if (!initialized || loading) return;
+  ui.list.querySelectorAll('.appointment-card').forEach(card => {
+    const item = items.find(item => String(item.encounter_id) === card.dataset.encounterId);
+    if (item && !cancellationNotice(item).allowed) card.querySelector('.appointment-cancel-button')?.remove();
+  });
+}
+let cancellationClock = setInterval(refreshCancellationActions, 1000);
+window.addEventListener('pagehide', () => clearInterval(cancellationClock));
+window.addEventListener('pageshow', () => { clearInterval(cancellationClock); refreshCancellationActions(); cancellationClock = setInterval(refreshCancellationActions, 1000); });

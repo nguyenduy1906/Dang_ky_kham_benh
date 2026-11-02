@@ -91,3 +91,8 @@
   .auth-visual-copy h2 { font-size: 25px; }
 }
 @media (prefers-reduced-motion: reduce) { .auth-visual, .auth-panel, .auth-home, .auth-home svg { transition: none; } }
+
+.recovery-demo { margin: 0 0 16px; padding: 14px 16px; border: 1px solid #b7dbc8; border-radius: 8px; background: #f0f8f3; text-align: center; }
+.recovery-demo[hidden] { display: none; }
+.recovery-demo p { margin: 0; color: #476454; font-size: 12px; }
+.recovery-demo output { display: block; margin: 5px 0; color: #008349; font-size: 26px; font-weight: 700; letter-spacing: .25em; }

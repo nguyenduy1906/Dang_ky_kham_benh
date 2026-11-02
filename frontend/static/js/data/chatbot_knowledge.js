@@ -1,0 +1,71 @@
+// Navigation guidance for the student demo, researched 2026-11-01.
+// These are suggested entry points in this site's directory, not diagnoses or a
+// clinically validated triage tool. Seek clinical review before real-world use.
+export const medicalSources = {
+  abdomen: ['NHS · Đau bụng', 'https://www.nhs.uk/symptoms/stomach-ache/'],
+  head: ['NHS · Đau đầu', 'https://www.nhs.uk/symptoms/headaches/'],
+  throat: ['NHS · Đau họng', 'https://www.nhs.uk/symptoms/sore-throat/'],
+  eye: ['NHS · Mắt đỏ', 'https://www.nhs.uk/symptoms/red-eye/'],
+  skin: ['NHS · Ngứa da', 'https://www.nhs.uk/symptoms/itchy-skin/'],
+  teeth: ['NHS · Đau răng', 'https://www.nhs.uk/symptoms/toothache/'],
+  back: ['NHS · Đau lưng', 'https://www.nhs.uk/conditions/back-pain/'],
+  cough: ['NHS · Ho', 'https://www.nhs.uk/symptoms/cough/'],
+  urinary: ['NHS · Triệu chứng đường tiết niệu', 'https://www.nhs.uk/conditions/urinary-tract-infections-utis/'],
+  heart: ['NHS · Hồi hộp, đánh trống ngực', 'https://www.nhs.uk/symptoms/heart-palpitations/'],
+  child: ['NHS · Sốt ở trẻ em', 'https://www.nhs.uk/symptoms/fever-in-children/'],
+};
+
+// Explicit department/service names and already-named conditions are directory
+// aliases, not inferences that a symptom means a particular disease.
+export const departmentAliases = {
+  'nội tổng quát':['khám tổng quát','khám sức khỏe'],
+  'nhi':['nhi khoa'],
+  'răng hàm mặt':['nha khoa'],
+  'sản phụ khoa':['khám thai','khám phụ khoa','khám sản'],
+  'nội tiết':['tiểu đường','đái tháo đường','tuyến giáp'],
+  'dinh dưỡng':['tư vấn dinh dưỡng','khám dinh dưỡng'],
+};
+
+// Aliases match directory names, never numeric IDs. All doctors/prices are read
+// from the public API at response time; missing specialties are never invented.
+export const symptomTopics = [
+  {id:'abdomen', terms:['đau bụng','bụng đau','đau dạ dày','đau bao tử','đau thượng vị','đau quanh rốn'], departments:['tiêu hóa','nội tổng quát'], source:'abdomen', question:'Bạn đau vùng nào, từ khi nào? Người cần khám là người lớn hay trẻ em, đau nhẹ hay dữ dội?', warning:'Đau bụng đột ngột dữ dội, nôn ra máu, phân đen hoặc ngất cần được đánh giá khẩn cấp.'},
+  {id:'digestive', terms:['đầy bụng','đầy hơi','ợ chua','ợ nóng','khó tiêu','tiêu chảy','đi ngoài','táo bón','buồn nôn'], departments:['tiêu hóa','nội tổng quát'], source:'abdomen', question:'Người cần khám là người lớn hay trẻ em? Triệu chứng kéo dài bao lâu, có đau dữ dội, nôn ra máu hoặc phân đen không?', warning:'Nôn ra máu, phân đen, đau dữ dội hoặc không giữ được nước cần khám trực tiếp sớm.'},
+  {id:'head', terms:['đau đầu','nhức đầu','đầu đau','đau nửa đầu'], departments:['nội tổng quát','thần kinh'], source:'head', question:'Đau bắt đầu từ khi nào, nhẹ hay dữ dội? Người khám là người lớn hay trẻ em? Có đột ngột đau nhiều, yếu tay chân hoặc nhìn mờ không?', warning:'Đau đầu đột ngột dữ dội, nói khó, yếu tay chân, co giật hoặc mất thị lực cần cấp cứu.'},
+  {id:'throat', terms:['đau họng','rát họng','viêm họng','nuốt đau','khàn tiếng','đau tai','ù tai','nghẹt mũi','sổ mũi','chảy mũi','viêm xoang'], departments:['tai mũi họng','nội tổng quát'], source:'throat', question:'Người khám là người lớn hay trẻ em? Tình trạng kéo dài bao lâu, có khó thở, không nuốt được nước bọt hoặc nặng lên nhanh không?', warning:'Khó thở hoặc không nuốt được nước bọt cần trợ giúp y tế khẩn cấp.'},
+  {id:'eye', terms:['đỏ mắt','mắt đỏ','ngứa mắt','đau mắt','mờ mắt','nhìn mờ','khô mắt','chảy nước mắt'], departments:['mắt','nhãn khoa'], source:'eye', question:'Người khám là người lớn hay trẻ em? Mắt có đau nhiều, giảm thị lực đột ngột, chấn thương hoặc bị hóa chất bắn vào không?', warning:'Mất hoặc giảm thị lực đột ngột, chấn thương hay hóa chất vào mắt cần được đánh giá khẩn cấp.'},
+  {id:'skin', terms:['ngứa da','nổi mẩn','nổi ban','phát ban','mẩn ngứa','nổi mụn','mụn trứng cá','rụng tóc','nấm da','mề đay'], departments:['da liễu'], source:'skin', question:'Người khám là người lớn hay trẻ em? Tình trạng xuất hiện từ khi nào, ở vùng nào? Có sưng môi/lưỡi hoặc khó thở không?', warning:'Sưng môi/lưỡi kèm khó thở cần trợ giúp khẩn cấp. Ngứa trong thai kỳ cần trao đổi trực tiếp với nhân viên y tế.'},
+  {id:'teeth', terms:['đau răng','nhức răng','sâu răng','sưng lợi','chảy máu chân răng','đau hàm','răng khôn','ê buốt răng'], departments:['răng hàm mặt','nha khoa'], source:'teeth', question:'Người khám là người lớn hay trẻ em? Đau từ khi nào, có sưng mặt/cổ, khó nuốt hoặc khó thở không?', warning:'Sưng miệng/cổ làm khó thở hoặc khó nuốt cần cấp cứu.'},
+  {id:'back', terms:['đau lưng','đau thắt lưng','đau cột sống'], departments:['cơ xương khớp','nội tổng quát'], source:'back', question:'Người khám là người lớn hay trẻ em? Đau từ khi nào, có chấn thương, yếu hai chân hoặc không kiểm soát tiểu tiện không?', warning:'Đau lưng kèm yếu hai chân, tê vùng kín hoặc thay đổi kiểm soát tiểu tiện cần cấp cứu.'},
+  {id:'joint', terms:['đau khớp','đau gối','đau đầu gối','đau vai','đau cổ','đau cơ','sưng khớp','đau xương'], departments:['cơ xương khớp','nội tổng quát'], source:'back', question:'Người khám là người lớn hay trẻ em? Đau vị trí nào và bao lâu? Có chấn thương, sưng nóng đỏ, sốt hoặc không đi lại được không?', warning:'Nếu có chấn thương nặng, khớp sưng nóng kèm sốt hoặc không vận động được, hãy liên hệ cơ sở y tế để được khám sớm.'},
+  {id:'cough', terms:['ho','ho khan','ho có đờm','ho kéo dài','khò khè'], departments:['hô hấp','nội tổng quát'], source:'cough', question:'Người khám là người lớn hay trẻ em? Ho bao lâu, có khó thở, đau ngực, ho ra máu hoặc nặng lên nhanh không?', warning:'Ho ra máu, khó thở hoặc đau ngực cần đánh giá trực tiếp sớm; không chờ lịch khám thông thường.'},
+  {id:'urinary', terms:['tiểu buốt','tiểu rắt','tiểu nhiều','tiểu đau','đái buốt','đái rắt','đau khi tiểu'], departments:['thận tiết niệu','tiết niệu','nội tổng quát'], source:'urinary', question:'Người khám là người lớn hay trẻ em? Triệu chứng từ khi nào? Có sốt, đau hông lưng, tiểu ra máu hoặc đang mang thai không?', warning:'Sốt, đau hông lưng, tiểu ra máu hoặc triệu chứng khi mang thai cần liên hệ nhân viên y tế để khám sớm.'},
+  {id:'heart', terms:['tim đập nhanh','đánh trống ngực','hồi hộp','tim đập không đều','tái khám huyết áp','cao huyết áp'], departments:['tim mạch','nội tổng quát'], source:'heart', question:'Người khám là người lớn hay trẻ em? Tình trạng từ khi nào, có đang đau ngực, khó thở hoặc ngất không?', warning:'Hồi hộp kèm đau ngực, khó thở hoặc ngất cần cấp cứu.'},
+  {id:'fever', terms:['sốt','nóng sốt','sốt nhẹ','sốt cao'], departments:['nội tổng quát'], source:'child', question:'Người cần khám bao nhiêu tuổi (hoặc bao nhiêu tháng), sốt bao nhiêu độ và từ khi nào? Có khó thở, co giật hoặc khó đánh thức không?', warning:'Trẻ dưới 3 tháng sốt từ 38°C cần được đánh giá y tế ngay; khó thở, co giật hoặc khó đánh thức cần cấp cứu.'},
+];
+
+// Website instructions follow the current project workflow. Exact eligibility,
+// prices and deadlines belong to the booking/encounter screens, not this chat.
+export const faqEntries = [
+  {id:'register', terms:['đăng ký tài khoản','tạo tài khoản','chưa có tài khoản'], text:'Mở trang Đăng nhập → Đăng ký ngay → điền họ tên, số điện thoại hoặc email và mật khẩu theo yêu cầu trên form. Tài khoản công khai là người dùng; vai trò nhân viên do quản trị cấp. Hồ sơ người khám được lựa chọn hoặc tạo riêng trong bước đặt lịch.', target:'login'},
+  {id:'booking-error', terms:['không đặt được','không đặt lịch được','lỗi đặt lịch'], text:'Bạn kiểm tra đăng nhập, hồ sơ người khám và chọn khung giờ còn trống. Online cần trước giờ bắt đầu ca ít nhất 5 giờ; ca đầy hoặc không còn nhận đặt sẽ không chọn được. Nếu gặp lỗi sau thanh toán, xem lại Lịch khám trước khi thử lại và liên hệ nhân viên để đối chiếu.', target:'appointments'},
+  {id:'cancel', terms:['hủy lịch','hủy khám','bỏ lịch','không đi khám nữa'], text:'Đăng nhập → Đặt lịch khám → Lịch khám → chọn đúng lượt → Hủy lịch và nhập lý do nếu được yêu cầu. Hủy lịch và hoàn tiền là hai bước riêng; xem chính sách áp dụng trên lượt khám. Chatbot không hủy lịch thay bạn.', target:'appointments'},
+  {id:'refund', terms:['hoàn tiền','hoàn cọc','trả lại tiền','mất cọc'], text:'Khoản hoàn phụ thuộc thời điểm hủy, nguyên nhân và chính sách đã lưu trên lượt khám. Chính sách mặc định: người bệnh hủy từ 12 giờ trước hẹn được xét hoàn 50% cọc; dưới 12 giờ hoặc không đến thì không hoàn; phía bệnh viện/bác sĩ hủy thì xét hoàn 100% khoản thu đủ điều kiện. Liên hệ nhân viên để đối chiếu giao dịch.', target:'appointments'},
+  {id:'change', terms:['đổi lịch','dời lịch','đổi giờ','đổi bác sĩ'], text:'Mở Lịch khám để kiểm tra lượt đã đặt và liên hệ lễ tân khi cần thay đổi. Không tự hủy rồi đặt lại trước khi xem chính sách hoàn tiền và lịch còn trống. Chatbot không tự thay lịch hoặc chuyển bác sĩ.', target:'appointments'},
+  {id:'holding', terms:['giữ chỗ','hết hạn','10 phút','chờ thanh toán'], text:'Lịch mới được giữ chỗ theo thời hạn hiển thị ở bước thanh toán, mặc định 10 phút. Chỉ sau xác nhận thanh toán thành công mới có lịch xác nhận và phiếu khám. Khi hết hạn, kiểm tra trạng thái trước khi chọn lịch mới; không thanh toán tiếp một yêu cầu đã hết hiệu lực.', target:'appointments'},
+  {id:'checkin', terms:['check in','checkin','đến sớm','đến muộn','trễ giờ','trước bao lâu'], text:'Với lịch online, mặc định cần đến check-in ít nhất 30 phút trước giờ hẹn và trong đúng ngày khám. Mang phiếu cùng giấy tờ người khám đến lễ tân; hãy xem hạn cụ thể trên lịch của bạn. Nếu trễ, liên hệ lễ tân để được hướng dẫn, không tạo thêm lượt trực tiếp cho cùng lần khám.', target:'appointments'},
+  {id:'deadline', terms:['5 giờ','đặt trước','đặt trong ngày','đặt hôm nay','đặt ngay hôm nay'], text:'Đặt online cần trước thời điểm bắt đầu ca ít nhất 5 giờ, không tính từ khung giờ riêng bạn chọn. Trang đặt khám chỉ hiển thị lịch có thể đặt. Nếu không còn lịch phù hợp, đổi ngày hoặc liên hệ lễ tân để hỏi việc tiếp nhận trực tiếp.', target:'booking'},
+  {id:'payment', terms:['thanh toán','chuyển khoản','đặt cọc','trả tiền','ví điện tử'], text:'Sau khi kiểm tra lịch, chuyển sang bước Thanh toán và làm theo hướng dẫn. Lịch đặt mới mặc định thanh toán 100% phí khám để xác nhận; số tiền chính xác nằm trên màn hình. Thanh toán trong đồ án là mô phỏng, không chuyển tiền thật đến mã QR demo.', target:'booking'},
+  {id:'ticket', terms:['phiếu khám','mã phiếu','số thứ tự'], text:'Sau khi thanh toán được xác nhận, mở Lịch khám và xem chi tiết để lấy mã phiếu, bác sĩ, phòng, ngày và khung giờ. Website dùng khung giờ và mã phiếu, không cấp số thứ tự theo mô hình cũ.', target:'appointments'},
+  {id:'walkin', terms:['trực tiếp','chưa đặt lịch','không đặt lịch','đăng ký tại quầy'], text:'Bạn có thể liên hệ lễ tân để hỏi lịch tiếp nhận trực tiếp. Lễ tân tìm hồ sơ đã có hoặc tạo hồ sơ phù hợp, hỗ trợ đăng ký theo khả năng tiếp nhận và thanh toán tại quầy. Nếu đã đặt online cho cùng lần khám, dùng phiếu đó để check-in.', target:'contact'},
+  {id:'family', terms:['người thân','đặt hộ','cho con','cho bố','cho mẹ','gia đình'], text:'Ở bước đặt lịch, chọn đúng hồ sơ người được khám hoặc thêm hồ sơ người thân theo hướng dẫn. Mỗi người có hồ sơ và lịch sử riêng; số điện thoại dùng chung không đồng nghĩa gộp hồ sơ. Kiểm tra lại tên, ngày sinh và quan hệ trước khi đặt.', target:'booking'},
+  {id:'preparation', terms:['mang gì','giấy tờ','chuẩn bị gì','cần mang','cccd'], text:'Chuẩn bị phiếu khám, giấy tờ xác định người khám, thông tin thuốc đang dùng và kết quả khám trước nếu có. Mã BHYT có thể được lưu trong hồ sơ; website chưa tính quyền lợi chi trả BHYT. Không gửi ảnh giấy tờ hoặc bệnh án vào chat.', target:'contact'},
+  {id:'insurance', terms:['bhyt','bảo hiểm','thẻ bảo hiểm'], text:'Bạn có thể cung cấp mã thẻ BHYT trong hồ sơ người khám. Website hiện chưa tính mức hưởng hay xử lý chi trả BHYT; liên hệ nhân viên để hỏi thông tin áp dụng. Không gửi số thẻ hoặc giấy tờ cá nhân vào chat.', target:'contact'},
+  {id:'fasting', terms:['nhịn ăn','ăn sáng','trước xét nghiệm'], text:'Việc nhịn ăn phụ thuộc loại xét nghiệm và chỉ định. Không tự nhịn ăn hoặc ngừng thuốc chỉ dựa vào chatbot; hỏi nhân viên y tế trước buổi khám và làm theo hướng dẫn dành riêng cho bạn.', target:'contact'},
+  {id:'results', terms:['kết quả','đơn thuốc','bệnh án','hồ sơ sức khỏe','xuất hồ sơ'], text:'Đăng nhập → Đặt lịch khám → Hồ sơ sức khỏe → chọn đúng người → chọn lượt khám để xem kết quả và đơn thuốc đã có. Có thể dùng Xuất hồ sơ ở chức năng tương ứng. Chatbot không truy cập bệnh án cá nhân; không gửi nội dung bệnh án vào chat.', target:'records'},
+  {id:'password', terms:['quên mật khẩu','đổi mật khẩu','không đăng nhập','otp'], text:'Vào trang Đăng nhập, dùng Quên mật khẩu để thực hiện các bước xác minh và đặt lại mật khẩu. OTP trong đồ án được mô phỏng tùy cấu hình. Không gửi mật khẩu hoặc OTP trong chat; nếu không nhận được mã, liên hệ người quản lý demo.', target:'login'},
+  {id:'profiles', terms:['hồ sơ','thông tin cá nhân','ngày sinh','số điện thoại'], text:'Tài khoản đăng nhập và hồ sơ người được khám là hai thông tin khác nhau. Chọn đúng hồ sơ ở bước đặt lịch; cập nhật thông tin tại khu vực tài khoản/hồ sơ được phép. Chatbot không xem hoặc thay đổi thông tin cá nhân của bạn.', target:'booking'},
+  {id:'review', terms:['đánh giá','chấm sao','nhận xét bác sĩ'], text:'Bạn có thể đánh giá bác sĩ gắn với lượt khám đã hoàn thành và thuộc quyền của mình. Mở thông tin bác sĩ, sử dụng chức năng đánh giá và chọn đúng lượt khám theo hướng dẫn. Chatbot không tạo đánh giá thay bạn.', target:'doctors'},
+  {id:'fee', terms:['phí khám gồm','phí xét nghiệm','giá bao gồm','tiền thuốc'], text:'Phí khám niêm yết của bác sĩ không đủ để suy ra tổng chi phí thuốc hoặc xét nghiệm. Xem khoản cần thanh toán ở bước đặt lịch và hỏi nhân viên về dịch vụ khác; chatbot không tự tính thêm các khoản chưa có dữ liệu.', target:'doctors'},
+  {id:'booking', terms:['đặt lịch','đặt khám','đăng ký khám','lịch trống','lịch khám','còn lịch','còn chỗ'], text:'Mở Đặt lịch khám → đăng nhập → chọn hồ sơ người khám → chọn bác sĩ, ngày và khung giờ còn trống → kiểm tra thông tin → thanh toán để xác nhận. Tình trạng còn chỗ được kiểm tra tại trang đặt lịch; chatbot không tự đặt lịch.', target:'booking'},
+];

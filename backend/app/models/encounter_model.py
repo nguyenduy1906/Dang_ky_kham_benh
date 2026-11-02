@@ -39,6 +39,19 @@ def access_clause(actor):
     return 'FALSE', []
 
 
+def lock_booking_account(db, user_id):
+    """Serialize online bookings and cancellations across family profiles and shifts."""
+    db.execute('SELECT pg_advisory_xact_lock(73421, %s)', (user_id,))
+
+
+def count_personal_cancellations(db, user_id, start, end):
+    return db.execute('''SELECT COUNT(*) AS n FROM encounter
+        WHERE created_by_id=%s AND encounter_type='ONLINE'
+        AND encounter_status='CANCELLED' AND cancel_origin='PATIENT'
+        AND cancelled_at >= %s AND cancelled_at < %s''',
+        (user_id, start, end)).fetchone()['n']
+
+
 def get_encounter(db, encounter_id, actor=None):
     clause, params = access_clause(actor) if actor else ('TRUE', [])
     return db.execute(f'{SELECT} WHERE e.encounter_id=%s AND {clause}', [encounter_id] + params).fetchone()

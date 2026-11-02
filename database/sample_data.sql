@@ -3739,4 +3739,326 @@ CROSS JOIN role r WHERE r.role_name='RECEPTIONIST'
 ON CONFLICT (email) DO NOTHING;
 -- END EXTRA_RECEPTION_SEED
 
+-- BEGIN DEPARTMENT_DIRECTORY_DEMO_20261102
+-- Năm khoa bổ sung và hồ sơ minh họa; khối này cũng dùng để nạp tăng dần.
+-- Không xóa dữ liệu, không đổi mật khẩu/tài khoản cũ, không tự tạo lịch khám.
+SELECT pg_advisory_xact_lock(hashtext('chatbot-directory-demo-v1'));
+CREATE TEMP TABLE department_directory_demo ON COMMIT DROP AS
+SELECT * FROM (VALUES
+('tieu-hoa', 'Tiêu hóa', 300000, 'Khám, tư vấn và theo dõi các vấn đề về đường tiêu hóa, gan và mật.', 'Khoa Tiêu hóa trong mô hình NEU Medical tiếp nhận khám, tư vấn và theo dõi về đường tiêu hóa, gan và mật. Bác sĩ ghi nhận lý do đến khám, tiền sử và kết quả đã có để trao đổi hướng đánh giá phù hợp.
+
+Người bệnh có thể xem đội ngũ bác sĩ, tìm hiểu chuyên môn và tra cứu lịch khám trên website. Hồ sơ này là dữ liệu minh họa của đồ án; hình ảnh được dùng tạm từ thư viện sẵn có, không xác nhận cơ sở vật chất hoặc nhân sự thực tế của khoa.', 'Cung cấp thông tin rõ ràng về lĩnh vực đường tiêu hóa, gan và mật, hỗ trợ người bệnh chuẩn bị buổi khám và phối hợp chăm sóc theo đánh giá chuyên môn.', '/uploads/articles/51b1ebcf5ebd20779938e9fb09baa9df.jpg', '["Tiêu hóa tổng quát", "Theo dõi các vấn đề gan mật", "Tư vấn sức khỏe đường tiêu hóa"]'::jsonb, '["Khám và ghi nhận các triệu chứng tiêu hóa", "Trao đổi kết quả xét nghiệm và chẩn đoán hình ảnh theo chỉ định", "Tư vấn theo dõi và hẹn tái khám theo đánh giá của bác sĩ"]'::jsonb, '["Phòng khám và khu vực tiếp đón minh họa", "Dụng cụ thăm khám cơ bản trong mô hình đồ án", "Hệ thống tra cứu hồ sơ bác sĩ và lịch khám"]'::jsonb, '["Nội dung minh họa hoạt động khám và tư vấn chuyên khoa", "Phối hợp trao đổi thông tin giữa bác sĩ và điều dưỡng", "Chưa công bố thành tích hoặc chứng nhận thực tế của khoa"]'::jsonb, '["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và danh sách thuốc đang sử dụng nếu có.", "Kiểm tra đúng khoa, bác sĩ, ngày và khung giờ đã chọn.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb, '[{"url": "/uploads/articles/51b1ebcf5ebd20779938e9fb09baa9df.jpg", "caption": "Bác sĩ thăm khám vùng bụng cho người bệnh."}, {"url": "/uploads/articles/7b215986c0cecf06102cb44a283d4c5d.jpg", "caption": "Không gian phòng khám và thiết bị; ảnh minh họa từ thư viện dự án."}, {"url": "/uploads/articles/2ae8c73cc8838d7770b9fceb62ddfaf4.jpg", "caption": "Ảnh minh họa hoạt động tiếp nhận và thăm khám từ thư viện dự án."}]'::jsonb, '[{"title": "Chuẩn bị trước buổi khám", "content": "Ghi lại lý do đến khám và những thông tin muốn trao đổi với bác sĩ. Bộ phận tiếp đón hỗ trợ kiểm tra hồ sơ và hướng dẫn đến đúng phòng khám."}, {"title": "Thông tin minh họa", "content": "Nội dung và hình ảnh phục vụ đồ án NEU Medical. Thông tin dịch vụ, trang thiết bị và đội ngũ thực tế cần được đơn vị vận hành xác nhận trước khi công bố."}]'::jsonb),
+('ho-hap', 'Hô hấp', 300000, 'Khám, tư vấn và theo dõi các vấn đề của đường hô hấp và phổi.', 'Khoa Hô hấp trong mô hình NEU Medical tiếp nhận khám, tư vấn và theo dõi về đường hô hấp và phổi. Bác sĩ ghi nhận lý do đến khám, tiền sử và kết quả đã có để trao đổi hướng đánh giá phù hợp.
+
+Người bệnh có thể xem đội ngũ bác sĩ, tìm hiểu chuyên môn và tra cứu lịch khám trên website. Hồ sơ này là dữ liệu minh họa của đồ án; hình ảnh được dùng tạm từ thư viện sẵn có, không xác nhận cơ sở vật chất hoặc nhân sự thực tế của khoa.', 'Cung cấp thông tin rõ ràng về lĩnh vực đường hô hấp và phổi, hỗ trợ người bệnh chuẩn bị buổi khám và phối hợp chăm sóc theo đánh giá chuyên môn.', '/uploads/articles/357a90e4928a56f78b2500418b21ec6e.jpg', '["Hô hấp tổng quát", "Theo dõi sức khỏe phổi", "Tư vấn quản lý bệnh hô hấp mạn tính"]'::jsonb, '["Khám và ghi nhận triệu chứng hô hấp", "Trao đổi kết quả thăm dò chức năng và hình ảnh theo chỉ định", "Hướng dẫn theo dõi và tái khám theo kế hoạch cá nhân"]'::jsonb, '["Phòng khám và khu vực tiếp đón minh họa", "Dụng cụ thăm khám cơ bản trong mô hình đồ án", "Hệ thống tra cứu hồ sơ bác sĩ và lịch khám"]'::jsonb, '["Nội dung minh họa hoạt động khám và tư vấn chuyên khoa", "Phối hợp trao đổi thông tin giữa bác sĩ và điều dưỡng", "Chưa công bố thành tích hoặc chứng nhận thực tế của khoa"]'::jsonb, '["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và danh sách thuốc đang sử dụng nếu có.", "Kiểm tra đúng khoa, bác sĩ, ngày và khung giờ đã chọn.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb, '[{"url": "/uploads/articles/357a90e4928a56f78b2500418b21ec6e.jpg", "caption": "Bác sĩ dùng ống nghe thăm khám tim phổi tại giường bệnh."}, {"url": "/uploads/articles/7b215986c0cecf06102cb44a283d4c5d.jpg", "caption": "Không gian phòng khám và thiết bị; ảnh minh họa từ thư viện dự án."}, {"url": "/uploads/articles/2ae8c73cc8838d7770b9fceb62ddfaf4.jpg", "caption": "Ảnh minh họa hoạt động tiếp nhận và thăm khám từ thư viện dự án."}]'::jsonb, '[{"title": "Chuẩn bị trước buổi khám", "content": "Ghi lại lý do đến khám và những thông tin muốn trao đổi với bác sĩ. Bộ phận tiếp đón hỗ trợ kiểm tra hồ sơ và hướng dẫn đến đúng phòng khám."}, {"title": "Thông tin minh họa", "content": "Nội dung và hình ảnh phục vụ đồ án NEU Medical. Thông tin dịch vụ, trang thiết bị và đội ngũ thực tế cần được đơn vị vận hành xác nhận trước khi công bố."}]'::jsonb),
+('than-tiet-nieu', 'Thận - Tiết niệu', 320000, 'Khám, tư vấn và theo dõi các vấn đề của thận và đường tiết niệu.', 'Khoa Thận - Tiết niệu trong mô hình NEU Medical tiếp nhận khám, tư vấn và theo dõi về thận và đường tiết niệu. Bác sĩ ghi nhận lý do đến khám, tiền sử và kết quả đã có để trao đổi hướng đánh giá phù hợp.
+
+Người bệnh có thể xem đội ngũ bác sĩ, tìm hiểu chuyên môn và tra cứu lịch khám trên website. Hồ sơ này là dữ liệu minh họa của đồ án; hình ảnh được dùng tạm từ thư viện sẵn có, không xác nhận cơ sở vật chất hoặc nhân sự thực tế của khoa.', 'Cung cấp thông tin rõ ràng về lĩnh vực thận và đường tiết niệu, hỗ trợ người bệnh chuẩn bị buổi khám và phối hợp chăm sóc theo đánh giá chuyên môn.', '/uploads/articles/d3053409a289d7c446aad835d70e78e1.jpg', '["Thận học", "Tiết niệu tổng quát", "Theo dõi chức năng thận"]'::jsonb, '["Khám và ghi nhận triệu chứng thận - tiết niệu", "Trao đổi kết quả xét nghiệm và siêu âm theo chỉ định", "Phối hợp chuyên khoa và hướng dẫn tái khám khi cần"]'::jsonb, '["Phòng khám và khu vực tiếp đón minh họa", "Dụng cụ thăm khám cơ bản trong mô hình đồ án", "Hệ thống tra cứu hồ sơ bác sĩ và lịch khám"]'::jsonb, '["Nội dung minh họa hoạt động khám và tư vấn chuyên khoa", "Phối hợp trao đổi thông tin giữa bác sĩ và điều dưỡng", "Chưa công bố thành tích hoặc chứng nhận thực tế của khoa"]'::jsonb, '["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và danh sách thuốc đang sử dụng nếu có.", "Kiểm tra đúng khoa, bác sĩ, ngày và khung giờ đã chọn.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb, '[{"url": "/uploads/articles/d3053409a289d7c446aad835d70e78e1.jpg", "caption": "Nhân viên y tế trao đổi và thăm hỏi người bệnh tại giường."}, {"url": "/uploads/articles/7b215986c0cecf06102cb44a283d4c5d.jpg", "caption": "Không gian phòng khám và thiết bị; ảnh minh họa từ thư viện dự án."}, {"url": "/uploads/articles/2ae8c73cc8838d7770b9fceb62ddfaf4.jpg", "caption": "Ảnh minh họa hoạt động tiếp nhận và thăm khám từ thư viện dự án."}]'::jsonb, '[{"title": "Chuẩn bị trước buổi khám", "content": "Ghi lại lý do đến khám và những thông tin muốn trao đổi với bác sĩ. Bộ phận tiếp đón hỗ trợ kiểm tra hồ sơ và hướng dẫn đến đúng phòng khám."}, {"title": "Thông tin minh họa", "content": "Nội dung và hình ảnh phục vụ đồ án NEU Medical. Thông tin dịch vụ, trang thiết bị và đội ngũ thực tế cần được đơn vị vận hành xác nhận trước khi công bố."}]'::jsonb),
+('noi-tiet', 'Nội tiết', 320000, 'Khám, tư vấn và theo dõi các vấn đề nội tiết và chuyển hóa.', 'Khoa Nội tiết trong mô hình NEU Medical tiếp nhận khám, tư vấn và theo dõi về nội tiết và chuyển hóa. Bác sĩ ghi nhận lý do đến khám, tiền sử và kết quả đã có để trao đổi hướng đánh giá phù hợp.
+
+Người bệnh có thể xem đội ngũ bác sĩ, tìm hiểu chuyên môn và tra cứu lịch khám trên website. Hồ sơ này là dữ liệu minh họa của đồ án; hình ảnh được dùng tạm từ thư viện sẵn có, không xác nhận cơ sở vật chất hoặc nhân sự thực tế của khoa.', 'Cung cấp thông tin rõ ràng về lĩnh vực nội tiết và chuyển hóa, hỗ trợ người bệnh chuẩn bị buổi khám và phối hợp chăm sóc theo đánh giá chuyên môn.', '/uploads/articles/2ae8c73cc8838d7770b9fceb62ddfaf4.jpg', '["Nội tiết tổng quát", "Theo dõi sức khỏe tuyến giáp", "Theo dõi rối loạn chuyển hóa"]'::jsonb, '["Khám và đánh giá thông tin bệnh sử nội tiết", "Trao đổi kết quả xét nghiệm nội tiết theo chỉ định", "Tư vấn theo dõi lâu dài và phối hợp các chuyên khoa liên quan"]'::jsonb, '["Phòng khám và khu vực tiếp đón minh họa", "Dụng cụ thăm khám cơ bản trong mô hình đồ án", "Hệ thống tra cứu hồ sơ bác sĩ và lịch khám"]'::jsonb, '["Nội dung minh họa hoạt động khám và tư vấn chuyên khoa", "Phối hợp trao đổi thông tin giữa bác sĩ và điều dưỡng", "Chưa công bố thành tích hoặc chứng nhận thực tế của khoa"]'::jsonb, '["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và danh sách thuốc đang sử dụng nếu có.", "Kiểm tra đúng khoa, bác sĩ, ngày và khung giờ đã chọn.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb, '[{"url": "/uploads/articles/2ae8c73cc8838d7770b9fceb62ddfaf4.jpg", "caption": "Nhân viên y tế đo huyết áp cho người bệnh tại phòng khám."}, {"url": "/uploads/articles/7b215986c0cecf06102cb44a283d4c5d.jpg", "caption": "Ảnh minh họa hoạt động tiếp nhận và thăm khám từ thư viện dự án."}]'::jsonb, '[{"title": "Chuẩn bị trước buổi khám", "content": "Ghi lại lý do đến khám và những thông tin muốn trao đổi với bác sĩ. Bộ phận tiếp đón hỗ trợ kiểm tra hồ sơ và hướng dẫn đến đúng phòng khám."}, {"title": "Thông tin minh họa", "content": "Nội dung và hình ảnh phục vụ đồ án NEU Medical. Thông tin dịch vụ, trang thiết bị và đội ngũ thực tế cần được đơn vị vận hành xác nhận trước khi công bố."}]'::jsonb),
+('dinh-duong', 'Dinh dưỡng', 250000, 'Tư vấn và đánh giá nhu cầu dinh dưỡng theo từng người được khám.', 'Khoa Dinh dưỡng trong mô hình NEU Medical tiếp nhận khám, tư vấn và theo dõi về đánh giá tình trạng và nhu cầu dinh dưỡng cá nhân. Bác sĩ ghi nhận lý do đến khám, tiền sử và kết quả đã có để trao đổi hướng đánh giá phù hợp.
+
+Người bệnh có thể xem đội ngũ bác sĩ, tìm hiểu chuyên môn và tra cứu lịch khám trên website. Hồ sơ này là dữ liệu minh họa của đồ án; hình ảnh được dùng tạm từ thư viện sẵn có, không xác nhận cơ sở vật chất hoặc nhân sự thực tế của khoa.', 'Cung cấp thông tin rõ ràng về lĩnh vực đánh giá tình trạng và nhu cầu dinh dưỡng cá nhân, hỗ trợ người bệnh chuẩn bị buổi khám và phối hợp chăm sóc theo đánh giá chuyên môn.', '/uploads/articles/53774a5c66499139f783c899657f9e95.jpg', '["Dinh dưỡng tổng quát", "Tư vấn khẩu phần cá nhân", "Phối hợp chăm sóc dinh dưỡng"]'::jsonb, '["Ghi nhận thói quen ăn uống và thông tin sức khỏe", "Đánh giá nhu cầu tư vấn dinh dưỡng theo từng đối tượng", "Trao đổi kế hoạch theo dõi và phối hợp với bác sĩ điều trị"]'::jsonb, '["Phòng khám và khu vực tiếp đón minh họa", "Dụng cụ thăm khám cơ bản trong mô hình đồ án", "Hệ thống tra cứu hồ sơ bác sĩ và lịch khám"]'::jsonb, '["Nội dung minh họa hoạt động khám và tư vấn chuyên khoa", "Phối hợp trao đổi thông tin giữa bác sĩ và điều dưỡng", "Chưa công bố thành tích hoặc chứng nhận thực tế của khoa"]'::jsonb, '["Chuẩn bị giấy tờ và thông tin của người được khám.", "Mang theo kết quả khám trước đây và danh sách thuốc đang sử dụng nếu có.", "Kiểm tra đúng khoa, bác sĩ, ngày và khung giờ đã chọn.", "Với lịch online, đến check-in ít nhất 30 phút trước giờ hẹn."]'::jsonb, '[{"url": "/uploads/articles/53774a5c66499139f783c899657f9e95.jpg", "caption": "Bác sĩ và người bệnh tại buồng điều trị; ảnh minh họa hoạt động chăm sóc."}, {"url": "/uploads/articles/7b215986c0cecf06102cb44a283d4c5d.jpg", "caption": "Không gian phòng khám và thiết bị; ảnh minh họa từ thư viện dự án."}, {"url": "/uploads/articles/2ae8c73cc8838d7770b9fceb62ddfaf4.jpg", "caption": "Ảnh minh họa hoạt động tiếp nhận và thăm khám từ thư viện dự án."}]'::jsonb, '[{"title": "Chuẩn bị trước buổi khám", "content": "Ghi lại lý do đến khám và những thông tin muốn trao đổi với bác sĩ. Bộ phận tiếp đón hỗ trợ kiểm tra hồ sơ và hướng dẫn đến đúng phòng khám."}, {"title": "Thông tin minh họa", "content": "Nội dung và hình ảnh phục vụ đồ án NEU Medical. Thông tin dịch vụ, trang thiết bị và đội ngũ thực tế cần được đơn vị vận hành xác nhận trước khi công bố."}]'::jsonb)
+) AS v(slug, name, fee, description, overview, mission, cover_image_url, specialties, clinical_services, equipment, achievements, patient_guide, gallery, extra_sections);
+
+INSERT INTO department(name,description,content_is_demo)
+SELECT s.name,s.description,1 FROM department_directory_demo s
+WHERE NOT EXISTS(SELECT 1 FROM department d WHERE lower(trim(d.name))=lower(s.name))
+ON CONFLICT DO NOTHING;
+
+-- Chỉ điền trường trống; giữ nội dung đã được quản trị viên cập nhật.
+UPDATE department d SET
+    description=CASE WHEN NULLIF(trim(d.description),'') IS NULL THEN s.description ELSE d.description END,
+    overview=CASE WHEN NULLIF(trim(d.overview),'') IS NULL THEN s.overview ELSE d.overview END,
+    mission=CASE WHEN NULLIF(trim(d.mission),'') IS NULL THEN s.mission ELSE d.mission END,
+    cover_image_url=CASE WHEN NULLIF(trim(d.cover_image_url),'') IS NULL THEN s.cover_image_url ELSE d.cover_image_url END,
+    specialties=CASE WHEN d.specialties='[]'::jsonb THEN s.specialties ELSE d.specialties END,
+    clinical_services=CASE WHEN d.clinical_services='[]'::jsonb THEN s.clinical_services ELSE d.clinical_services END,
+    equipment=CASE WHEN d.equipment='[]'::jsonb THEN s.equipment ELSE d.equipment END,
+    achievements=CASE WHEN d.achievements='[]'::jsonb THEN s.achievements ELSE d.achievements END,
+    patient_guide=CASE WHEN d.patient_guide='[]'::jsonb THEN s.patient_guide ELSE d.patient_guide END,
+    gallery=CASE WHEN d.gallery='[]'::jsonb THEN s.gallery ELSE d.gallery END,
+    extra_sections=CASE WHEN d.extra_sections='[]'::jsonb THEN s.extra_sections ELSE d.extra_sections END,
+    content_is_demo=CASE WHEN NULLIF(trim(d.overview),'') IS NULL THEN 1 ELSE d.content_is_demo END,
+    version=d.version+1,
+    updated_at=CURRENT_TIMESTAMP
+FROM department_directory_demo s
+WHERE lower(trim(d.name))=lower(s.name) AND d.is_active=1 AND (
+    NULLIF(trim(d.description),'') IS NULL OR
+    NULLIF(trim(d.overview),'') IS NULL OR
+    NULLIF(trim(d.mission),'') IS NULL OR
+    NULLIF(trim(d.cover_image_url),'') IS NULL OR
+    d.specialties='[]'::jsonb OR
+    d.clinical_services='[]'::jsonb OR
+    d.equipment='[]'::jsonb OR
+    d.achievements='[]'::jsonb OR
+    d.patient_guide='[]'::jsonb OR
+    d.gallery='[]'::jsonb OR
+    d.extra_sections='[]'::jsonb);
+
+-- Tài khoản hiển thị mẫu dùng mật khẩu ngẫu nhiên, không công bố mật khẩu.
+INSERT INTO users(role_id,full_name,email,password_hash,approval_status)
+SELECT r.role_id,v.full_name,v.email,v.password_hash,'APPROVED'
+FROM (VALUES
+('chatbot-demo-tieu-hoa-1@example.invalid', 'Bác sĩ Tiêu hóa 01 (Demo)', 'scrypt:32768:8:1$9AHXIPZNeLdAN2Yz$8ba1f7fb5005ab42e32decdb324812bf24b3f8640cbd38014af53876fd76739dd04f6180c3030f76c0f85b941e28417e669e100d4175e39d02499236d8a0d9ce', 'Tiêu hóa'),
+('chatbot-demo-tieu-hoa-2@example.invalid', 'Bác sĩ Tiêu hóa 02 (Demo)', 'scrypt:32768:8:1$jBCpW5MHvbDI61Ip$69c68c97eadaeebc70037d25386d71893c17d316155f127d07b5efe438ea2f2ee6ee2db31f55ff91bb25c3d9ac19bcfd5c1abb51ef65dc596b2cecfd031a8a72', 'Tiêu hóa'),
+('chatbot-demo-ho-hap-1@example.invalid', 'Bác sĩ Hô hấp 01 (Demo)', 'scrypt:32768:8:1$kcPOELYAUJWeFny5$1a785f59193f0e3b996c55f0f22b39c858338f5056e6ab42df2b9fcd2d9189962ab9fcd79dffeaccbda4f0b1fdfb8dd4c422d12bec59546130f699fe22e6c7fd', 'Hô hấp'),
+('chatbot-demo-ho-hap-2@example.invalid', 'Bác sĩ Hô hấp 02 (Demo)', 'scrypt:32768:8:1$71eFONbyLHIJoqnh$c42b742effe586f27837d3abb352e6a252fb6594ce0a474b95b5d208041eb54c96f2b2e7b0e00c84278ab3e8455f6cf96bf89c5c6b7c3fda85bef277f7d7730b', 'Hô hấp'),
+('chatbot-demo-than-tiet-nieu-1@example.invalid', 'Bác sĩ Thận - Tiết niệu 01 (Demo)', 'scrypt:32768:8:1$1UgHWFMJkqHjmvCh$f3044d014ab6d2522111fbf3973500a0c6881540913d174730c0d287b5cd500082c4076cc2f6bfcb036821ddec7a41ce6aa1649c71e529190949ffc1dd36ba3b', 'Thận - Tiết niệu'),
+('chatbot-demo-than-tiet-nieu-2@example.invalid', 'Bác sĩ Thận - Tiết niệu 02 (Demo)', 'scrypt:32768:8:1$TuTpwcMswg0kCv0Q$eadcd2d94ffb546cec983c0e999f0280634b7e25795cc1427cd14472dd97a16d2ee78b2bb0d97474c117b97aec17ff077e66d87271820091d8749094d2a56382', 'Thận - Tiết niệu'),
+('chatbot-demo-noi-tiet-1@example.invalid', 'Bác sĩ Nội tiết 01 (Demo)', 'scrypt:32768:8:1$j21DB3G2cCtCdgSE$db91f0ed088fd3a40feff091cb79f1330c92ab5655bb6691cc64465452d3f97b3b19e7c5d0692e18d18aba47fa70d9d7d9c6e87d39edb07297ba3572bc2470cc', 'Nội tiết'),
+('chatbot-demo-noi-tiet-2@example.invalid', 'Bác sĩ Nội tiết 02 (Demo)', 'scrypt:32768:8:1$CT8U17fvPRxKwyxU$f98df23afc01f7820666920e4bea010646d2b773888224db072c1e66bacab60d8ed21a52b8a21b828e5ba33d1feb8072667f87745fc77c64f0778deceb767b4f', 'Nội tiết'),
+('chatbot-demo-dinh-duong-1@example.invalid', 'Bác sĩ Dinh dưỡng 01 (Demo)', 'scrypt:32768:8:1$hBJ2Z5LOEka46Gtx$375e04e348214d3d130bfe889625b7cac1049b6245416f69001c3f3ab8088b8f6250b6da20662072a178761a0833c2caa97fb2ba4782c458a80b9f6fc9e3f2c2', 'Dinh dưỡng'),
+('chatbot-demo-dinh-duong-2@example.invalid', 'Bác sĩ Dinh dưỡng 02 (Demo)', 'scrypt:32768:8:1$HxslUG3V2dFmxSyR$a3cf361e738b2da67c99f262c0330816f5de3a8fc0907f495ff226cd3fa668b2ffb159f1ecd63c8844ee85d2f5faa4fcd95e9c413d6b0964b56e729e7ad70ad5', 'Dinh dưỡng')
+) AS v(email,full_name,password_hash,department_name)
+JOIN department d ON lower(trim(d.name))=lower(v.department_name) AND d.is_active=1
+CROSS JOIN role r WHERE r.role_name='DOCTOR'
+AND NOT EXISTS(SELECT 1 FROM users existing WHERE existing.email=v.email)
+ON CONFLICT(email) DO NOTHING;
+
+INSERT INTO doctor_profile(user_id,department_id,specialization,introduction,consultation_fee)
+SELECT u.user_id,d.department_id,s.name,
+       'Hồ sơ hư cấu để minh họa danh mục đồ án, không đại diện bác sĩ thật. Phí khám là dữ liệu mẫu; chưa có lịch khám được tạo bởi khối dữ liệu này.',s.fee
+FROM department_directory_demo s
+JOIN department d ON lower(trim(d.name))=lower(s.name) AND d.is_active=1
+CROSS JOIN generate_series(1,2) AS n(i)
+JOIN users u ON u.email='chatbot-demo-'||s.slug||'-'||n.i||'@example.invalid'
+JOIN role r ON r.role_id=u.role_id AND r.role_name='DOCTOR'
+WHERE u.deleted_at IS NULL AND u.account_status='ACTIVE' AND u.approval_status='APPROVED'
+AND NOT EXISTS(SELECT 1 FROM doctor_profile p WHERE p.user_id=u.user_id);
+
+DO $department_demo_check$
+BEGIN
+    IF EXISTS(SELECT 1 FROM department_directory_demo s
+      JOIN department d ON lower(trim(d.name))=lower(s.name) AND d.is_active=1
+      WHERE NULLIF(trim(d.overview),'') IS NULL OR NULLIF(trim(d.mission),'') IS NULL
+      OR NULLIF(trim(d.cover_image_url),'') IS NULL OR jsonb_array_length(d.gallery)=0
+      OR jsonb_array_length(d.specialties)=0 OR jsonb_array_length(d.clinical_services)=0
+      OR jsonb_array_length(d.patient_guide)=0) THEN
+        RAISE EXCEPTION 'Ho so khoa bo sung chua day du; huy transaction';
+    END IF;
+END;
+$department_demo_check$;
+-- END DEPARTMENT_DIRECTORY_DEMO_20261102
+
+-- Thống kê sau cùng, bao gồm các khoa và bác sĩ demo vừa gộp vào bộ mẫu.
+SELECT 'department' AS table_name,count(*) AS row_count FROM department
+UNION ALL SELECT 'doctor_profile',count(*) FROM doctor_profile
+UNION ALL SELECT 'users',count(*) FROM users;
+
+
+-- BEGIN ROLE_DEMO_20261102
+SELECT pg_advisory_xact_lock(20261102);
+DO $$ BEGIN IF EXISTS(SELECT 1 FROM encounter WHERE symptoms LIKE 'DEMO_ROLE_20261102:%') THEN RAISE EXCEPTION 'Demo batch already exists; do not reload'; END IF; END $$;
+CREATE TEMP TABLE role_demo_new ON COMMIT DROP AS SELECT encounter_id FROM encounter WHERE false;
+-- Dùng phòng có sẵn của từng khoa; không thay ca đã được phân công.
+INSERT INTO work_schedule(doctor_profile_id,room_id,work_date,start_time,end_time,max_quota,slot_minutes)
+SELECT d.doctor_profile_id,r.room_id,DATE '2026-11-01'+day,'08:00','11:30',7,30
+FROM doctor_profile d
+JOIN LATERAL(SELECT room_id FROM room WHERE department_id=d.department_id AND is_active=1 ORDER BY room_id LIMIT 1) r ON true
+CROSS JOIN generate_series(0,7) day
+WHERE d.is_active=1 AND NOT EXISTS(SELECT 1 FROM work_schedule w WHERE w.doctor_profile_id=d.doctor_profile_id AND w.work_date=DATE '2026-11-01'+day);
+WITH inserted AS (
+INSERT INTO encounter(encounter_type,patient_id,doctor_profile_id,schedule_id,room_id,created_by_id,consultation_fee_snapshot,deposit_amount_snapshot,symptoms,encounter_status,estimated_exam_at,appointment_end_at,checked_in_at,created_at)
+SELECT 'ONLINE',p.patient_id,s.doctor_profile_id,s.schedule_id,s.room_id,p.user_id,d.consultation_fee,d.consultation_fee,'DEMO_ROLE_20261102: khám và tái khám minh họa',
+CASE WHEN s.work_date<(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date THEN 'COMPLETED' ELSE 'CONFIRMED' END,
+x.at,x.at+make_interval(mins=>s.slot_minutes),CASE WHEN s.work_date<(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date THEN x.at-interval '30 minutes' END,x.at-interval '2 days'
+FROM work_schedule s JOIN doctor_profile d USING(doctor_profile_id)
+CROSS JOIN generate_series(0,2) n
+JOIN LATERAL(SELECT patient_id,user_id FROM patient WHERE archived_at IS NULL AND user_id IS NOT NULL ORDER BY CASE WHEN user_id=4 THEN 0 ELSE 1 END,patient_id OFFSET ((s.doctor_profile_id-1)*3+n) LIMIT 1) p ON true
+CROSS JOIN LATERAL(SELECT ((s.work_date+s.start_time) AT TIME ZONE 'Asia/Saigon')+make_interval(mins=>n*s.slot_minutes) AS at) x
+WHERE s.work_date BETWEEN DATE '2026-11-01' AND DATE '2026-11-08'
+AND s.schedule_status IN ('OPEN','FULL') AND x.at+make_interval(mins=>s.slot_minutes)<=((s.work_date+s.end_time) AT TIME ZONE 'Asia/Saigon')
+AND (s.work_date<(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Saigon')::date OR x.at>CURRENT_TIMESTAMP+interval '5 hours')
+AND s.booked_count+3<=s.max_quota
+AND NOT EXISTS(SELECT 1 FROM encounter pe WHERE pe.patient_id=p.patient_id AND pe.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED') AND pe.estimated_exam_at<x.at+make_interval(mins=>s.slot_minutes) AND pe.appointment_end_at>x.at)
+AND NOT EXISTS(SELECT 1 FROM encounter e WHERE e.schedule_id=s.schedule_id AND e.estimated_exam_at=x.at AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED'))
+AND NOT EXISTS(SELECT 1 FROM encounter e WHERE e.schedule_id=s.schedule_id AND e.patient_id=p.patient_id AND e.symptoms LIKE 'DEMO_ROLE_20261102:%')
+RETURNING encounter_id)
+INSERT INTO role_demo_new SELECT encounter_id FROM inserted;
+INSERT INTO encounter_status_log(encounter_id,new_status,changed_by_id,note)
+SELECT e.encounter_id,e.encounter_status,e.created_by_id,'Lượt khám minh họa phục vụ demo đồ án' FROM encounter e JOIN role_demo_new n USING(encounter_id);
+INSERT INTO payment(encounter_id,payment_type,amount,payment_method,transaction_status,created_by_id,paid_at)
+SELECT e.encounter_id,'DEPOSIT',e.deposit_amount_snapshot,'BANK','SUCCESS',e.created_by_id,e.created_at+interval '1 minute' FROM encounter e JOIN role_demo_new n USING(encounter_id);
+INSERT INTO medical_record(encounter_id,diagnosis,treatment,doctor_notes,examined_at)
+SELECT e.encounter_id,'Kết quả khám minh họa phục vụ đồ án','Nội dung theo dõi minh họa; không phải chỉ định điều trị','Bệnh án hư cấu để trình bày lịch sử khám',e.estimated_exam_at FROM encounter e JOIN role_demo_new n USING(encounter_id) WHERE e.encounter_status='COMPLETED';
+UPDATE work_schedule s SET booked_count=(SELECT count(*) FROM encounter e WHERE e.schedule_id=s.schedule_id AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED')) WHERE s.schedule_id IN(SELECT e.schedule_id FROM encounter e JOIN role_demo_new n USING(encounter_id));
+UPDATE work_schedule SET schedule_status=CASE WHEN booked_count>=max_quota THEN 'FULL' ELSE 'OPEN' END WHERE schedule_status IN ('OPEN','FULL');
+INSERT INTO nurse_assignment(nurse_id,schedule_id,assigned_by_id,note)
+SELECT 3,s.schedule_id,1,'Phân công demo hỗ trợ bác sĩ Nguyễn Hoàng Minh' FROM work_schedule s WHERE s.doctor_profile_id=1 AND s.work_date BETWEEN DATE '2026-11-01' AND DATE '2026-11-08' AND NOT EXISTS(SELECT 1 FROM nurse_assignment a JOIN work_schedule w USING(schedule_id) WHERE a.nurse_id=3 AND a.revoked_at IS NULL AND w.work_date=s.work_date AND w.start_time<s.end_time AND w.end_time>s.start_time);
+INSERT INTO reception_assignment(receptionist_id,workstation_id,work_date,start_time,end_time,assigned_by_id,note)
+SELECT 2,(SELECT min(workstation_id) FROM reception_workstation WHERE is_active), DATE '2026-11-01'+day,'07:00','17:30',1,'Phân công lễ tân minh họa đồ án' FROM generate_series(0,7) day WHERE NOT EXISTS(SELECT 1 FROM reception_assignment a WHERE a.receptionist_id=2 AND a.work_date=DATE '2026-11-01'+day AND a.revoked_at IS NULL);
+INSERT INTO notification(user_id,notification_type,title,content,event_key)
+SELECT u.user_id,'DEMO','Dữ liệu trình bày đồ án','Lịch khám, lịch sử khám và phân công minh họa đã được bổ sung.','ROLE_DEMO_20261102' FROM users u WHERE u.user_id IN(1,2,3,4,6) AND NOT EXISTS(SELECT 1 FROM notification n WHERE n.user_id=u.user_id AND n.event_key='ROLE_DEMO_20261102');
+SELECT count(*) AS added_demo_encounters FROM role_demo_new;
+-- END ROLE_DEMO_20261102
+
+
+-- BEGIN COMPLETED_RECORDS_DEMO_20261102
+-- Ca hư cấu đã hoàn tất sáng sớm 01–02/11; không đánh dấu hoàn tất ca tương lai.
+DO $demo$
+DECLARE d record; s record; pat record; day date; exam timestamptz; eid integer; rid integer; n integer; actor integer;
+BEGIN
+PERFORM pg_advisory_xact_lock(20261103);
+INSERT INTO patient(full_name,dob,gender,address) SELECT 'Người bệnh demo hồ sơ '||g.num,DATE '1990-01-01','Khác','Hồ sơ hư cấu phục vụ đồ án' FROM generate_series(1,48) AS g(num) WHERE NOT EXISTS(SELECT 1 FROM patient WHERE full_name='Người bệnh demo hồ sơ '||g.num);
+FOR d IN SELECT dp.*,u.full_name FROM doctor_profile dp JOIN users u USING(user_id) WHERE dp.is_active=1 AND u.account_status='ACTIVE' AND u.deleted_at IS NULL ORDER BY dp.doctor_profile_id LOOP
+ IF NOT EXISTS(SELECT 1 FROM room WHERE room_name='Phòng demo hồ sơ BS '||d.doctor_profile_id) THEN
+ INSERT INTO room(department_id,room_name,description) VALUES(d.department_id,'Phòng demo hồ sơ BS '||d.doctor_profile_id,'Không gian hư cấu phục vụ trình bày bệnh án demo');
+ END IF;
+ FOR day IN SELECT generate_series(DATE '2026-11-01',DATE '2026-11-02',interval '1 day')::date LOOP
+ IF (day+time '07:00') AT TIME ZONE 'Asia/Saigon'>CURRENT_TIMESTAMP THEN CONTINUE; END IF;
+ IF NOT EXISTS(SELECT 1 FROM work_schedule WHERE doctor_profile_id=d.doctor_profile_id AND work_date=day AND start_time<time '07:00' AND end_time>time '06:00') THEN
+ INSERT INTO work_schedule(doctor_profile_id,room_id,work_date,start_time,end_time,max_quota,slot_minutes)
+ SELECT d.doctor_profile_id,room_id,day,'06:00','07:00',2,30 FROM room WHERE room_name='Phòng demo hồ sơ BS '||d.doctor_profile_id;
+ END IF;
+ SELECT * INTO s FROM work_schedule WHERE doctor_profile_id=d.doctor_profile_id AND work_date=day AND start_time='06:00' AND end_time='07:00';
+ IF NOT FOUND THEN CONTINUE; END IF;
+ FOR n IN 0..1 LOOP
+ exam:=((day+time '06:00') AT TIME ZONE 'Asia/Saigon')+make_interval(mins=>n*30);
+ IF EXISTS(SELECT 1 FROM encounter WHERE schedule_id=s.schedule_id AND estimated_exam_at=exam AND encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED')) THEN CONTINUE; END IF;
+ SELECT p.* INTO pat FROM patient p WHERE archived_at IS NULL
+ AND NOT EXISTS(SELECT 1 FROM encounter e WHERE e.patient_id=p.patient_id AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED') AND e.estimated_exam_at<exam+interval '30 minutes' AND e.appointment_end_at>exam)
+ ORDER BY CASE WHEN p.user_id=4 THEN 0 WHEN p.user_id=5 THEN 1 ELSE 2 END,p.patient_id LIMIT 1;
+ IF NOT FOUND THEN RAISE EXCEPTION 'No free demo patient'; END IF;
+ INSERT INTO encounter(encounter_type,patient_id,doctor_profile_id,schedule_id,room_id,created_by_id,consultation_fee_snapshot,deposit_amount_snapshot,symptoms,registration_details,encounter_status,estimated_exam_at,appointment_end_at,checked_in_at,created_at)
+ VALUES(CASE WHEN pat.user_id IS NULL THEN 'WALK_IN' ELSE 'ONLINE' END,pat.patient_id,d.doctor_profile_id,s.schedule_id,s.room_id,coalesce(pat.user_id,2),d.consultation_fee,CASE WHEN pat.user_id IS NULL THEN 0 ELSE d.consultation_fee END,'DEMO_RECORDS_20261102: khám sức khỏe và tư vấn minh họa',jsonb_build_object('full_name',pat.full_name,'phone',pat.phone,'dob',pat.dob,'gender',pat.gender),'COMPLETED',exam,exam+interval '30 minutes',exam-interval '30 minutes',exam-interval '1 day') RETURNING encounter_id INTO eid;
+ INSERT INTO payment(encounter_id,payment_type,amount,payment_method,transaction_status,created_by_id,paid_at,created_at) VALUES(eid,CASE WHEN pat.user_id IS NULL THEN 'EXAM_FEE' ELSE 'DEPOSIT' END,d.consultation_fee,CASE WHEN pat.user_id IS NULL THEN 'CASH' ELSE 'BANK' END,'SUCCESS',coalesce(pat.user_id,2),exam-interval '23 hours',exam-interval '1 day');
+ INSERT INTO medical_record(encounter_id,diagnosis,treatment,doctor_notes,examined_at,created_at) VALUES(eid,'Khám sức khỏe tổng quát — kết quả minh họa của đồ án','Đã trao đổi kết quả khám; không kê thuốc trong tình huống demo này.','Bệnh án hư cấu phục vụ demo, không sử dụng làm chỉ định y khoa. Bác sĩ phụ trách: '||d.full_name,exam+interval '5 minutes',exam+interval '5 minutes') RETURNING record_id INTO rid;
+ INSERT INTO encounter_status_log(encounter_id,old_status,new_status,changed_by_id,note,changed_at) VALUES
+ (eid,NULL,'HOLDING',coalesce(pat.user_id,2),'Demo: đăng ký khám',exam-interval '1 day'),
+ (eid,'HOLDING','CONFIRMED',coalesce(pat.user_id,2),'Demo: thanh toán thành công',exam-interval '23 hours'),
+ (eid,'CONFIRMED','CHECKED_IN',2,'Demo: tiếp nhận người bệnh',exam-interval '30 minutes'),
+ (eid,'CHECKED_IN','IN_PROGRESS',d.user_id,'Demo: bắt đầu khám',exam),
+ (eid,'IN_PROGRESS','COMPLETED',d.user_id,'Demo: hoàn tất khám và bệnh án',exam+interval '25 minutes');
+ END LOOP;
+ UPDATE work_schedule SET booked_count=(SELECT count(*) FROM encounter WHERE schedule_id=s.schedule_id AND encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED')),schedule_status='FULL' WHERE schedule_id=s.schedule_id;
+ SELECT u.user_id INTO actor FROM users u JOIN role r USING(role_id) WHERE r.role_name='NURSE' AND u.account_status='ACTIVE' AND NOT EXISTS(SELECT 1 FROM nurse_assignment a JOIN work_schedule w USING(schedule_id) WHERE a.nurse_id=u.user_id AND a.revoked_at IS NULL AND w.work_date=day AND w.start_time<s.end_time AND w.end_time>s.start_time) ORDER BY CASE WHEN u.user_id=3 THEN 0 ELSE 1 END,u.user_id LIMIT 1;
+ IF actor IS NOT NULL THEN INSERT INTO nurse_assignment(nurse_id,schedule_id,assigned_by_id,assigned_at,note) VALUES(actor,s.schedule_id,1,((day+time '05:00') AT TIME ZONE 'Asia/Saigon'),'DEMO_RECORDS_20261102: hỗ trợ ca khám đã hoàn tất'); END IF;
+ END LOOP;
+END LOOP;
+END $demo$;
+-- END COMPLETED_RECORDS_DEMO_20261102
+
+
+-- BEGIN TODAY_SHIFT_DEMO_20261102
+DO $todaydemo$
+DECLARE s record; p record; n integer; at_time timestamptz; eid integer; nurse integer;
+BEGIN
+PERFORM pg_advisory_xact_lock(20261104);
+FOR s IN SELECT w.*,d.consultation_fee FROM work_schedule w JOIN doctor_profile d USING(doctor_profile_id) WHERE w.work_date=DATE '2026-11-02' AND w.start_time>=time '08:00' AND w.schedule_status IN ('OPEN','FULL') ORDER BY w.start_time,w.doctor_profile_id LOOP
+ FOR n IN 0..1 LOOP
+ at_time:=((s.work_date+s.start_time) AT TIME ZONE 'Asia/Saigon')+make_interval(mins=>n*s.slot_minutes);
+ IF at_time<CURRENT_TIMESTAMP OR EXISTS(SELECT 1 FROM encounter WHERE schedule_id=s.schedule_id AND estimated_exam_at=at_time AND encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED')) THEN CONTINUE; END IF;
+ IF EXISTS(SELECT 1 FROM encounter WHERE schedule_id=s.schedule_id AND symptoms='DEMO_TODAY_20261102: người bệnh chờ khám '||n) THEN CONTINUE; END IF;
+ SELECT * INTO p FROM patient pat WHERE archived_at IS NULL AND NOT EXISTS(SELECT 1 FROM encounter e WHERE e.patient_id=pat.patient_id AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED') AND e.estimated_exam_at<at_time+make_interval(mins=>s.slot_minutes) AND e.appointment_end_at>at_time) ORDER BY CASE WHEN pat.user_id=4 THEN 0 WHEN pat.user_id=5 THEN 1 ELSE 2 END,pat.patient_id LIMIT 1;
+ IF NOT FOUND THEN CONTINUE; END IF;
+ INSERT INTO encounter(encounter_type,patient_id,doctor_profile_id,schedule_id,room_id,created_by_id,consultation_fee_snapshot,deposit_amount_snapshot,symptoms,encounter_status,estimated_exam_at,appointment_end_at,created_at)
+ VALUES('WALK_IN',p.patient_id,s.doctor_profile_id,s.schedule_id,s.room_id,2,s.consultation_fee,0,'DEMO_TODAY_20261102: người bệnh chờ khám '||n,'CONFIRMED',at_time,at_time+make_interval(mins=>s.slot_minutes),CURRENT_TIMESTAMP) RETURNING encounter_id INTO eid;
+ INSERT INTO payment(encounter_id,payment_type,amount,payment_method,transaction_status,created_by_id,processed_by_id,paid_at) VALUES(eid,'EXAM_FEE',s.consultation_fee,'CASH','SUCCESS',2,2,CURRENT_TIMESTAMP);
+ INSERT INTO encounter_status_log(encounter_id,new_status,changed_by_id,note) VALUES(eid,'CONFIRMED',2,'Demo hôm nay: đã đăng ký và thu phí, chờ thao tác tiếp nhận/khám');
+ END LOOP;
+ SELECT u.user_id INTO nurse FROM users u JOIN role r USING(role_id) WHERE r.role_name='NURSE' AND u.account_status='ACTIVE' AND NOT EXISTS(SELECT 1 FROM nurse_assignment a JOIN work_schedule w USING(schedule_id) WHERE a.nurse_id=u.user_id AND a.revoked_at IS NULL AND w.work_date=s.work_date AND w.start_time<s.end_time AND w.end_time>s.start_time) ORDER BY u.user_id LIMIT 1;
+ IF nurse IS NOT NULL AND NOT EXISTS(SELECT 1 FROM nurse_assignment WHERE schedule_id=s.schedule_id AND revoked_at IS NULL) THEN INSERT INTO nurse_assignment(nurse_id,schedule_id,assigned_by_id,note) VALUES(nurse,s.schedule_id,1,'DEMO_TODAY_20261102: phân công ca hôm nay'); END IF;
+ UPDATE work_schedule SET booked_count=(SELECT count(*) FROM encounter WHERE schedule_id=s.schedule_id AND encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED')) WHERE schedule_id=s.schedule_id;
+END LOOP;
+END $todaydemo$;
+-- END TODAY_SHIFT_DEMO_20261102
+
+
+-- BEGIN DEMO_PAGE_COVERAGE_20261102
+DO $coverage$
+DECLARE sch record; pat record; n integer; eid integer; rec integer; pay integer; at_time timestamptz;
+BEGIN
+PERFORM pg_advisory_xact_lock(20261105);
+PERFORM set_config('app.admin_id','1',true);
+PERFORM set_config('app.admin_name','Quản trị dữ liệu demo',true);
+IF NOT EXISTS(SELECT 1 FROM work_schedule WHERE doctor_profile_id=1 AND work_date=DATE '2026-11-02' AND start_time<time '08:00' AND end_time>time '07:00') THEN
+ INSERT INTO work_schedule(doctor_profile_id,room_id,work_date,start_time,end_time,max_quota,slot_minutes) SELECT 1,room_id,DATE '2026-11-02','07:00','08:00',4,15 FROM room WHERE room_name='Phòng demo hồ sơ BS 1';
+END IF;
+SELECT * INTO sch FROM work_schedule WHERE doctor_profile_id=1 AND work_date=DATE '2026-11-02' AND start_time='07:00' AND end_time='08:00';
+IF FOUND THEN
+ FOR n IN 0..3 LOOP
+ at_time:=TIMESTAMPTZ '2026-11-02 07:00+07'+make_interval(mins=>15*n);
+ IF at_time+interval '15 minutes'>CURRENT_TIMESTAMP THEN CONTINUE; END IF;
+ IF EXISTS(SELECT 1 FROM encounter WHERE symptoms='DEMO_COVERAGE_20261102: lịch sử người bệnh '||n) THEN CONTINUE; END IF;
+ SELECT * INTO pat FROM patient p WHERE p.archived_at IS NULL AND p.patient_id=2+n AND NOT EXISTS(SELECT 1 FROM encounter e WHERE e.patient_id=p.patient_id AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED') AND e.estimated_exam_at<at_time+interval '15 minutes' AND e.appointment_end_at>at_time);
+ IF NOT FOUND THEN CONTINUE; END IF;
+ INSERT INTO encounter(encounter_type,patient_id,doctor_profile_id,schedule_id,room_id,created_by_id,consultation_fee_snapshot,deposit_amount_snapshot,symptoms,encounter_status,estimated_exam_at,appointment_end_at,checked_in_at,created_at)
+ VALUES('ONLINE',pat.patient_id,1,sch.schedule_id,sch.room_id,pat.user_id,250000,250000,'DEMO_COVERAGE_20261102: lịch sử người bệnh '||n,'COMPLETED',at_time,at_time+interval '15 minutes',at_time-interval '30 minutes',at_time-interval '1 day') RETURNING encounter_id INTO eid;
+ INSERT INTO payment(encounter_id,payment_type,amount,payment_method,transaction_status,created_by_id,paid_at,created_at) VALUES(eid,'DEPOSIT',250000,'BANK','SUCCESS',pat.user_id,at_time-interval '23 hours',at_time-interval '1 day');
+ INSERT INTO medical_record(encounter_id,diagnosis,treatment,doctor_notes,examined_at,created_at) VALUES(eid,'Kết quả khám nội khoa minh họa số '||(n+1),'Theo dõi và hẹn tái khám theo hồ sơ minh họa.','Hồ sơ và đơn thuốc hư cấu phục vụ demo đồ án; không sử dụng để điều trị.',at_time+interval '3 minutes',at_time+interval '3 minutes') RETURNING record_id INTO rec;
+ INSERT INTO prescription_item(record_id,medication_name,dosage,quantity,instructions) VALUES(rec,'Thuốc minh họa A — không dùng điều trị','Liều dùng minh họa',10,'Dữ liệu đồ án, không phải chỉ định sử dụng thuốc');
+ INSERT INTO encounter_status_log(encounter_id,old_status,new_status,changed_by_id,note,changed_at) VALUES(eid,NULL,'HOLDING',pat.user_id,'Demo: đăng ký',at_time-interval '1 day'),(eid,'HOLDING','CONFIRMED',pat.user_id,'Demo: thanh toán',at_time-interval '23 hours'),(eid,'CONFIRMED','CHECKED_IN',2,'Demo: tiếp nhận',at_time-interval '30 minutes'),(eid,'CHECKED_IN','IN_PROGRESS',6,'Demo: khám',at_time),(eid,'IN_PROGRESS','COMPLETED',6,'Demo: hoàn tất',at_time+interval '14 minutes');
+ END LOOP;
+ UPDATE work_schedule SET booked_count=(SELECT count(*) FROM encounter e WHERE e.schedule_id=sch.schedule_id AND e.encounter_status IN ('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED')),schedule_status='FULL' WHERE schedule_id=sch.schedule_id;
+ IF NOT EXISTS(SELECT 1 FROM nurse_assignment WHERE schedule_id=sch.schedule_id AND nurse_id=3 AND revoked_at IS NULL) AND NOT EXISTS(SELECT 1 FROM nurse_assignment a JOIN work_schedule w USING(schedule_id) WHERE a.nurse_id=3 AND a.revoked_at IS NULL AND w.work_date=sch.work_date AND w.start_time<sch.end_time AND w.end_time>sch.start_time) THEN
+ INSERT INTO nurse_assignment(nurse_id,schedule_id,assigned_by_id,assigned_at,note) VALUES(3,sch.schedule_id,1,TIMESTAMPTZ '2026-11-01 12:00+07','DEMO_COVERAGE_20261102: xem hồ sơ và đơn thuốc'); END IF;
+END IF;
+INSERT INTO review(record_id,rating,comment,created_at)
+ SELECT m.record_id,5,'Phản hồi minh họa: hướng dẫn rõ ràng, hỗ trợ chu đáo.',CURRENT_TIMESTAMP FROM medical_record m JOIN encounter e USING(encounter_id) WHERE e.encounter_status='COMPLETED' AND e.patient_id IN(1,2,3,4,5) AND e.symptoms LIKE 'DEMO_%20261102:%' AND e.appointment_end_at<CURRENT_TIMESTAMP AND NOT EXISTS(SELECT 1 FROM review r WHERE r.record_id=m.record_id);
+INSERT INTO staff_leave_request(user_id,from_date,to_date,period,reason)
+ SELECT u.user_id,DATE '2026-11-06',DATE '2026-11-06','AFTERNOON','DEMO_COVERAGE_20261102: xin nghỉ việc gia đình; chờ quản trị xét duyệt' FROM users u WHERE u.user_id IN(2,3,6) AND NOT EXISTS(SELECT 1 FROM staff_leave_request r WHERE r.user_id=u.user_id AND r.from_date<=DATE '2026-11-06' AND r.to_date>=DATE '2026-11-06' AND r.status IN ('PENDING','APPROVED'));
+INSERT INTO notification(user_id,notification_type,title,content,event_key)
+ SELECT u.user_id,'DEMO','Hồ sơ demo ngày 02/11 đã sẵn sàng','Có lịch khám, lịch sử, kết quả khám và dữ liệu phân công để trình bày đồ án.','DEMO_COVERAGE_20261102' FROM users u WHERE u.user_id IN(1,2,3,4,6) AND NOT EXISTS(SELECT 1 FROM notification n WHERE n.user_id=u.user_id AND n.event_key='DEMO_COVERAGE_20261102');
+UPDATE patient SET phone='09988'||lpad(patient_id::text,5,'0'),email='patient-demo-'||patient_id||'@example.invalid',emergency_contact_name='Người liên hệ minh họa',emergency_contact_relationship='Người thân',emergency_contact_phone='09989'||lpad(patient_id::text,5,'0') WHERE full_name LIKE 'Người bệnh demo hồ sơ %' AND phone IS NULL;
+END $coverage$;
+-- END DEMO_PAGE_COVERAGE_20261102
+
+
+-- BEGIN DEMO_DETAIL_COVERAGE_20261102
+DO $detail$
+DECLARE s record; eid integer; paid integer; amt bigint; actor integer;
+BEGIN
+PERFORM pg_advisory_xact_lock(20261106);
+PERFORM set_config('app.admin_id','1',true); PERFORM set_config('app.admin_name','Quản trị dữ liệu demo',true);
+-- Đặt hộ người thân: người đặt Nam chỉ thấy đúng các lượt do mình tạo.
+UPDATE encounter SET created_by_id=4 WHERE patient_id IN(3,7) AND symptoms LIKE 'DEMO_RECORDS_20261102:%' AND created_by_id<>4;
+UPDATE payment p SET created_by_id=4 FROM encounter e WHERE p.encounter_id=e.encounter_id AND e.patient_id IN(3,7) AND e.symptoms LIKE 'DEMO_RECORDS_20261102:%';
+UPDATE encounter_status_log l SET changed_by_id=4 FROM encounter e WHERE e.encounter_id=l.encounter_id AND e.patient_id IN(3,7) AND e.symptoms LIKE 'DEMO_RECORDS_20261102:%' AND l.new_status IN('HOLDING','CONFIRMED');
+INSERT INTO prescription_item(record_id,medication_name,dosage,quantity,instructions)
+SELECT m.record_id,'Thuốc minh họa B — không dùng điều trị','Thông tin mô phỏng',5,'Đơn thuốc giả lập của đồ án, không sử dụng để điều trị' FROM medical_record m JOIN encounter e USING(encounter_id) WHERE e.patient_id IN(1,7) AND e.symptoms LIKE 'DEMO_RECORDS_20261102:%' AND NOT EXISTS(SELECT 1 FROM prescription_item pi WHERE pi.record_id=m.record_id);
+-- Ngày giao dịch demo không nằm trong tương lai.
+UPDATE encounter SET created_at=LEAST(created_at,CURRENT_TIMESTAMP-interval '1 hour') WHERE symptoms LIKE 'DEMO_ROLE_20261102:%' AND created_at>CURRENT_TIMESTAMP;
+UPDATE payment p SET created_at=LEAST(p.created_at,CURRENT_TIMESTAMP-interval '1 hour'),paid_at=LEAST(p.paid_at,CURRENT_TIMESTAMP-interval '30 minutes') FROM encounter e WHERE e.encounter_id=p.encounter_id AND e.symptoms LIKE 'DEMO_ROLE_20261102:%' AND (p.created_at>CURRENT_TIMESTAMP OR p.paid_at>CURRENT_TIMESTAMP);
+-- Một lịch hủy và hoàn đủ do bệnh viện, để trình bày lịch sử hoàn tiền hôm nay.
+IF NOT EXISTS(SELECT 1 FROM encounter WHERE symptoms='DEMO_DETAIL_20261102: hủy và hoàn tiền') THEN
+ SELECT w.*,d.consultation_fee INTO s FROM work_schedule w JOIN doctor_profile d USING(doctor_profile_id) WHERE w.doctor_profile_id=1 AND w.work_date=DATE '2026-11-03' AND w.start_time='08:00' ORDER BY w.schedule_id LIMIT 1;
+ IF FOUND THEN
+ INSERT INTO encounter(encounter_type,patient_id,doctor_profile_id,schedule_id,room_id,created_by_id,consultation_fee_snapshot,deposit_amount_snapshot,symptoms,encounter_status,estimated_exam_at,appointment_end_at,cancelled_by_id,cancel_reason,cancel_origin,cancelled_at,refund_reference_at,created_at)
+ VALUES('ONLINE',1,1,s.schedule_id,s.room_id,4,s.consultation_fee,s.consultation_fee,'DEMO_DETAIL_20261102: hủy và hoàn tiền','CANCELLED',TIMESTAMPTZ '2026-11-03 10:30+07',TIMESTAMPTZ '2026-11-03 11:00+07',1,'Demo: bệnh viện điều chỉnh lịch','HOSPITAL',CURRENT_TIMESTAMP-interval '5 minutes',TIMESTAMPTZ '2026-11-03 10:30+07',CURRENT_TIMESTAMP-interval '1 hour') RETURNING encounter_id INTO eid;
+ INSERT INTO payment(encounter_id,payment_type,amount,payment_method,transaction_status,created_by_id,paid_at,refunded_at,created_at) VALUES(eid,'DEPOSIT',s.consultation_fee,'BANK','REFUNDED',4,CURRENT_TIMESTAMP-interval '50 minutes',CURRENT_TIMESTAMP-interval '5 minutes',CURRENT_TIMESTAMP-interval '1 hour') RETURNING payment_id INTO paid;
+ INSERT INTO payment(encounter_id,payment_type,amount,payment_method,transaction_status,original_payment_id,created_by_id,processed_by_id,reason,paid_at,refunded_at,created_at) VALUES(eid,'REFUND',s.consultation_fee,'BANK','SUCCESS',paid,1,1,'Demo: hoàn đủ do bệnh viện điều chỉnh lịch',CURRENT_TIMESTAMP-interval '5 minutes',CURRENT_TIMESTAMP-interval '5 minutes',CURRENT_TIMESTAMP-interval '5 minutes');
+ INSERT INTO encounter_status_log(encounter_id,old_status,new_status,changed_by_id,note,changed_at) VALUES(eid,NULL,'HOLDING',4,'Demo: đăng ký',CURRENT_TIMESTAMP-interval '1 hour'),(eid,'HOLDING','CONFIRMED',4,'Demo: thanh toán',CURRENT_TIMESTAMP-interval '50 minutes'),(eid,'CONFIRMED','CANCELLED',1,'Demo: hủy do bệnh viện và hoàn tiền',CURRENT_TIMESTAMP-interval '5 minutes');
+ END IF;
+END IF;
+END $detail$;
+-- END DEMO_DETAIL_COVERAGE_20261102
+
+
+-- BEGIN LIVE_DEMO_STATES_20261102
+DO $states$
+DECLARE s record; p record; scenario record; eid integer; at_time timestamptz;
+BEGIN
+PERFORM pg_advisory_xact_lock(20261107);
+SELECT w.*,d.consultation_fee INTO s FROM work_schedule w JOIN doctor_profile d USING(doctor_profile_id) WHERE w.doctor_profile_id=1 AND w.work_date=DATE '2026-11-02' AND w.start_time='08:00' AND w.end_time='11:30' LIMIT 1;
+IF NOT FOUND OR CURRENT_TIMESTAMP<TIMESTAMPTZ '2026-11-02 08:05+07' OR CURRENT_TIMESTAMP>TIMESTAMPTZ '2026-11-02 11:30+07' THEN RETURN; END IF;
+FOR scenario IN SELECT * FROM (VALUES(time '08:00','IN_PROGRESS',true),(time '09:00','CHECKED_IN',true),(time '09:30','CONFIRMED',false)) v(hour,status,paid) LOOP
+at_time:=(DATE '2026-11-02'+scenario.hour) AT TIME ZONE 'Asia/Saigon';
+IF EXISTS(SELECT 1 FROM encounter WHERE symptoms='DEMO_LIVE_20261102: '||scenario.status) OR EXISTS(SELECT 1 FROM encounter WHERE schedule_id=s.schedule_id AND estimated_exam_at=at_time AND encounter_status IN('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED')) THEN CONTINUE; END IF;
+SELECT * INTO p FROM patient pat WHERE archived_at IS NULL AND full_name LIKE 'Người bệnh demo hồ sơ %' AND NOT EXISTS(SELECT 1 FROM encounter e WHERE e.patient_id=pat.patient_id AND e.encounter_status IN('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED') AND e.estimated_exam_at<at_time+interval '30 minutes' AND e.appointment_end_at>at_time) ORDER BY patient_id LIMIT 1;
+IF NOT FOUND THEN CONTINUE; END IF;
+INSERT INTO encounter(encounter_type,patient_id,doctor_profile_id,schedule_id,room_id,created_by_id,consultation_fee_snapshot,deposit_amount_snapshot,symptoms,encounter_status,estimated_exam_at,appointment_end_at,checked_in_at,created_at) VALUES('WALK_IN',p.patient_id,1,s.schedule_id,s.room_id,2,s.consultation_fee,0,'DEMO_LIVE_20261102: '||scenario.status,scenario.status,at_time,at_time+interval '30 minutes',CASE WHEN scenario.paid THEN CURRENT_TIMESTAMP-interval '3 minutes' END,CURRENT_TIMESTAMP-interval '5 minutes') RETURNING encounter_id INTO eid;
+INSERT INTO payment(encounter_id,payment_type,amount,payment_method,transaction_status,created_by_id,processed_by_id,paid_at,created_at) VALUES(eid,'EXAM_FEE',s.consultation_fee,'CASH',CASE WHEN scenario.paid THEN 'SUCCESS' ELSE 'PENDING' END,2,CASE WHEN scenario.paid THEN 2 END,CASE WHEN scenario.paid THEN CURRENT_TIMESTAMP-interval '4 minutes' END,CURRENT_TIMESTAMP-interval '5 minutes');
+INSERT INTO encounter_status_log(encounter_id,old_status,new_status,changed_by_id,note,changed_at) VALUES(eid,NULL,'CONFIRMED',2,'Demo: đăng ký trực tiếp',CURRENT_TIMESTAMP-interval '5 minutes');
+IF scenario.paid THEN INSERT INTO encounter_status_log(encounter_id,old_status,new_status,changed_by_id,note,changed_at) VALUES(eid,'CONFIRMED','CHECKED_IN',2,'Demo: người bệnh đã có mặt',CURRENT_TIMESTAMP-interval '3 minutes'); END IF;
+IF scenario.status='IN_PROGRESS' THEN
+INSERT INTO encounter_status_log(encounter_id,old_status,new_status,changed_by_id,note,changed_at) VALUES(eid,'CHECKED_IN','IN_PROGRESS',6,'Demo: bác sĩ đang khám',CURRENT_TIMESTAMP-interval '2 minutes');
+INSERT INTO medical_record(encounter_id,diagnosis,treatment,doctor_notes,examined_at) VALUES(eid,'Bệnh án đang khám — nội dung mô phỏng','Đang ghi nhận thông tin khám minh họa','Bản ghi hư cấu phục vụ trình bày thao tác lưu và hoàn tất bệnh án.',CURRENT_TIMESTAMP-interval '2 minutes');
+END IF;
+END LOOP;
+UPDATE work_schedule SET booked_count=(SELECT count(*) FROM encounter WHERE schedule_id=s.schedule_id AND encounter_status IN('HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS','COMPLETED')) WHERE schedule_id=s.schedule_id;
+END $states$;
+-- END LIVE_DEMO_STATES_20261102
+
 COMMIT;

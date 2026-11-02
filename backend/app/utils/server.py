@@ -64,7 +64,7 @@ def main():
     return run(
         [[sys.executable, '-m', 'backend.app.db.init_db'],
          [sys.executable, '-m', 'backend.app.db.seed_db']],
-        [['gunicorn', '--bind', '0.0.0.0:5000', '--workers', '2',
+        [['gunicorn', '--bind', '0.0.0.0:5000', '--workers', '2', '--timeout', '55',
           '--graceful-timeout', '5', '--access-logfile', '-', '--error-logfile', '-',
           'backend.app.main:create_app()'],
          [sys.executable, '-m', 'backend.app.utils.worker']],
