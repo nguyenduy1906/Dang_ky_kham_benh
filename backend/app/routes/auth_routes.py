@@ -115,10 +115,12 @@ def forgot_password():
             phone: {type: string, example: "0901234567"}
     responses:
       200:
-        description: Cung cấp một identifier/email/phone. OTP giả lập trong log khi SEND_EMAIL=1 hoặc SEND_SMS=1; không trả OTP qua API.
+        description: Cung cấp một identifier/email/phone. OTP giả lập trong log khi SEND_EMAIL=1 hoặc SEND_SMS=1. Chỉ DEMO_PASSWORD_RECOVERY=1 và số điện thoại mới trả demo_mode/demo_otp; chế độ thường không trả OTP.
     """
     data = auth_schema.validate_forgot_password(_body())
-    return jsonify(auth_service.forgot_password(data))
+    response = jsonify(auth_service.forgot_password(data))
+    response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 @auth_bp.post('/verify-otp')

@@ -2,7 +2,7 @@ import {renderDoctorOverview} from '../core/doctor_overview.js';
 import { observeOverviewEncounters } from "../core/doctor_encounter_list.js";
 import { loadClinicalProfile, loadClinicalRows } from "../core/doctor_clinical_profile.js";
 import { initNurseRecords as initDoctorPatientRecords } from "../core/nurse_records.js";
-import { renderClinicalDesign } from "../core/doctor_clinical_design.js";
+import { renderClinicalDesign } from "../core/doctor_clinical_design.js?v=20261102-patient-switch";
 import { initTodayOverview } from "../core/staff_overview.js";
 import { staffReady } from "../core/staff_workspace.js";
 import { initEncounterList } from "../core/staff_encounters.js";
@@ -37,5 +37,9 @@ async function clinical() {
   }
   if (!/^\d+$/.test(requested)) throw new Error("Mã lượt khám không hợp lệ.");
   const profile = await loadClinicalProfile(requested);
-  renderClinicalDesign({profiles:[profile],initialId:profile.id,mode:params.get("mode"),loadDay:loadClinicalRows,loadProfile:loadClinicalProfile});
+  // A deep link selects one visit, but must still load the day's other patients.
+  const rows = await loadClinicalRows(profile.work_date);
+  const profiles = rows.map(row => row.id === profile.id ? profile : row);
+  if (!profiles.some(row => row.id === profile.id)) profiles.unshift(profile);
+  renderClinicalDesign({profiles,initialId:profile.id,mode:params.get("mode"),loadDay:loadClinicalRows,loadProfile:loadClinicalProfile});
 }

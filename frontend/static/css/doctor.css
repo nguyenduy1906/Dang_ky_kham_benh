@@ -62,14 +62,14 @@
 .doctor-assigned-workspace #encounter-list :is(th,td) {font-size:13px}
 .doctor-assigned-workspace #encounter-list :is(th,td):nth-last-child(-n+2) {text-align:center}
 .doctor-assigned-workspace #encounter-list .actions {justify-content:center;margin:0;gap:14px}
-.doctor-assigned-workspace #encounter-list :is(.status,button,.button-link) {border:0;border-radius:0;background:transparent;padding:0;box-shadow:none;font-size:13px;text-decoration:underline;text-underline-offset:3px;min-height:0}
+.doctor-assigned-workspace #encounter-list :is(.status,button) {border:0;border-radius:0;background:transparent;padding:0;box-shadow:none;font-size:13px;text-decoration:underline;text-underline-offset:3px;min-height:0}
 @media(max-width:1100px){.doctor-assigned-workspace #assigned-shifts .shift-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.doctor-assigned-workspace #assigned-shifts .shift-grid{grid-template-columns:1fr}}
 
 .doctor-page[data-page="history"] #encounter-list :is(th,td):nth-last-child(-n+2) {text-align:center}
 .doctor-page[data-page="history"] #encounter-list :is(th,td) {font-size:13px}
 .doctor-page[data-page="history"] #encounter-list .actions {justify-content:center;margin:0;gap:14px}
-.doctor-page[data-page="history"] #encounter-list :is(.status,button,.button-link) {border:0;border-radius:0;background:transparent;padding:0;box-shadow:none;font-size:13px;text-decoration:underline;text-underline-offset:3px;min-height:0}
+.doctor-page[data-page="history"] #encounter-list :is(.status,button) {border:0;border-radius:0;background:transparent;padding:0;box-shadow:none;font-size:13px;text-decoration:underline;text-underline-offset:3px;min-height:0}
 
 .doctor-assigned-workspace #encounter-filters {display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) minmax(240px,2fr);align-items:end;gap:20px}
 .doctor-assigned-workspace #encounter-filters > label {min-width:0}
@@ -194,7 +194,8 @@
 .doctor-page .doctor-encounter-table :is(th,td) {font-size:13px;vertical-align:middle}
 .doctor-page .doctor-encounter-table :is(th,td):nth-last-child(-n+2) {text-align:center}
 .doctor-page .doctor-encounter-table .actions {justify-content:center;margin:0;gap:14px}
-.doctor-page .doctor-encounter-table .button-link {border:0;border-radius:0;background:transparent;padding:0;box-shadow:none;font-size:13px;text-decoration:underline;text-underline-offset:3px;min-height:0}
+.doctor-page .doctor-encounter-table .button-link {display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:7px 14px;border:1px solid #c6ded1;border-radius:6px;background:#fff;color:#28664a;font-size:12px;font-weight:600;line-height:1.4;text-decoration:none;white-space:nowrap}
+.doctor-page .doctor-encounter-table .button-link:is(:hover,:focus-visible) {background:#dff2e8;border-color:#75b995;color:#006c3d}
 .doctor-page .doctor-encounter-table .status {display:inline-block;padding:6px 10px;border:0;border-radius:5px;text-decoration:none;background:#fff4df;color:#946115;font-weight:600}
 .doctor-page .doctor-encounter-table .status.done {background:#e6f4eb;color:#23724b}
 .doctor-page .doctor-encounter-table .status.examining {background:#e8f0fc;color:#285e9a}
@@ -206,3 +207,14 @@
 .doctor-page[data-page="history"] #encounter-filters .encounter-search-field {order:-1;min-width:0}
 .doctor-page[data-page="history"] #encounter-filters > input[type="hidden"] {display:none}
 @media(max-width:700px){.doctor-page[data-page="history"] #encounter-filters{grid-template-columns:1fr}}
+
+.doctor-page .clinical-editor-footer:has(.actions > button[hidden]):has(#clinical-save-feedback:empty) {display:none}
+
+/* Keep calendar icon inside the visible date input, independent of validation text. */
+.doctor-page .clinical-date-field .date-field-control {margin-top:7px}
+.doctor-page .clinical-date-field .date-field-display {margin:0;min-height:48px}
+.doctor-page .clinical-date-field .date-field-native {margin:0;min-height:0;height:1px}
+.doctor-page .clinical-date-field .date-field-control .date-field-picker {top:8px;bottom:auto;margin:0}
+
+.doctor-page #clinical-profile-results tr[data-profile-row] {cursor:pointer}
+.doctor-page #clinical-profile-results tr[data-profile-row]:hover {background:#f0f8f3}

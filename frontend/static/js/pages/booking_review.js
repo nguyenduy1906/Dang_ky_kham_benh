@@ -351,6 +351,9 @@ ui.confirm.addEventListener("click", async () => {
     } else if (error.status === 0 || error.status >= 500 || error.code === "DUPLICATE_ENCOUNTER") {
       submissionUncertain = true; ui.confirm.hidden=false;ui.confirm.textContent="Kiểm tra yêu cầu";
       ui.dialogStatus.textContent += " Chọn Kiểm tra yêu cầu trước khi gửi lại.";
+    } else if (error.code === "DAILY_CANCELLATION_LIMIT") {
+      ui.confirm.hidden = true;
+      ui.dialogStatus.setAttribute('role', 'alert');
     } else if (error.status === 409 || error.code === "SCHEDULE_NOT_FOUND") {
       ui.confirm.hidden = true;
       ui.dialogStatus.textContent += " Hãy quay lại và chọn khung giờ khác.";

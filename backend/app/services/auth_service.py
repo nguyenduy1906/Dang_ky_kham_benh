@@ -1,4 +1,6 @@
 """Nghiệp vụ xác thực: đăng ký, đăng nhập, quên mật khẩu/OTP, xác minh email."""
+import os
+
 from psycopg import errors as pg_errors
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -73,10 +75,13 @@ def _usable(user):
 
 
 def forgot_password(data):
+    demo = os.environ.get('DEMO_PASSWORD_RECOVERY', '0') == '1' and bool(data.get('phone'))
     outbox = None
     with get_db_connection() as db:
         user = (auth_model.get_user_by_email(db, data['email']) if data.get('email')
                 else auth_model.get_user_by_phone(db, data['phone']))
+        if demo and not _usable(user):
+            raise not_found('Số điện thoại chưa đăng ký tài khoản hoặc tài khoản không thể khôi phục', 'RECOVERY_ACCOUNT_NOT_FOUND')
         if _usable(user):
             uid = user['user_id']
             auth_token_model.invalidate_unused(db, uid, constants.TOKEN_OTP)
@@ -91,7 +96,11 @@ def forgot_password(data):
             mail.send_sms_otp(phone, otp)
         else:
             mail.send_otp(email, otp)
-    # Cùng một thông báo cho cả tài khoản tồn tại và không tồn tại.
+    if demo and outbox:
+        return {'message': 'Đã tìm thấy tài khoản. Mã OTP demo đã được tạo.',
+                'demo_mode': True, 'demo_otp': outbox[2],
+                'expires_in': constants.OTP_TTL_MINUTES * 60}
+    # Khi không bật demo, không tiết lộ tài khoản tồn tại hoặc mã OTP.
     return {'message': 'Nếu tài khoản tồn tại, mã OTP đã được gửi tới thông tin liên hệ đã cung cấp'}
 
 

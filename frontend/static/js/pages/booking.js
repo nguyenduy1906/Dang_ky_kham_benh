@@ -1,4 +1,5 @@
 import {commitForm} from "../core/form_workflow.js";
+import { checkBookingEligibility } from "../api/encounter.js";
 import { startAutoRefresh } from "../core/auto_refresh.js";
 import { listDoctors } from "../api/doctor.js";
 import { listDepartments } from "../api/catalog.js";
@@ -29,6 +30,7 @@ const ui = {
 enableDragScroll(ui.days);
 let doctors = [], departments = [], patients = [], schedules = [], selectedDoctor, selectedDate = "", selectedSlot, actor;
 let loading = false, checking = false, scheduleVersion = 0, scheduleAbort;
+let checkingEligibility = false;
 const registrationEntries = new Map();
 function errorMessage(error) {
   if (error.status === 401) {
@@ -375,9 +377,24 @@ ui.form.addEventListener("change", clearBookingErrors);
 ui.form.addEventListener("click", event => {
   if (event.target.closest(".booking-doctor, .time-slot-grid button")) clearBookingErrors();
 });
-ui.form.addEventListener("submit", event => {
+ui.form.addEventListener("submit", async event => {
   event.preventDefault();
-  if (loading) return;
+  if (loading || checkingEligibility) return;
+  checkingEligibility = true;
+  ui.reviewSubmit.disabled = true;
+  try {
+    await checkBookingEligibility();
+  } catch (error) {
+    const status = $("#appointment-status");
+    status.textContent = errorMessage(error);
+    status.setAttribute('role', 'alert');
+    status.tabIndex = -1;
+    status.focus();
+    return;
+  } finally {
+    checkingEligibility = false;
+    ui.reviewSubmit.disabled = false;
+  }
   const patient = selectedPatient(), symptoms = $("#appointment-symptoms").value.trim();
   if (!selectedDoctor) { showBookingError($(".booking-doctors-step"), "Vui lòng chọn bác sĩ phụ trách.", $("#appointment-search")); return; }
   if (!selectedSlot) { showBookingError(ui.slots.closest(".booking-step"), "Vui lòng chọn khung giờ khám còn trống.", ui.slots.querySelector("button") || ui.slots); return; }
