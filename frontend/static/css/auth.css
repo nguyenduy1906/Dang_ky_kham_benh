@@ -18,6 +18,7 @@
 .auth-intro { color: var(--muted); font-size: 15px; line-height: 1.65; margin: 0 0 20px; }
 .auth-field { margin-bottom: 12px; }
 .auth-form-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+#register-form .auth-form-row { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
 .auth-contact-hint { margin: -5px 0 14px; }
 .auth-field label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; line-height: 1.5; }
 .auth-field input { width: 100%; min-width: 0; font: inherit; font-size: 16px; color: var(--ink); border: 1px solid #cbd7cf; background: white; padding: 12px 14px; min-height: 48px; }
@@ -29,7 +30,6 @@
 .password-toggle svg { width: 21px; height: 21px; }
 .password-toggle[aria-pressed="true"] { color: var(--green); }
 .auth-field-note { margin: 7px 0 0; font-size: 12px; line-height: 1.6; color: var(--muted); }
-#password-hint { margin: -5px 0 12px; }
 .auth-form-options { display: flex; justify-content: flex-end; margin: -2px 0 20px; }
 .auth-text-button { border: 0; background: transparent; padding: 0; color: var(--green); font-weight: 600; line-height: 1.6; }
 .auth-text-button:hover { text-decoration: underline; }
@@ -96,3 +96,7 @@
 .recovery-demo[hidden] { display: none; }
 .recovery-demo p { margin: 0; color: #476454; font-size: 12px; }
 .recovery-demo output { display: block; margin: 5px 0; color: #008349; font-size: 26px; font-weight: 700; letter-spacing: .25em; }
+
+/* Use the same custom eye in each field, without a second browser reveal button. */
+.password-field input::-ms-reveal,
+.password-field input::-ms-clear { display: none; }

@@ -156,6 +156,32 @@ def ensure_available(db, user_id, work_date, start, end):
             raise conflict('Nhân viên đã được duyệt nghỉ trong ca này', 'STAFF_ON_LEAVE')
 
 
+def reject_overdue_pending(db, actor_id, now):
+    """Called by the worker in one transaction, using the same lock as admin reviews."""
+    from backend.app.models import reception_assignment_model
+    model.lock_changes(db)
+    count = 0
+    for row in model.pending_started_candidates(db, now.astimezone(VN_TZ).date()):
+        shifts = (reception_assignment_model.leave_assignments(db, row) if row['role_name'] == 'RECEPTIONIST'
+                  else model.affected_schedules(db, row, row['role_name']))
+        if shifts:
+            first = min(datetime.combine(s['work_date'], s['start_time'], VN_TZ) for s in shifts)
+        else:
+            # An assignment may have been removed since submission. Do not leave an
+            # expired request pending indefinitely when there is no remaining shift.
+            start = SHIFTS['AFTERNOON' if row['period'] == 'AFTERNOON' else 'MORNING'][0]
+            first = datetime.combine(row['from_date'], start, VN_TZ)
+        if now < first:
+            continue
+        note = 'Tự động từ chối do ca làm việc đã bắt đầu mà đơn chưa được duyệt.'
+        model.review_request(db, row['request_id'], {'decision':'REJECTED','note':note}, actor_id,
+                             Jsonb({'automatic_rejection':True,'first_shift_start':first.isoformat()}))
+        model.notify(db, row['user_id'], row['request_id'], 'auto-rejected', 'Đơn xin nghỉ bị từ chối tự động',
+                     f"Đơn {business_code('NP', row['request_id'])}: {note}")
+        count += 1
+    return count
+
+
 def calendar(actor, query, user_id=None):
     _role(actor, user_id is not None)
     target_id = user_id if user_id is not None else actor['user_id']

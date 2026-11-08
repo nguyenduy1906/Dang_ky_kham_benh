@@ -145,12 +145,12 @@ def list_doctor_public(doctor_profile_id, query):
             db, doctor_profile_id=doctor_profile_id, from_date=start, to_date=end,
             status=query['status'], exclude_closed=True, limit=query['page_size'],
             offset=(query['page'] - 1) * query['page_size'])
-        from backend.app.services.appointment_slot_service import available_slots, schedule_bounds
+        from backend.app.services.appointment_slot_service import available_slots, online_booking_deadline
         from backend.app.utils import date as date_utils
         from datetime import timedelta
         for row in rows:
             allowed = (row['schedule_status'] == 'OPEN' and row['remaining'] > 0
-                       and date_utils.utc_now() <= schedule_bounds(row)[0] - timedelta(hours=5))
+                       and date_utils.utc_now() <= online_booking_deadline(row))
             row['slots'] = [{'appointment_time': start.strftime('%H:%M'),
                              'starts_at': start.isoformat(), 'ends_at': end.isoformat()}
                             for start, end in available_slots(db, row)] if allowed else []

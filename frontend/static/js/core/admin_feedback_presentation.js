@@ -46,13 +46,17 @@ export function feedbackMarkup(reviews, {showType=true, personal=false}={}) {
 
 export async function initFeedbackPresentation(key, {presentationOnly=false, staffRole=null, readNotifications=readAdminNotifications, readNotification=openNotification}={}) {
   const reviews=key==="reviews";
-  let rows=[], saving=false;
+  let rows=[], saving=false, active=true, detailVersion=0, listVersion=0;
+  const stop=()=>{active=false;detailVersion++;listVersion++;};
+  window.addEventListener('pagehide',stop,{once:true});
+  window.addEventListener('neu:auth-change',()=>{stop();modal.close();modalBody.replaceChildren();body.replaceChildren();},{once:true});
   const body=document.querySelector("#page-body");
   const modal=document.querySelector("#admin-dialog"), modalBody=document.querySelector("#admin-dialog-body");
   body.innerHTML=feedbackMarkup(reviews,{showType:!presentationOnly&&!staffRole,personal:presentationOnly||Boolean(staffRole)});
   const form=document.querySelector("#feedback-filters"), error=document.querySelector("#feedback-error");
   let page=1, trigger;
   function render() {
+    if(!active)return;
     const values=Object.fromEntries(new FormData(form));
     const invalid=Boolean(values.from_date&&values.to_date&&values.to_date<values.from_date);
     form.elements.to_date.setCustomValidity(invalid?"Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.":"");
@@ -68,6 +72,7 @@ export async function initFeedbackPresentation(key, {presentationOnly=false, sta
     replaceAdminRegion(document.querySelector("#feedback-pager"),`<span role="status">${result.total?`${(page-1)*pageSize+1}–${Math.min(page*pageSize,result.total)} / ${result.total}`:"0"} ${reviews?"đánh giá":"thông báo"}${!reviews?` · ${rows.filter(row=>!row.is_read).length} chưa đọc trong hộp thư`:""}</span><div><button type="button" class="secondary" data-feedback-action="previous" ${page<=1?"disabled":""}>Trang trước</button><button type="button" class="secondary" data-feedback-action="next" ${page>=result.pages?"disabled":""}>Trang sau</button></div>`);
   }
   function open(row) {
+    if(!active)return;
     document.querySelector("#admin-dialog-title").textContent=reviews?"Chi tiết đánh giá":"Chi tiết thông báo";
     modalBody.innerHTML=reviews?reviewDetail(row):notificationDetail(row);
     if(!modal.open){trigger=document.activeElement;modal.showModal();}
@@ -79,7 +84,9 @@ export async function initFeedbackPresentation(key, {presentationOnly=false, sta
     const button=event.target.closest("[data-feedback-action]");if(!button||button.disabled)return;
     const action=button.dataset.feedbackAction;
     if(saving)return;
+    if(!active)return;
     if(action==="visibility" && reviews) {
+      detailVersion++;listVersion++;
       const row=rows.find(row=>String(row.id)===button.dataset.id);
       if(row) {
         if(!row.is_hidden) {
@@ -92,27 +99,38 @@ export async function initFeedbackPresentation(key, {presentationOnly=false, sta
         }
         button.disabled=true;
         saving=true;
-        try {await setReviewVisibility(row.id,false);row.is_hidden=false;render();}
-        catch(err){error.hidden=false;error.textContent=err.message;}
+        try {await setReviewVisibility(row.id,false);if(!active)return;row.is_hidden=false;render();}
+        catch(err){if(active){error.hidden=false;error.textContent=err.message;}}
         finally{saving=false;button.disabled=false;}
         body.querySelector(`[data-feedback-action="visibility"][data-id="${row.id}"]`)?.focus();
       }
     }
     if(action==="cancel-hide")modal.close();
     if(action==="confirm-hide"&&reviews) {
+      detailVersion++;listVersion++;
       const row=rows.find(row=>String(row.id)===button.dataset.id);
       if(row){
         saving=true;modal.setAttribute("aria-busy","true");
         const buttons=[...modal.querySelectorAll("button")];buttons.forEach(b=>b.disabled=true);
-        try {await setReviewVisibility(row.id,true);row.is_hidden=true;render();modal.close();}
-        catch(err){let note=modalBody.querySelector('[role="alert"]');if(!note){note=document.createElement("p");note.setAttribute("role","alert");modalBody.append(note);}note.textContent=err.message;}
+        try {await setReviewVisibility(row.id,true);if(!active)return;row.is_hidden=true;render();modal.close();}
+        catch(err){if(active){let note=modalBody.querySelector('[role="alert"]');if(!note){note=document.createElement("p");note.setAttribute("role","alert");modalBody.append(note);}note.textContent=err.message;}}
         finally{saving=false;modal.removeAttribute("aria-busy");buttons.forEach(b=>b.disabled=false);}
       }
     }
     if(action==="detail") {
+      listVersion++;
+      const current=++detailVersion;
       button.disabled=true;
-      try {const selected=rows.find(row=>String(row.id)===button.dataset.id);const row=reviews?await readAdminReview(button.dataset.id):presentationOnly?selected:await readNotification(selected);if(row){const index=rows.findIndex(item=>item.id===row.id);if(index>=0)rows[index]=row;render();open(row);}}
-      catch(err){error.hidden=false;error.textContent=err.message;}
+      try {
+        const selected=rows.find(row=>String(row.id)===button.dataset.id);
+        const row=reviews?await readAdminReview(button.dataset.id):presentationOnly?selected:await readNotification(selected);
+        if(!active||current!==detailVersion)return;
+        if(row){
+          if(String(row.id)!==String(button.dataset.id))throw new Error('Nội dung trả về không khớp mục đã chọn.');
+          const index=rows.findIndex(item=>item.id===row.id);if(index>=0)rows[index]=row;render();trigger=button;open(row);
+        }
+      }
+      catch(err){if(active&&current===detailVersion){error.hidden=false;error.textContent=err.message;}}
       finally{button.disabled=false;}
     }
     if(action==="previous"||action==="next"){
@@ -125,6 +143,7 @@ export async function initFeedbackPresentation(key, {presentationOnly=false, sta
   }
   body.addEventListener("click",action);modalBody.addEventListener("click",action);
   modal.addEventListener("close",()=>{
+    detailVersion++;
     document.querySelector("#notification-back")?.remove();
     const replacement=trigger?.dataset.id?body.querySelector(`[data-feedback-action="${trigger.dataset.feedbackAction || "detail"}"][data-id="${trigger.dataset.id}"]`):null;
     (trigger?.isConnected?trigger:replacement||form.elements.q).focus();
@@ -132,16 +151,22 @@ export async function initFeedbackPresentation(key, {presentationOnly=false, sta
   modal.addEventListener("cancel",event=>{if(saving)event.preventDefault();});
   if(!presentationOnly) {
     document.querySelector("#feedback-results").textContent="Đang tải…";
-    try {rows=reviews?await readAdminReviews():await readNotifications();
+    try {rows=reviews?await readAdminReviews():await readNotifications();if(!active)return;
       if(!reviews&&form.elements.type)for(const type of new Set(rows.map(row=>row.type)))if(!types[type]){types[type]=type;form.elements.type.add(new Option(type,type));}}
-    catch(err){error.hidden=false;error.textContent=err.message;document.querySelector("#feedback-results").innerHTML='<button type="button" data-review-retry>Thử lại</button>';body.querySelector("[data-review-retry]").addEventListener("click",()=>location.reload());return;}
+    catch(err){if(!active)return;error.hidden=false;error.textContent=err.message;document.querySelector("#feedback-results").innerHTML='<button type="button" data-review-retry>Thử lại</button>';body.querySelector("[data-review-retry]").addEventListener("click",()=>location.reload());return;}
   }
   render();
-  if(!reviews&&!presentationOnly) {
-    let active=true;
-    window.addEventListener('pagehide',()=>{active=false;},{once:true});
-    window.addEventListener('neu:auth-change',()=>{active=false;},{once:true});
-    startAutoRefresh(async()=>{const latest=await readNotifications();if(active){rows=latest;render();}}, {canRefresh:()=>active&&!saving&&!modal.open});
+  if(!presentationOnly) {
+    startAutoRefresh(async()=>{
+      const current=++listVersion;
+      try {
+        const latest=reviews?await readAdminReviews():await readNotifications();
+        if(active&&current===listVersion&&!saving){rows=latest;render();}
+      }catch(err){if(active&&current===listVersion){error.hidden=false;error.textContent=err.message;}}
+    }, {canRefresh:()=>active&&!saving&&!modal.open});
   }
-  if(reviews){const id=new URLSearchParams(location.search).get("review_id");if(id&&/^[1-9]\d*$/.test(id))try{open(await readAdminReview(id));}catch(err){error.hidden=false;error.textContent=err.message;}}
+  if(reviews){const id=new URLSearchParams(location.search).get("review_id");if(id&&/^[1-9]\d*$/.test(id)){
+    const current=++detailVersion;
+    try{const row=await readAdminReview(id);if(active&&current===detailVersion)open(row);}catch(err){if(active&&current===detailVersion){error.hidden=false;error.textContent=err.message;}}
+  }}
 }

@@ -3,15 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Hẹn truyền hóa chất | NEU Medical</title>
+    <title>Lịch hẹn điều trị | NEU Medical</title>
     <link rel="stylesheet" href="../../static/css/home.css?v=20261023-calligraphy-motto" />
     <link rel="stylesheet" href="../../static/css/public_pages.css?v=20261014-interface-update" />
     <link rel="stylesheet" href="../../static/css/patient_pages.css?v=20261015-account" />
     <script src="../../static/js/core/public.js?v=20261014-interface-update" defer></script>
+    <script type="module" src="../../static/js/pages/treatment_appointments.js"></script>
     <link rel="stylesheet" href="../../static/css/chatbot.css" />
     <script type="module" src="../../static/js/pages/chatbot.js"></script>
   </head>
-  <body>
+  <body class="auth-pending">
     <a class="skip-link" href="#main">Đến nội dung chính</a>
     <header class="patient-header">
       <div class="identity">
@@ -24,18 +25,31 @@
         </a>
       </div>
     </header>
-    <main id="main" class="appointment-page">
+    <div id="treatment-auth-status" class="section-wrap" role="status"><p>Đang kiểm tra đăng nhập…</p><button type="button" hidden>Thử lại</button></div>
+    <main inert id="main" class="appointment-page">
       <div class="patient-heading">
         <nav class="patient-breadcrumb" aria-label="Đường dẫn trang">
-          <a href="portal.html">Trang bệnh nhân</a><span aria-hidden="true">/</span><span aria-current="page">Hẹn truyền hóa chất</span>
+          <a href="portal.html">Trang bệnh nhân</a><span aria-hidden="true">/</span><span aria-current="page">Lịch hẹn điều trị</span>
         </nav>
-        <h1>Hẹn truyền hóa chất</h1>
+        <h1>Lịch hẹn điều trị</h1>
       </div>
-      <section class="patient-panel" aria-labelledby="patient-panel-title">
-        <h2 id="patient-panel-title">Chức năng chưa triển khai</h2>
-        <div class="patient-empty">
-          <svg viewBox="0 0 48 48" fill="none" stroke-width="3" aria-hidden="true"><path d="M9 10h30v30H9zM9 19h30M16 6v10M32 6v10" /></svg>
-          <p>Hệ thống hiện chưa hỗ trợ xem hoặc đăng ký lịch hẹn truyền hóa chất. Vui lòng liên hệ bộ phận tiếp nhận để được hướng dẫn.</p>
+      <section class="patient-panel appointments-panel" aria-label="Danh sách lịch hẹn điều trị">
+        <div class="patient-tabs" role="tablist" aria-label="Loại lịch hẹn điều trị">
+          <button type="button" role="tab" id="treatment-upcoming-tab" aria-selected="true" aria-controls="treatment-panel" data-treatment-view="upcoming">Sắp tới</button>
+          <button type="button" role="tab" id="treatment-history-tab" aria-selected="false" aria-controls="treatment-panel" data-treatment-view="history" tabindex="-1">Lịch sử</button>
+        </div>
+        <div class="appointments-toolbar">
+          <div><label for="treatment-patient">Người khám</label><select id="treatment-patient"><option value="">Tất cả hồ sơ</option></select></div>
+        </div>
+        <p id="treatment-status" class="appointments-notice" role="status"></p>
+        <button id="treatment-retry" type="button" class="outline-button" hidden>Thử lại</button>
+        <div id="treatment-panel" role="tabpanel" aria-labelledby="treatment-upcoming-tab" tabindex="0">
+          <div id="treatment-list" class="appointments-list"></div>
+          <nav id="treatment-pagination" class="appointments-pagination" aria-label="Phân trang lịch hẹn điều trị" hidden>
+            <button id="treatment-prev" type="button" class="outline-button">Trang trước</button>
+            <span id="treatment-page"></span>
+            <button id="treatment-next" type="button" class="outline-button">Trang sau</button>
+          </nav>
         </div>
       </section>
     </main>

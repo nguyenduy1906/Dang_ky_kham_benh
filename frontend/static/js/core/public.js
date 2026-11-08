@@ -1,4 +1,5 @@
 import("./contact_info.js").then(module => module.initContactInfo());
+import("./patient_notifications.js").then(module => module.initPatientNotifications());
 
 // Only inner patient pages keep the compact header pinned while scrolling.
 const patientHeader = document.querySelector("body > .patient-header");

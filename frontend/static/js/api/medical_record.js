@@ -27,6 +27,10 @@ export function completeEncounter(encounterId, options = {}) {
   return apiRequest(`/doctor/encounters/${pathSegment(encounterId)}/complete`, { ...options, method: "POST" });
 }
 
+export function saveAndCompleteEncounter(encounterId,data,options={}) {
+  return apiRequest(`/doctor/encounters/${pathSegment(encounterId)}/save-and-complete`,{...options,method:'POST',data});
+}
+
 /** POST /encounters/<int:encounter_id>/review */
 export function createReview(encounterId, data, options = {}) {
   return apiRequest(`/encounters/${pathSegment(encounterId)}/review`, { ...options, method: "POST", data });

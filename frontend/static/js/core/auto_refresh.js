@@ -5,6 +5,7 @@ export const AUTO_REFRESH_MS = 30_000;
 // Refresh only existing readers. Mutations must always remain user initiated.
 export function startAutoRefresh(read, {
   canRefresh = () => true,
+  canRefreshDialog = () => false,
   environment = globalThis,
 } = {}) {
   const { document, window } = environment;
@@ -17,7 +18,8 @@ export function startAutoRefresh(read, {
       if (retry === undefined) retry = environment.setTimeout(() => { retry = undefined; void tick(); }, 1000);
       return;
     }
-    if (document.querySelector('dialog[open], .date-field-display[aria-invalid="true"], [aria-busy="true"], [data-saving="true"], [data-busy="true"], [data-workflow-dirty="true"], .staff-auth-pending, main[inert]') ||
+    const openDialog = document.querySelector('dialog[open]');
+    if ((openDialog && !canRefreshDialog(openDialog)) || document.querySelector('.date-field-display[aria-invalid="true"], [aria-busy="true"], [data-saving="true"], [data-busy="true"], [data-workflow-dirty="true"], .staff-auth-pending, main[inert]') ||
         document.activeElement?.matches('input, textarea, select, [contenteditable="true"]')) return;
     environment.clearTimeout(retry);
     retry = undefined;

@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Đăng nhập | NEU Medical</title>
     <link rel="stylesheet" href="../../static/css/home.css?v=20261023-calligraphy-motto" />
-    <link rel="stylesheet" href="../../static/css/auth.css?v=20261017-rounded-neu" />
-    <script src="../../static/js/pages/auth.js?v=20261017-admin-entry" type="module"></script>
+    <link rel="stylesheet" href="../../static/css/auth.css?v=20261108-password-eyes" />
+    <script src="../../static/js/pages/auth.js?v=20261108-real-email" type="module"></script>
   </head>
   <body class="auth-page">
     <a class="skip-link" href="#main">Đến nội dung chính</a>
@@ -20,7 +20,6 @@
           <div class="auth-form-wrap">
             <p class="auth-eyebrow">CHÀO MỪNG TRỞ LẠI</p>
             <h1 id="login-title" tabindex="-1">Đăng nhập</h1>
-            <p class="auth-intro">Đăng nhập để vào khu vực bệnh nhân hoặc khu vực làm việc dành cho nhân viên bệnh viện.</p>
             <form id="login-form" method="post">
               <div class="auth-field"><label for="login-identifier">Số điện thoại hoặc email</label><input id="login-identifier" name="identifier" autocomplete="username" maxlength="255" required placeholder="Nhập số điện thoại hoặc email" /></div>
               <div class="auth-field"><label for="login-password">Mật khẩu</label><div class="password-field"><input id="login-password" name="password" type="password" autocomplete="current-password" maxlength="128" required placeholder="Nhập mật khẩu" /><button type="button" class="password-toggle" data-password="login-password" aria-label="Hiện mật khẩu" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
@@ -40,14 +39,10 @@
               <div class="auth-field"><label for="register-name">Họ và tên</label><input id="register-name" name="full_name" autocomplete="name" maxlength="150" required placeholder="Nhập họ và tên của bạn" /></div>
               <div class="auth-form-row">
                 <div class="auth-field"><label for="register-phone">Số điện thoại</label><input id="register-phone" name="phone" type="tel" autocomplete="tel" maxlength="20" placeholder="Số điện thoại" /></div>
-                <div class="auth-field"><label for="register-email">Email</label><input id="register-email" name="email" type="email" autocomplete="email" maxlength="254" placeholder="Địa chỉ email" /></div>
+                <div class="auth-field"><label for="register-email">Email</label><input id="register-email" name="email" type="email" autocomplete="email" maxlength="254" required placeholder="Địa chỉ email" /></div>
               </div>
-              <p class="auth-field-note auth-contact-hint">Cung cấp số điện thoại hoặc email để đăng nhập.</p>
-              <div class="auth-form-row">
-              <div class="auth-field"><label for="register-password">Mật khẩu</label><div class="password-field"><input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required aria-describedby="password-hint" placeholder="Tạo mật khẩu" /><button type="button" class="password-toggle" data-password="register-password" aria-label="Hiện mật khẩu" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
-              <div class="auth-field"><label for="register-confirm">Nhập lại mật khẩu</label><div class="password-field"><input id="register-confirm" type="password" autocomplete="new-password" minlength="8" maxlength="128" required placeholder="Nhập lại mật khẩu" /><button type="button" class="password-toggle" data-password="register-confirm" aria-label="Hiện mật khẩu" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
-              </div>
-              <p class="auth-field-note" id="password-hint">Từ 8 đến 128 ký tự, gồm chữ và số.</p>
+              <div class="auth-field"><label for="register-password">Mật khẩu</label><div class="password-field"><input id="register-password" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" required placeholder="Tạo mật khẩu" /><button type="button" class="password-toggle" data-password="register-password" aria-label="Hiện mật khẩu" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+              <div class="auth-field"><label for="register-confirm">Nhập lại mật khẩu</label><div class="password-field"><input id="register-confirm" type="password" autocomplete="new-password" minlength="8" maxlength="128" required placeholder="Nhập lại mật khẩu" /><button type="button" class="password-toggle" data-password="register-confirm" aria-label="Hiện mật khẩu" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
               <p class="auth-status" id="register-status" role="status" aria-live="polite"></p>
               <button type="submit" class="auth-submit" disabled>Đăng ký</button>
             </form>
@@ -65,7 +60,7 @@
     <footer class="auth-footer">© 2026 NEU Medical. Đồng hành cùng sức khỏe của bạn.</footer>
     <dialog id="recovery-dialog" class="recovery-dialog" aria-labelledby="recovery-title">
       <div class="recovery-heading"><h2 id="recovery-title">Lấy lại mật khẩu</h2><button type="button" id="recovery-close" aria-label="Đóng lấy lại mật khẩu">×</button></div>
-      <p class="auth-intro">Khôi phục tài khoản bằng số điện thoại hoặc email đã đăng ký.</p>
+      <p class="auth-intro">Nhập số điện thoại hoặc email đã đăng ký. Mã OTP sẽ được gửi tới email đã lưu của tài khoản; hãy kiểm tra cả thư rác.</p>
       <form id="recovery-form" method="post">
         <div class="auth-field" id="recovery-identity-field"><label for="recovery-identifier">Số điện thoại hoặc email</label><input id="recovery-identifier" autocomplete="username" maxlength="255" required /></div>
         <div class="auth-field" id="recovery-otp-field" hidden><label for="recovery-otp">Mã xác minh</label><input id="recovery-otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="Nhập 6 chữ số" /></div>

@@ -10,6 +10,9 @@ def notify_encounter(db, encounter_id, event_key, kind, title, content, *, admin
     created = None
     if owner and owner['user_id'] is not None:
         created = model.create_once(db, owner['user_id'], event_key, kind, title, content, encounter_id)
+        if kind == 'REMINDER':
+            from backend.app.services.email_service import enqueue
+            enqueue(db, owner['user_id'], encounter_id, 'REMINDER', event_key)
     if kind == 'REFUND':
         from backend.app.services.admin_notification_service import publish
         reference, identifier = admin_reference or ('ENCOUNTER', encounter_id)
@@ -26,6 +29,12 @@ def notify_status(db, encounter_id, log_id, status, note):
     notify_encounter(db, encounter_id, f'encounter-status:{log_id}', 'ENCOUNTER_STATUS',
                      titles[status], f'Lượt khám {business_code("LK", encounter_id)}: {note or status}')
     if status == 'COMPLETED':
+        notify_encounter(db, encounter_id, f'result-ready:{encounter_id}', 'RESULT_READY',
+                         'Đã có kết quả khám', 'Bác sĩ đã hoàn tất kết quả. Vui lòng mở hồ sơ sức khỏe để xem.')
+        owner = model.encounter_owner(db, encounter_id)
+        if owner and owner['user_id'] is not None:
+            from backend.app.services.email_service import enqueue
+            enqueue(db, owner['user_id'], encounter_id, 'RESULT_READY', f'result-ready:{encounter_id}')
         from backend.app.services.staff_notification_service import encounter_completed
         encounter_completed(db, encounter_id)
     if status in ('HOLDING', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED'):

@@ -21,7 +21,7 @@ def contact_values(db):
 
 def reminder_hours(db):
     row = get(db, 'REMINDER_BEFORE_HOURS')
-    value = int(row['config_value']) if row else 24
+    value = int(row['config_value']) if row else 12
     if not 1 <= value <= 168:
         raise RuntimeError('REMINDER_BEFORE_HOURS phải từ 1 đến 168')
     return value

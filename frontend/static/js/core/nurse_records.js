@@ -42,14 +42,16 @@ export async function initNurseRecords() {
   window.addEventListener("neu:auth-change", stop, { once: true });
 
   let currentPage = 1, historyPageNumber = 1;
-  async function load(page = 1) {
+  async function load(page = 1, silent = false) {
     currentPage = page;
     const version = ++listVersion;
-    matchingPatients = [];
-    listRequest?.abort(); listRequest = new AbortController(); clearDetail();
+    listRequest?.abort(); listRequest = new AbortController();
+    if (!silent) { matchingPatients = []; clearDetail(); }
     const status = $("#nurse-record-status");
-    status.hidden = false; status.textContent = "Đang tải hồ sơ…";
-    $("#nurse-record-list").innerHTML = ""; $("#nurse-record-pages").innerHTML = "";
+    if (!silent) {
+      status.hidden = false; status.textContent = "Đang tải hồ sơ…";
+      $("#nurse-record-list").innerHTML = ""; $("#nurse-record-pages").innerHTML = "";
+    }
     try {
       const range = nurseFormRange(search);
       const options = { signal: listRequest.signal };
@@ -63,10 +65,15 @@ export async function initNurseRecords() {
       const { items: matching, latest } = recentNursePatients(patients, visits.filter(v=>v.payment_confirmed===true), range);
       matchingPatients = matching;
       const result = localPage(matching, page);
+      currentPage = result.page;
       $("#nurse-record-list").innerHTML = nurseRecordTable(result.items, latest);
       pagination(result, load, $("#nurse-record-pages")); status.hidden = true;
     } catch (error) {
       if (!active || version !== listVersion) return;
+      if ([401, 403].includes(error.status)) {
+        matchingPatients = []; clearDetail();
+        $("#nurse-record-list").replaceChildren(); $("#nurse-record-pages").replaceChildren();
+      }
       status.textContent = sessionError(error); status.hidden = false;
     }
   }
@@ -150,5 +157,11 @@ export async function initNurseRecords() {
   await load();
   const patientId = new URLSearchParams(globalThis.location?.search || "").get("patient_id");
   if (patientId && /^[1-9]\d*$/.test(patientId)) await showPatient(patientId);
-  startAutoRefresh(() => selectedPatient ? showPatient(selectedPatient.patient_id, historyPageNumber, true) : load(currentPage), { canRefresh: () => active });
+  startAutoRefresh(async () => {
+    const patientId = selectedPatient?.patient_id, version = detailVersion;
+    await load(currentPage, true);
+    if (active && patientId && selectedPatient?.patient_id === patientId && version === detailVersion) {
+      await showPatient(patientId, historyPageNumber, true);
+    }
+  }, { canRefresh: () => active });
 }

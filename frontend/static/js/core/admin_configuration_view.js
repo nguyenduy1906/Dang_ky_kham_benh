@@ -4,7 +4,7 @@ const groups=[
   {id:"facility",title:"Thông tin cơ sở",description:"Thông tin giới thiệu và liên hệ hỗ trợ người bệnh.",keys:["HOSPITAL_NAME","SUPPORT_PHONE","SUPPORT_EMAIL","EXAM_HOURS"]},
   {id:"operations",title:"Tiếp nhận và nhắc lịch",description:"Thiết lập tiếp nhận trực tiếp và thời điểm nhắc lịch trong ứng dụng.",keys:["ALLOW_WALK_IN","REMINDER_BEFORE_HOURS"]},
   {id:"booking",title:"Đặt lịch và tiếp nhận",description:"Các mốc thời gian áp dụng trong quy trình khám bệnh.",keys:["APPOINTMENT_HOLD_MINUTES","CHECKIN_EARLY_MINUTES","CHECKIN_LATE_MINUTES","NO_SHOW_GRACE_MINUTES"]},
-  {id:"payment",title:"Đặt cọc và hoàn tiền",description:"Chính sách đặt cọc, hủy lịch và không đến khám cho các lượt khám mới.",keys:["DEFAULT_DEPOSIT_PERCENT","CANCEL_HOURS_LIMIT","CANCEL_REFUND_PERCENT","NO_SHOW_FORFEIT_DEPOSIT"]},
+  {id:"payment",title:"Đặt cọc và hoàn tiền",description:"Chính sách đặt cọc, hủy lịch và không đến khám cho các lượt khám mới.",keys:["DEFAULT_DEPOSIT_PERCENT","CANCEL_HOURS_LIMIT","CANCEL_REFUND_PERCENT","CANCEL_FULL_REFUND_HOURS","NO_SHOW_FORFEIT_DEPOSIT"]},
 ];
 const metadata={
   HOSPITAL_NAME:["Tên cơ sở","Tên hiển thị trong thông tin liên hệ công khai."],
@@ -19,7 +19,8 @@ const metadata={
   NO_SHOW_GRACE_MINUTES:["Thời gian chờ sau ca","Thời gian chờ sau khi ca kết thúc trước khi xác định không đến khám.","phút"],
   DEFAULT_DEPOSIT_PERCENT:["Tỷ lệ đặt cọc","Tỷ lệ đặt cọc cho lượt khám mới, từ 1 đến 100%.","%"],
   CANCEL_HOURS_LIMIT:["Mốc hủy lịch được hoàn cọc","Mốc thời gian trước giờ hẹn áp dụng cho trường hợp người bệnh hủy.","giờ"],
-  CANCEL_REFUND_PERCENT:["Tỷ lệ hoàn cọc khi đủ điều kiện","Tỷ lệ hoàn cọc khi người bệnh hủy đúng mốc; nguyên nhân bệnh viện áp dụng chính sách riêng.","%"],
+  CANCEL_FULL_REFUND_HOURS:["Mốc hủy lịch hoàn 100% cọc","Hủy trước ít nhất mốc này được hoàn toàn bộ tiền cọc.","giờ"],
+  CANCEL_REFUND_PERCENT:["Tỷ lệ hoàn cọc khi đủ điều kiện","Tỷ lệ hoàn cọc từ mốc đủ điều kiện đến trước mốc hoàn 100%; nguyên nhân bệnh viện áp dụng chính sách riêng.","%"],
   NO_SHOW_FORFEIT_DEPOSIT:["Không hoàn cọc khi không đến","Bật để không hoàn cọc khi vắng mặt; tắt để cho phép admin hoàn toàn bộ cọc sau khi xác định không đến khám."],
   MAX_REVIEW_RATING:["Điểm đánh giá tối đa","Điểm tối đa cho lượt khám mới, từ 1 đến 5 sao; không đổi điểm đã đánh giá.","sao"],
 };
@@ -60,7 +61,7 @@ export function configurationRow(row) {
     const hours=parseExamHours(value), parsed=hourNames.every(name=>hours[name]);
     return `<form class="configuration-row configuration-hours-row" data-form="configuration" data-key="EXAM_HOURS" data-exam-hours><div class="configuration-label"><span>Giờ khám</span><p id="config-EXAM_HOURS-help">Chọn giờ bắt đầu và kết thúc cho từng buổi. Đây là giờ khám công khai; ca làm việc được quản lý tại trang Lịch làm việc.</p>${!parsed&&value?`<p class="configuration-hours-existing">Giá trị đang lưu: ${esc(value)}. Chọn đủ bốn mốc giờ để cập nhật.</p>`:""}</div><div class="configuration-hours-editor"><input type="hidden" name="config_value" value="${esc(value)}">${[["morning","Buổi sáng"],["afternoon","Buổi chiều"]].map(([period,title])=>`<fieldset><legend>${title}</legend><div><label>Giờ bắt đầu<input type="time" name="${period}_start" value="${esc(hours[`${period}_start`])}" step="60" aria-describedby="config-EXAM_HOURS-help" required></label><span aria-hidden="true">–</span><label>Giờ kết thúc<input type="time" name="${period}_end" value="${esc(hours[`${period}_end`])}" step="60" aria-describedby="config-EXAM_HOURS-help" required></label></div></fieldset>`).join("")}<button type="submit" class="secondary">Lưu giờ khám</button></div><p class="form-feedback" role="status" aria-live="polite"></p></form>`;
   }
-  const limits={APPOINTMENT_HOLD_MINUTES:[1,1440],DEFAULT_DEPOSIT_PERCENT:[1,100],CHECKIN_EARLY_MINUTES:[0,1440],CHECKIN_LATE_MINUTES:[0,1440],NO_SHOW_GRACE_MINUTES:[0,1440],CANCEL_HOURS_LIMIT:[0,8760],CANCEL_REFUND_PERCENT:[0,100],MAX_REVIEW_RATING:[1,5],REMINDER_BEFORE_HOURS:[1,168]};
+  const limits={APPOINTMENT_HOLD_MINUTES:[1,1440],DEFAULT_DEPOSIT_PERCENT:[1,100],CHECKIN_EARLY_MINUTES:[0,1440],CHECKIN_LATE_MINUTES:[0,1440],NO_SHOW_GRACE_MINUTES:[0,1440],CANCEL_HOURS_LIMIT:[0,8760],CANCEL_REFUND_PERCENT:[0,100],CANCEL_FULL_REFUND_HOURS:[1,8760],MAX_REVIEW_RATING:[1,5],REMINDER_BEFORE_HOURS:[1,168]};
   const limit=limits[key];
   const attrs=`id="${esc(id)}" name="config_value" aria-describedby="${esc(id)}-help" required`;
   const control=["ALLOW_WALK_IN","NO_SHOW_FORFEIT_DEPOSIT"].includes(key)?`<select ${attrs}>${options(key==="ALLOW_WALK_IN"?[["true","Cho phép"],["false","Tạm dừng"]]:[["true","Không hoàn cọc"],["false","Cho phép hoàn toàn bộ cọc"]],value,"Chọn trạng thái")}</select>`:

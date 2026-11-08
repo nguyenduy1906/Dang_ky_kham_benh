@@ -68,6 +68,8 @@ $schema_check$;
 
 -- Xóa dữ liệu cũ để có thể chạy lại file seed nhiều lần.
 TRUNCATE TABLE
+    treatment_appointment,
+    email_outbox,
     department_membership_log,
     nurse_assignment_change,
     schedule_move,
@@ -190,16 +192,16 @@ VALUES
 INSERT INTO doctor_profile
 (doctor_profile_id, user_id, department_id, academic_degree, specialization, experience_years, introduction, consultation_fee, is_active, created_at, updated_at)
 VALUES
-(1, 6, 1, 'Thạc sĩ', 'Nội khoa', 12, 'Bác sĩ chuyên khám nội tổng quát.', 250000, 1, '2026-09-04 08:00:00+07', '2026-09-04 08:00:00+07'),
-(2, 7, 2, 'Tiến sĩ', 'Tim mạch', 15, 'Bác sĩ chuyên khoa tim mạch.', 350000, 1, '2026-09-04 08:10:00+07', '2026-09-04 08:10:00+07'),
-(3, 8, 3, 'Chuyên khoa I', 'Da liễu', 9, 'Bác sĩ chuyên điều trị bệnh da.', 280000, 1, '2026-09-04 08:20:00+07', '2026-09-04 08:20:00+07'),
-(4, 9, 4, 'Thạc sĩ', 'Nhi khoa', 11, 'Bác sĩ chuyên khám và điều trị trẻ em.', 300000, 1, '2026-09-04 08:30:00+07', '2026-09-04 08:30:00+07'),
-(5, 10, 5, 'Chuyên khoa II', 'Sản phụ khoa', 14, 'Bác sĩ chuyên sản phụ khoa.', 380000, 1, '2026-09-04 08:40:00+07', '2026-09-04 08:40:00+07'),
-(6, 11, 6, 'Thạc sĩ', 'Tai Mũi Họng', 10, 'Bác sĩ chuyên tai mũi họng.', 270000, 1, '2026-09-04 08:50:00+07', '2026-09-04 08:50:00+07'),
-(7, 12, 7, 'Chuyên khoa I', 'Nhãn khoa', 8, 'Bác sĩ chuyên khám và điều trị mắt.', 260000, 1, '2026-09-04 09:00:00+07', '2026-09-04 09:00:00+07'),
-(8, 13, 8, 'Thạc sĩ', 'Răng Hàm Mặt', 13, 'Bác sĩ chuyên răng hàm mặt.', 320000, 1, '2026-09-04 09:10:00+07', '2026-09-04 09:10:00+07'),
-(9, 14, 9, 'Tiến sĩ', 'Cơ Xương Khớp', 16, 'Bác sĩ chuyên cơ xương khớp.', 360000, 1, '2026-09-04 09:20:00+07', '2026-09-04 09:20:00+07'),
-(10, 15, 10, 'Chuyên khoa II', 'Thần kinh', 17, 'Bác sĩ chuyên thần kinh.', 400000, 1, '2026-09-04 09:30:00+07', '2026-09-04 09:30:00+07');
+(1, 6, 1, 'Thạc sĩ', 'Nội khoa', 12, 'Bác sĩ chuyên khám nội tổng quát.', 1500000, 1, '2026-09-04 08:00:00+07', '2026-09-04 08:00:00+07'),
+(2, 7, 2, 'Tiến sĩ', 'Tim mạch', 15, 'Bác sĩ chuyên khoa tim mạch.', 2000000, 1, '2026-09-04 08:10:00+07', '2026-09-04 08:10:00+07'),
+(3, 8, 3, 'Chuyên khoa I', 'Da liễu', 9, 'Bác sĩ chuyên điều trị bệnh da.', 1300000, 1, '2026-09-04 08:20:00+07', '2026-09-04 08:20:00+07'),
+(4, 9, 4, 'Thạc sĩ', 'Nhi khoa', 11, 'Bác sĩ chuyên khám và điều trị trẻ em.', 1500000, 1, '2026-09-04 08:30:00+07', '2026-09-04 08:30:00+07'),
+(5, 10, 5, 'Chuyên khoa II', 'Sản phụ khoa', 14, 'Bác sĩ chuyên sản phụ khoa.', 1800000, 1, '2026-09-04 08:40:00+07', '2026-09-04 08:40:00+07'),
+(6, 11, 6, 'Thạc sĩ', 'Tai Mũi Họng', 10, 'Bác sĩ chuyên tai mũi họng.', 1500000, 1, '2026-09-04 08:50:00+07', '2026-09-04 08:50:00+07'),
+(7, 12, 7, 'Chuyên khoa I', 'Nhãn khoa', 8, 'Bác sĩ chuyên khám và điều trị mắt.', 1300000, 1, '2026-09-04 09:00:00+07', '2026-09-04 09:00:00+07'),
+(8, 13, 8, 'Thạc sĩ', 'Răng Hàm Mặt', 13, 'Bác sĩ chuyên răng hàm mặt.', 1500000, 1, '2026-09-04 09:10:00+07', '2026-09-04 09:10:00+07'),
+(9, 14, 9, 'Tiến sĩ', 'Cơ Xương Khớp', 16, 'Bác sĩ chuyên cơ xương khớp.', 2000000, 1, '2026-09-04 09:20:00+07', '2026-09-04 09:20:00+07'),
+(10, 15, 10, 'Chuyên khoa II', 'Thần kinh', 17, 'Bác sĩ chuyên thần kinh.', 1800000, 1, '2026-09-04 09:30:00+07', '2026-09-04 09:30:00+07');
 
 -- Hồ sơ đào tạo/công tác minh họa cho 10 bác sĩ mẫu, không thay phí khám hoặc ảnh.
 UPDATE doctor_profile SET introduction='Bác sĩ chuyên khám nội tổng quát.
@@ -952,9 +954,10 @@ VALUES
 ('CHECKIN_EARLY_MINUTES','30', 'Online bắt buộc check-in ít nhất 30 phút trước giờ hẹn', '2026-10-09 00:00:00+07'),
 ('CHECKIN_LATE_MINUTES','0', 'Không cho check-in sau hạn 30 phút trước giờ hẹn', '2026-10-09 00:00:00+07'),
 ('NO_SHOW_GRACE_MINUTES','15', 'No-show sau kết thúc ca 15 phút; chính sách cố định', '2026-10-09 00:00:00+07'),
-('CANCEL_HOURS_LIMIT','12', 'Bệnh nhân hủy từ 12 giờ trước giờ hẹn được hoàn 50% cọc', '2026-10-09 00:00:00+07'),
-('CANCEL_REFUND_PERCENT','50', 'Hoàn 50% cọc khi hủy đủ hạn; lỗi bệnh viện hoàn 100%', '2026-10-09 00:00:00+07'),
-('REMINDER_BEFORE_HOURS', '24', 'Gửi thông báo nhắc lịch trước giờ khám', '2026-10-01 08:00:00+07'),
+('CANCEL_FULL_REFUND_HOURS','48', 'Hủy trước ít nhất 48 giờ hoàn 100% cọc', '2026-11-08 00:00:00+07'),
+('CANCEL_HOURS_LIMIT','12', 'Bệnh nhân hủy từ 12 đến dưới 48 giờ trước hẹn hoàn 50% cọc', '2026-10-09 00:00:00+07'),
+('CANCEL_REFUND_PERCENT','50', 'Hủy từ 48 giờ hoàn 100% cọc; từ 12 đến dưới 48 giờ hoàn 50%; lỗi bệnh viện hoàn 100%', '2026-10-09 00:00:00+07'),
+('REMINDER_BEFORE_HOURS', '12', 'Gửi thông báo nhắc lịch trước giờ khám', '2026-10-01 08:00:00+07'),
 ('MAX_REVIEW_RATING','5', 'Điểm đánh giá tối đa', '2026-10-01 08:00:00+07'),
 ('HOSPITAL_NAME', 'Bệnh viện NEU Medical', 'Tên cơ sở khám bệnh hiển thị trên hệ thống', '2026-10-01 08:00:00+07'),
 ('SUPPORT_PHONE', '19001234', 'Số điện thoại hỗ trợ khách hàng', '2026-10-01 08:00:00+07'),
@@ -1039,7 +1042,7 @@ Quá trình công tác:
 - 2020–nay: Bác sĩ chuyên ngành Nội khoa tại Bệnh viện NEU Medical.
 - 2014–2020: Khám và theo dõi người bệnh trong lĩnh vực Nội khoa.
 
-Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',290000),
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',1100000),
 (12,25,2,'Tiến sĩ','Tim mạch',18,'Bác sĩ chuyên ngành Tim mạch.
 
 Quá trình đào tạo:
@@ -1051,7 +1054,7 @@ Quá trình công tác:
 - 2020–nay: Bác sĩ chuyên ngành Tim mạch tại Bệnh viện NEU Medical.
 - 2008–2020: Khám và theo dõi người bệnh trong lĩnh vực Tim mạch.
 
-Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',390000),
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',1900000),
 (13,26,6,'Thạc sĩ','Tai Mũi Họng',10,'Bác sĩ chuyên ngành Tai Mũi Họng.
 
 Quá trình đào tạo:
@@ -1062,7 +1065,7 @@ Quá trình công tác:
 - 2020–nay: Bác sĩ chuyên ngành Tai Mũi Họng tại Bệnh viện NEU Medical.
 - 2016–2020: Khám và theo dõi người bệnh trong lĩnh vực Tai Mũi Họng.
 
-Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',300000),
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',1100000),
 (14,27,9,'Chuyên khoa II','Cơ Xương Khớp',15,'Bác sĩ chuyên ngành Cơ Xương Khớp.
 
 Quá trình đào tạo:
@@ -1074,7 +1077,7 @@ Quá trình công tác:
 - 2020–nay: Bác sĩ chuyên ngành Cơ Xương Khớp tại Bệnh viện NEU Medical.
 - 2011–2020: Khám và theo dõi người bệnh trong lĩnh vực Cơ Xương Khớp.
 
-Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',380000);
+Hồ sơ đào tạo và công tác mẫu phục vụ đồ án.',1600000);
 
 INSERT INTO room(room_id,department_id,room_name,description) VALUES
 (11,1,'Phòng Nội 103','Phòng mẫu bổ sung cho đồ án'),

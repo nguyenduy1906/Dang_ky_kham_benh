@@ -12,7 +12,7 @@ from backend.app.utils import date as date_utils
 from backend.app.utils.date import VN_TZ
 
 from backend.app.db.database import get_db_connection
-from backend.app.models.configuration_model import reminder_hours, encounter_policy
+from backend.app.models.configuration_model import encounter_policy
 from backend.app.services import encounter_service as service, notification_service as notifications
 from backend.app.services.admin_notification_service import enqueue_article_publications
 
@@ -56,26 +56,56 @@ def enqueue_reminders():
     count = 0
     with get_db_connection() as db:
         now = date_utils.utc_now()
-        cutoff = now + timedelta(hours=reminder_hours(db))
-        rows = db.execute("SELECT e.encounter_id,e.estimated_exam_at,e.policy_snapshot FROM encounter e "
-                          "JOIN work_schedule s ON s.schedule_id=e.schedule_id JOIN patient p ON p.patient_id=e.patient_id "
-                          "WHERE e.encounter_type='ONLINE' AND e.encounter_status='CONFIRMED' "
-                          "AND p.user_id IS NOT NULL AND s.schedule_status IN ('OPEN','FULL') "
-                          "AND e.estimated_exam_at + make_interval(mins => COALESCE((e.policy_snapshot->>'CHECKIN_LATE_MINUTES')::int,0) "
-                          "- COALESCE((e.policy_snapshot->>'CHECKIN_EARLY_MINUTES')::int,30)) > %s AND e.estimated_exam_at<=%s "
-                          "AND NOT EXISTS (SELECT 1 FROM notification n WHERE n.user_id=p.user_id "
-                          "AND n.event_key='reminder:' || e.encounter_id::text || ':' || "
-                          "to_char(e.estimated_exam_at AT TIME ZONE 'UTC','YYYYMMDDHH24MISS')) "
-                          'ORDER BY e.estimated_exam_at,e.encounter_id LIMIT 100 FOR UPDATE OF e SKIP LOCKED',
-                          (now, cutoff)).fetchall()
-        for row in rows:
-            key = f'reminder:{row["encounter_id"]}:{row["estimated_exam_at"].strftime("%Y%m%d%H%M%S")}'
-            local = row['estimated_exam_at'].astimezone(VN_TZ)
-            policy = encounter_policy(row)
-            deadline = local + timedelta(minutes=policy['CHECKIN_LATE_MINUTES'] - policy['CHECKIN_EARLY_MINUTES'])
-            created = notifications.notify_encounter(db, row['encounter_id'], key, 'REMINDER', 'Nhắc lịch khám',
-                f'Giờ hẹn {local:%d/%m/%Y %H:%M} (Asia/Saigon). Vui lòng check-in trước {deadline:%d/%m/%Y %H:%M}.')
-            count += created is not None
+        # Preserve legacy 12-hour keys so previously sent reminders stay deduplicated.
+        # The 24-hour window closes at 12 hours; never backfill two messages at once.
+        for hours, prefix, lower in ((24, 'reminder24:', now + timedelta(hours=12)),
+                                     (12, 'reminder:', now)):
+            rows = db.execute("SELECT e.encounter_id,e.estimated_exam_at,e.policy_snapshot FROM encounter e "
+                "JOIN work_schedule s ON s.schedule_id=e.schedule_id JOIN patient p ON p.patient_id=e.patient_id "
+                "WHERE e.encounter_type='ONLINE' AND e.encounter_status='CONFIRMED' "
+                "AND p.user_id IS NOT NULL AND s.schedule_status IN ('OPEN','FULL') "
+                "AND e.estimated_exam_at + make_interval(mins => COALESCE((e.policy_snapshot->>'CHECKIN_LATE_MINUTES')::int,0) "
+                "- COALESCE((e.policy_snapshot->>'CHECKIN_EARLY_MINUTES')::int,30)) > %s "
+                "AND e.estimated_exam_at>%s AND e.estimated_exam_at<=%s "
+                "AND NOT EXISTS (SELECT 1 FROM email_outbox n WHERE n.user_id=p.user_id "
+                "AND n.event_key=%s || e.encounter_id::text || ':' || "
+                "to_char(e.estimated_exam_at AT TIME ZONE 'UTC','YYYYMMDDHH24MISS')) "
+                'ORDER BY e.estimated_exam_at,e.encounter_id LIMIT 100 FOR UPDATE OF e SKIP LOCKED',
+                (now, lower, now + timedelta(hours=hours), prefix)).fetchall()
+            for row in rows:
+                key = f'{prefix}{row["encounter_id"]}:{row["estimated_exam_at"].strftime("%Y%m%d%H%M%S")}'
+                local = row['estimated_exam_at'].astimezone(VN_TZ)
+                policy = encounter_policy(row)
+                deadline = local + timedelta(minutes=policy['CHECKIN_LATE_MINUTES'] - policy['CHECKIN_EARLY_MINUTES'])
+                created = notifications.notify_encounter(db, row['encounter_id'], key, 'REMINDER',
+                    f'Nhắc lịch khám - trước {hours} giờ',
+                    f'Giờ hẹn {local:%d/%m/%Y %H:%M} (Asia/Saigon). Vui lòng check-in trước {deadline:%d/%m/%Y %H:%M}.')
+                count += created is not None
+    return count
+
+
+def enqueue_treatment_reminders():
+    """Follow-up timing is independent of the original encounter's status or shift."""
+    from backend.app.services.email_service import enqueue
+    count=0
+    with get_db_connection() as db:
+        now=date_utils.utc_now()
+        for hours,lower in ((24,now+timedelta(hours=12)),(12,now)):
+            prefix=f'treatment-reminder{hours}:'
+            rows=db.execute('''SELECT t.treatment_id,t.encounter_id,t.starts_at,p.user_id
+                FROM treatment_appointment t JOIN encounter e USING(encounter_id)
+                JOIN patient p USING(patient_id) JOIN users u ON u.user_id=p.user_id
+                WHERE u.deleted_at IS NULL AND u.account_status='ACTIVE'
+                AND u.email IS NOT NULL AND trim(u.email)<>''
+                AND t.starts_at>%s AND t.starts_at<=%s
+                AND NOT EXISTS (SELECT 1 FROM email_outbox q WHERE q.event_key=%s || t.treatment_id::text || ':' ||
+                    to_char(t.starts_at AT TIME ZONE 'UTC','YYYYMMDDHH24MISS'))
+                ORDER BY t.starts_at,t.treatment_id LIMIT 100 FOR UPDATE OF t SKIP LOCKED''',
+                (lower,now+timedelta(hours=hours),prefix)).fetchall()
+            for row in rows:
+                key=prefix+f'{row["treatment_id"]}:{row["starts_at"].strftime("%Y%m%d%H%M%S")}'
+                enqueue(db,row['user_id'],row['encounter_id'],'TREATMENT_REMINDER',key,treatment_id=row['treatment_id'])
+                count+=1
     return count
 
 
@@ -101,6 +131,13 @@ def mark_overdue_no_shows():
     return count
 
 
+def reject_overdue_leave_requests():
+    from backend.app.services.staff_leave_service import reject_overdue_pending
+    with get_db_connection() as db:
+        actor_id = system_actor(db)
+        return reject_overdue_pending(db, actor_id, date_utils.utc_now())
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--once', action='store_true')
@@ -111,10 +148,18 @@ def main():
         signal.signal(sig, lambda *_: stopping.set())
     while not stopping.is_set():
         try:
+            logger.info('Overdue leave requests rejected: %s', reject_overdue_leave_requests())
             logger.info('Expired holds: %s', expire_holds())
             logger.info('No-show visits: %s', mark_overdue_no_shows())
             logger.info('Appointment reminders: %s', enqueue_reminders())
+            logger.info('Follow-up reminders: %s', enqueue_treatment_reminders())
             logger.info('Scheduled articles published: %s', enqueue_article_publications())
+            from backend.app.services.email_service import process_pending
+            try:
+                logger.info('Notification emails sent: %s', process_pending())
+            except Exception:
+                # Do not expose SMTP credentials or stop appointment maintenance.
+                logger.warning('Email delivery cycle unavailable; queued messages retained')
         except Exception:
             logger.exception('Expiry cycle failed; transaction rolled back')
             if args.once:

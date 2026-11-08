@@ -23,20 +23,7 @@ def init_database():
                     value = str(value).lower()
                     db.execute('UPDATE system_configuration SET config_value=%s WHERE config_key=%s', (value, key))
         db.execute((DATABASE_DIR / 'init_db.sql').read_text(encoding='utf-8'))
-        # Keep old installations compatible without loading destructive sample data.
-        apply_migrations(db)
-
-
-def apply_migrations(db):
-    """Apply each additive migration once, in the caller's transaction."""
-    db.execute('''CREATE TABLE IF NOT EXISTS schema_migration (
-        filename text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP)''')
-    applied = {row['filename'] for row in db.execute('SELECT filename FROM schema_migration').fetchall()}
-    for migration in sorted((DATABASE_DIR / 'migrations').glob('*.sql')):
-        if migration.name in applied:
-            continue
-        db.execute(migration.read_text(encoding='utf-8'))
-        db.execute('INSERT INTO schema_migration(filename) VALUES (%s)', (migration.name,))
+        # Schema additions and compatible upgrades are kept in init_db.sql.
 
 
 ROLES = (

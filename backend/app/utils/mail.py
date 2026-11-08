@@ -1,34 +1,85 @@
-"""Adapter gửi email/OTP.
-
-Chưa có nhà cung cấp email thật. Khi SEND_EMAIL=1, nội dung thư được in ra log của
-backend (docker compose logs backend) để thử nghiệm. Khi SEND_EMAIL khác 1, adapter
-không làm lộ mã ở bất kỳ đâu. Chế độ thường không trả OTP qua API; DEMO_PASSWORD_RECOVERY=1 cho phép trình diễn OTP điện thoại.
-"""
+"""Authenticated SMTP with mandatory TLS; never log message bodies or credentials."""
 import os
+import smtplib
+import ssl
+from email.message import EmailMessage
+from email.utils import parseaddr
+from urllib.parse import urlsplit
+from backend.app.core.errors import AppError
 
 
 def send_email_enabled():
+    # Legacy payment-demo switch, unrelated to SMTP.
     return os.environ.get('SEND_EMAIL', '0') == '1'
 
 
-def deliver(to_email, subject, body):
-    if send_email_enabled():
-        print(f'[SEND MAIL] to={to_email} | {subject} | {body}', flush=True)
-    else:
-        print(f'[MAIL] Chưa cấu hình nhà cung cấp email, chưa gửi thư tới {to_email}', flush=True)
+def settings():
+    user = os.environ.get('SMTP_USER', '').strip()
+    password = os.environ.get('SMTP_PASSWORD', '').replace(' ', '')
+    sender = os.environ.get('MAIL_FROM', '').strip() or user
+    host = os.environ.get('SMTP_HOST', 'smtp.gmail.com').strip()
+    security = os.environ.get('SMTP_SECURITY', 'starttls').strip().lower()
+    try:
+        port = int(os.environ.get('SMTP_PORT', '587'))
+        valid = (os.environ.get('EMAIL_ENABLED') == '1' and user and password and host
+                 and security in ('starttls', 'ssl') and 1 <= port <= 65535
+                 and parseaddr(sender)[1] == sender and '@' in sender
+                 and not any(c in sender + user + host for c in '\r\n'))
+    except ValueError:
+        valid = False
+    if not valid:
+        raise AppError(503, 'EMAIL_NOT_CONFIGURED', 'Chưa cấu hình gửi email thật. Vui lòng liên hệ quản trị viên.')
+    return host, port, user, password, sender, security
+
+
+def website_url(path):
+    base = os.environ.get('PUBLIC_SITE_URL', '').strip().rstrip('/')
+    parsed = urlsplit(base)
+    if parsed.scheme not in ('http', 'https') or not parsed.netloc or parsed.query or parsed.fragment or parsed.username:
+        raise AppError(503, 'EMAIL_NOT_CONFIGURED', 'Chưa cấu hình địa chỉ website trong email.')
+    return base + '/frontend/templates/' + path
+
+
+def deliver(to_email, subject, body, *, message_id=None):
+    host, port, user, password, sender, security = settings()
+    if (not isinstance(to_email, str) or parseaddr(to_email)[1] != to_email
+            or '@' not in to_email or any(c in to_email + subject for c in '\r\n')
+            or to_email.lower().endswith(('.invalid', '.test', '.example'))):
+        raise AppError(503, 'EMAIL_RECIPIENT_INVALID', 'Địa chỉ email nhận chưa hợp lệ.')
+    message = EmailMessage()
+    message['From'], message['To'], message['Subject'] = sender, to_email, subject
+    if message_id:
+        message['Message-ID'] = message_id
+    message.set_content(body)
+    try:
+        context = ssl.create_default_context()
+        client = (smtplib.SMTP_SSL(host, port, timeout=15, context=context) if security == 'ssl'
+                  else smtplib.SMTP(host, port, timeout=15))
+        with client as smtp:
+            if security == 'starttls':
+                smtp.ehlo()
+                smtp.starttls(context=context)
+                smtp.ehlo()
+            smtp.login(user, password)
+            if smtp.send_message(message):
+                raise smtplib.SMTPException('Recipient rejected')
+    except (smtplib.SMTPException, OSError):
+        raise AppError(503, 'EMAIL_DELIVERY_FAILED', 'Chưa gửi được email. Vui lòng thử lại sau.') from None
 
 
 def send_otp(to_email, otp):
-    deliver(to_email, 'Mã OTP đặt lại mật khẩu', f'OTP của bạn là {otp}')
+    deliver(to_email, 'NEU Medical - Mã OTP đặt lại mật khẩu',
+            f'Mã OTP của bạn: {otp}\nMã có hiệu lực 10 phút, chỉ dùng một lần. '
+            'Không chia sẻ mã với bất kỳ ai. Nếu không yêu cầu đặt lại mật khẩu, hãy bỏ qua thư này.')
 
 
 def send_sms_otp(phone, otp):
-    """SMS giả lập cho đồ án; không gửi SMS thật. OTP trình diễn do auth_service kiểm soát riêng."""
-    if os.environ.get('SEND_SMS', '0') == '1':
-        print(f'[SEND SMS] to={phone} | Mã OTP đặt lại mật khẩu: {otp}', flush=True)
-    else:
-        print('[SMS] Chưa cấu hình nhà cung cấp SMS, chưa gửi mã', flush=True)
+    raise AppError(503, 'SMS_NOT_CONFIGURED', 'Chưa hỗ trợ SMS thật. Vui lòng khôi phục bằng email đã đăng ký.')
 
 
 def send_email_verification(to_email, token):
-    deliver(to_email, 'Xác minh email', f'Mã xác minh email: {token}')
+    from urllib.parse import quote
+    link = website_url('auth/verify_email.html') + '#token=' + quote(token, safe='')
+    deliver(to_email, 'NEU Medical - Xác minh email đăng ký',
+            'Chào mừng bạn đến với NEU Medical.\nMở liên kết và bấm Xác minh email:\n'
+            + link + '\nLiên kết có hiệu lực 24 giờ. Nếu bạn không tạo tài khoản, hãy bỏ qua thư này.')

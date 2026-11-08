@@ -12,6 +12,8 @@ export function refundPreview(payment,encounter) {
   if(!Number.isFinite(amount)||amount<0)return null;
   if(encounter.cancel_origin==='HOSPITAL'||encounter.encounter_status==='NO_SHOW')return amount;
   const reference=Date.parse(encounter.refund_reference_at||encounter.estimated_exam_at),cancelled=Date.parse(encounter.cancelled_at);
+  const fullHours=policy.CANCEL_FULL_REFUND_HOURS??48;
+  if(Number.isFinite(reference)&&Number.isFinite(cancelled)&&reference-cancelled>=Number(fullHours)*3600000)return amount;
   const hours=policy.CANCEL_HOURS_LIMIT,percent=policy.CANCEL_REFUND_PERCENT;
   if(hours==null||percent==null||!Number.isFinite(reference)||!Number.isFinite(cancelled))return null;
   if(reference-cancelled<Number(hours)*3600000)return 0;

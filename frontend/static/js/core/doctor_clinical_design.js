@@ -1,6 +1,7 @@
-import {commitForm,markFormChanged} from "./form_workflow.js";
+import {commitForm,markFormChanged,confirmDiscardAsync} from "./form_workflow.js";
+import {openTreatmentForm} from './doctor_treatment.js';
 import {startAutoRefresh} from './auto_refresh.js';
-import { clinicalPayload,saveClinicalProfile,finishClinicalProfile,beginClinicalProfile } from "./doctor_clinical_workflow.js";
+import { clinicalPayload,saveClinicalProfile,beginClinicalProfile } from "./doctor_clinical_workflow.js";
 import { recordDetailView } from "./record_detail_view.js";
 import { canEditClinicalShift, clinicalShiftEnded, canBeginClinical, canEditClinicalRecord } from "./clinical_shift_access.js";
 import { $, esc, date, today, panel, facts, dialog, table, badge, money } from "./staff_ui.js";
@@ -35,6 +36,8 @@ export function renderClinicalDesign(options = {}) {
   const pinnedReadOnlyId = initiallySelected && (options.mode === "view" || !canEdit(initiallySelected)) ? initiallySelected.id : null;
   const visible = p => p.id === pinnedReadOnlyId || p.id === selected?.id || canEdit(p) || !clinicalShiftEnded(shiftFor(p));
   let selected = null, dirty = false, editing = false;
+  const warnBeforeLeave=event=>{if(active&&dirty){event.preventDefault();event.returnValue='';}};
+  window.addEventListener('beforeunload',warnBeforeLeave);
   $("#page-body").innerHTML = `<div class="clinical-design">
     <section class="panel clinical-lookup" aria-labelledby="clinical-lookup-title">
       <div class="section-heading"><div><h2 id="clinical-lookup-title">Tìm người bệnh</h2></div></div>
@@ -85,7 +88,8 @@ export function renderClinicalDesign(options = {}) {
       $('#clinical-design-body').scrollIntoView({behavior:'smooth',block:'start'});
       return;
     }
-    if (dirty && !confirm('Nội dung đang nhập chưa lưu. Chuyển sang hồ sơ khác?')) return;
+    if (dirty && !(await confirmDiscardAsync($('#clinical-design-form')))) return;
+    if (!active || saving) return;
     const requestVersion = ++selectionVersion;
     $('#clinical-search-feedback').textContent = `Đang tải hồ sơ ${nextProfile.name}…`;
     $('#clinical-profile-results').setAttribute('aria-busy','true');
@@ -112,7 +116,7 @@ export function renderClinicalDesign(options = {}) {
   function renderEditor() {
     const p = savedProfiles.get(selected.id) || selected;
     $("#clinical-design-body").innerHTML = `<section class="panel clinical-patient-summary" aria-label="Hồ sơ đang chọn">
-      <div class="clinical-patient-heading"><div><h2>${esc(p.name)}</h2><p>${p.patient} · ${date(p.dob)} · ${esc(p.gender)}</p></div><div><span class="clinical-info-tag">${p.id}</span><button class="primary" id="clinical-begin" type="button" ${canBeginClinical(p)?"":"hidden"}>Bắt đầu khám</button></div></div>
+      <div class="clinical-patient-heading"><div><h2>${esc(p.name)}</h2><p>${p.patient} · ${date(p.dob)} · ${esc(p.gender)}</p></div><div><button class="secondary" id="clinical-treatment" type="button" ${p.status==='IN_PROGRESS'?'':'disabled title="Chỉ hẹn điều trị từ lượt đang khám"'}>Hẹn điều trị</button><button class="primary" id="clinical-begin" type="button" ${canBeginClinical(p)?"":"hidden"}>Bắt đầu khám</button></div></div>
       ${!editing && canEdit(p) ? '<button id="clinical-enable-edit" type="button" class="secondary">Chỉnh sửa bệnh án</button>' : ""}<div class="clinical-summary-grid">${facts([["Số điện thoại",p.phone],["BHYT",p.insurance],["Ngày khám",date(p.work_date || shiftDay)],["Khung giờ",p.clock],["Phòng / chuyên khoa",`${p.room} · ${p.department || "Chưa cập nhật"}`]])}</div>
       <div class="clinical-symptom"><strong>Lý do đến khám / triệu chứng đã khai</strong><p>${esc(p.symptom)}</p></div>
     </section>
@@ -130,7 +134,7 @@ export function renderClinicalDesign(options = {}) {
         <p id="clinical-no-medicine" class="clinical-no-medicine" hidden>Không kê thuốc cho lượt khám này. Bạn vẫn có thể lưu bệnh án không kèm thuốc.</p>
       </section>
       ${historyMarkup(p)}
-      <div class="clinical-editor-footer"><p id="clinical-save-feedback" role="status"></p><div class="actions"><button type="submit">Lưu bệnh án và đơn thuốc</button></div></div>
+      <div class="clinical-editor-footer"><p id="clinical-save-feedback" role="status"></p><div class="actions"><button type="submit">Lưu hồ sơ</button></div></div>
     </form>`;
     function updateCount() {
       const rows = Array.from($("#clinical-medicine-rows").children);
@@ -151,6 +155,7 @@ export function renderClinicalDesign(options = {}) {
     $("#clinical-design-body").querySelectorAll("[data-clinical-history]").forEach(button => button.addEventListener("click", () => showHistory(p, Number(button.dataset.clinicalHistory))));
     $("#clinical-add-medicine").addEventListener("click", () => {addMedicine();dirty=true;markFormChanged(form);$("#clinical-medicine-rows").lastElementChild?.querySelector("input").focus();});
     const form = $("#clinical-design-form");
+    $('#clinical-treatment').addEventListener('click',()=>{if(!saving)openTreatmentForm(p);});
     $('#clinical-enable-edit')?.addEventListener('click',()=>{if(saving||!canEdit(p))return;editing=true;renderEditor();});
     form.addEventListener("input", () => {dirty=true;});
     form.addEventListener("neu:discard-changes",()=>{dirty=false;});
@@ -163,11 +168,13 @@ export function renderClinicalDesign(options = {}) {
       finally {saving=false;form.dataset.busy="false";if(active){$("#clinical-work-date").disabled=false;$("#clinical-period").disabled=false;lockEditor();}}
     }
     $("#clinical-begin")?.addEventListener("click",async()=>{
-      if(saving || !confirm(`Bắt đầu khám cho ${p.name}?`))return;
+      if(saving || !active)return;
       const feedback=$("#clinical-save-feedback");feedback.textContent="Đang bắt đầu khám…";
       const ok=await performAction(async()=>{
         const e=await beginClinicalProfile(p);if(!active)return;
-        p.status=e.encounter_status;selected=p;editing=true;dirty=false;
+        p.status=e.encounter_status;
+        const listed=profiles.find(row=>row.id===p.id);if(listed)listed.status=e.encounter_status;
+        savedProfiles.set(p.id,p);selected=p;editing=true;dirty=false;
       },feedback);
       if(ok){renderResults();renderEditor();}
     });
@@ -179,28 +186,15 @@ export function renderClinicalDesign(options = {}) {
       try {
         payload=clinicalPayload(Object.fromEntries(new FormData(form)),Array.from($("#clinical-medicine-rows").children).map(row=>Array.from(row.querySelectorAll("input")).map(input=>input.value)));
       } catch(error) {feedback.textContent=error.message;return;}
-      feedback.textContent="Đang lưu bệnh án và đơn thuốc…";
+      feedback.textContent="Đang lưu hồ sơ và hoàn tất lượt khám…";
       const ok=await performAction(async()=>{
         const saved=await saveClinicalProfile(p,payload);if(!active)return;
-        commitForm(form);savedProfiles.set(p.id,saved);Object.assign(p,saved);selected=p;dirty=false;
+        commitForm(form);savedProfiles.set(p.id,saved);Object.assign(p,saved);selected=p;dirty=false;editing=false;
+        const listed=profiles.find(row=>row.id===p.id);if(listed)listed.status=saved.status;
       },feedback);
       if(!ok)return;
-      feedback.textContent="Đã lưu bệnh án và đơn thuốc.";
-      if(p.status==='CHECKED_IN'){renderResults();feedback.textContent='Đã lưu bệnh án và đơn thuốc. Lượt khám vẫn ở trạng thái Đã check-in.';return;}
-      dialog("Xác nhận hoàn thành lượt khám", `<p>Xác nhận hoàn thành lượt khám cho <strong>${esc(p.name)}</strong>?</p>${facts([["Mã hồ sơ",p.patient],["Mã lượt khám",p.id],["Ngày khám",date(p.work_date)],["Khung giờ",p.clock],["Chẩn đoán",payload.diagnosis],["Số thuốc",String(payload.items.length)]])}<div class="actions"><button class="primary" id="clinical-confirm-complete" type="button">Xác nhận</button><button id="clinical-complete-later" type="button" class="secondary">Để sau</button></div><p id="clinical-completion-feedback" role="status"></p>`);
-      $("#clinical-complete-later").addEventListener("click",()=>{if(!saving)$("#staff-dialog").close();});
-      $("#clinical-confirm-complete").addEventListener("click",async event=>{
-        if(saving || !active)return;
-        const button=event.currentTarget;button.disabled=true;
-        const status=$("#clinical-completion-feedback");status.textContent="Đang xác nhận hoàn tất…";
-        const done=await performAction(async()=>{
-          const e=await finishClinicalProfile(p);if(!active)return;
-          p.status=e.encounter_status;savedProfiles.set(p.id,{...p});selected=p;editing=false;
-        },status);
-        if(!active)return;
-        if(done){$("#staff-dialog").close();renderResults();renderEditor();$("#clinical-save-feedback").textContent="Đã hoàn tất lượt khám.";}
-        else button.disabled=!canEdit(p);
-      });
+      renderResults();renderEditor();
+      $("#clinical-save-feedback").textContent="Đã lưu hồ sơ và hoàn thành lượt khám.";
     });
     form.addEventListener("input", event => event.target.setCustomValidity?.(""));
     lockEditor();
@@ -218,6 +212,9 @@ export function renderClinicalDesign(options = {}) {
   let eligibility = accessSignature();
   const shiftTimer = setInterval(() => {
     const begin=$('#clinical-begin');if(begin&&selected)begin.hidden=!canBeginClinical(selected);
+    if(selected&&dirty&&!saving&&clinicalShiftEnded(selected)){
+      $('#clinical-save-feedback').textContent='Ca đã kết thúc. Nội dung chưa lưu vẫn được giữ lại; chưa thể lưu và hoàn tất ngoài giờ ca.';
+    }
     const next = accessSignature();
     if (next !== eligibility) {eligibility = next;renderResults();lockEditor();}
   }, 1000);
@@ -245,14 +242,19 @@ export function renderClinicalDesign(options = {}) {
     if(statusChanged){editing=false;renderEditor();}
     renderResults();lockEditor();
   },{canRefresh:()=>active&&!saving&&!dirty});
-  const stopTimer = () => {active=false;$("#page-body").replaceChildren();$("#staff-dialog").close();dataVersion++;selectionVersion++;clearInterval(shiftTimer);stopRefresh();window.removeEventListener("resize",sizePatientList);};
+  const stopTimer = () => {active=false;$("#page-body").replaceChildren();$("#staff-dialog").close();dataVersion++;selectionVersion++;clearInterval(shiftTimer);stopRefresh();window.removeEventListener("resize",sizePatientList);window.removeEventListener('beforeunload',warnBeforeLeave);};
   window.addEventListener("pagehide", stopTimer, {once:true});
   window.addEventListener("neu:auth-change", stopTimer, {once:true});
   $("#clinical-work-date").addEventListener("change", async () => {
     if(saving)return;
     const day = $("#clinical-work-date").value;
     if (!day || !options.loadDay) {renderResults();return;}
-    if (dirty && !confirm("Nội dung chưa lưu sẽ bị bỏ khi đổi ngày. Tiếp tục?")) {$("#clinical-work-date").value=selected?.work_date || shiftDay;return;}
+    if (dirty) {
+      const discard=await confirmDiscardAsync($('#clinical-design-form'));
+      if(!active)return;
+      if(!discard){$("#clinical-work-date").value=selected?.work_date || shiftDay;return;}
+    }
+    if (!active || saving) return;
     const version=++dataVersion;selectionVersion++;
     selected=null;editing=false;dirty=false;profiles=[];
     $("#clinical-design-body").replaceChildren();renderResults();
@@ -262,7 +264,6 @@ export function renderClinicalDesign(options = {}) {
   });
   $("#clinical-period").addEventListener("change", renderResults);
   $("#clinical-profile-search").addEventListener("input",renderResults);
-  window.addEventListener("beforeunload", event => {if(dirty){event.preventDefault();event.returnValue="";}});
   if (options.initialId) {
     selected = profiles.find(p => p.id === options.initialId) || null;
     if (selected) {

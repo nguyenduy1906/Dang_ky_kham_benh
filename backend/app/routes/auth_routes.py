@@ -1,5 +1,9 @@
 """Route xác thực: đăng ký, đăng nhập, quên mật khẩu/OTP, xác minh email."""
 from flask import Blueprint, jsonify, request
+from collections import deque
+from threading import Lock
+from time import monotonic
+from backend.app.core.errors import AppError
 
 from backend.app.core import constants
 from backend.app.core.security import current_user, login_required, roles_required
@@ -7,6 +11,29 @@ from backend.app.schemas import auth_schema
 from backend.app.services import auth_service
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+_email_attempts = {}
+_email_lock = Lock()
+
+
+@auth_bp.before_request
+def limit_email_requests():
+    limits = {'/auth/register': 5, '/auth/forgot-password': 5,
+              '/auth/verify-otp': 20, '/auth/email-verification/request': 5}
+    maximum = limits.get(request.path)
+    if request.method != 'POST' or maximum is None:
+        return
+    now = monotonic()
+    key = (request.remote_addr or 'unknown', request.path)
+    with _email_lock:
+        for identity, attempts in list(_email_attempts.items()):
+            while attempts and attempts[0] <= now - 60:
+                attempts.popleft()
+            if not attempts:
+                del _email_attempts[identity]
+        attempts = _email_attempts.setdefault(key, deque())
+        if len(attempts) >= maximum or len(_email_attempts) > 4096:
+            raise AppError(429, 'AUTH_RATE_LIMIT', 'Bạn thử quá nhiều lần. Vui lòng đợi một phút rồi thử lại.')
+        attempts.append(now)
 
 
 def _body():
@@ -25,7 +52,7 @@ def register():
         required: true
         schema:
           type: object
-          required: [full_name, password]
+          required: [full_name, email, password]
           properties:
             full_name: {type: string, example: Nguyen Van A}
             email: {type: string, example: a@example.com}
@@ -115,7 +142,7 @@ def forgot_password():
             phone: {type: string, example: "0901234567"}
     responses:
       200:
-        description: Cung cấp một identifier/email/phone. OTP giả lập trong log khi SEND_EMAIL=1 hoặc SEND_SMS=1. Chỉ DEMO_PASSWORD_RECOVERY=1 và số điện thoại mới trả demo_mode/demo_otp; chế độ thường không trả OTP.
+        description: Cung cấp một identifier/email/phone. Gửi OTP thật tới email đã lưu của tài khoản; không trả mã trong API hoặc log.
     """
     data = auth_schema.validate_forgot_password(_body())
     response = jsonify(auth_service.forgot_password(data))
@@ -188,7 +215,7 @@ def email_verification_request():
       - Bearer: []
     responses:
       200:
-        description: Đã gửi mã (nằm trong log khi SEND_EMAIL=1)
+        description: Đã gửi thư xác minh qua SMTP thật.
       409:
         description: Email đã được xác minh
     """

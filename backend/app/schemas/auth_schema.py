@@ -31,8 +31,8 @@ def identity_fields(data):
 def validate_register(data):
     data = ensure_object(data)
     email, phone = identity_fields(data)
-    if not email and not phone:
-        raise bad_request('Cần có email hoặc số điện thoại')
+    if not email:
+        raise bad_request('Cần cung cấp email để nhận thư xác minh tài khoản', 'EMAIL_REQUIRED')
     # Cố ý bỏ qua role/approval_status do client gửi để không thể tự nâng quyền.
     return {
         'full_name': text_field(data, 'full_name', required=True, max_len=150),

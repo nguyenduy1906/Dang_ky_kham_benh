@@ -20,8 +20,7 @@ export function clinicalShiftEnded(shift, now = new Date()) {
 
 export function canBeginClinical(visit, now = new Date()) {
   const status=visit.encounter_status ?? visit.status;
-  const appointment=Date.parse(visit.estimated_exam_at);
   return visit.payment_confirmed===true && status==='CHECKED_IN'
     && !['CLOSED','UNAVAILABLE'].includes(visit.schedule_status)
-    && canEditClinicalShift(visit,now) && Number.isFinite(appointment) && now.getTime()>=appointment;
+    && canEditClinicalShift(visit,now);
 }

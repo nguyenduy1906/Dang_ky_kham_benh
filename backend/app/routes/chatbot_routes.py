@@ -58,7 +58,7 @@ def chat_message():
                 type: object
                 properties:
                   role: {type: string, enum: [user, assistant]}
-                  content: {type: string, maxLength: 1200}
+                  content: {type: string, maxLength: 6000}
     responses:
       200: {description: 'text, links và mode (ai, basic hoặc guide)'}
       400: {description: Dữ liệu không hợp lệ}
@@ -69,10 +69,10 @@ def chat_message():
     _limit()
     if not request.is_json:
         raise bad_request('Yêu cầu cần Content-Type application/json.')
-    if request.content_length and request.content_length > 32768:
+    if request.content_length and request.content_length > 524288:
         raise AppError(413, 'CHAT_TOO_LARGE', 'Nội dung trò chuyện quá lớn.')
-    raw = request.stream.read(32769)
-    if len(raw) > 32768:
+    raw = request.stream.read(524289)
+    if len(raw) > 524288:
         raise AppError(413, 'CHAT_TOO_LARGE', 'Nội dung trò chuyện quá lớn.')
     try:
         data = json.loads(raw)

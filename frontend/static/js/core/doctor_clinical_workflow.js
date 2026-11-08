@@ -1,5 +1,5 @@
 import {getEncounter,startExamination} from "../api/encounter.js";
-import {saveRecord,savePrescriptionItems,completeEncounter} from "../api/medical_record.js";
+import {saveAndCompleteEncounter,completeEncounter} from "../api/medical_record.js";
 import {canEditClinicalShift,canBeginClinical,canEditClinicalRecord} from "./clinical_shift_access.js";
 
 export function clinicalPayload(data, rows) {
@@ -30,20 +30,15 @@ function requireShift(e,now) {
 }
 export async function saveClinicalProfile(profile,payload,options={},now) {
   const e=await currentEncounter(profile,options);
-  if(!canEditClinicalRecord(e))throw new Error('Chỉ chỉnh sửa sau check-in; lượt đã hoàn tất chỉ được xem.');
-  const result=await saveRecord(e.encounter_id,{diagnosis:payload.diagnosis,treatment:payload.treatment,doctor_notes:payload.doctor_notes,expected_version:profile.record_version ?? 0},options);
+  if(e.encounter_status!=='COMPLETED'){
+    requireShift(e,now || new Date());
+    if(e.encounter_status!=='IN_PROGRESS')throw new Error('Vui lòng bắt đầu khám trước khi lưu hồ sơ và hoàn tất lượt khám.');
+  }else if(profile.status==='COMPLETED')throw new Error('Lượt khám đã hoàn tất, hồ sơ chỉ được xem.');
+  const result=await saveAndCompleteEncounter(e.encounter_id,{diagnosis:payload.diagnosis,treatment:payload.treatment,doctor_notes:payload.doctor_notes,items:payload.items,expected_version:profile.record_version ?? 0},options);
   const record=result.medical_record;
-  if(String(record?.encounter_id)!==String(e.encounter_id)||!record.record_id||!Number.isInteger(record.version)) throw new Error("Chưa xác nhận được kết quả lưu bệnh án. Đọc lại hồ sơ trước khi thử lại.");
-  // Keep the committed version even if the separate prescription request fails.
-  profile.record_id=record.record_id;profile.record_version=record.version;
-  try {
-    const prescriptions=await savePrescriptionItems(record.record_id,{items:payload.items,expected_version:record.version},options);
-    if(!Number.isInteger(prescriptions.record_version)||!Array.isArray(prescriptions.items)) throw new Error("Phản hồi đơn thuốc không hợp lệ.");
-    profile.record_version=prescriptions.record_version;
-  } catch(error) {
-    throw new Error(`Bệnh án đã được lưu; chưa xác nhận lưu đơn thuốc: ${error.message}. Nội dung đang nhập được giữ lại. Hãy đọc lại hồ sơ trước khi thử lại.`,{cause:error});
-  }
-  return {...profile,diagnosis:record.diagnosis,treatment:record.treatment || "",note:record.doctor_notes || "",meds:payload.items.map(m=>[m.medication_name,m.dosage || "",String(m.quantity),m.instructions || ""])};
+  verifyEncounter(profile,result.encounter);
+  if(result.encounter.encounter_status!=='COMPLETED'||String(record?.encounter_id)!==String(e.encounter_id)||!record.record_id||!Number.isInteger(record.version)||!record.examined_at||!Array.isArray(result.items))throw new Error('Chưa xác nhận được kết quả lưu và hoàn tất. Nội dung đang nhập được giữ lại; hãy kiểm tra trước khi thử lại.');
+  return {...profile,status:'COMPLETED',record_id:record.record_id,record_version:record.version,diagnosis:record.diagnosis,treatment:record.treatment || "",note:record.doctor_notes || "",meds:result.items.map(m=>[m.medication_name,m.dosage || "",String(m.quantity),m.instructions || ""])};
 }
 export async function finishClinicalProfile(profile,options={},now) {
   const e=await currentEncounter(profile,options);
@@ -56,7 +51,7 @@ export async function finishClinicalProfile(profile,options={},now) {
 }
 export async function beginClinicalProfile(profile,options={},now) {
   const e=await currentEncounter(profile,options);requireShift(e,now || new Date());
-  if(!canBeginClinical(e,now || new Date())) throw new Error("Chỉ bắt đầu khám sau check-in và khi đã đến giờ hẹn trong ca đang hoạt động.");
+  if(!canBeginClinical(e,now || new Date())) throw new Error("Chỉ bắt đầu khám lượt đã check-in trong ca đang hoạt động.");
   const {encounter}=await startExamination(e.encounter_id,options);verifyEncounter(profile,encounter);
   if(encounter.encounter_status!=="IN_PROGRESS") throw new Error("Chưa nhận được xác nhận bắt đầu khám.");
   return encounter;

@@ -49,6 +49,11 @@ def review_request(db, request_id, fields, actor_id, effects):
             (fields['decision'], fields['note'], actor_id, effects, request_id))
 
 
+def pending_started_candidates(db, today):
+    return db.execute(SELECT + " WHERE l.status='PENDING' AND l.from_date<=%s "
+                      'ORDER BY l.request_id FOR UPDATE OF l', (today,)).fetchall()
+
+
 def overlapping(db, user_id, start, end, period, *, approved_only=False):
     return db.execute('''SELECT l.* FROM staff_leave_request l WHERE user_id=%s
         AND status=ANY(%s) AND from_date<=%s AND to_date>=%s

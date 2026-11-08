@@ -50,7 +50,8 @@ def put_record(actor, encounter_id, fields):
     require_role(actor, 'DOCTOR')
     with get_db_connection() as db:
         encounter, schedules = encounters.locked_context(db, encounter_id)
-        encounters.visible_encounter(db, actor, encounter_id)
+        visible=encounters.visible_encounter(db, actor, encounter_id)
+        _require_active_write(encounter,schedules,visible)
         record = records.get(db, encounter_id, lock=True)
         _editable(encounter, record, fields)
         before = _snapshot(db, record) if record else None
@@ -89,7 +90,8 @@ def put_items(actor, record_id, fields):
     with get_db_connection() as db:
         encounter_id = _record_encounter_id(db, record_id)
         encounter, schedules = encounters.locked_context(db, encounter_id)
-        encounters.visible_encounter(db, actor, encounter_id)
+        visible=encounters.visible_encounter(db, actor, encounter_id)
+        _require_active_write(encounter,schedules,visible)
         record = records.get(db, encounter_id, lock=True)
         _editable(encounter, record, fields)
         before = _snapshot(db, record)
@@ -100,6 +102,16 @@ def put_items(actor, record_id, fields):
         result = records.get(db, encounter_id)
         rows = records.list_items(db, record_id)
     return {'items': jsonable(rows), 'record_version': result['version']}
+
+
+def _require_active_write(encounter,schedules,visible):
+    if encounter['encounter_status']=='COMPLETED':
+        raise conflict('Lượt khám đã hoàn tất; bệnh án và đơn thuốc chỉ được xem','MEDICAL_RECORD_READ_ONLY')
+    if encounter['encounter_status']!='IN_PROGRESS':
+        raise conflict('Vui lòng bắt đầu khám trước khi lưu bệnh án hoặc đơn thuốc','INVALID_ENCOUNTER_STATUS')
+    encounters.require_clinical_shift(schedules[encounter['schedule_id']])
+    if not visible.get('payment_confirmed'):
+        raise conflict('Lượt khám chưa xác nhận thanh toán thành công','PAYMENT_REQUIRED')
 
 
 def complete(actor, encounter_id):
@@ -113,6 +125,43 @@ def complete(actor, encounter_id):
         if record is None or not (record['diagnosis'] or '').strip() or record['examined_at'] is None:
             raise conflict('Cần bệnh án có chẩn đoán và thời điểm khám trước khi hoàn tất', 'MEDICAL_RECORD_INCOMPLETE')
         result = encounters.complete_with_medical_record(db, actor, encounter_id)
+    return result
+
+
+def save_and_complete(actor,encounter_id,fields):
+    """Commit record, prescription and completion together, or commit nothing."""
+    require_role(actor,'DOCTOR')
+    with get_db_connection() as db:
+        encounter,schedules=encounters.locked_context(db,encounter_id)
+        visible=encounters.visible_encounter(db,actor,encounter_id)
+        record=records.get(db,encounter_id,lock=True)
+        values={k:fields[k] for k in ('diagnosis','treatment','doctor_notes')}
+        if encounter['encounter_status']=='COMPLETED':
+            # A lost response can be retried with the original version and exact payload.
+            items=records.list_items(db,record['record_id']) if record else []
+            same_items=[{k:r[k] for k in ('medication_name','dosage','quantity','instructions')} for r in items]
+            if (not record or fields['expected_version']!=record['version']-1
+                    or any(record[k]!=v for k,v in values.items()) or same_items!=fields['items']):
+                raise conflict('Lượt khám đã hoàn tất; đọc lại bệnh án để xem kết quả đã lưu','MEDICAL_RECORD_READ_ONLY')
+            return {'encounter':encounters._present(visible),'medical_record':_public(record),'items':jsonable(items)}
+        if encounter['encounter_status']!='IN_PROGRESS':
+            raise conflict('Vui lòng bắt đầu khám trước khi lưu hồ sơ và hoàn tất lượt khám','INVALID_ENCOUNTER_STATUS')
+        encounters.require_clinical_shift(schedules[encounter['schedule_id']])
+        if not visible.get('payment_confirmed'):
+            raise conflict('Lượt khám chưa xác nhận thanh toán thành công','PAYMENT_REQUIRED')
+        _editable(encounter,record,fields)
+        before=_snapshot(db,record) if record else None
+        if record:
+            records.update_record(db,record['record_id'],values)
+            db.execute('UPDATE medical_record SET examined_at=COALESCE(examined_at,%s) WHERE record_id=%s',
+                       (date_utils.utc_now(),record['record_id']))
+        else:
+            record=records.create_record(db,encounter_id,values,date_utils.utc_now())
+        records.replace_items(db,record['record_id'],fields['items'])
+        after=records.get(db,encounter_id)
+        records.append_revision(db,record['record_id'],actor['user_id'],'Lưu hồ sơ và hoàn tất lượt khám',before,_snapshot(db,after))
+        result=encounters.complete_with_medical_record(db,actor,encounter_id)
+        result.update(medical_record=_public(records.get(db,encounter_id)),items=jsonable(records.list_items(db,record['record_id'])))
     return result
 
 

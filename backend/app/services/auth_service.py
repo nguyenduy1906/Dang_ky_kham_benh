@@ -24,6 +24,8 @@ _BAD_RESET = 'Phiên đặt lại mật khẩu không hợp lệ hoặc đã h�
 
 
 def register(data):
+    mail.settings()
+    mail.website_url('auth/verify_email.html')
     with get_db_connection() as db:
         role = auth_model.get_role_by_name(db, constants.ROLE_USER)
         if role is None:
@@ -40,7 +42,11 @@ def register(data):
         except pg_errors.UniqueViolation:
             raise _duplicate() from None
         user = auth_model.get_user_by_id(db, user_id)
-    return {'user': auth_model.to_public(user)}
+        token = generate_token()
+        auth_token_model.create_token(db, user_id, constants.TOKEN_VERIFY_EMAIL,
+                                     hash_token(token), constants.EMAIL_VERIFY_TTL_MINUTES)
+        mail.send_email_verification(user['email'], token)
+    return {'user': auth_model.to_public(user), 'message': 'Đăng ký thành công. Vui lòng kiểm tra email để xác minh tài khoản.'}
 
 
 def login(data):
@@ -75,33 +81,30 @@ def _usable(user):
 
 
 def forgot_password(data):
-    demo = os.environ.get('DEMO_PASSWORD_RECOVERY', '0') == '1' and bool(data.get('phone'))
-    outbox = None
+    mail.settings()
     with get_db_connection() as db:
         user = (auth_model.get_user_by_email(db, data['email']) if data.get('email')
                 else auth_model.get_user_by_phone(db, data['phone']))
-        if demo and not _usable(user):
-            raise not_found('Số điện thoại chưa đăng ký tài khoản hoặc tài khoản không thể khôi phục', 'RECOVERY_ACCOUNT_NOT_FOUND')
-        if _usable(user):
+        if _usable(user) and user.get('email'):
             uid = user['user_id']
+            # Serialize requests per account and rate-limit email without revealing existence.
+            db.execute('SELECT user_id FROM users WHERE user_id=%s FOR UPDATE', (uid,))
+            recent = db.execute("SELECT 1 FROM auth_token WHERE user_id=%s AND token_type=%s AND created_at>CURRENT_TIMESTAMP-INTERVAL '60 seconds' LIMIT 1", (uid, constants.TOKEN_OTP)).fetchone()
+            if recent:
+                return {'message': 'Nếu tài khoản có email hợp lệ, yêu cầu gửi mã đã được tiếp nhận. Vui lòng kiểm tra hộp thư và thư rác.'}
             auth_token_model.invalidate_unused(db, uid, constants.TOKEN_OTP)
             auth_token_model.invalidate_unused(db, uid, constants.TOKEN_RESET_PASSWORD)
             otp = generate_otp()
             auth_token_model.create_token(db, uid, constants.TOKEN_OTP,
                                           hash_token(otp, uid), constants.OTP_TTL_MINUTES)
-            outbox = (data.get('phone'), user['email'], otp)
-    if outbox:
-        phone, email, otp = outbox
-        if phone:
-            mail.send_sms_otp(phone, otp)
-        else:
-            mail.send_otp(email, otp)
-    if demo and outbox:
-        return {'message': 'Đã tìm thấy tài khoản. Mã OTP demo đã được tạo.',
-                'demo_mode': True, 'demo_otp': outbox[2],
-                'expires_in': constants.OTP_TTL_MINUTES * 60}
-    # Khi không bật demo, không tiết lộ tài khoản tồn tại hoặc mã OTP.
-    return {'message': 'Nếu tài khoản tồn tại, mã OTP đã được gửi tới thông tin liên hệ đã cung cấp'}
+            try:
+                mail.send_otp(user['email'], otp)
+            except AppError:
+                # Keep the unauthenticated response indistinguishable for unknown accounts.
+                auth_token_model.invalidate_unused(db, uid, constants.TOKEN_OTP)
+                import logging
+                logging.getLogger(__name__).warning('Password recovery email could not be delivered')
+    return {'message': 'Nếu tài khoản có email hợp lệ, yêu cầu gửi mã đã được tiếp nhận. Vui lòng kiểm tra hộp thư và thư rác.'}
 
 
 def verify_otp(data):
