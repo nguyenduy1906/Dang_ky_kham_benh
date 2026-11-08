@@ -2,7 +2,7 @@ import re
 
 from backend.app.core.errors import bad_request
 from backend.app.utils.validation import (
-    ensure_object, normalize_phone, normalize_email, text_field, bool_arg, int_field, page_params
+    ensure_object, normalize_phone, normalize_email, text_field, bool_arg, int_field, page_params, parse_date
 )
 from backend.app.schemas.profile_schema import personal_fields
 
@@ -61,6 +61,7 @@ def parse_list_query(args):
     phone = (args.get('phone') or '').strip()
     return {'q': (args.get('q') or '').strip()[:100] or None,
             'phone': normalize_phone(phone) if phone else None,
+            'reception_created_on': parse_date(args.get('reception_created_on'), 'reception_created_on') if args.get('reception_created_on') else None,
             'booked_by_me': bool_arg(args, 'booked_by_me'),
             'include_archived': bool_arg(args, 'include_archived'),
             'page': page, 'page_size': page_size}

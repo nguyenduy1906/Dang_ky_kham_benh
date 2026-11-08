@@ -1,3 +1,4 @@
+import {matchesSearch} from "./search_text.js";
 import {apiRequest,pathSegment} from './api.js';
 import {esc,options,table,facts,stamp,today,money} from './admin_ui.js';
 export const activityActions={CREATE:'Tạo mới',ASSIGN:'Phân công',UPDATE:'Cập nhật',REVOKE:'Thu hồi',APPROVE:'Duyệt',REJECT:'Từ chối',LOCK:'Khóa',UNLOCK:'Mở khóa',HIDE:'Ẩn',SHOW:'Hiện',OPEN:'Mở ca',CLOSE:'Đóng ca',CHANGE_DOCTOR:'Đổi bác sĩ',CHANGE_ROOM:'Đổi phòng',MOVE:'Chuyển ca',REFUND:'Hoàn tiền',DELETE:'Ngừng sử dụng'};
@@ -37,6 +38,20 @@ export function activityDescription(row){
   return {action,target,content:`${action} · ${target} · ${reference(row)}`};
 }
 export async function listActivities(params,signal){
+  if(params.q?.trim()){
+    const {q,...filters}=params,items=[];
+    let result,current=1;
+    do{
+      result=await listActivities({...filters,page:current,page_size:100},signal);
+      items.push(...result.items.filter(row=>matchesSearch([
+        logCode(row.log_id),row.actor_name,`TK_${row.actor_id}`,reference(row),
+        ...Object.values(activityDescription(row)),JSON.stringify(row.before_data||{}),JSON.stringify(row.after_data||{})
+      ].join(' '),q)));
+      current++;
+    }while((current-1)*result.page_size<result.total);
+    const size=Number(params.page_size)||12,page=Math.min(Math.max(1,Number(params.page)||1),Math.max(1,Math.ceil(items.length/size)));
+    return {items:items.slice((page-1)*size,page*size),total:items.length,page,page_size:size};
+  }
   const selected=params.action||'';
   if(!selected&&params.target&&params.target!=='PAYMENT')return readActivityPage(params,signal);
   if(selected==='REFUND'&&params.target&&params.target!=='PAYMENT')return {items:[],total:0,page:Number(params.page)||1,page_size:Number(params.page_size)||12};

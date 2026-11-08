@@ -81,30 +81,24 @@ def _usable(user):
 
 
 def forgot_password(data):
-    mail.settings()
     with get_db_connection() as db:
-        user = (auth_model.get_user_by_email(db, data['email']) if data.get('email')
-                else auth_model.get_user_by_phone(db, data['phone']))
-        if _usable(user) and user.get('email'):
-            uid = user['user_id']
-            # Serialize requests per account and rate-limit email without revealing existence.
-            db.execute('SELECT user_id FROM users WHERE user_id=%s FOR UPDATE', (uid,))
-            recent = db.execute("SELECT 1 FROM auth_token WHERE user_id=%s AND token_type=%s AND created_at>CURRENT_TIMESTAMP-INTERVAL '60 seconds' LIMIT 1", (uid, constants.TOKEN_OTP)).fetchone()
-            if recent:
-                return {'message': 'Nếu tài khoản có email hợp lệ, yêu cầu gửi mã đã được tiếp nhận. Vui lòng kiểm tra hộp thư và thư rác.'}
-            auth_token_model.invalidate_unused(db, uid, constants.TOKEN_OTP)
-            auth_token_model.invalidate_unused(db, uid, constants.TOKEN_RESET_PASSWORD)
-            otp = generate_otp()
-            auth_token_model.create_token(db, uid, constants.TOKEN_OTP,
-                                          hash_token(otp, uid), constants.OTP_TTL_MINUTES)
-            try:
-                mail.send_otp(user['email'], otp)
-            except AppError:
-                # Keep the unauthenticated response indistinguishable for unknown accounts.
-                auth_token_model.invalidate_unused(db, uid, constants.TOKEN_OTP)
-                import logging
-                logging.getLogger(__name__).warning('Password recovery email could not be delivered')
-    return {'message': 'Nếu tài khoản có email hợp lệ, yêu cầu gửi mã đã được tiếp nhận. Vui lòng kiểm tra hộp thư và thư rác.'}
+        user = auth_model.get_user_by_email(db, data['email'])
+        if not _usable(user):
+            raise not_found('Gmail chưa được đăng ký hoặc tài khoản không còn hoạt động.', 'RECOVERY_EMAIL_NOT_FOUND')
+        uid = user['user_id']
+        db.execute('SELECT user_id FROM users WHERE user_id=%s FOR UPDATE', (uid,))
+        recent = db.execute("SELECT 1 FROM auth_token WHERE user_id=%s AND token_type=%s AND used_at IS NULL AND expires_at>clock_timestamp() LIMIT 1", (uid, constants.TOKEN_OTP)).fetchone()
+        if recent:
+            raise AppError(429, 'OTP_ALREADY_SENT', 'Mã OTP đã được gửi và còn hiệu lực. Vui lòng kiểm tra Gmail hoặc chờ mã hết hạn để gửi lại.')
+        mail.settings()
+        otp = generate_otp()
+        # Delivery failure propagates and rolls back this transaction.
+        mail.send_otp(user['email'], otp)
+        auth_token_model.invalidate_unused(db, uid, constants.TOKEN_OTP)
+        auth_token_model.invalidate_unused(db, uid, constants.TOKEN_RESET_PASSWORD)
+        auth_token_model.create_recovery_otp(db, uid, hash_token(otp, uid))
+    return {'message': 'Đã gửi mã OTP tới Gmail của bạn. Vui lòng kiểm tra cả thư rác.',
+            'expires_in': constants.OTP_TTL_MINUTES * 60}
 
 
 def verify_otp(data):

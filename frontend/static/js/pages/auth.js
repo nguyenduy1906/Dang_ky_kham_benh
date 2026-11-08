@@ -98,11 +98,31 @@ let recoveryIdentity = "";
 let resetToken = null;
 let recoveryRequest;
 let recoveryVersion = 0;
-const demoOtp = document.querySelector('#recovery-demo');
-function clearDemoOtp() {
-  demoOtp.hidden = true;
-  document.querySelector('#recovery-demo-code').textContent = '';
-  document.querySelector('#recovery-demo-countdown').textContent = '';
+const countdown = document.querySelector('#recovery-countdown');
+let otpDeadline = 0;
+let otpTimer;
+function stopOtpCountdown() {
+  clearInterval(otpTimer);
+  otpTimer = undefined;
+  otpDeadline = 0;
+  countdown.hidden = true;
+  countdown.textContent = '';
+}
+function updateOtpCountdown() {
+  const seconds = Math.max(0, Math.ceil((otpDeadline - Date.now()) / 1000));
+  countdown.textContent = seconds > 0 ? `Mã OTP còn hiệu lực ${seconds} giây.` : 'Mã OTP đã hết hạn. Vui lòng gửi lại mã.';
+  if (recoveryForm.dataset.busy !== 'true') {
+    document.querySelector('#recovery-otp').disabled = seconds === 0;
+    recoveryForm.querySelector('[type="submit"]').disabled = seconds === 0;
+  }
+  if (seconds === 0) clearInterval(otpTimer);
+}
+function startOtpCountdown(seconds) {
+  stopOtpCountdown();
+  otpDeadline = Date.now() + seconds * 1000;
+  countdown.hidden = false;
+  updateOtpCountdown();
+  otpTimer = setInterval(updateOtpCountdown, 250);
 }
 const stepLabels = { identity: "Gửi mã xác minh", otp: "Xác minh mã", password: "Đặt lại mật khẩu" };
 function recoveryMode(step, focus = true) {
@@ -119,10 +139,11 @@ function recoveryMode(step, focus = true) {
   confirmation.disabled = step !== 'password';
   document.querySelector("#recovery-restart").hidden = step === "identity";
   recoveryForm.querySelector('[type="submit"]').textContent = stepLabels[step];
+  if (step === "otp" && otpDeadline) updateOtpCountdown();
   if (focus) document.querySelector(`#recovery-${step === "identity" ? "identifier" : step}`).focus();
 }
 function resetRecovery() {
-  clearDemoOtp();
+  stopOtpCountdown();
   recoveryVersion++;
   recoveryRequest?.abort();
   recoveryRequest = undefined;
@@ -136,7 +157,8 @@ function resetRecovery() {
 }
 document.querySelector("#forgot-password").addEventListener("click", () => {
   resetRecovery();
-  document.querySelector("#recovery-identifier").value = document.querySelector("#login-identifier").value;
+  const identity = document.querySelector("#login-identifier").value.trim();
+  document.querySelector("#recovery-identifier").value = /^[^@\s]+@gmail\.com$/i.test(identity) ? identity : "";
   recoveryDialog.showModal();
 });
 document.querySelector("#recovery-close").addEventListener("click", () => recoveryDialog.close());
@@ -154,7 +176,8 @@ recoveryForm.addEventListener("submit", async event => {
   const identifier = document.querySelector("#recovery-identifier").value.trim();
   const otp = document.querySelector("#recovery-otp").value.trim();
   const password = document.querySelector("#recovery-password").value;
-  if (step === "identity" && !validIdentity(identifier)) { message(recoveryStatus, "Vui lòng nhập số điện thoại hoặc email hợp lệ."); return; }
+  if (step === "identity" && !/^[^@\s]+@gmail\.com$/i.test(identifier)) { message(recoveryStatus, "Vui lòng nhập địa chỉ @gmail.com đã đăng ký."); return; }
+  if (step === "otp" && Date.now() >= otpDeadline) { updateOtpCountdown(); return; }
   if (step === "otp" && !/^\d{6}$/.test(otp)) { message(recoveryStatus, "Mã xác minh cần đúng 6 chữ số."); return; }
   if (step === "password" && !validPassword(password)) { message(recoveryStatus, "Mật khẩu cần từ 8 đến 128 ký tự, gồm chữ và số."); return; }
   if (step === 'password' && password !== document.querySelector('#recovery-password-confirm').value) {
@@ -164,7 +187,6 @@ recoveryForm.addEventListener("submit", async event => {
     return;
   }
   document.querySelector('#recovery-password-confirm').removeAttribute('aria-invalid');
-  cancelOtpAutofill?.();
   const version = ++recoveryVersion;
   recoveryRequest = new AbortController();
   const options = { signal: recoveryRequest.signal };
@@ -175,14 +197,16 @@ recoveryForm.addEventListener("submit", async event => {
     if (step === "identity") {
       const result = await authApi.forgotPassword({ identifier }, options);
       if (version !== recoveryVersion) return;
+      if (!(result?.expires_in > 0)) throw new Error("Phản hồi thời hạn OTP không hợp lệ.");
       recoveryIdentity = identifier;
       recoveryMode("otp", false);
+      startOtpCountdown(result.expires_in);
       message(recoveryStatus, result.message, true);
     } else if (step === "otp") {
       const result = await authApi.verifyOtp({ identifier: recoveryIdentity, otp }, options);
       if (version !== recoveryVersion) return;
       if (!result?.reset_token) throw new Error("Phản hồi xác minh không hợp lệ.");
-      clearDemoOtp();
+      stopOtpCountdown();
       resetToken = result.reset_token;
       document.querySelector("#recovery-otp").value = "";
       recoveryMode("password", false);

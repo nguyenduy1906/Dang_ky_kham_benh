@@ -137,12 +137,11 @@ def forgot_password():
         schema:
           type: object
           properties:
-            identifier: {type: string, description: Email hoặc số điện thoại, example: "0901234567"}
-            email: {type: string, example: a@example.com}
-            phone: {type: string, example: "0901234567"}
+            identifier: {type: string, description: Gmail đã đăng ký, example: "tenban@gmail.com"}
+            email: {type: string, example: tenban@gmail.com}
     responses:
       200:
-        description: Cung cấp một identifier/email/phone. Gửi OTP thật tới email đã lưu của tài khoản; không trả mã trong API hoặc log.
+        description: Cung cấp một identifier/email là Gmail đã đăng ký. Gửi OTP có hiệu lực 60 giây; trả expires_in, không trả mã trong API hoặc log.
     """
     data = auth_schema.validate_forgot_password(_body())
     response = jsonify(auth_service.forgot_password(data))
@@ -164,9 +163,8 @@ def verify_otp():
           type: object
           required: [otp]
           properties:
-            identifier: {type: string, description: Email hoặc số điện thoại đã yêu cầu OTP}
-            email: {type: string, example: a@example.com}
-            phone: {type: string, example: "0901234567"}
+            identifier: {type: string, description: Gmail đã yêu cầu OTP}
+            email: {type: string, example: tenban@gmail.com}
             otp: {type: string, example: "123456"}
     responses:
       200:

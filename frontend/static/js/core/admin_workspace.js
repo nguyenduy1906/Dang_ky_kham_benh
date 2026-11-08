@@ -1,3 +1,4 @@
+import {matchesSearch} from "./search_text.js";
 import "./date_inputs.js";
 import "./table_layout.js";
 import {initAdminStatistics} from "./admin_statistics.js";
@@ -195,7 +196,7 @@ export async function initAdminWorkspace(key) {
       if(config.local){
         let items=result.items;
         const q=String(params.q || "").trim().toLocaleLowerCase("vi");
-        if(q)items=items.filter(row=>[row.name,row.room_name,row.description].filter(Boolean).join(" ").toLocaleLowerCase("vi").includes(q));
+        if(q)items=items.filter(row=>matchesSearch([row.name,row.room_name,row.department_name,row.description,code(key==="rooms"?"PH":"CK",row[config.id])].filter(Boolean).join(" "),q));
         return {items:items.slice((page-1)*pageSize,page*pageSize),total:items.length,page,page_size:pageSize,
           departmentNames:key==="departments"?[...new Set(result.items.map(row=>row.name).filter(Boolean))]:undefined};
       }

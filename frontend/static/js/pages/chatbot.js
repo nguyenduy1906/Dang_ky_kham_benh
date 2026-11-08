@@ -4,6 +4,7 @@ import { listDoctors } from '../api/doctor.js';
 import { getContactInfo } from '../api/configuration.js';
 import { createDemoAssistant } from '../core/chatbot_ai.js';
 import { sendChatMessage } from '../api/chatbot.js';
+import { hasSession } from '../core/session.js';
 
 import { CONVERSATION_KEY, loadConversation, saveConversation, clearConversation, emptyConversation, conversationHistory } from '../core/chatbot_conversation.js';
 import { pause, revealText } from '../core/chatbot_typing.js';
@@ -21,7 +22,6 @@ function mountChatbot() {
     <section class="neu-chat-panel" id="neu-chat-panel" aria-labelledby="neu-chat-title" hidden>
       <header class="neu-chat-header"><span class="neu-chat-avatar" aria-hidden="true">✦</span><div><h2 id="neu-chat-title">Trợ lý NEU Medical</h2><p>Tìm nơi khám & hỗ trợ đặt lịch</p></div><button type="button" class="neu-chat-close" aria-label="Đóng trò chuyện">×</button></header>
       <div class="neu-chat-messages" role="log" aria-label="Nội dung trò chuyện" aria-live="polite" aria-relevant="additions" tabindex="0"></div>
-      <div class="neu-chat-prompts" aria-label="Câu hỏi gợi ý"><button type="button">Đau bụng khám ở đâu?</button><button type="button">Chuyên khoa</button><button type="button">Bác sĩ và phí khám</button><button type="button">Hướng dẫn đặt lịch</button><button type="button">Hủy lịch, hoàn tiền</button><button type="button">Giờ khám và liên hệ</button></div>
       <p class="neu-chat-status" role="status"></p>
       <form class="neu-chat-form" data-workflow="ignore"><label class="neu-chat-sr" for="neu-chat-input">Câu hỏi của bạn</label><input id="neu-chat-input" maxlength="500" required autocomplete="off" placeholder="Nhập câu hỏi của bạn…"><button type="submit" aria-label="Gửi câu hỏi">➤</button></form>
       <div class="neu-chat-footer"><button type="button" class="neu-chat-reset">Xóa hội thoại</button></div>
@@ -33,14 +33,16 @@ function mountChatbot() {
   const input = widget.querySelector('input');
   const messages = widget.querySelector('.neu-chat-messages');
   const status = widget.querySelector('.neu-chat-status');
-  const controls = [...widget.querySelectorAll('.neu-chat-form button, .neu-chat-prompts button, .neu-chat-reset')];
+  const controls = [...widget.querySelectorAll('.neu-chat-form button, .neu-chat-reset')];
   const api = {
     departments: params => listDepartments(params, { auth: false, timeoutMs: 8000 }),
     doctors: params => listDoctors(params, { auth: false, timeoutMs: 8000 }),
     contact: () => getContactInfo({ auth: false, timeoutMs: 8000 }),
   };
   let storage;
-  try { storage = window.localStorage; } catch { /* Storage may be disabled. */ }
+  try { window.localStorage.removeItem(CONVERSATION_KEY); } catch { /* Remove legacy history. */ }
+  try { storage = window.sessionStorage; } catch { /* Storage may be disabled. */ }
+  hasSession(); // Expired sign-ins must clear history before it can be restored.
   let conversation = loadConversation(storage);
   let storageFailed = false;
   function persist() { storageFailed = !saveConversation(storage, conversation); }
@@ -201,7 +203,6 @@ function mountChatbot() {
     } }
   }
   widget.querySelector('form').addEventListener('submit', event => { event.preventDefault(); send(input.value); });
-  widget.querySelectorAll('.neu-chat-prompts button').forEach(button => button.addEventListener('click', () => send(button.textContent)));
   input.addEventListener('input', () => { conversation.draft = input.value; persist(); });
   widget.querySelector('.neu-chat-reset').addEventListener('click', () => {
     const open = !panel.hidden;
@@ -214,6 +215,7 @@ function mountChatbot() {
     input.focus();
   });
   function restoreConversation() {
+    hasSession();
     conversationVersion++;
     conversation = loadConversation(storage);
     busy = false; controls.forEach(node => { node.disabled = false; });
@@ -232,6 +234,16 @@ function mountChatbot() {
   window.addEventListener('pageshow', event => { if (event.persisted) restoreConversation(); });
   window.addEventListener('storage', event => {
     if (event.storageArea === storage && (event.key === CONVERSATION_KEY || event.key === null)) restoreConversation();
+  });
+  window.addEventListener('neu:auth-change', restoreConversation);
+  // Detect expiry even while the user leaves the chat open without an API request.
+  let sessionCheck = window.setInterval(() => hasSession(), 1000);
+  window.addEventListener('pagehide', () => {
+    conversationVersion++;
+    window.clearInterval(sessionCheck);
+  });
+  window.addEventListener('pageshow', event => {
+    if (event.persisted) sessionCheck = window.setInterval(() => hasSession(), 1000);
   });
   restoreConversation();
 }

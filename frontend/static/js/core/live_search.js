@@ -1,5 +1,5 @@
 // Keep text searches responsive without firing a request for every IME keystroke.
-export function bindLiveSearch(input, search, { invalidate = () => {}, delay = 250 } = {}) {
+export function bindLiveSearch(input, search, { invalidate = () => {}, delay = 250, searchWhileComposing = false } = {}) {
   let timer, composing = false, active = true;
   function clear() { clearTimeout(timer); invalidate(); }
   function refresh() {
@@ -10,7 +10,7 @@ export function bindLiveSearch(input, search, { invalidate = () => {}, delay = 2
   function queue(event) {
     if (!active) return;
     clear();
-    if (!composing && !event.isComposing) timer = setTimeout(refresh, delay);
+    if (searchWhileComposing || (!composing && !event.isComposing)) timer = setTimeout(refresh, delay);
   }
   input.addEventListener("input", queue);
   input.addEventListener("compositionstart", () => { composing = true; clear(); });

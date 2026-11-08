@@ -1,10 +1,11 @@
+import {normalizeSearchText} from "./search_text.js";
 import {listStaffSchedules,getStaffSchedule} from "../api/schedule.js";
 import {listPatients,getPatient} from "../api/patient.js";
 import {allPages} from "./admin_ui.js";
-import {parseCode} from "./business_codes.js";
+import {parseCode,code} from "./business_codes.js";
 import {createReceptionWalkIn} from "./reception_intake_data.js";
 
-export const normalizeScheduleSearch = value => String(value ?? "").normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[đĐ]/g,"d").toLowerCase().trim();
+export const normalizeScheduleSearch = normalizeSearchText;
 function present(row,doctor) {
   if(!row.schedule_id || String(row.doctor_profile_id)!==String(doctor.doctor_profile_id))throw new Error("Lịch khám trả về không khớp bác sĩ.");
   return {...row,doctor_name:row.doctor_name || doctor.full_name,department_name:row.department_name || doctor.department_name};
@@ -20,7 +21,7 @@ export function filterReceptionDoctorSchedules(rows, filters = {}) {
   const words=normalizeScheduleSearch(filters.q).split(/\s+/).filter(Boolean),department=normalizeScheduleSearch(filters.department);
   return rows.filter(row=>(!filters.work_date||row.work_date===filters.work_date)
     &&(!department||normalizeScheduleSearch(row.department_name).includes(department))
-    && words.every(word=>normalizeScheduleSearch(`${row.doctor_name} ${row.department_name} ${row.room_name}`).includes(word)));
+    && words.every(word=>normalizeScheduleSearch(`${row.doctor_name} ${row.department_name} ${row.room_name} ${code("BS",row.doctor_profile_id)} ${code("CA",row.schedule_id)} ${code("PH",row.room_id)}`).includes(word)));
 }
 export async function readReceptionDoctorSchedule(row, options = {}) {
   const {schedule:current}=await getStaffSchedule(row.schedule_id,options);

@@ -46,6 +46,6 @@
   .reception-payment-dialog-actions { flex-wrap: wrap; }
 }
 
-.reception-payments-page .payment-confirm-check {display:flex;align-items:flex-start;gap:10px;margin:16px 0;line-height:1.6}.reception-payments-page .payment-confirm-check input {width:18px;height:18px;flex:none;accent-color:#008349}.reception-payments-page [hidden] {display:none!important;}
+.reception-payments-page .payment-confirm-check {display:flex;align-items:flex-start;gap:10px;margin:16px 0;line-height:1.6}.reception-payments-page #payment-dialog .payment-confirm-check input[type="checkbox"] {box-sizing:border-box;width:18px;height:18px;min-width:18px;min-height:18px;flex:0 0 18px;margin:0.2em 0 0;padding:0;accent-color:#008349}.reception-payments-page [hidden] {display:none!important;}
 
 .reception-payments-page .reception-payment-table .payment-channel { text-align: center; white-space: nowrap; }

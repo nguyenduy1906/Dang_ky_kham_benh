@@ -6,7 +6,7 @@ export function code(prefix, id) {
 }
 export function parseCode(value, prefix) {
   const text = String(value ?? "").trim();
-  const match = text.match(new RegExp(`^(?:${prefix}_)?(\\d+)$`, "i"));
+  const match = text.match(new RegExp(`^(?:${prefix}[\\s_-]*)?(\\d+)$`, "i"));
   const number = match ? Number(match[1]) : NaN;
   if (!Number.isSafeInteger(number) || number <= 0) throw new Error(`Mã không hợp lệ. Ví dụ: ${prefix}_001.`);
   return number;

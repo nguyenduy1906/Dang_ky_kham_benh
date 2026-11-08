@@ -1,3 +1,4 @@
+import {normalizeSearchText, matchesSearch} from "../core/search_text.js";
 import {commitForm} from "../core/form_workflow.js";
 import { checkBookingEligibility } from "../api/encounter.js";
 import { startAutoRefresh } from "../core/auto_refresh.js";
@@ -75,7 +76,7 @@ function renderPatients(preferred = ui.patients.value) {
   $("#relative-status").textContent = "";
   updateReviewState();
 }
-const normalize = value => value.toLocaleLowerCase("vi").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d");
+const normalize = normalizeSearchText;
 const specialtyImages = {
   "co xuong khop": "khoa_xuong_khop.png",
   "da lieu": "khoa_da_lieu.png",
@@ -92,7 +93,7 @@ function renderDepartments() {
   const term = normalize($("#department-search").value.trim());
   const holder = $("#booking-departments");
   const choices = [{ department_id: "", name: "Tất cả chuyên khoa" }, ...departments]
-    .filter(department => normalize(department.name).includes(term));
+    .filter(department => matchesSearch(department.name,term));
   holder.replaceChildren(...choices.map(department => {
     const id = String(department.department_id);
     const button = el("button", "", "booking-department");
@@ -121,7 +122,7 @@ function renderDepartments() {
 function renderDoctors() {
   const term = normalize($("#appointment-search").value.trim());
   const department = ui.departments.value;
-  const visible = doctors.filter(d => (!department || String(d.department_id) === department) && normalize(d.full_name).includes(term));
+  const visible = doctors.filter(d => (!department || String(d.department_id) === department) && matchesSearch(`${d.full_name} BS_${d.doctor_profile_id}`,term));
   ui.doctors.replaceChildren();
   for (const doctor of visible) {
     const chosen = doctor.doctor_profile_id === selectedDoctor?.doctor_profile_id;

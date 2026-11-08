@@ -542,3 +542,7 @@ body:has(> .patient-header) > .skip-link { position: fixed; z-index: 30; }
 .booking-qr,
 .booking-confirm-dialog,
 .appointment-page > .patient-panel { border-radius: 5px; }
+
+/* Treatment profile filter occupies half of the toolbar on larger screens. */
+.appointments-toolbar.treatment-toolbar > div { flex: 0 1 calc((100% - 18px) / 2); min-width: 0; }
+@media (max-width: 680px) { .appointments-toolbar.treatment-toolbar > div { flex-basis: 100%; } }

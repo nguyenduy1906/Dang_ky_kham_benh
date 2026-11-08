@@ -61,12 +61,12 @@ def validate_recovery_identity(data):
     data = ensure_object(data)
     supplied = [text_field(data, key) for key in ('identifier', 'email', 'phone')]
     identifiers = [value for value in supplied if value]
-    if len(identifiers) != 1:
-        raise bad_request('Cung cấp một email hoặc số điện thoại')
-    identifier = identifiers[0]
-    if '@' in identifier:
-        return {'email': normalize_email(identifier), 'phone': None}
-    return {'email': None, 'phone': normalize_phone(identifier)}
+    if len(identifiers) != 1 or supplied[2]:
+        raise bad_request('Vui lòng cung cấp Gmail đã đăng ký.', 'GMAIL_REQUIRED')
+    email = normalize_email(identifiers[0])
+    if not email.endswith('@gmail.com'):
+        raise bad_request('Chỉ hỗ trợ địa chỉ @gmail.com để lấy lại mật khẩu.', 'GMAIL_REQUIRED')
+    return {'email': email, 'phone': None}
 
 
 def validate_forgot_password(data):

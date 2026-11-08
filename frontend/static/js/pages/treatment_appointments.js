@@ -68,7 +68,7 @@ async function load() {
   try {
     const [result,profiles]=await Promise.allSettled([
       listTreatmentAppointments({view,page,page_size:pageSize,...(selectedPatient?{patient_id:selectedPatient}:{})},{signal:controller.signal}),
-      profilesCache===null?allPages(listPatients,{}, {signal:controller.signal}):Promise.resolve(profilesCache),
+      !profilesCache?.length?allPages(listPatients,{include_archived:true}, {signal:controller.signal}):Promise.resolve(profilesCache),
     ]);
     if(current!==version)return;
     if(result.status==='rejected')throw result.reason;
@@ -77,14 +77,15 @@ async function load() {
     if(page>Math.max(1,Math.ceil(data.total/pageSize))){page=Math.max(1,Math.ceil(data.total/pageSize));saveFilters();return load();}
     if(profiles.status==='fulfilled')profilesCache=profiles.value;
     const availablePatients=new Map();
-    for(const item of profilesCache||[])availablePatients.set(String(item.patient_id),item.full_name+(item.dob?' — '+dayFormatter.format(new Date(item.dob+'T00:00:00+07:00')):''));
+    for(const item of profilesCache||[])availablePatients.set(String(item.patient_id),item.full_name+(item.dob?' — '+dayFormatter.format(new Date(item.dob+'T00:00:00+07:00')):'')+(item.is_archived?' (đã lưu trữ)':''));
     for(const item of data.items)if(!availablePatients.has(String(item.patient_id)))availablePatients.set(String(item.patient_id),item.patient_name);
     if(selectedPatient&&!availablePatients.has(selectedPatient))availablePatients.set(selectedPatient,'Hồ sơ đã chọn');
     const all=text('option','Tất cả hồ sơ');all.value='';
     patient.replaceChildren(all,...[...availablePatients].map(([id,name])=>{const option=text('option',name);option.value=id;return option;}));
     patient.value=availablePatients.has(selectedPatient)?selectedPatient:'';
     rows=data.items;total=data.total;render();
-    if(profiles.status==='rejected')status.textContent+=' Chưa tải được đầy đủ danh sách người khám; hệ thống sẽ thử lại.';
+    if(profiles.status==='rejected'){status.textContent+=' Chưa tải được đầy đủ danh sách người khám. Vui lòng thử lại.';retry.hidden=false;}
+    else if(!availablePatients.size)status.textContent+=' Tài khoản chưa có hồ sơ người khám để lựa chọn.';
   } catch(error) {
     if(current!==version)return;
     rows=[];list.replaceChildren();pager.hidden=true;status.textContent=error.message;retry.hidden=false;

@@ -83,6 +83,11 @@ CREATE TABLE IF NOT EXISTS patient (
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE patient ADD COLUMN IF NOT EXISTS created_by_id integer REFERENCES users(user_id);
+ALTER TABLE patient ADD COLUMN IF NOT EXISTS created_by_role text;
+CREATE INDEX IF NOT EXISTS idx_patient_reception_created ON patient(created_at) WHERE created_by_role='RECEPTIONIST';
+
+
 -- Người đặt hộ được chọn lại hồ sơ đã thêm và đặt lượt mới, không tự có quyền
 -- xem toàn bộ lịch sử của tài khoản bệnh nhân. Lượt họ tạo lưu created_by_id.
 CREATE TABLE IF NOT EXISTS patient_delegate (

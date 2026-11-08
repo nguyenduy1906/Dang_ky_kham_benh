@@ -13,7 +13,8 @@ export async function initReceptionDoctorSchedule() {
   const form = $("#doctor-schedule-filter");
   form.elements.work_date.value = today();
   const feedback=$('#page-status'),modal=$('#staff-dialog');
-  const closeDetail=()=>{detailVersion++;detailRequest?.abort();patientRequest?.abort();};
+  let patientListObserver;
+  const closeDetail=()=>{detailVersion++;detailRequest?.abort();patientRequest?.abort();patientListObserver?.disconnect();};
   const stop=()=>{active=false;version++;request?.abort();closeDetail();};
   window.addEventListener('pagehide',stop,{once:true});
   window.addEventListener('neu:auth-change',()=>{stop();modal.close();$('#page-body').innerHTML='';$('#staff-dialog-content').innerHTML='';},{once:true});
@@ -60,6 +61,19 @@ export async function initReceptionDoctorSchedule() {
       dialog("Thêm bệnh nhân vào ca khám", `<div class="reception-schedule-detail">${panel("Ca khám đã chọn", facts([["Bác sĩ", `BS. ${row.doctor}`], ["Ngày khám", date(row.day)], ["Ca / giờ khám", `${row.shift} · ${row.hours}`], ["Phòng khám", row.room], ["Số lượng", `${row.count} / ${row.capacity}`]]))}<section class="panel reception-patient-picker"><label>Tìm kiếm<input type="search" id="schedule-patient-search" placeholder="Họ tên, mã hồ sơ hoặc số điện thoại" aria-controls="schedule-patient-results"></label><div id="schedule-patient-results" class="reception-patient-results" aria-label="Kết quả tìm bệnh nhân"></div></section><div class="actions"><button type="button" class="secondary" data-schedule-cancel>Hủy</button><button type="button" disabled>Thêm bệnh nhân</button></div></div>`);
       let patients = [],patientVersion=0;
       const search = $("#schedule-patient-search"), results = $("#schedule-patient-results");
+      results.tabIndex = 0;
+      results.setAttribute('role', 'region');
+      results.setAttribute('aria-label', 'Danh sách bệnh nhân, cuộn để xem thêm');
+      function fitPatientList() {
+        const choices = results.querySelectorAll('[data-pick-patient]');
+        if (choices.length > 10) {
+          results.style.setProperty('--patient-list-ten-rows', `${choices[9].getBoundingClientRect().bottom - choices[0].getBoundingClientRect().top}px`);
+        } else {
+          results.style.removeProperty('--patient-list-ten-rows');
+        }
+      }
+      patientListObserver = new ResizeObserver(fitPatientList);
+      patientListObserver.observe(results);
       let selected = "";
       const confirm=$('#staff-dialog-content .actions > button:last-child');
       results.insertAdjacentHTML('afterend','<p id="schedule-patient-feedback" class="scope-note" role="status"></p>');
@@ -68,6 +82,7 @@ export async function initReceptionDoctorSchedule() {
         const query = normalize(search.value.trim());
         const matches = patients.filter(patient => normalize(`${patient.name} ${patient.id} ${patient.phone}`).includes(query));
         results.innerHTML = matches.length ? matches.map(patient => `<button type="button" class="reception-patient-choice${selected === patient.id ? " is-selected" : ""}" data-pick-patient="${esc(patient.id)}" aria-pressed="${selected === patient.id}"><strong>${esc(patient.name)}</strong><span>${esc(patient.id)} · ${date(patient.dob)}</span><span>Điện thoại: ${esc(patient.phone)}</span></button>`).join("") : '<p class="scope-note">Không tìm thấy bệnh nhân phù hợp.</p>';
+        fitPatientList();
       }
       async function findPatients() {
         patientRequest?.abort();patientRequest=new AbortController();const next=++patientVersion;
@@ -75,7 +90,7 @@ export async function initReceptionDoctorSchedule() {
         try {
           const profiles=await searchSchedulePatients(search.value,{signal:patientRequest.signal});
           if(!active||current!==detailVersion||next!==patientVersion)return;
-          patients=profiles.map(p=>({...p,id:code('BN',p.patient_id),name:p.full_name}));renderPatients();note.textContent='';
+          patients=profiles.map(p=>({...p,id:code('BN',p.patient_id),name:p.full_name}));renderPatients();results.scrollTop=0;note.textContent='';
         } catch(error) {if(active&&current===detailVersion&&next===patientVersion){patients=[];renderPatients();note.textContent=sessionError(error);}}
       }
       bindLiveSearch(search,findPatients,{invalidate(){patientVersion++;patientRequest?.abort();selected='';confirm.disabled=true;results.innerHTML='';}});

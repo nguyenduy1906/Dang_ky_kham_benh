@@ -21,8 +21,6 @@
 .neu-chat-message p { margin: 5px 0; white-space: pre-wrap; }
 .neu-chat-message a { display: block; margin-top: 8px; color: #006c3c; text-decoration: underline; font-weight: bold; }
 .neu-chat-user { margin-left: auto; background: #e1f3e9; border-radius: 14px 14px 3px 14px; }
-.neu-chat-prompts { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px 0; }
-.neu-chat-prompts button { background: #fff; border: 1px solid #b7dbc8; color: #006d3d; border-radius: 20px; padding: 6px 10px; font-size: 11px; }
 .neu-chat-status { margin: 3px 16px; min-height: 16px; font-size: 11px; color: #526b60; }
 .neu-chat-form { display: flex; gap: 8px; padding: 0 12px 10px; }
 .neu-chat-form input { min-width: 0; width: 100%; border: 1px solid #ccdcd2; border-radius: 12px; padding: 10px; background: #fff; color: #19372c; }

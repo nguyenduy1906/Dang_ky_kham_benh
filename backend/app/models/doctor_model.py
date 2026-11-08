@@ -1,3 +1,4 @@
+from backend.app.utils.search import text_search
 from backend.app.utils.database_helpers import insert_row, update_row
 
 _SELECT = '''SELECT d.doctor_profile_id, d.user_id, d.department_id, dep.name AS department_name,
@@ -22,9 +23,9 @@ def list_doctors(db, *, department_id=None, q=None, include_inactive=False, limi
         where.append('d.department_id = %s')
         params.append(department_id)
     if q:
-        like = '%' + q.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_') + '%'
-        where.append('(u.full_name ILIKE %s OR d.specialization ILIKE %s)')
-        params.extend([like, like])
+        search, values = text_search(q, ['u.full_name', 'd.specialization', 'u.phone', 'u.email'], {'bs': 'd.doctor_profile_id', 'tk': 'd.user_id'})
+        where.append(search)
+        params.extend(values)
     clause = ' AND '.join(where)
     total = db.execute('SELECT COUNT(*) AS n FROM doctor_profile d JOIN users u ON u.user_id = d.user_id '
                        f'WHERE {clause}', params).fetchone()['n']

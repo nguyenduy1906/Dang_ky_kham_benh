@@ -1,3 +1,4 @@
+import {normalizeSearchText} from "./search_text.js";
 import { listEncounters } from "../api/encounter.js";
 
 export const activeStatuses = Object.freeze(["CONFIRMED", "CHECKED_IN", "IN_PROGRESS"]);
@@ -35,7 +36,7 @@ export function attendance(row) {
   if (row.checked_in_at || ["CHECKED_IN", "IN_PROGRESS", "COMPLETED"].includes(row.encounter_status)) return '<span class="badge green">Đã đến</span>';
   return '<span class="badge blue">Chưa đến</span>';
 }
-export const normalizeSearch = text => String(text || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase();
+export const normalizeSearch = normalizeSearchText;
 
 export const visitOrder = (a, b) => `${a.work_date}${a.estimated_exam_at || a.start_time || ""}`.localeCompare(`${b.work_date}${b.estimated_exam_at || b.start_time || ""}`) || a.encounter_id - b.encounter_id;
 export const inNurseRange = (row, range) => !range || ((!range.from || row.work_date >= range.from) && (!range.to || row.work_date <= range.to));
@@ -49,9 +50,9 @@ export function nurseRange(search = globalThis.location?.search || "") {
 export function nurseFormRange(form) {
   return nurseRange(new URLSearchParams({ from_date: form.elements.from_date?.value || "", to_date: form.elements.to_date?.value || "" }).toString());
 }
-export function recentNursePatients(patients, visits, range = null) {
+export function recentNursePatients(patients, visits, range = null, statuses = historyStatuses) {
   const latest = new Map();
-  for (const visit of visits.filter(e => historyStatuses.includes(e.encounter_status) && inNurseRange(e, range)).sort((a, b) => visitOrder(b, a))) {
+  for (const visit of visits.filter(e => statuses.includes(e.encounter_status) && inNurseRange(e, range)).sort((a, b) => visitOrder(b, a))) {
     if (!latest.has(String(visit.patient_id))) latest.set(String(visit.patient_id), visit);
   }
   const items = patients.filter(p => latest.has(String(p.patient_id))).sort((a, b) => visitOrder(latest.get(String(b.patient_id)), latest.get(String(a.patient_id))) || b.patient_id - a.patient_id);

@@ -1,3 +1,4 @@
+import {normalizeSearchText} from "../core/search_text.js";
 import {startAutoRefresh} from "../core/auto_refresh.js";
 import {sessionError} from "../core/staff_workspace.js";
 import {canTransferEncounter,loadTransferOptions,transferReceptionEncounter,sameTransferSource,retainTransferTarget} from "../core/reception_coordination_data.js";
@@ -8,7 +9,7 @@ import * as encounters from "../api/encounter.js";
 import * as patients from "../api/patient.js";
 import { $, panel, esc, date, today, time, facts, dialog, submit, run, badge } from "../core/staff_ui.js";
 
-const normalize = value => String(value ?? "").normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[đĐ]/g, "d").toLowerCase();
+const normalize = normalizeSearchText;
 async function collect(reader, params = {}, options = {}) {
   const rows = []; let result, page = 1;
   do { result = await reader({ ...params, page, page_size: 100 }, options); rows.push(...result.items); page++; }
@@ -80,7 +81,7 @@ export async function initReceptionCoordination() {
     results.hidden = !selectedVisit && !selectedSchedule;
     if (results.hidden) { results.innerHTML = ""; return; }
     const selectedDate = $("#coordination-visit-date").value;
-    const matches = selectedSchedule ? [selectedSchedule] : schedules.filter(row => (!selectedDate || row.work_date === selectedDate) && (!department || normalize(departmentFor(row)).includes(department)) && words.every(word => normalize(`${row.doctor_name} ${row.department_name || ""} ${row.room_name}`).includes(word)));
+    const matches = selectedSchedule ? [selectedSchedule] : schedules.filter(row => (!selectedDate || row.work_date === selectedDate) && (!department || normalize(departmentFor(row)).includes(department)) && words.every(word => normalize(`${row.doctor_name} ${row.department_name || ""} ${row.room_name} ${code("BS",row.doctor_profile_id)} ${code("PH",row.room_id)} ${code("CA",row.schedule_id)}`).includes(word)));
     $("#coordination-rooms").innerHTML = matches.length ? matches.map(row => `<button type="button" class="coordination-choice${selectedSchedule?.schedule_id === row.schedule_id ? " is-selected" : ""}" data-coordination-schedule="${esc(row.schedule_id)}" aria-pressed="${selectedSchedule?.schedule_id === row.schedule_id}" ${row.slots?.length ? "" : "disabled"}><span><strong>${esc(row.doctor_name)}</strong><small>${esc(row.room_name)}</small></span><span>${date(row.work_date)}</span><span>${esc(row.start_time.slice(0, 5))} – ${esc(row.end_time.slice(0, 5))}</span><span>${row.slots?.length || 0} khung giờ còn trống</span></button>`).join("") : '<p class="coordination-empty" role="status">Không có ca khám phù hợp với tìm kiếm và ngày đã chọn.</p>';
   }
   $("#coordination-patient-query").addEventListener("input", () => {

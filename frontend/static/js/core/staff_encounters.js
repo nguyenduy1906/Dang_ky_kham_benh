@@ -1,3 +1,4 @@
+import {normalizeSearchText} from "./search_text.js";
 import { doctorEncounterStatuses, loadDoctorEncounterRows, doctorEncounterTable } from "./doctor_encounter_list.js";
 import { code } from "./business_codes.js";
 import { startAutoRefresh } from "./auto_refresh.js";
@@ -81,13 +82,13 @@ export async function initEncounterList({ role, completed = false, assignments =
     });
   }
   function render() {
-    const normalize = value => String(value || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[đĐ]/g,"d").toLowerCase().trim();
+    const normalize = normalizeSearchText;
     const query = normalize($("#encounter-search").value);
     let matches = rows.filter(e => {
       if (!doctorSearch && !receptionSearch) return normalize(`${e.patient_name} ${code("LK",e.encounter_id)} ${code("BN",e.patient_id)} ${e.ticket_code || ""}`).includes(query);
       const content = document.createElement("template");
       content.innerHTML = `<table><tbody><tr>${encounterColumns(e)}</tr></tbody></table>`;
-      const text = normalize(`${Array.from(content.content.querySelectorAll("td, small, strong")).map(node => node.textContent).join(" ")} ${code("BN", e.patient_id)}`);
+      const text = normalize(`${Array.from(content.content.querySelectorAll("td, small, strong")).map(node => node.textContent).join(" ")} ${code("BN", e.patient_id)} ${code("LK",e.encounter_id)} ${code("BS",e.doctor_profile_id)} ${code("PH",e.room_id)}`);
       return query.split(/\s+/).every(word => text.includes(word));
     });
     if (doctorList || receptionSearch) {

@@ -3,6 +3,11 @@ import { updateMe } from "../api/auth.js";
 import { clearSession, getSessionUser, hasSession, loginUrl, workspaceUrl } from "../core/session.js";
 import { personalFields, editableProfileKeys, todayVN, profileChanges } from "../core/profile.js";
 import { bindAvatarForm, renderAccountAvatar } from "../core/avatar.js";
+import { profileReturnUrl } from "../core/profile_return.js";
+
+const backUrl = profileReturnUrl(location.href, document.referrer, history.state?.profileReturnUrl);
+document.querySelector('#profile-back').href = backUrl.href;
+history.replaceState({ ...history.state, profileReturnUrl: backUrl.href }, '', location.href);
 
 const $ = selector => document.querySelector(selector);
 const main = $("#main"), status = $("#profile-auth-status"), details = $("#profile-details");
