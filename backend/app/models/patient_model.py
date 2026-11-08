@@ -1,6 +1,7 @@
+from backend.app.utils.search import text_search
 from backend.app.utils.database_helpers import insert_row, update_row
 
-_COLUMNS = ['user_id', 'full_name', 'dob', 'gender', 'id_card', 'address', 'phone',
+_COLUMNS = ['created_by_id', 'created_by_role', 'user_id', 'full_name', 'dob', 'gender', 'id_card', 'address', 'phone',
             'health_insurance', 'relationship', 'email', 'emergency_contact_name',
             'emergency_contact_phone', 'emergency_contact_relationship']
 _UPDATABLE = {'full_name', 'dob', 'gender', 'id_card', 'address', 'phone',
@@ -19,8 +20,11 @@ def nurse_can_view(db, patient_id, nurse_id):
                       + _nurse_scope('p.patient_id'), (patient_id, nurse_id)).fetchone() is not None
 
 
-def list_patients(db, *, user_id=None, nurse_id=None, q=None, include_archived=False, phone=None, booked_by_id=None, limit=20, offset=0):
+def list_patients(db, *, user_id=None, nurse_id=None, q=None, include_archived=False, phone=None, booked_by_id=None, reception_created_on=None, limit=20, offset=0):
     where, params = ['TRUE'], []
+    if reception_created_on is not None:
+        where.append("created_by_role='RECEPTIONIST' AND created_by_id IS NOT NULL AND (created_at AT TIME ZONE 'Asia/Saigon')::date=%s")
+        params.append(reception_created_on)
     if user_id is not None:
         where.append('(user_id = %s OR EXISTS (SELECT 1 FROM patient_delegate pd '
                      'WHERE pd.patient_id=patient.patient_id AND pd.user_id=%s))')
@@ -38,9 +42,9 @@ def list_patients(db, *, user_id=None, nurse_id=None, q=None, include_archived=F
                      "AND booked.created_by_id=%s AND booked.encounter_type='ONLINE')")
         params.append(booked_by_id)
     if q:
-        like = '%' + q.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_') + '%'
-        where.append('(full_name ILIKE %s OR phone ILIKE %s OR id_card ILIKE %s)')
-        params.extend([like, like, like])
+        search, values = text_search(q, ['full_name', 'phone', 'id_card'], {'bn': 'patient.patient_id', 'tk': 'patient.user_id'})
+        where.append(search)
+        params.extend(values)
     clause = ' AND '.join(where)
     total = db.execute(f'SELECT COUNT(*) AS n FROM patient WHERE {clause}', params).fetchone()['n']
     rows = db.execute(f'SELECT * FROM patient WHERE {clause} ORDER BY patient_id DESC LIMIT %s OFFSET %s',

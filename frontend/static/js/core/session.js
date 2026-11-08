@@ -1,6 +1,7 @@
 import * as authApi from "../api/auth.js";
 import { ApiError, setAccessToken } from "./api.js";
 import { resetOverviewPreferences } from "./overview_preferences.js";
+import { clearBrowserConversation } from "./chatbot_conversation.js";
 
 const STORAGE_KEY = "neu-medical.auth";
 const templates = new URL("../../../templates/", import.meta.url);
@@ -21,6 +22,7 @@ let verification;
 function announce() { window.dispatchEvent(new Event("neu:auth-change")); }
 
 export function clearSession() {
+  clearBrowserConversation();
   try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* Storage may be disabled. */ }
   resetOverviewPreferences();
   setAccessToken(null);
@@ -28,14 +30,17 @@ export function clearSession() {
 }
 
 function readSession() {
+  let stored;
   try {
-    const value = JSON.parse(sessionStorage.getItem(STORAGE_KEY));
+    stored = sessionStorage.getItem(STORAGE_KEY);
+    const value = JSON.parse(stored);
     if (value && typeof value.token === "string" && value.token &&
         Number.isFinite(value.expiresAt) && value.expiresAt > Date.now()) {
       setAccessToken(value.token);
       return value;
     }
   } catch { /* Treat malformed/unavailable storage as signed out. */ }
+  if (stored) { clearSession(); return null; }
   setAccessToken(null);
   try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* Nothing to restore. */ }
   return null;
@@ -80,6 +85,7 @@ export async function signIn(credentials) {
   }
   setAccessToken(result.access_token);
   resetOverviewPreferences();
+  clearBrowserConversation();
   announce();
   return result.user;
 }

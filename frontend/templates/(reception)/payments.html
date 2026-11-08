@@ -57,7 +57,7 @@
         <label>Phương thức<select name="payment_method"><option value="CASH">Tiền mặt</option><option value="BANK">Chuyển khoản</option><option value="EWALLET">Ví điện tử</option><option value="CARD">Thẻ</option></select></label>
         <label class="full-width">Ghi chú<textarea name="note" rows="3" maxlength="500" placeholder="Nhập ghi chú (nếu có)"></textarea></label>
       </div>
-      <label id="payment-request-check" class="payment-confirm-check" hidden><input type="checkbox" name="verified"> Đã đối chiếu đúng người bệnh, số tiền và phương thức thanh toán.</label><div id="payment-request-preview" class="reception-payment-review" role="status" hidden></div>
+      <label id="payment-request-check" class="payment-confirm-check" hidden><input type="checkbox" name="verified"><span>Đã đối chiếu đúng người bệnh, số tiền và phương thức thanh toán.</span></label><div id="payment-request-preview" class="reception-payment-review" role="status" hidden></div>
       <div class="reception-payment-dialog-actions"><button type="button" id="payment-request-cancel" class="secondary">Hủy</button><button id="payment-request-failed" type="button" class="secondary" hidden>Không thành công</button><button type="submit">Tạo yêu cầu thanh toán</button></div>
     </form>
   </dialog>

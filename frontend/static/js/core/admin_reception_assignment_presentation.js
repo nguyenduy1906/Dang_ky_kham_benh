@@ -1,3 +1,4 @@
+import {normalizeSearchText} from "./search_text.js";
 import './date_inputs.js';
 import './table_layout.js';
 import {today,esc,panel,allPages,table,facts,date,stamp,options,createAdminContext} from './admin_ui.js';
@@ -18,7 +19,7 @@ const state=row=>`<span class="badge ${row.revoked_at?'assignment-revoked':'gree
 const staffLabel=row=>`${row.full_name} (${code('TK',row.user_id)})`;
 const stationLabel=row=>row.name;
 const eligible=row=>!row.revoked_at&&Date.parse(`${row.work_date}T${row.start_time}+07:00`)>Date.now();
-const normalized=value=>String(value).normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/[đĐ]/g,'d').toLowerCase();
+const normalized = normalizeSearchText;
 
 export async function initReceptionAssignmentPresentation() {
   const ctx=createAdminContext(),body=document.querySelector('#page-body'),header=document.querySelector('#page-header');

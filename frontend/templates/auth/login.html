@@ -6,7 +6,7 @@
     <title>Đăng nhập | NEU Medical</title>
     <link rel="stylesheet" href="../../static/css/home.css?v=20261023-calligraphy-motto" />
     <link rel="stylesheet" href="../../static/css/auth.css?v=20261108-password-eyes" />
-    <script src="../../static/js/pages/auth.js?v=20261108-real-email" type="module"></script>
+    <script src="../../static/js/pages/auth.js?v=20261109-gmail-otp-60s" type="module"></script>
   </head>
   <body class="auth-page">
     <a class="skip-link" href="#main">Đến nội dung chính</a>
@@ -60,11 +60,11 @@
     <footer class="auth-footer">© 2026 NEU Medical. Đồng hành cùng sức khỏe của bạn.</footer>
     <dialog id="recovery-dialog" class="recovery-dialog" aria-labelledby="recovery-title">
       <div class="recovery-heading"><h2 id="recovery-title">Lấy lại mật khẩu</h2><button type="button" id="recovery-close" aria-label="Đóng lấy lại mật khẩu">×</button></div>
-      <p class="auth-intro">Nhập số điện thoại hoặc email đã đăng ký. Mã OTP sẽ được gửi tới email đã lưu của tài khoản; hãy kiểm tra cả thư rác.</p>
+      <p class="auth-intro">Nhập Gmail đã đăng ký. Mã OTP có hiệu lực 60 giây sẽ được gửi tới Gmail của bạn; hãy kiểm tra cả thư rác.</p>
       <form id="recovery-form" method="post">
-        <div class="auth-field" id="recovery-identity-field"><label for="recovery-identifier">Số điện thoại hoặc email</label><input id="recovery-identifier" autocomplete="username" maxlength="255" required /></div>
+        <div class="auth-field" id="recovery-identity-field"><label for="recovery-identifier">Gmail đã đăng ký</label><input id="recovery-identifier" type="email" autocomplete="email" maxlength="254" pattern="[^@\s]+@[gG][mM][aA][iI][lL]\.[cC][oO][mM]" placeholder="tenban@gmail.com" required /></div>
         <div class="auth-field" id="recovery-otp-field" hidden><label for="recovery-otp">Mã xác minh</label><input id="recovery-otp" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" placeholder="Nhập 6 chữ số" /></div>
-        <div class="recovery-demo" id="recovery-demo" hidden><p>Mã OTP mô phỏng</p><output id="recovery-demo-code" aria-label="Mã OTP mô phỏng"></output><p id="recovery-demo-countdown" role="status"></p></div>
+        <p class="auth-field-note" id="recovery-countdown" hidden></p>
         <div class="auth-field" id="recovery-password-field" hidden><label for="recovery-password">Mật khẩu mới</label><input id="recovery-password" type="password" autocomplete="new-password" minlength="8" maxlength="128" aria-describedby="recovery-password-hint" /><p class="auth-field-note" id="recovery-password-hint">Từ 8 đến 128 ký tự, gồm chữ và số.</p></div>
         <div class="auth-field" id="recovery-password-confirm-field" hidden><label for="recovery-password-confirm">Xác nhận mật khẩu mới</label><input id="recovery-password-confirm" type="password" autocomplete="new-password" minlength="8" maxlength="128" aria-describedby="recovery-status" /></div>
         <p class="auth-status" id="recovery-status" role="status" aria-live="polite"></p>

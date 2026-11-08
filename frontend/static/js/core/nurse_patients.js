@@ -1,3 +1,4 @@
+import {matchesSearch} from "./search_text.js";
 import { code } from "./business_codes.js";
 import { startAutoRefresh } from "./auto_refresh.js";
 import { getEncounter } from "../api/encounter.js";
@@ -56,7 +57,7 @@ export async function initNursePatients({ assignments }) {
     const q = normalizeSearch(search.value.trim()), now = Date.now(), period = form.elements.period.value;
     const matches = rows.filter(e => assigned.has(String(e.schedule_id))
       && (period === "all" || (period === "past" ? shiftEnd(e) < now : shiftEnd(e) >= now || e.encounter_status === "IN_PROGRESS"))
-      && normalizeSearch(`${e.patient_name} ${e.ticket_code || ""} ${code("LK",e.encounter_id)} ${code("BN",e.patient_id)}`).includes(q));
+      && matchesSearch(`${e.patient_name} ${e.ticket_code || ""} ${code("LK",e.encounter_id)} ${code("BN",e.patient_id)}`,q));
     matches.sort(visitOrder);
     const result = localPage(matches, next); 
     $("#nurse-visit-list").innerHTML = nurseVisitTable(result.items);

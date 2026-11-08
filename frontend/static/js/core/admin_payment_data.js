@@ -1,3 +1,4 @@
+import {normalizeSearchText} from "./search_text.js";
 import * as payments from "../api/payment.js";
 import { getEncounter } from "../api/encounter.js";
 import { getDepartment } from "../api/catalog.js";
@@ -14,7 +15,7 @@ export async function readAdminPaymentHistory({ signal } = {}) {
   }
 }
 
-const text = value => String(value ?? "").normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[đĐ]/g,"d").toLowerCase();
+const text = normalizeSearchText;
 function dayOf(row) {
   const date = new Date(row.refunded_at || row.paid_at || row.created_at);
   return Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(date) : "";

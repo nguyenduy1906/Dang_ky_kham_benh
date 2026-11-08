@@ -1,3 +1,4 @@
+from backend.app.utils.search import text_search
 """Truy vấn SQL cho bảng users và role (db là kết nối psycopg trả về dict)."""
 from backend.app.utils.business_codes import business_code
 from backend.app.schemas.profile_schema import PROFILE_FIELDS
@@ -135,9 +136,9 @@ def list_users(db, *, role=None, account_status=None, approval_status=None,
         where.append('u.approval_status = %s')
         params.append(approval_status)
     if q:
-        like = f'%{_escape_like(q)}%'
-        where.append('(u.full_name ILIKE %s OR u.email ILIKE %s OR u.phone ILIKE %s OR u.id_card ILIKE %s)')
-        params.extend([like, like, like, like])
+        search, values = text_search(q, ['u.full_name', 'u.email', 'u.phone', 'u.id_card'], {'tk': 'u.user_id'})
+        where.append(search)
+        params.extend(values)
     clause = ' AND '.join(where)
     base = 'FROM users u JOIN role r ON r.role_id = u.role_id WHERE ' + clause
     total = db.execute('SELECT COUNT(*) AS n ' + base, params).fetchone()['n']
@@ -159,6 +160,15 @@ def create_token(db, user_id, token_type, token_hash, ttl_minutes):
                (user_id, token_type, token_hash, ttl_minutes))
 
 
+def create_recovery_otp(db, user_id, token_hash):
+    # Start the 60 seconds after SMTP completes, independent of transaction start.
+    from backend.app.core.constants import OTP_TTL_MINUTES
+    db.execute("INSERT INTO auth_token (user_id, token_type, token_hash, created_at, expires_at) "
+               "VALUES (%s, 'OTP', %s, clock_timestamp(), "
+               "clock_timestamp() + make_interval(mins => %s::int))",
+               (user_id, token_hash, OTP_TTL_MINUTES))
+
+
 def consume_by_hash(db, token_type, token_hash):
     """Đánh dấu đã dùng nếu token còn hạn và chưa dùng (một câu lệnh nên không dùng lại được)."""
     row = db.execute('UPDATE auth_token SET used_at = CURRENT_TIMESTAMP '
@@ -171,6 +181,6 @@ def consume_by_hash(db, token_type, token_hash):
 def consume_otp(db, user_id, token_hash):
     row = db.execute("UPDATE auth_token SET used_at = CURRENT_TIMESTAMP "
                      "WHERE user_id = %s AND token_type = 'OTP' AND token_hash = %s "
-                     "AND used_at IS NULL AND expires_at > CURRENT_TIMESTAMP "
+                     "AND used_at IS NULL AND expires_at > clock_timestamp() "
                      "RETURNING token_id", (user_id, token_hash)).fetchone()
     return row is not None

@@ -22,8 +22,8 @@ export function nurseVisitTable(items, action = e => `<button type="button" clas
 }
 
 export function nurseRecordTable(items, latest, action = p => `<button type="button" class="secondary" data-patient="${esc(p.patient_id)}">Xem hồ sơ</button>`) {
-  return items.length ? `<div class="nurse-record-table">${table(["Người bệnh", "Ngày khám", "Điện thoại", "Kết quả", "Hồ sơ"], items.map(p => {
+  return items.length ? `<div class="nurse-record-table">${table(["Người bệnh", "Ngày khám", "Điện thoại", "Trạng thái", "Hồ sơ"], items.map(p => {
     const last = latest.get(String(p.patient_id));
-    return `<tr><td><strong>${esc(p.full_name)}</strong><small class="cell-subtitle">Mã hồ sơ ${esc(code("BN", p.patient_id))}</small></td><td>${date(last.work_date)}</td><td>${esc(p.phone || "—")}</td><td>${badge(last.encounter_status)}</td><td><div class="actions">${action(p)}</div></td></tr>`;
-  }))}</div>` : empty("Chưa có người bệnh đã khám xong hoặc không đến khám phù hợp.");
+    return `<tr><td><strong>${esc(p.full_name)}</strong><small class="cell-subtitle">Mã hồ sơ ${esc(code("BN", p.patient_id))}</small></td><td>${last ? date(last.work_date) : "—"}</td><td>${esc(p.phone || "—")}</td><td>${last ? badge(last.encounter_status) : "—"}</td><td><div class="actions">${action(p)}</div></td></tr>`;
+  }))}</div>` : empty("Không tìm thấy hồ sơ phù hợp.");
 }

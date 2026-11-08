@@ -1,3 +1,4 @@
+import {normalizeSearchText} from "./search_text.js";
 import {listEncounters} from '../api/encounter.js';
 import {listRooms} from '../api/catalog.js';
 import {allPages} from './admin_ui.js';
@@ -37,7 +38,7 @@ export async function readRefundSelectionData(signal) {
   }
   return {items,rooms};
 }
-const normalize=value=>String(value??'').normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/[đĐ]/g,'d').toLowerCase().trim();
+const normalize = normalizeSearchText;
 export function filterRefundSelection(items,filters={}) {
   const query=normalize(filters.query),reference=query.match(/^(tt|lk)_0*(\d+)$/);
   return items.filter(({payment,encounter})=>{

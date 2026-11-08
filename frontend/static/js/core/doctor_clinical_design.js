@@ -1,3 +1,4 @@
+import {normalizeSearchText, matchesSearch} from "./search_text.js";
 import {commitForm,markFormChanged,confirmDiscardAsync} from "./form_workflow.js";
 import {openTreatmentForm} from './doctor_treatment.js';
 import {startAutoRefresh} from './auto_refresh.js';
@@ -6,7 +7,7 @@ import { recordDetailView } from "./record_detail_view.js";
 import { canEditClinicalShift, clinicalShiftEnded, canBeginClinical, canEditClinicalRecord } from "./clinical_shift_access.js";
 import { $, esc, date, today, panel, facts, dialog, table, badge, money } from "./staff_ui.js";
 
-const normalize = value => String(value || "").normalize("NFD").replace(/\p{Diacritic}/gu, "").replace(/[đĐ]/g,"d").toLowerCase().trim();
+const normalize = normalizeSearchText;
 function previousVisits(p) { return p.history || []; }
 function historyMarkup(p) {
   return `<section class="panel clinical-history-panel" aria-labelledby="clinical-history-title"><div class="section-heading"><div><h2 id="clinical-history-title">Lịch sử khám bệnh</h2></div><span class="clinical-info-tag">Chỉ xem</span></div>${p.historyError ? `<p role="status">${esc(p.historyError)}</p>` : ""}${table(["Ngày khám","Bác sĩ / phòng","Trạng thái","Kết quả"],previousVisits(p).map((v,i)=>`<tr><td>${date(v.day)}<small class="cell-subtitle">Lượt ${v.id}</small></td><td>${esc(v.doctor)}<small class="cell-subtitle">${esc(v.room)}</small></td><td>${badge(v.status)}</td><td><button type="button" class="secondary" data-clinical-history="${i}">${v.status === "COMPLETED" ? "Xem bệnh án / đơn thuốc" : "Xem lượt khám"}</button></td></tr>`))}</section>`;
@@ -65,7 +66,7 @@ export function renderClinicalDesign(options = {}) {
     const query = normalize($("#clinical-profile-search").value);
     const period = $("#clinical-period").value;
     const selectedDay = $("#clinical-work-date").value;
-    const matches = profiles.filter(p => (!selectedDay || selectedDay === (p.work_date || shiftDay)) && visible(p) && (period === "all" || periodFor(p) === period) && normalize(`${p.name} ${p.patient} ${p.id} ${p.phone} ${p.phone.replace(/ /g,"")}`).includes(query));
+    const matches = profiles.filter(p => (!selectedDay || selectedDay === (p.work_date || shiftDay)) && visible(p) && (period === "all" || periodFor(p) === period) && matchesSearch(`${p.name} ${p.patient} ${p.id} ${p.phone} ${p.phone.replace(/ /g,"")}`,query));
     $("#clinical-profile-results").innerHTML = table(["Người bệnh / phiếu khám", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", "Thao tác"], matches.map(p => `<tr data-profile-row="${p.id}"${selected?.id === p.id ? ' class="is-selected"' : ''}><td><strong>${esc(p.name)}</strong><small class="cell-subtitle">${p.patient} · ${p.id}</small></td><td>${date(p.work_date || shiftDay)}<small class="cell-subtitle">${p.clock}</small></td><td>${esc(p.room)}<small class="cell-subtitle">${esc(p.doctor || "Chưa cập nhật")}</small></td><td>${badge(savedProfiles.get(p.id)?.status || p.status || "IN_PROGRESS")}</td><td><button type="button" class="clinical-detail-link" data-profile="${p.id}">Chi tiết</button>${canEdit(p) ? `<button type="button" class="clinical-detail-link" data-profile="${p.id}" data-edit>Chỉnh sửa</button>` : ""}</td></tr>`));
     sizePatientList();
     $("#clinical-search-feedback").textContent = matches.length ? "" : !period ? "Hiện không trong ca làm việc. Chọn ca để xem danh sách." : "Không tìm thấy hồ sơ phù hợp trong ca đã chọn.";

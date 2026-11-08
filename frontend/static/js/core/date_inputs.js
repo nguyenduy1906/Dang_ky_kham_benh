@@ -57,6 +57,7 @@ if(typeof document!=='undefined') {
   // keep ISO values; stale results are hidden until the displayed date is valid.
   for(const name of ['input','change','submit','click'])document.addEventListener(name,event=>{
     const target=event.target;
+    if ((name === 'input' || name === 'change') && target.matches?.('[data-search-without-date]')) return;
     if(target.matches?.('.date-field-display')||target.closest?.('.date-field-picker'))return;
     if(name==='click'&&!target.closest?.('button'))return;
     if(name==='click'&&target.closest('button')?.matches('[type="reset"],[data-dialog-dismiss],#staff-dialog-close,#calendar-dialog-close,[data-patient-cancel],[data-patient-close],[data-patient-edit-cancel],[data-schedule-cancel]'))return;

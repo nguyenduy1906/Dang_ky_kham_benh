@@ -69,7 +69,7 @@ def deliver(to_email, subject, body, *, message_id=None):
 
 def send_otp(to_email, otp):
     deliver(to_email, 'NEU Medical - Mã OTP đặt lại mật khẩu',
-            f'Mã OTP của bạn: {otp}\nMã có hiệu lực 10 phút, chỉ dùng một lần. '
+            f'Mã OTP của bạn: {otp}\nMã có hiệu lực 60 giây, chỉ dùng một lần. '
             'Không chia sẻ mã với bất kỳ ai. Nếu không yêu cầu đặt lại mật khẩu, hãy bỏ qua thư này.')
 
 

@@ -47,6 +47,8 @@ def _require_write(actor, patient):
 
 
 def list_patients(actor, query):
+    if query.get('reception_created_on') and actor['role_name'] not in STAFF_WRITE:
+        raise forbidden()
     owner_filter = actor['user_id'] if actor['role_name'] == constants.ROLE_USER else None
     if query.get('booked_by_me') and owner_filter is None:
         raise forbidden()
@@ -57,6 +59,7 @@ def list_patients(actor, query):
             db, user_id=owner_filter,
             nurse_id=actor['user_id'] if actor['role_name'] == constants.ROLE_NURSE else None,
             q=query['q'], include_archived=query['include_archived'],
+            reception_created_on=query.get('reception_created_on'),
             phone=query.get('phone'), booked_by_id=actor['user_id'] if query.get('booked_by_me') else None,
             limit=query['page_size'], offset=(query['page'] - 1) * query['page_size'])
     return {'items': [_present(r, actor) for r in rows], 'total': total,
@@ -146,6 +149,8 @@ def create_patient(actor, fields):
         else:
             try:
                 with db.transaction():
+                    fields['created_by_id'] = actor['user_id']
+                    fields['created_by_role'] = role
                     row = patient_model.create_patient(db, fields)
             except pg_errors.UniqueViolation:
                 raise conflict('Thông tin đã được sử dụng trong hồ sơ khác. Vui lòng kiểm tra họ tên và số điện thoại.',

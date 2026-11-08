@@ -1,3 +1,4 @@
+import {normalizeSearchText, matchesSearch} from "./search_text.js";
 import {replaceAdminRegion} from "./admin_render.js";
 import {readAdminNotifications,openNotification} from "./admin_notification_data.js";
 import {startAutoRefresh} from "./auto_refresh.js";
@@ -7,7 +8,7 @@ import { esc, table, facts, stamp, options, today } from "./admin_ui.js";
 import { code } from "./business_codes.js";
 
 const types={...baseTypes};
-const normalize=value=>String(value??"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/đ/g,"d").replace(/Đ/g,"D").toLocaleLowerCase("vi");
+const normalize = normalizeSearchText;
 const day=value=>new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Ho_Chi_Minh",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(value)); // Preview timestamps are explicitly in UTC+07:00.
 
 const readBadge=row=>`<span class="badge ${row.is_read?"blue":"amber"}">${row.is_read?"Đã đọc":"Chưa đọc"}</span>`;
@@ -16,7 +17,7 @@ export const ratingStars=rating=>`<span class="feedback-rating" aria-label="${Nu
 export function feedbackPage(rows,filters={},page=1,size=10) {
   if(filters.from_date&&filters.to_date&&filters.to_date<filters.from_date)throw new Error("Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.");
   const q=normalize(filters.q?.trim());
-  const items=rows.filter(row=>(!q||normalize([row.id,code(row.rating?"DG":"TB",row.id),row.doctor,row.department,row.comment,row.title,row.content,row.reference].join(" ")).includes(q))
+  const items=rows.filter(row=>(!q||matchesSearch([row.id,code(row.rating?"DG":"TB",row.id),row.doctor,row.department,row.comment,row.title,row.content,row.reference].join(" "),q))
     &&(!filters.doctor||row.doctor===filters.doctor)
     &&(!filters.rating||(filters.rating==="low"?row.rating<=2:String(row.rating)===filters.rating))
     &&(!filters.type||row.type===filters.type)

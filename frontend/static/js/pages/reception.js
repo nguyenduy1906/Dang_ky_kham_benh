@@ -56,7 +56,7 @@ function patientPayload(form) {
   return data;
 }
 export async function patientPage() {
-  $("#page-body").innerHTML = panel("Danh sách hồ sơ", '<form id="patient-search-form" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tìm kiếm<input name="q" type="search" maxlength="100" placeholder="Họ tên, số điện thoại hoặc CCCD" aria-controls="patient-list"></label><label>Ngày khám<input name="work_date" type="date" aria-controls="patient-list"></label></form><div id="patient-list"></div><div id="list-pagination" class="list-pagination"></div>');
+  $("#page-body").innerHTML = panel("Danh sách hồ sơ", '<form id="patient-search-form" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tìm kiếm<input data-search-without-date name="q" type="search" maxlength="100" placeholder="Họ tên, số điện thoại hoặc CCCD" aria-controls="patient-list"></label><label>Ngày khám<input name="work_date" type="date" aria-controls="patient-list"></label></form><div id="patient-list"></div><div id="list-pagination" class="list-pagination"></div>');
   const searchForm = $("#patient-search-form");
   searchForm.elements.work_date.value = today();
   let currentPage = 1, version = 0, request, active = true, detailVersion = 0, detailRequest;
@@ -72,7 +72,7 @@ export async function patientPage() {
     request?.abort(); request = new AbortController();
     await run(async () => {
       let result;
-      try { result = await searchReceptionPatients({ q: searchForm.elements.q.value, work_date:searchForm.elements.work_date.value }, page, 10, { signal: request.signal }); }
+      try { result = await searchReceptionPatients({ q: searchForm.elements.q.value, work_date:searchForm.elements.q.value.trim() ? "" : searchForm.elements.work_date.value }, page, 10, { signal: request.signal }); }
       catch (error) { if (!active || current !== version) return;$("#patient-list").innerHTML="";$("#list-pagination").innerHTML="";throw error; }
       if (!active || current !== version) return;
       currentPage = result.page;
@@ -120,7 +120,7 @@ export async function patientPage() {
           } catch (error) { if (active && detailCurrent===detailVersion && historyNode.isConnected) {historyNode.textContent = error.message || "Không tải được lịch sử khám.";if([401,403].includes(error.status))throw error;} }
         }
   }
-  const refreshSearch = bindLiveSearch(searchForm.elements.q, () => load(), { invalidate() {
+  const refreshSearch = bindLiveSearch(searchForm.elements.q, () => load(), { delay: 150, searchWhileComposing: true, invalidate() {
     version++; request?.abort();
     if(!active)return;
     $("#patient-list").innerHTML = '<p role="status">Đang tìm hồ sơ…</p>'; $("#list-pagination").innerHTML = "";

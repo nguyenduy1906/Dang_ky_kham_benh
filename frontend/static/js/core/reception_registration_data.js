@@ -1,3 +1,4 @@
+import {normalizeSearchText, matchesSearch} from "./search_text.js";
 import {listPatients} from '../api/patient.js';
 import * as encounters from '../api/encounter.js';
 import {listEncounterPayments} from '../api/payment.js';
@@ -56,13 +57,13 @@ export async function loadIntakeRegistrations(profiles,today,options={}){
 
 
 export async function loadDirectIntakePage({q='',work_date='',status=''}={},page=1,size=10,options={}){
- if(status!=='UNREGISTERED'&&work_date&&(!/^\d{4}-\d{2}-\d{2}$/.test(work_date)||!Number.isFinite(Date.parse(work_date))||new Date(work_date).toISOString().slice(0,10)!==work_date))throw new Error('Vui lòng chọn ngày khám hợp lệ.');
+ if(!work_date||(!/^\d{4}-\d{2}-\d{2}$/.test(work_date)||!Number.isFinite(Date.parse(work_date))||new Date(work_date).toISOString().slice(0,10)!==work_date))throw new Error('Vui lòng chọn ngày khám hợp lệ.');
  // Unregistered means no active appointment in any channel or day, not a missing visit on the filtered date.
  const unregistered=status==='UNREGISTERED';
  const visitQuery=unregistered||!status?{}:{encounter_type:'WALK_IN',...(work_date?{work_date}:{})};
- const [profiles,visits]=await Promise.all([allPages(listPatients,{include_archived:false},options),allPages(encounters.listEncounters,visitQuery,options)]);
+ const [profiles,visits]=await Promise.all([allPages(listPatients,{include_archived:false,reception_created_on:work_date},options),allPages(encounters.listEncounters,visitQuery,options)]);
  const registeredPatients=new Set(visits.filter(row=>['HOLDING','CONFIRMED','CHECKED_IN','IN_PROGRESS'].includes(row.encounter_status)).map(row=>String(row.patient_id)));
- const normalize=value=>String(value||'').normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/[đĐ]/g,'d').toLowerCase();
+ const normalize = normalizeSearchText;
  const registrations=new Map();
  const matching=unregistered?[]:visits.filter(row=>row.encounter_type==='WALK_IN'&&(!work_date||row.work_date===work_date)&&(!status||row.encounter_status===status)).sort((a,b)=>Number(b.encounter_id)-Number(a.encounter_id));
  const words=normalize(q).trim().split(/\s+/).filter(Boolean);
@@ -74,7 +75,7 @@ export async function loadDirectIntakePage({q='',work_date='',status=''}={},page
   if(!status&&!own.length&&registeredPatients.has(String(p.patient_id)))return [];
   return (own.length?own:[null]).flatMap(visit=>{
    const text=normalize([p.full_name,p.phone,p.id_card,`BN_${String(p.patient_id).padStart(3,'0')}`,visit?.ticket_code,visit?`LK_${String(visit.encounter_id).padStart(3,'0')}`:''].join(' '));
-   if(!words.every(word=>text.includes(word)))return [];
+   if(!matchesSearch(text,q))return [];
    if(visit)registrations.set(String(visit.encounter_id),visit);
    return [{...p,visit}];
   });

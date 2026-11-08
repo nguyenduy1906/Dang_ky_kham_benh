@@ -1,5 +1,12 @@
 export const CONVERSATION_KEY = 'neu-medical.chat-conversation';
 
+// Clear both the current tab and the persistent store used by older versions.
+export function clearBrowserConversation() {
+  for (const name of ['sessionStorage', 'localStorage']) {
+    try { clearConversation(globalThis[name]); } catch { /* Storage may be disabled. */ }
+  }
+}
+
 export function emptyConversation() {
   return { version: 1, messages: [], pending: null, open: false, draft: '' };
 }

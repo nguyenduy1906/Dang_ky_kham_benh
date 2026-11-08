@@ -231,6 +231,8 @@ body.reception-page[data-page="doctor_schedule"] *, body.reception-page[data-pag
 @media (max-width: 680px) { .reception-patient-results { grid-template-columns: 1fr; } }
 
 .reception-page .reception-patient-results { grid-template-columns: minmax(0, 1fr); }
+.reception-page #schedule-patient-results { max-height: min(var(--patient-list-ten-rows, 40dvh), 40dvh); overflow-y: auto; overscroll-behavior-y: contain; scrollbar-gutter: stable; grid-auto-rows: max-content; align-content: start; }
+.reception-page #schedule-patient-feedback:empty { display: none; }
 .reception-page .reception-patient-choice { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr); align-items: center; justify-items: start; text-align: left; gap: 16px; }
 .reception-page .reception-schedule-detail > .actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin: 0; }
 .reception-page .reception-schedule-detail > .actions [data-schedule-cancel] { order: 2; }

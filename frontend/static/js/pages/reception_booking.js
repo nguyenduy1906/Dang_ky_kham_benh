@@ -1,3 +1,4 @@
+import {normalizeSearchText, matchesSearch} from "../core/search_text.js";
 import {commitForm} from "../core/form_workflow.js";
 import {getSessionUser,loginUrl} from '../core/session.js';
 import {getPatient} from '../api/patient.js';
@@ -18,7 +19,7 @@ const e=(tag,text='',className='')=>{const n=document.createElement(tag);n.textC
 const query=new URLSearchParams(location.search),stage=document.body.dataset.bookingStage;
 let active=true,actor,patient,doctors=[],departments=[],doctor,rows=[],selected,day='',range=todayVN(),version=0,request,draftKey=query.get('draft');
 const paymentStates={PENDING:'Chờ thanh toán',SUCCESS:'Thành công',FAILED:'Thất bại',REFUNDED:'Đã hoàn tiền'};
-const normalize=value=>String(value||'').normalize('NFD').replace(/\p{Diacritic}/gu,'').replace(/[đĐ]/g,'d').toLowerCase();
+const normalize = normalizeSearchText;
 const shiftDay=(value,offset)=>new Date(Date.parse(value+'T12:00:00Z')+offset*86400000).toISOString().slice(0,10);
 window.addEventListener('pagehide',()=>{active=false;version++;request?.abort();},{once:true});
 window.addEventListener('neu:auth-change',()=>{active=false;version++;request?.abort();$('#main').inert=true;$('#main').hidden=true;showError('Phiên làm việc đã thay đổi. Vui lòng mở lại trang.');},{once:true});
@@ -64,7 +65,7 @@ function renderDepartments(){
  $('#department-empty').hidden=holder.children.length>0;
 }
 function renderDoctors(){
- const dept=$('#appointment-department').value,term=normalize($('#appointment-search').value),visible=doctors.filter(d=>(!dept||String(d.department_id)===dept)&&normalize(d.full_name).includes(term));
+ const dept=$('#appointment-department').value,term=normalize($('#appointment-search').value),visible=doctors.filter(d=>(!dept||String(d.department_id)===dept)&&matchesSearch(`${d.full_name} BS_${d.doctor_profile_id}`,term));
  if(doctor&&!visible.includes(doctor)){doctor=null;selected=null;rows=[];version++;request?.abort();renderDays();renderSlots();updateSelection();}
  const holder=$('.booking-doctor-list');holder.replaceChildren();
  for(const item of visible){
@@ -169,6 +170,7 @@ async function setupPayment(draft){
    $('#payment-summary').replaceWith(Object.assign(facts([...summaryPairs(draft),['Mã lượt khám',`LK_${String(row.encounter_id).padStart(3,'0')}`],['Trạng thái',encounterStatusLabels[row.encounter_status]||row.encounter_status],...(row.ticket_code?[['Mã phiếu',row.ticket_code]]:[])]),{id:'payment-summary'}));$('#payment-total').textContent=money(row.deposit_amount_snapshot??row.consultation_fee_snapshot);
    const paid=hasVerifiedRegistrationPayment(row,payments),failure=displayFailure&&payments.find(p=>p.transaction_status==='FAILED');
    $('#payment-layout').hidden=paid||Boolean(failure);result.hidden=!(paid||failure);
+   $('#reception-payment-return').hidden = !paid;
    if(paid||failure){
     result.dataset.outcome=paid?'SUCCESS':'FAILED';$('#reception-payment-result-title').textContent=paid?'Đã thanh toán':'Thanh toán không thành công';$('#reception-payment-result-description').textContent=paid?'Giao dịch đã được ghi nhận và lịch khám đã được xác nhận. Check-in được thực hiện riêng khi người bệnh đến.':'Giao dịch đã được ghi nhận không thành công. Có thể tạo lại yêu cầu nếu lịch còn giữ chỗ.';
     $('#reception-payment-result-summary').replaceChildren(facts([...summaryPairs(draft),['Mã phiếu',row.ticket_code||'—'],['Trạng thái',encounterStatusLabels[row.encounter_status]||row.encounter_status]]));$('#reception-payment-result-icon').textContent=paid?'✓':'!';result.querySelector('.payment-preview-notice').hidden=true;$('#reception-payment-preview-back').hidden=paid;

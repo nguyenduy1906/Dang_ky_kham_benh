@@ -10,7 +10,7 @@ import { listDoctorPatientHistory,getDoctorPatientHistory } from "../api/medical
 import { readMedicalRecord,medicalRecordMarkup } from "./staff_encounters.js";
 import { sessionError } from "./staff_workspace.js";
 import { bindLiveSearch } from "./live_search.js";
-import { $, esc, date, facts, panel, empty, table, pagination, badge, dialog, time, money, today } from "./staff_ui.js";
+import { $, esc, date, facts, panel, empty, table, pagination, badge, dialog, time, money, today, labels } from "./staff_ui.js";
 
 // Shared read-only records screen. Existing endpoints enforce the signed-in staff role and encounter scope; no patient or clinical writes.
 export async function initNurseRecords() {
@@ -18,7 +18,7 @@ export async function initNurseRecords() {
   const doctorView = document.body?.dataset?.role === "doctor";
   const recordStatuses = historyStatuses.filter(status => registeredEncounterStatuses.includes(status));
   $("#page-body").innerHTML = panel("Tra cứu hồ sơ", `
-    <form id="nurse-record-search" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tìm kiếm<input type="search" name="q" maxlength="100" placeholder="Tên, số điện thoại hoặc CCCD" autocomplete="off" aria-controls="nurse-record-list"></label><label>Trạng thái<select name="encounter_status"><option value="">Tất cả</option><option value="COMPLETED">Hoàn thành</option><option value="NO_SHOW">Không đến</option></select></label><label>Từ ngày<input type="date" name="from_date" value="${esc(initialRange?.from || "")}"></label><label>Đến ngày<input type="date" name="to_date" value="${esc(initialRange?.to || "")}"></label></form>
+    <form id="nurse-record-search" class="staff-toolbar" role="search" aria-label="Tra cứu hồ sơ"><label>Tìm kiếm<input data-search-without-date type="search" name="q" maxlength="100" placeholder="Tên, số điện thoại hoặc CCCD" autocomplete="off" aria-controls="nurse-record-list"></label><label>Trạng thái<select name="encounter_status"><option value="">Tất cả</option>${registeredEncounterStatuses.map(status => `<option value="${status}">${esc(labels[status])}</option>`).join("")}</select></label><label>Từ ngày<input type="date" name="from_date" value="${esc(initialRange?.from || "")}"></label><label>Đến ngày<input type="date" name="to_date" value="${esc(initialRange?.to || "")}"></label></form>
     <p id="nurse-record-status" class="scope-note" role="status" hidden></p><div id="nurse-record-list"></div><div id="nurse-record-pages" class="list-pagination"></div>`)
     + '<section id="nurse-record-detail" class="panel" tabindex="-1" aria-label="Hồ sơ đang xem" hidden></section>';
   const search = $("#nurse-record-search"), detail = $("#nurse-record-detail");
@@ -53,16 +53,31 @@ export async function initNurseRecords() {
       $("#nurse-record-list").innerHTML = ""; $("#nurse-record-pages").innerHTML = "";
     }
     try {
-      const range = nurseFormRange(search);
       const options = { signal: listRequest.signal };
       const state = search.elements.encounter_status.value;
-      if (state && !recordStatuses.includes(state)) throw new Error("Trạng thái lọc không hợp lệ.");
+      const q = search.elements.q.value.trim();
+      if (q) {
+        const query = { q, include_archived: true, page, page_size: 12 };
+        let result = await listPatients(query, options);
+        const lastPage = Math.max(1, Math.ceil(result.total / result.page_size));
+        if (!active || version !== listVersion) return;
+        if (page > lastPage) result = await listPatients({ ...query, page: lastPage }, options);
+        if (!active || version !== listVersion) return;
+        matchingPatients = result.items;
+        currentPage = result.page;
+        $("#nurse-record-list").innerHTML = nurseRecordTable(result.items, new Map());
+        pagination(result, load, $("#nurse-record-pages"));
+        status.hidden = true;
+        return;
+      }
+      const range = nurseFormRange(search);
+      if (state && !registeredEncounterStatuses.includes(state)) throw new Error("Trạng thái lọc không hợp lệ.");
       const [patients, visits] = await Promise.all([
-        allPages((paging, request) => listPatients({ q: search.elements.q.value.trim(), include_archived: true, ...paging }, request), options),
-        nurseEncounters(state ? [state] : recordStatuses, range?.from && range.from === range.to ? { work_date: range.from } : {}, options),
+        allPages((paging, request) => listPatients({ include_archived: true, ...paging }, request), options),
+        nurseEncounters(state ? [state] : registeredEncounterStatuses, range?.from && range.from === range.to ? { work_date: range.from } : {}, options),
       ]);
       if (!active || version !== listVersion) return;
-      const { items: matching, latest } = recentNursePatients(patients, visits.filter(v=>v.payment_confirmed===true), range);
+      const { items: matching, latest } = recentNursePatients(patients, visits, range, registeredEncounterStatuses);
       matchingPatients = matching;
       const result = localPage(matching, page);
       currentPage = result.page;
@@ -143,7 +158,7 @@ export async function initNurseRecords() {
       if (active && version === recordVersion) { status.textContent = sessionError(error); status.hidden = false; }
     }
   });
-  const refreshSearch = bindLiveSearch(search.elements.q, () => load(), { invalidate() {
+  const refreshSearch = bindLiveSearch(search.elements.q, () => load(), { delay: 150, searchWhileComposing: true, invalidate() {
     listVersion++; listRequest?.abort();
     if (!active) return;
     clearDetail();
