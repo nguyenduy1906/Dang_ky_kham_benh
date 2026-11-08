@@ -34,7 +34,7 @@ export function conversationHistory(messages) {
   for (const message of messages) {
     if (message.role === 'user') user = message.text;
     else if (user !== undefined) {
-      history.push({ role: 'user', content: user.slice(0, 500) }, { role: 'assistant', content: message.text.slice(0, 1200) });
+      history.push({ role: 'user', content: user.slice(0, 500) }, { role: 'assistant', content: message.text.slice(0, 6000) });
       user = undefined;
     }
   }

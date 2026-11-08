@@ -78,12 +78,15 @@ export async function patientPage() {
       currentPage = result.page;
       $("#patient-list").innerHTML = table(["Hồ sơ", "Ngày sinh / CCCD", "Liên hệ", "Thao tác"], result.items.map(p => `<tr><td><strong>${esc(p.full_name)}</strong><small class="cell-subtitle">Hồ sơ ${code("BN", p.patient_id)}</small></td><td>${date(p.dob)}<small class="cell-subtitle">${esc(p.id_card || "—")}</small></td><td>${esc(p.phone || "—")}</td><td><div class="actions"><button data-patient="${p.patient_id}" data-mode="view" class="secondary">Xem</button><button data-patient="${p.patient_id}" data-mode="edit" class="secondary">Chỉnh sửa</button></div></td></tr>`));
       pagination(result, load);
-      $("#patient-list").querySelectorAll("[data-patient]").forEach(button => button.addEventListener("click", () => run(async () => {
+      $("#patient-list").querySelectorAll("[data-patient]").forEach(button => button.addEventListener("click", () => run(() => showPatient(button.dataset.patient, button.dataset.mode))));
+    });
+  }
+  async function showPatient(patientId, mode = "view") {
         const detailCurrent=++detailVersion;detailRequest?.abort();detailRequest=new AbortController();
         const detailOptions={signal:detailRequest.signal};
-        const p = await readReceptionPatient(button.dataset.patient,detailOptions);
+        const p = await readReceptionPatient(patientId,detailOptions);
         if(!active || detailCurrent!==detailVersion)return;
-        const edit = button.dataset.mode === "edit";
+        const edit = mode === "edit";
         const row = { ...p };
         const wrapper = html => `<div class="admin-page reception-patient-view">${html}</div>`;
         if (edit) {
@@ -116,8 +119,6 @@ export async function patientPage() {
             if (historyNode.isConnected) historyNode.innerHTML = table(["Mã lượt khám", "Bệnh nhân", "Ngày khám", "Bác sĩ / phòng", "Hình thức", "Trạng thái"], visits.map(visit => `<tr><td>${esc(code("LK", visit.encounter_id))}</td><td>${esc(visit.patient_name || (String(visit.patient_id) === String(p.patient_id) ? p.full_name : "Chưa cập nhật"))}</td><td>${date(visit.work_date)}</td><td>${esc(visit.doctor_name || "—")}<small class="cell-subtitle">${esc(visit.room_name || "—")}</small></td><td>${encounterTypeBadge(visit.encounter_type)}</td><td>${badge(visit.encounter_status)}</td></tr>`));
           } catch (error) { if (active && detailCurrent===detailVersion && historyNode.isConnected) {historyNode.textContent = error.message || "Không tải được lịch sử khám.";if([401,403].includes(error.status))throw error;} }
         }
-      })));
-    });
   }
   const refreshSearch = bindLiveSearch(searchForm.elements.q, () => load(), { invalidate() {
     version++; request?.abort();
@@ -127,6 +128,8 @@ export async function patientPage() {
   searchForm.addEventListener("submit", event => { event.preventDefault(); refreshSearch(); });
   searchForm.elements.work_date.addEventListener("change",()=>refreshSearch());
   await load();
+  const linkedPatientId = new URLSearchParams(location.search).get("patient_id");
+  if (active && /^[1-9]\d*$/.test(linkedPatientId || "")) await run(() => showPatient(linkedPatientId));
   startAutoRefresh(() => load(currentPage),{canRefresh:()=>active});
 }
 async function coordinationPage() {

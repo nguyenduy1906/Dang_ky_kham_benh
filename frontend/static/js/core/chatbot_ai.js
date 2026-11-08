@@ -21,7 +21,7 @@ export function createDemoAssistant({ askAI, createBasic, initialHistory = [] })
     }
   };
   function remember(message, text) {
-    history.push({ role:'user', content:message.slice(0,500) }, { role:'assistant', content:text.slice(0,1200) });
+    history.push({ role:'user', content:message.slice(0,500) }, { role:'assistant', content:text.slice(0,6000) });
     history.splice(0, Math.max(0, history.length-12));
   }
 }

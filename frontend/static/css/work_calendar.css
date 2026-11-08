@@ -110,3 +110,8 @@
 .calendar-legend .legend-free { background: #fff; }
 .work-calendar-page .leave-state.state-PENDING { color: #76501f; background: #fff3e6; }
 .work-calendar-page .leave-state.state-APPROVED { color: #9b3030; background: #fdecec; }
+
+/* Elapsed shifts take precedence over working and leave colors. */
+.work-calendar-page button.calendar-shift.is-completed { background: #e5f5fc; border-color: #a9d9ed; color: #245a70; border-style: solid; }
+.work-calendar-page button.calendar-shift.is-completed:hover { background: #d5edf8; border-color: #72b8d5; }
+.calendar-legend .legend-completed { background: #a9d9ed; }

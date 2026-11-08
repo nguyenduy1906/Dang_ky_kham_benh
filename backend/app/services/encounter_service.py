@@ -1,7 +1,7 @@
 """Đầu mối gói 3 cho quyền truy cập và transaction lượt khám."""
 from datetime import timedelta
 from psycopg.types.json import Jsonb
-from backend.app.services.appointment_slot_service import reserve_interval, reserve_walk_in_interval, schedule_bounds
+from backend.app.services.appointment_slot_service import reserve_interval, reserve_walk_in_interval, schedule_bounds, online_booking_deadline
 from backend.app.services import patient_service
 from backend.app.utils.validation import normalize_phone
 
@@ -135,8 +135,8 @@ def _require_available(schedule, now, *, online=False):
     start, end = schedule_bounds(schedule)
     if schedule['schedule_status'] not in ('OPEN', 'FULL'):
         raise conflict('Ca đã đóng hoặc bác sĩ báo nghỉ', 'SCHEDULE_UNAVAILABLE')
-    if online and now > start - timedelta(hours=5):
-        raise conflict('Phải đặt online ít nhất 5 giờ trước giờ bắt đầu ca', 'SCHEDULE_TOO_LATE')
+    if online and now > online_booking_deadline(schedule):
+        raise conflict('Hạn đặt online là 18:00 ngày liền trước ngày khám (giờ Việt Nam)', 'SCHEDULE_TOO_LATE')
     if not online and now >= end:
         raise conflict('Ca không còn tiếp nhận', 'SCHEDULE_TOO_LATE')
     if schedule['booked_count'] >= schedule['max_quota']:
@@ -306,7 +306,7 @@ def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIEN
             visible = visible_encounter(db, actor, encounter_id)
             _patient_for_booking(db, visible['patient_id'], actor, online=False)
         encounter, schedules = locked_context(db, encounter_id)
-        visible_encounter(db, actor, encounter_id)
+        visible = visible_encounter(db, actor, encounter_id)
         schedule = schedules[encounter['schedule_id']]
         status, now = encounter['encounter_status'], date_utils.utc_now()
         terminal = {'cancel': 'CANCELLED', 'check-in': 'CHECKED_IN', 'no-show': 'NO_SHOW', 'start': 'IN_PROGRESS'}[operation]
@@ -347,19 +347,16 @@ def action(actor, encounter_id, operation, reason=None, *, cancel_origin='PATIEN
         else:
             if status != 'CHECKED_IN':
                 raise conflict('Chỉ bắt đầu khám lượt đã check-in', 'INVALID_ENCOUNTER_STATUS')
+            if not visible.get('payment_confirmed'):
+                raise conflict('Lượt khám chưa xác nhận thanh toán thành công', 'PAYMENT_REQUIRED')
             if not encounter.get('checked_in_at') or encounter['checked_in_at'] > now:
                 raise conflict('Chưa có xác nhận bệnh nhân đã đến hợp lệ', 'CHECK_IN_REQUIRED')
-            if now < encounter['estimated_exam_at']:
-                raise conflict('Chưa đến giờ hẹn khám của người bệnh', 'APPOINTMENT_NOT_STARTED')
             require_clinical_shift(schedule, now)
             if now < start or schedule['schedule_status'] in ('CLOSED', 'UNAVAILABLE'):
                 raise conflict('Ca chưa bắt đầu hoặc không hoạt động', 'SCHEDULE_UNAVAILABLE')
             schedule_model.lock_doctor_and_room(db,schedule['doctor_profile_id'],schedule['room_id'])
             if model.clinical_in_progress(db,schedule['doctor_profile_id'],schedule['room_id']):
                 raise conflict('Bác sĩ hoặc phòng vẫn đang khám lượt trước','EXAMINATION_IN_PROGRESS')
-            next_ready=model.next_checked_in(db,schedule['schedule_id'])
-            if next_ready is None or next_ready['encounter_id']!=encounter_id:
-                raise conflict('Cần gọi người bệnh đã có mặt theo thứ tự trước','ENCOUNTER_NOT_NEXT')
         model.update_encounter(db, encounter_id, fields)
         if operation == 'cancel':
             from backend.app.models.payment_model import fail_pending_deposits

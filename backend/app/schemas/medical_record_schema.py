@@ -33,6 +33,17 @@ def validate_items(data):
             'expected_version': int_field(data, 'expected_version', minimum=0)}
 
 
+def validate_save_and_complete(data):
+    data=ensure_object(data)
+    if set(data)-{'diagnosis','treatment','doctor_notes','items','expected_version'}:
+        raise bad_request('Chỉ nhận bệnh án, đơn thuốc và version đang chỉnh sửa')
+    record=validate_record({k:v for k,v in data.items() if k!='items'})
+    if record['expected_version'] is None:
+        raise bad_request('Cần version bệnh án trước khi lưu và hoàn tất')
+    record['items']=validate_items({'items':data.get('items')})['items']
+    return record
+
+
 def validate_review(data):
     data = ensure_object(data)
     if set(data) - {'rating', 'comment'}:

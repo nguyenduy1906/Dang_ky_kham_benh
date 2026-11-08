@@ -39,6 +39,8 @@ import {leaveRequestDetails} from "./admin_leave_detail.js";
 import {openScheduleDetail} from "./admin_schedule_detail.js";
 import {initAdminOverview} from "./admin_overview.js";
 import {startAutoRefresh} from "./auto_refresh.js";
+import {startAdminLeaveRefresh} from "./admin_leave_refresh.js";
+import {commitForm} from "./form_workflow.js";
 export {adminPages} from "./admin_resources.js";
 
 const dataForm = form => {
@@ -470,6 +472,12 @@ export async function initAdminWorkspace(key) {
       }
       if(type==="review") {
         if(!["APPROVED","REJECTED"].includes(raw.decision)||!raw.note?.trim())throw new Error("Chọn quyết định và nhập ý kiến xét duyệt.");
+        const latest=await leave.getAdminLeaveRequest(id,{signal});
+        if(String(latest.leave_request?.request_id)!==String(id))throw new Error('Đơn nghỉ trả về không khớp đơn đang xem.');
+        if(latest.leave_request.status!=="PENDING"){
+          commitForm(form);modalBody.innerHTML=leaveRequestDetails(latest,id);
+          throw new Error('Đơn nghỉ đã được xử lý. Không thể xét duyệt lại.');
+        }
         return leave.reviewLeaveRequest(id,{decision:raw.decision,note:raw.note.trim()},{signal});
       }
       if(type==="configuration") {
@@ -526,6 +534,7 @@ export async function initAdminWorkspace(key) {
   if(resources[key])await resourcePage();
   else if(key==="configuration")await configurationPage();
   const linkParams=new URLSearchParams(location.search);
+  if(key==="schedule")startAdminLeaveRefresh({ctx,modal,body:modalBody});
   const detailId=linkParams.get("detail_id"),leaveId=linkParams.get("leave_request_id");
   if(key==="schedule"&&leaveId&&/^[1-9]\d*$/.test(leaveId))await leaveDetail(leaveId);
   else if(resources[key]&&detailId&&/^[1-9]\d*$/.test(detailId)) {

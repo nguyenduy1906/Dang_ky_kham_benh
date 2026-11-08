@@ -12,6 +12,7 @@ export const paymentUrl = new URL("(patient)/payment.html", templates);
 export const appointmentsUrl = new URL("(patient)/appointments.html", templates);
 export const profileUrl = new URL("(patient)/profile.html", templates);
 export const recordsUrl = new URL("(patient)/records.html", templates);
+export const treatmentAppointmentsUrl = new URL("(patient)/chemotherapy.html", templates);
 const signInUrl = new URL("auth/login.html", templates);
 export const rolePaths = Object.freeze({ USER: "(patient)/portal.html", DOCTOR: "(doctor)/home.html", NURSE: "(nurse)/home.html", RECEPTIONIST: "(reception)/home.html", ADMIN: "(admin)/home.html" });
 export function workspaceUrl(role) { return new URL(Object.hasOwn(rolePaths, role) ? rolePaths[role] : "public/home.html", templates); }
@@ -131,14 +132,14 @@ export function returnUrl(value, role = "USER") {
   try {
     const url = new URL(value || fallback.href, location.href);
     const relative = decodeURIComponent(url.pathname.slice(templates.pathname.length));
-    const staffFiles = { ADMIN: ["home", "encounters", "patients", "schedule", "assignments", "doctors", "departments", "rooms", "users", "articles", "payments", "statistics", "audit", "configuration"], DOCTOR: ["home", "schedule", "encounters", "clinical", "history"], NURSE: ["home", "patients", "assignments", "records", "work_calendar"], RECEPTIONIST: ["home", "encounters", "walk_in", "patients", "coordination"] };
+    const staffFiles = { ADMIN: ["home", "reception_assignments", "reviews", "notifications", "encounters", "patients", "schedule", "assignments", "doctors", "departments", "rooms", "users", "articles", "payments", "statistics", "audit", "configuration"], DOCTOR: ["home", "schedule", "encounters", "clinical", "history", "records", "work_calendar", "notifications"], NURSE: ["home", "patients", "assignments", "records", "work_calendar", "notifications"], RECEPTIONIST: ["home", "encounters", "walk_in", "patients", "coordination", "work_calendar", "notifications", "payments", "doctor_schedule", "booking", "booking_review", "payment"] };
     const folder = { ADMIN: "admin", DOCTOR: "doctor", NURSE: "nurse", RECEPTIONIST: "reception" }[role];
     const staffAllowed = Object.hasOwn(staffFiles, role) && (relative === "components/profile.html" || staffFiles[role].some(file => relative === `(${folder})/${file}.html`));
     if (url.origin === homeUrl.origin && url.protocol === homeUrl.protocol &&
         url.pathname.startsWith(templates.pathname) &&
         !url.username && !url.password &&
         (staffAllowed || (role === "USER" && [homeUrl.pathname, portalUrl.pathname, bookingUrl.pathname, bookingReviewUrl.pathname, paymentUrl.pathname, appointmentsUrl.pathname,
-          profileUrl.pathname, recordsUrl.pathname].includes(url.pathname)))) return url;
+          profileUrl.pathname, recordsUrl.pathname, treatmentAppointmentsUrl.pathname].includes(url.pathname)))) return url;
   } catch { /* Never redirect to an untrusted next URL. */ }
   return new URL(fallback);
 }

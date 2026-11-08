@@ -54,6 +54,13 @@ def complete(encounter_id):
     return jsonify(service.complete(current_user(), encounter_id))
 
 
+@medical_record_bp.post('/doctor/encounters/<int:encounter_id>/save-and-complete')
+@roles_required('DOCTOR')
+def save_and_complete(encounter_id):
+    return jsonify(service.save_and_complete(current_user(),encounter_id,
+        medical_record_schema.validate_save_and_complete(request.get_json(silent=True))))
+
+
 @medical_record_bp.get('/doctor/patients/<int:patient_id>/history')
 @roles_required('DOCTOR')
 @swag_from(spec('Medical records', 'Lịch sử đã kết thúc: xem bác sĩ khác chỉ khi đang có bệnh nhân trong ca; chỉ đọc', [path('patient_id')] + PAGE))

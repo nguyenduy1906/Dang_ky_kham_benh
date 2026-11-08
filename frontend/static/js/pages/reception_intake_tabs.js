@@ -31,14 +31,18 @@ export async function initReceptionIntakeTabs(){
   if(linked?.encounter_type==='WALK_IN'||params.get('mode')==='direct')await select(0);
   return {refresh:async()=>{await online.refresh();if(direct)await direct.refresh();}};
 }
-async function initDirectList(linked){
+export async function initDirectList(linked){
   $('#intake-direct').innerHTML=panel('Danh sách bệnh nhân trực tiếp',`<form id="direct-patient-filters" class="staff-toolbar"><label>Tìm kiếm<input id="direct-patient-query" type="search" placeholder="Tên người bệnh, mã hồ sơ, số điện thoại hoặc CCCD"></label><label>Ngày khám<input id="direct-patient-date" type="date" value="${today()}"></label><label>Trạng thái<select id="direct-patient-status">${statusOptions().replace('<option value="">Tất cả trạng thái</option>','<option value="">Tất cả trạng thái</option><option value="UNREGISTERED">Chưa đăng ký</option>')}</select></label></form><div id="direct-patient-list" role="status"></div><div id="direct-patient-pagination" class="list-pagination"></div>`,'<button type="button" class="secondary" id="direct-patient-refresh">Làm mới</button>');
   if(linked?.encounter_type==='WALK_IN'){
     $('#direct-patient-date').value=linked.work_date;
     $('#direct-patient-query').value=code('LK',linked.encounter_id);
   }
-  let active=true,version=0,request,currentPage=1,registrations=new Map();
-  const stop=()=>{active=false;version++;request?.abort();};window.addEventListener('pagehide',stop,{once:true});window.addEventListener('neu:auth-change',stop,{once:true});
+  let active=true,version=0,request,currentPage=1,registrations=new Map(),detailVersion=0,detailRequest,saving=false;
+  const modal=$('#staff-dialog'),closeButton=$('#staff-dialog-close'),content=$('#staff-dialog-content');
+  function setSaving(value){saving=value;content.dataset.busy=String(value);closeButton.disabled=value;}
+  modal.addEventListener('cancel',event=>{if(saving)event.preventDefault();});
+  modal.addEventListener('close',()=>{detailVersion++;detailRequest?.abort();});
+  const stop=()=>{active=false;version++;detailVersion++;request?.abort();detailRequest?.abort();setSaving(false);};window.addEventListener('pagehide',stop,{once:true});window.addEventListener('neu:auth-change',stop,{once:true});
   async function load(page=1){
     currentPage=page;const token=++version;request?.abort();request=new AbortController();
     $('#direct-patient-list').textContent='Đang tải danh sách bệnh nhân…';
@@ -53,14 +57,34 @@ async function initDirectList(linked){
     }catch(error){if(!active||token!==version||error.code==='CLIENT_ABORTED')return;$('#direct-patient-list').textContent=error.message||'Không tải được danh sách bệnh nhân.';$('#direct-patient-pagination').innerHTML='';}
   }
   $('#direct-patient-list').addEventListener('click',event=>{
+    if(!active||saving)return;
     const check=event.target.closest('[data-direct-checkin]');
     if(check){
       const visit=registrations.get(String(check.dataset.directCheckin));if(!visit)return;
+      const token=++detailVersion;detailRequest?.abort();
       dialog('Xác nhận check-in',`<p>Chỉ xác nhận khi người bệnh đã đến viện.</p><p><strong>${esc(visit.patient_name)}</strong> · ${esc(code('LK',visit.encounter_id))}</p><div class="actions"><button class="primary" type="button" id="direct-confirm-checkin">Xác nhận đã đến</button></div><p id="direct-checkin-status" role="status"></p>`);
-      $('#direct-confirm-checkin').onclick=async()=>{const button=$('#direct-confirm-checkin');if(button.disabled)return;button.disabled=true;try{await checkInReception(visit.encounter_id);if(!active)return;$('#staff-dialog').close();await load(currentPage);}catch(error){$('#direct-checkin-status').textContent=error.message;}finally{button.disabled=false;}};return;
+      $('#direct-confirm-checkin').onclick=async()=>{
+        const button=$('#direct-confirm-checkin'),feedback=$('#direct-checkin-status');
+        if(saving||button.disabled||!active||token!==detailVersion)return;
+        button.disabled=true;setSaving(true);
+        try{
+          await checkInReception(visit.encounter_id);
+          if(!active||token!==detailVersion)return;
+          setSaving(false);modal.close();await load(currentPage);
+        }catch(error){if(active&&token===detailVersion)feedback.textContent=error.message;}
+        finally{if(active){setSaving(false);button.disabled=false;}}
+      };return;
     }
     const button=event.target.closest('[data-direct-detail]');if(!button)return;
-    const token=version;void run(async()=>{const patient=await readReceptionPatient(button.dataset.directDetail);if(!active||token!==version)return;dialog('Thông tin bệnh nhân',patientDetails(patient,{showRelatives:false,showAccountStatus:false}));});
+    const token=++detailVersion;detailRequest?.abort();detailRequest=new AbortController();
+    dialog('Thông tin bệnh nhân','<p role="status">Đang tải hồ sơ…</p>');
+    void run(async()=>{
+      try{
+        const patient=await readReceptionPatient(button.dataset.directDetail,{signal:detailRequest.signal});
+        if(!active||token!==detailVersion||!modal.open)return;
+        dialog('Thông tin bệnh nhân',patientDetails(patient,{showRelatives:false,showAccountStatus:false}));
+      }catch(error){if(active&&token===detailVersion&&modal.open)content.innerHTML=`<p role="status">${esc(error.message||'Không tải được hồ sơ.')}</p>`;}
+    });
   });
   const search=bindLiveSearch($('#direct-patient-query'),()=>load(),{invalidate(){version++;request?.abort();}});
   $('#direct-patient-filters').addEventListener('submit',event=>{event.preventDefault();search();});
@@ -68,5 +92,5 @@ async function initDirectList(linked){
   $('#direct-patient-status').addEventListener('change',()=>{const unregistered=$('#direct-patient-status').value==='UNREGISTERED';$('#direct-patient-date').disabled=unregistered;$('#direct-patient-date').title=unregistered?'Không áp dụng ngày khám cho người chưa đăng ký.':'';void load();});
   $('#direct-patient-date').addEventListener('input',()=>void load());
   $('#direct-patient-refresh').addEventListener('click',()=>void load(currentPage));
-  await load();startAutoRefresh(()=>load(currentPage),{canRefresh:()=>active&&!$('#intake-direct').hidden});return {refresh:()=>load(currentPage)};
+  await load();startAutoRefresh(()=>load(currentPage),{canRefresh:()=>active&&!saving&&!$('#intake-direct').hidden});return {refresh:()=>load(currentPage)};
 }

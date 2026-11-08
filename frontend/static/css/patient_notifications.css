@@ -1,0 +1,30 @@
+.patient-notifications { position: relative; flex: 0 0 auto; margin-left: auto; color: #005c39; font: 15px/1.5 Arial, sans-serif; }
+.patient-notifications[hidden], .patient-notification-panel[hidden] { display: none; }
+.patient-notifications button { font: inherit; cursor: pointer; }
+.patient-notification-bell { display: grid; place-items: center; width: 48px; height: 48px; padding: 11px; border: 1px solid #c7e0d2; border-radius: 50%; color: #005c39; background: #edf7f1; }
+.patient-notification-bell svg { width: 25px; height: 25px; }
+.patient-notification-bell:hover, .patient-notification-bell[aria-expanded="true"] { background: #dcefe3; border-color: #008751; }
+.patient-notifications button:focus-visible { outline: 3px solid #008751; outline-offset: 3px; }
+.patient-header .identity > .patient-notifications + .patient-account-link { margin-left: 0; }
+.patient-notification-panel { position: absolute; z-index: 100; top: calc(100% + 14px); right: 0; width: 380px; max-width: calc(100vw - 32px); overflow: hidden; border: 1px solid #d9e7df; border-radius: 16px; background: white; box-shadow: 0 16px 48px #123c2929; text-align: left; }
+.patient-notification-heading { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 8px; }
+.patient-notification-heading h2 { margin: 0; color: #005c39; font: 700 21px/1.4 Arial, sans-serif; }
+.patient-notification-close { width: 40px; height: 40px; border: 0; border-radius: 50%; color: #53665b; background: transparent; font-size: 28px !important; }
+.patient-notification-close:hover { background: #edf7f1; }
+.patient-notification-filters { display: flex; gap: 8px; padding: 0 20px 16px; border-bottom: 1px solid #e7eee9; }
+.patient-notification-filters button { padding: 7px 16px; border: 0; border-radius: 24px; color: #53665b; background: #f3f6f4; }
+.patient-notification-filters button[aria-pressed="true"] { color: #006b42; background: #e0f2e7; font-weight: 700; }
+.patient-notification-empty { padding: 32px 24px 38px; text-align: center; }
+.patient-notification-empty > span { display: grid; place-items: center; width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%; background: #edf7f1; font-size: 30px; }
+.patient-notification-empty h3 { margin: 0 0 8px; color: #243d30; font-size: 17px; }
+.patient-notification-empty svg { width: 28px; height: 28px; }
+.patient-notification-empty p { margin: 0; color: #64756b; font-size: 14px; line-height: 1.7; }
+@media (max-width: 1100px) {
+  .site-header .identity:has(> .patient-notifications:not([hidden])) .motto { width: auto; flex: 1; max-width: calc(100% - 64px); }
+}
+@media (max-width: 600px) {
+  .patient-notification-bell { width: 42px; height: 42px; padding: 9px; }
+  .patient-header .identity:has(> .patient-notifications:not([hidden])) { gap: 10px; }
+  .patient-notification-panel { position: fixed; top: var(--patient-header-height, 150px); right: 16px; width: calc(100vw - 32px); max-height: calc(100dvh - var(--patient-header-height, 150px) - 24px); overflow-y: auto; }
+  .site-header .patient-notification-panel { top: 150px; }
+}

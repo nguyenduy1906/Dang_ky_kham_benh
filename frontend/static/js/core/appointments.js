@@ -33,6 +33,8 @@ export function cancellationNotice(encounter, now = Date.now()) {
   const hours = (new Date(encounter.estimated_exam_at).getTime() - now) / 3600000;
   if(encounter.schedule_status==='UNAVAILABLE')return {allowed:true,message:'Ca khám đã báo nghỉ. Khi hủy do bệnh viện, khoản thu đủ điều kiện được xét hoàn 100%; bộ phận quản trị xử lý hoàn tiền riêng.'};
   const policy=encounter.policy_snapshot||{};
+  const fullHours=policy.CANCEL_FULL_REFUND_HOURS??48;
+  if(hours>=fullHours)return {allowed:true,message:`Nếu hủy theo nhu cầu cá nhân lúc này, bạn được xét hoàn 100% tiền cọc (mốc ít nhất ${fullHours} giờ trước giờ hẹn). Bộ phận quản trị xử lý hoàn tiền riêng; bấm hủy chưa tự thực hiện hoàn tiền.`};
   const limit=policy.CANCEL_HOURS_LIMIT, percent=policy.CANCEL_REFUND_PERCENT;
   if(!Number.isFinite(limit)||limit<0||!Number.isFinite(percent)||percent<0||percent>100)return {allowed:true,message:'Mức hoàn tiền được xác định theo chính sách của lượt khám tại thời điểm hủy. Vui lòng liên hệ bộ phận tiếp nhận để đối chiếu; thao tác hủy không tự thực hiện hoàn tiền.'};
   return {allowed:true,message:hours>=limit

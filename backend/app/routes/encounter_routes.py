@@ -85,8 +85,8 @@ def booking_eligibility():
 @encounter_bp.post('/encounters/online')
 @login_required
 @swag_from({'tags': ['Encounters'], 'summary': 'USER giữ chỗ và chốt tiền cọc theo cấu hình; chưa phát phiếu',
-            'description': 'Chọn khung giờ trong ca sáng/chiều, ít nhất 5 giờ trước giờ bắt đầu ca (Asia/Saigon). '
-                           'Đúng mốc 5 giờ được nhận; sau mốc này hoặc trong ca bị từ chối với 409/SCHEDULE_TOO_LATE. '
+            'description': 'Chọn khung giờ trong ca sáng/chiều, hạn đặt online là 18:00 ngày liền trước ngày khám (Asia/Saigon). '
+                           'Đúng 18:00 ngày hôm trước được nhận; sau mốc này bị từ chối với 409/SCHEDULE_TOO_LATE. '
                            'Lượt đã HOLDING vẫn có 10 phút để thanh toán.',
             'security': _SECURITY, 'parameters': [_body({'patient_id': {'type': 'integer'},
                 'schedule_id': {'type': 'integer'}, 'appointment_time': {'type': 'string', 'example': '08:30'}, 'symptoms': {'type': 'string'},

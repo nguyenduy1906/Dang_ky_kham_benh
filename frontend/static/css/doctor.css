@@ -90,6 +90,14 @@
 .doctor-page .clinical-lookup input {margin-bottom:16px;min-height:48px}
 .doctor-page .clinical-profile-results {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .doctor-page .clinical-patient-heading {display:flex;justify-content:space-between;gap:16px;align-items:start;margin-bottom:24px}
+.doctor-page .clinical-patient-heading > div:last-child {display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.doctor-page .treatment-sessions-group {min-width:0;margin:16px 0;padding:16px;border:1px solid #dce5df;border-radius:8px}
+.doctor-page #treatment-sessions {display:grid;gap:16px}
+.doctor-page .treatment-session-row {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 44px;gap:16px;align-items:end}
+.doctor-page .treatment-session-row label {min-width:0;margin:0}
+.doctor-page .treatment-session-row :is(input,select) {width:100%;min-width:0;min-height:48px;margin-bottom:0}
+.doctor-page .treatment-session-row .treatment-remove-session {width:44px;min-height:48px;padding:0;margin:0;font-size:24px;line-height:1;color:#a33434}
+@media(max-width:550px){.doctor-page .treatment-session-row{grid-template-columns:minmax(0,1fr) 40px;gap:10px}.doctor-page .treatment-session-row label:first-child{grid-column:1/-1}.doctor-page .treatment-session-row .treatment-remove-session{width:40px}}
 .doctor-page .clinical-patient-heading h2 {font-size:24px;margin:0 0 8px}
 .doctor-page .clinical-patient-heading p:not(.clinical-eyebrow) {color:#65796e;margin:0;font-size:13px}
 .doctor-page .clinical-summary-grid .doctor-facts {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:18px}

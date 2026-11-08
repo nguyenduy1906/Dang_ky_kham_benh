@@ -40,6 +40,9 @@ export async function initNursePatients({ assignments }) {
     if (initialRange.from === initialRange.to) form.elements.work_date.value = initialRange.from;
   }
   let active = true, version = 0, detailVersion = 0, request, detailRequest, rows = [], currentPage = 1;
+  let selectedVisit = null;
+  const modal = $("#staff-dialog");
+  modal.addEventListener("close", () => { selectedVisit = null; detailVersion++; detailRequest?.abort(); });
   const assigned = new Set(assignments.map(a => String(a.schedule_id)));
   function stop() {
     active = false; version++; detailVersion++; request?.abort(); detailRequest?.abort(); rows = [];
@@ -61,7 +64,9 @@ export async function initNursePatients({ assignments }) {
   }
   async function load(keepPage = false) {
     const current = ++version; request?.abort(); request = new AbortController();
-    detailVersion++; detailRequest?.abort(); $("#staff-dialog").close(); rows = [];
+    const preserveDetail = keepPage === true && modal.open && selectedVisit;
+    if (!preserveDetail) { selectedVisit = null; detailVersion++; detailRequest?.abort(); modal.close(); }
+    rows = [];
     $("#nurse-visit-list").innerHTML = ""; $("#nurse-visit-pages").innerHTML = "";
     status.hidden = false; status.textContent = "Đang tải danh sách khám…"; status.dataset.error = "false";
     try {
@@ -69,6 +74,10 @@ export async function initNursePatients({ assignments }) {
         const assignments = await allPages(listOwnNurseAssignments, { signal: request.signal });
         if (!active || current !== version) return;
         assigned.clear(); assignments.forEach(a => assigned.add(String(a.schedule_id)));
+        if (preserveDetail && selectedVisit && !assigned.has(String(selectedVisit.schedule_id))) {
+          selectedVisit = null; detailVersion++; detailRequest?.abort(); modal.close();
+          $("#staff-dialog-content").replaceChildren();
+        }
         const picked = form.elements.schedule_id.value;
         const shifts = assignments.sort((a, b) => `${a.work_date}${a.start_time}`.localeCompare(`${b.work_date}${b.start_time}`));
         form.elements.schedule_id.innerHTML = '<option value="">Tất cả ca</option>' + shifts.map(a => `<option value="${esc(a.schedule_id)}">${date(a.work_date)} · ${esc(a.start_time.slice(0, 5))}–${esc(a.end_time.slice(0, 5))} · ${esc(a.room_name)}</option>`).join("")
@@ -86,29 +95,53 @@ export async function initNursePatients({ assignments }) {
         && (!filter.work_date || e.work_date === filter.work_date)
         && (!filter.schedule_id || String(e.schedule_id) === filter.schedule_id));
       render(keepPage ? currentPage : 1); status.hidden = true;
+      if (preserveDetail && modal.open && selectedVisit) {
+        if (!assigned.has(String(selectedVisit.schedule_id))) {
+          selectedVisit = null; detailVersion++; modal.close();
+          $("#staff-dialog-content").replaceChildren();
+        } else await showVisit(selectedVisit.encounter_id, true);
+      }
     } catch (error) {
-      if (active && current === version) { status.textContent = sessionError(error); status.dataset.error = "true"; }
+      if (active && current === version) {
+        if (preserveDetail && [401, 403, 404].includes(error.status)) {
+          selectedVisit = null; detailVersion++; detailRequest?.abort(); modal.close();
+          $("#staff-dialog-content").replaceChildren();
+        }
+        status.textContent = sessionError(error); status.dataset.error = "true";
+      }
     }
   }
-  async function showVisit(encounterId) {
+  async function showVisit(encounterId, silent = false) {
     if (!active) return;
-    const row = rows.find(e => String(e.encounter_id) === String(encounterId)) || (String(linked?.encounter_id)===String(encounterId)?linked:null);
+    const row = rows.find(e => String(e.encounter_id) === String(encounterId)) || (silent && String(selectedVisit?.encounter_id) === String(encounterId) ? selectedVisit : null) || (String(linked?.encounter_id)===String(encounterId)?linked:null);
     if (!row || !assigned.has(String(row.schedule_id))) return;
     const current = ++detailVersion; detailRequest?.abort(); detailRequest = new AbortController();
-    status.hidden = false; status.textContent = "Đang tải thông tin…"; status.dataset.error = "false";
+    const valid = () => active && current === detailVersion && (!silent || modal.open);
+    if (!silent) { status.hidden = false; status.textContent = "Đang tải thông tin…"; status.dataset.error = "false"; }
     try {
       const { encounter } = await getEncounter(row.encounter_id, { signal: detailRequest.signal });
-      if (!active || current !== detailVersion) return;
+      if (!valid()) return;
       if (String(encounter.patient_id) !== String(row.patient_id) || !assigned.has(String(encounter.schedule_id))) throw new Error("Lượt khám không thuộc người bệnh hoặc ca đang xem.");
       const { patient } = await getPatient(encounter.patient_id, { signal: detailRequest.signal });
-      if (!active || current !== detailVersion) return;
+      if (!valid()) return;
       if (String(patient.patient_id) !== String(encounter.patient_id)) throw new Error("Hồ sơ trả về không thuộc người bệnh đã chọn.");
       const clinical = ["IN_PROGRESS","COMPLETED"].includes(encounter.encounter_status) ? await readMedicalRecord(encounter) : "";
-      if (!active || current !== detailVersion) return;
-      dialog("Chi tiết lượt khám", encounterSummary(encounter) + panel("Thông tin người bệnh", facts([["Ngày sinh", date(patient.dob)], ["Giới tính", patient.gender], ["Điện thoại", patient.phone], ["BHYT", patient.health_insurance]])) + clinical);
+      if (!valid()) return;
+      const html = encounterSummary(encounter) + panel("Thông tin người bệnh", facts([["Ngày sinh", date(patient.dob)], ["Giới tính", patient.gender], ["Điện thoại", patient.phone], ["BHYT", patient.health_insurance]])) + clinical;
+      selectedVisit = encounter;
+      if (silent) {
+        const content = $("#staff-dialog-content"), scrollTop = modal.scrollTop, contentScrollTop = content.scrollTop;
+        if (content.innerHTML !== html) content.innerHTML = html;
+        modal.scrollTop = scrollTop; content.scrollTop = contentScrollTop;
+      } else dialog("Chi tiết lượt khám", html);
       status.hidden = true;
     } catch (error) {
-      if (active && current === detailVersion) { status.textContent = sessionError(error); status.dataset.error = "true"; }
+      if (valid()) {
+        if (silent && [401, 403, 404].includes(error.status)) {
+          selectedVisit = null; modal.close(); $("#staff-dialog-content").replaceChildren();
+        }
+        status.hidden = false; status.textContent = sessionError(error); status.dataset.error = "true";
+      }
     }
   }
   $("#nurse-visit-list").addEventListener("click", event => {
@@ -127,5 +160,6 @@ export async function initNursePatients({ assignments }) {
   await load();
   const encounterId = new URLSearchParams(location.search).get("encounter_id");
   if (encounterId) await showVisit(encounterId);
-  startAutoRefresh(() => load(true), { canRefresh: () => active });
+  startAutoRefresh(() => load(true), { canRefresh: () => active,
+    canRefreshDialog: opened => opened === modal && !!selectedVisit });
 }

@@ -1,4 +1,4 @@
-import {commitForm,confirmDiscard} from "./form_workflow.js";
+import {commitForm,confirmDiscardAsync} from "./form_workflow.js";
 import {isScheduleStatus,scheduleStatusBadge} from "./schedule_status.js";
 import {encounterStatusBadge,encounterStatusLabels} from "./encounter_status.js";
 import {encounterTypeBadge} from "./encounter_type.js";
@@ -31,13 +31,13 @@ export async function allPages(reader, params={}, signal) {
   }
 }
 export function createAdminContext() {
-  let active=true, version=0, modalVersion=0, controller, trigger;
+  let active=true, version=0, modalVersion=0, showVersion=0, controller, trigger;
   const requests=new Set();
   const content=$("#page-body"), modal=$("#admin-dialog"), modalBody=$("#admin-dialog-body");
-  function stop() { active=false; version++; modalVersion++; for(const item of requests)item.abort(); content.innerHTML=""; modalBody.innerHTML=""; if(modal.open)modal.close(); }
+  function stop() { active=false; version++; modalVersion++; showVersion++; for(const item of requests)item.abort(); content.innerHTML=""; modalBody.innerHTML=""; if(modal.open)modal.close(); }
   window.addEventListener("pagehide",stop,{once:true});
   window.addEventListener("neu:auth-change",stop);
-  modal.addEventListener("close",()=>{modalVersion++;trigger?.focus();});
+  modal.addEventListener("close",()=>{modalVersion++;showVersion++;trigger?.focus();});
   function handle(error,target=$("#admin-status")) {
     if (!active || error.code === "CLIENT_ABORTED") return;
     if (error.status === 401 || error.status === 403 && error.code !== "SELF_CHANGE_FORBIDDEN") { stop(); if(error.status === 401)clearSession(); $("#staff-access").hidden=false; $("#staff-access").textContent=error.message; $("#main-content").inert=true; return; }
@@ -61,7 +61,9 @@ export function createAdminContext() {
   }
   async function show(title, task) {
     if(!active)return;
-    if(!confirmDiscard(modal))throw Object.assign(new Error("Đã giữ nội dung chưa lưu."),{code:"CLIENT_ABORTED"});
+    const requested = ++showVersion;
+    if(!await confirmDiscardAsync(modal))throw Object.assign(new Error("Đã giữ nội dung chưa lưu."),{code:"CLIENT_ABORTED"});
+    if(!active || requested !== showVersion)return;
     const current=++modalVersion, request=new AbortController();requests.add(request);
     const patientHistory=modal.querySelector("#patient-history-header");if(patientHistory)patientHistory.hidden=true;
     $("#admin-dialog-title").textContent=title;modalBody.innerHTML='<p role="status">Đang tải…</p>';

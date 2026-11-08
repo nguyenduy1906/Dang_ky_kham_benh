@@ -38,8 +38,8 @@ const dept=f("department_id","Chuyên khoa","select",{reference:"departments",re
 const choice=(name,title,values)=>f(name,title,"select",{choices:values});
 const id=(name,title)=>f(name,title,"text",{businessId:true,required:true});
 export const resources = {
-  users:{id:"user_id",list:auth.listUsers,get:async(id,opt)=>(await auth.getUser(id,opt)).user,create:auth.createUser,update:auth.updateUser,add:"Tạo tài khoản",columns:["Mã","Người dùng","Liên hệ","Vai trò","Trạng thái","Phê duyệt"],
-    cells:r=>[esc(code("TK", r.user_id)),esc(r.full_name),esc([r.email,r.phone].filter(Boolean).join(" · ")),badge(r.role_name),badge(r.account_status),badge(r.approval_status)],
+  users:{id:"user_id",list:auth.listUsers,get:async(id,opt)=>(await auth.getUser(id,opt)).user,create:auth.createUser,update:auth.updateUser,add:"Tạo tài khoản",columns:["Mã","Người dùng","Liên hệ","Vai trò","Trạng thái"],
+    cells:r=>[esc(code("TK", r.user_id)),esc(r.full_name),esc([r.email,r.phone].filter(Boolean).join(" · ")),badge(r.role_name),badge(r.account_status)],
     filters:[f("q","Tên tài khoản, email hoặc số điện thoại","search"),f("role","Vai trò","select",{reference:"roles"}),choice("account_status","Trạng thái",["ACTIVE","LOCKED"])],
     fields:[f("full_name","Họ và tên","text",{required:true,max:150}),f("email","Email","email",{max:254,omitEmpty:true}),f("phone","Điện thoại","tel",{max:20,omitEmpty:true}),f("password","Mật khẩu ban đầu","password",{required:true,minLength:12,max:128,createOnly:true}),f("role","Vai trò","select",{reference:"roles",required:true}),{...choice("account_status","Trạng thái tài khoản",[["ACTIVE","Hoạt động"],["LOCKED","Đã khóa"]]),editOnly:true,required:true},
       f("dob","Ngày sinh","date",{editOnly:true}),{...choice("gender","Giới tính",["Nam","Nữ","Khác"]),editOnly:true},

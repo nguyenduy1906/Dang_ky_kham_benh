@@ -229,7 +229,7 @@ async function loadSchedules(preserveSelection = false) {
     for (const day of dates) dateSelect.add(new Option(dateLabel(day), day));
     dateSelect.value = selectedDate;
     ui.scheduleStatus.textContent = dates.length
-      ? "Chọn ngày và khung giờ còn trống. Đặt online cần trước giờ bắt đầu ca ít nhất 5 tiếng."
+      ? "Chọn ngày và khung giờ còn trống. Hạn đặt online là 18:00 ngày liền trước ngày khám (giờ Việt Nam)."
       : "Chưa có khung giờ có thể đặt online trong khoảng ngày này. Bạn có thể đổi ngày hoặc chọn bác sĩ khác.";
     renderDays();
     renderSlots();

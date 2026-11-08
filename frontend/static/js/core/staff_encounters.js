@@ -50,7 +50,12 @@ export async function initEncounterList({ role, completed = false, assignments =
   if (receptionSearch && !completed) form.elements.encounter_status.value = scheduleId || initialEncounter ? "" : "CONFIRMED";
   if(initialEncounter) $("#encounter-search").value=code("LK",initialEncounter.encounter_id);
   let rows = [], page = 1, version = 0, active = true, request, detailVersion = 0, detailRequest;
-  const stop = () => { active = false; version++; detailVersion++; request?.abort(); detailRequest?.abort(); rows=[]; };
+  let detailReader = null;
+  const modal = $("#staff-dialog");
+  const isReceptionDetail = () => role === "reception" && modal?.open && detailReader
+    && $("#staff-dialog-title").textContent === "Chi tiết lượt khám" && !modal.querySelector("form");
+  modal?.addEventListener("close", () => { detailReader = null; detailVersion++; detailRequest?.abort(); });
+  const stop = () => { active = false; detailReader = null; version++; detailVersion++; request?.abort(); detailRequest?.abort(); rows=[]; };
   window.addEventListener("pagehide", stop, { once: true });
   window.addEventListener("neu:auth-change", stop, { once: true });
   async function load(next = 1) {
@@ -92,13 +97,17 @@ export async function initEncounterList({ role, completed = false, assignments =
       pagination({total, page, page_size:10}, next => { page = next; render(); });
     }
     $("#encounter-list").innerHTML = doctorList ? doctorEncounterTable(matches) : table(["Người bệnh / phiếu khám", "Khung giờ", "Phòng / bác sĩ", "Trạng thái", compact && !completed ? "Mở hồ sơ bệnh án" : "Thao tác"], matches.map(e => `<tr>${encounterColumns(e)}<td><div class="actions">${doctorList ? "" : `<button class="secondary" data-detail="${e.encounter_id}">Chi tiết</button>`}${role === "doctor" && !completed ? `<a class="button-link secondary" href="clinical.html?encounter_id=${e.encounter_id}&mode=${e.encounter_status === "IN_PROGRESS" ? "edit" : "view"}">${completed ? "Xem / bổ sung" : "Mở bệnh án"}</a>` : ""}${role === "reception" && canCheckIn(e) ? `<button data-checkin="${e.encounter_id}">Check-in</button>` : ""}</div></td></tr>`));
-    $("#encounter-list").querySelectorAll("[data-detail]").forEach(button => button.addEventListener("click", () => run(async () => {
+    $("#encounter-list").querySelectorAll("[data-detail]").forEach(button => {
+      const showDetail = async (silent = false) => {
       const current = ++detailVersion;detailRequest?.abort();detailRequest=new AbortController();
+      const valid = () => active && current === detailVersion && (!silent || (detailReader === showDetail && isReceptionDetail()));
+      if(!silent && role === "reception") dialog("Chi tiết lượt khám", '<p role="status">Đang tải thông tin lượt khám…</p>');
+      try {
       const e = (await api.getEncounter(button.dataset.detail,{signal:detailRequest.signal})).encounter;
-      if(!active || current !== detailVersion)return;
+      if(!valid())return;
       if(String(e?.encounter_id)!==String(button.dataset.detail))throw new Error("Lượt khám không khớp thông tin đã chọn.");
       const history = await api.listStatusHistory(e.encounter_id, { page_size: 100 },{signal:detailRequest.signal});
-      if(!active || current !== detailVersion)return;
+      if(!valid())return;
       let clinical = "";
       if (role === "reception") clinical += registrationSummary(e);
       if (role === "nurse") {
@@ -106,6 +115,9 @@ export async function initEncounterList({ role, completed = false, assignments =
         clinical += panel("Thông tin người bệnh", facts([["Ngày sinh", date(patient.dob)], ["Giới tính", patient.gender], ["Điện thoại", patient.phone], ["BHYT", patient.health_insurance]]));
       }
       if (role === "nurse" || (role === "doctor" && ["IN_PROGRESS", "COMPLETED"].includes(e.encounter_status))) clinical += await readMedicalRecord(e);
+      if(!valid())return;
+      const contentScroll = $("#staff-dialog-content").scrollTop, modalScroll = modal.scrollTop;
+      if(role === "reception") detailReader = showDetail;
       dialog("Chi tiết lượt khám", (role === "reception" ? `<div class="reception-checkin-heading"><div><span>THÔNG TIN NGƯỜI BỆNH</span><h3>${esc(e.patient_name)}</h3><p>${esc(code("LK", e.encounter_id))} · ${e.encounter_type === "ONLINE" ? "Đặt trực tuyến" : "Khám trực tiếp"}</p></div><div class="reception-checkin-time"><span>Khung giờ khám</span><strong>${time(e.estimated_exam_at)} – ${time(e.appointment_end_at)}</strong><small>${date(e.work_date)}</small></div></div><section class="reception-checkin-summary"><h3>Thông tin lượt khám</h3>${encounterSummary(e)}</section>` : encounterSummary(e)) + clinical + panel("Lịch sử trạng thái", table(["Thời gian", "Trạng thái", "Ghi chú"], history.items.map(h => `<tr><td>${date(h.changed_at)} ${time(h.changed_at)}</td><td>${badge(h.new_status)}</td><td>${esc(h.note || "—")}</td></tr>`))) + (role === "reception" && ["CONFIRMED", "CHECKED_IN"].includes(e.encounter_status) ? `<a class="button-link" href="coordination.html?encounter_id=${e.encounter_id}">Chuyển bác sĩ / ca</a>` : ""));
       if (role === "reception") {
         const content = $("#staff-dialog-content");
@@ -118,6 +130,7 @@ export async function initEncounterList({ role, completed = false, assignments =
         if (transfer) actions.prepend(transfer);
         detail.append(actions);
         actions.querySelectorAll("button").forEach(action => action.addEventListener("click", () => {
+          detailReader = null; detailVersion++; detailRequest?.abort();
           const cancel = action.dataset.receptionAction === "cancel";
           dialog(cancel ? "Xác nhận hủy" : "Xác nhận vắng mặt", encounterSummary(e) + `<form id="reception-action-form">${cancel ? '<label class="reception-cancel-source">Hình thức hủy *<select name="cancel_origin" required><option value="" selected disabled>Chọn hình thức hủy</option><option value="PATIENT">Hủy do cá nhân</option><option value="HOSPITAL">Hủy do bệnh viện</option></select></label>' : ""}<label>Lý do ${cancel ? "*" : ""}<textarea name="reason" rows="3" maxlength="1000" ${cancel ? "required" : ""}></textarea></label><p>${cancel ? "Hệ thống sẽ ghi nguyên nhân hủy và xử lý chính sách hoàn cọc tương ứng." : "Chỉ được đánh dấu vắng mặt sau khi kết thúc ca ít nhất 15 phút."}</p><button type="submit">Xác nhận ${cancel ? "hủy lượt khám" : "vắng mặt"}</button><p role="status" class="form-feedback"></p></form>`);
           $("#reception-action-form").addEventListener("submit", event => {
@@ -126,10 +139,15 @@ export async function initEncounterList({ role, completed = false, assignments =
           });
         }));
       }
-    })));
+      if(silent){modal.scrollTop=modalScroll;$("#staff-dialog-content").scrollTop=contentScroll;}
+      } catch(error) { if(valid()) throw error; }
+      };
+      button.addEventListener("click", () => run(() => showDetail()));
+    });
     $("#encounter-list").querySelectorAll("[data-checkin]").forEach(button => button.addEventListener("click", () => {
       const e = rows.find(item => item.encounter_id === Number(button.dataset.checkin));
       if(!active || !e)return;
+      detailReader=null;detailVersion++;detailRequest?.abort();
       dialog("Xác nhận check-in", `<div class="reception-checkin"><div class="reception-checkin-heading"><div><span>TIẾP NHẬN NGƯỜI BỆNH</span><h3>${esc(e.patient_name)}</h3><p>Kiểm tra thông tin trước khi xác nhận người bệnh đã đến.</p></div><div class="reception-checkin-time"><span>Khung giờ khám</span><strong>${time(e.estimated_exam_at)} – ${time(e.appointment_end_at)}</strong><small>${date(e.work_date)}</small></div></div><section class="reception-checkin-summary"><h3>Thông tin lượt khám</h3>${encounterSummary(e)}</section>${registrationSummary(e)}<form id="checkin-form"><p class="reception-checkin-note">Đối chiếu giấy tờ, số điện thoại và phiếu với người bệnh có mặt. Khi xác nhận tiếp nhận, hệ thống tạo tài khoản cho người bệnh nếu chưa có.</p><div class="reception-checkin-footer"><p role="status" class="form-feedback"></p><button type="submit">Xác nhận check-in</button></div></form></div>`);
       $("#checkin-form .reception-checkin-note").insertAdjacentHTML("beforeend", ` ${esc(checkInInstruction(e))}`);
       $("#checkin-form").addEventListener("submit", event => { event.preventDefault(); submit(event.currentTarget, async () => { await checkInReception(e.encounter_id); if(!active)return; $("#staff-dialog").close(); await load(page); }, "Đã check-in lượt khám."); });
@@ -140,7 +158,21 @@ export async function initEncounterList({ role, completed = false, assignments =
   form.addEventListener("reset", event => { event.preventDefault(); for (const input of form.querySelectorAll("input, select")) input.value = ""; $("#encounter-search").value = ""; load(); });
   $("#encounter-search").addEventListener("input", () => { if (doctorList || receptionSearch) page = 1; render(); });
   await load();
-  startAutoRefresh(() => load(page), { canRefresh: () => active });
+  startAutoRefresh(async () => {
+    const reader = detailReader;
+    await load(page);
+    if(active && reader && reader === detailReader && isReceptionDetail()) {
+      await run(async () => {
+        try { await reader(true); }
+        catch(error){
+          if([401,403,404].includes(error.status) && reader === detailReader) {
+            modal.close(); $("#staff-dialog-content").replaceChildren();
+          }
+          throw error;
+        }
+      });
+    }
+  }, { canRefresh: () => active, canRefreshDialog: opened => opened === modal && !!isReceptionDetail() });
   return { refresh: () => load(page), selectSchedule(id, day) {
     if (compact && !Array.from(form.elements.schedule_id.options).some(option => option.value === String(id))) {
       form.elements.schedule_id.add(new Option(`Ca ${id} · ${date(day)}`, String(id)));

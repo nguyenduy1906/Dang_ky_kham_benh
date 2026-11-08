@@ -1,11 +1,16 @@
 """Khung giờ trong ca; bên ghi dữ liệu phải khóa work_schedule trước khi gọi."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 
 from backend.app.core.errors import conflict, bad_request
 from backend.app.models import encounter_model
 from backend.app.utils.date import VN_TZ
 
 OCCUPIED = ('HOLDING', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED')
+
+
+def online_booking_deadline(schedule):
+    """18:00 on the preceding calendar day in Vietnam, inclusive."""
+    return datetime.combine(schedule['work_date'] - timedelta(days=1), time(18), VN_TZ)
 
 
 def schedule_bounds(schedule):

@@ -68,9 +68,6 @@ function render() {
     tab.tabIndex = selected ? 0 : -1;
     if (selected) $("#appointments-panel").setAttribute("aria-labelledby", tab.id);
   });
-  $('#appointments-view-help').textContent = view === 'upcoming'
-    ? 'Các lượt còn hiệu lực: chờ thanh toán, đã thanh toán, đã check-in hoặc đang khám. Đến giờ hẹn sẽ không còn được tự hủy.'
-    : 'Các lượt đã hoàn thành, đã hủy, hết hạn giữ chỗ hoặc được ghi nhận không đến khám.';
   const filtered = filterAppointments(items, { view, patient: ui.patient.value, status: ui.filter.value });
   const pages = Math.max(1, Math.ceil(filtered.length / perPage));
   page = Math.min(page, pages);

@@ -151,6 +151,10 @@ CREATE TABLE IF NOT EXISTS work_schedule (
     created_at            TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at            TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT schedule_time_order CHECK (end_time > start_time),
+    CONSTRAINT schedule_standard_shift CHECK (
+        (start_time = TIME '08:00' AND end_time = TIME '11:30')
+        OR (start_time = TIME '13:30' AND end_time = TIME '17:00')
+    ),
     CONSTRAINT schedule_quota CHECK (booked_count BETWEEN 0 AND max_quota),
     CONSTRAINT schedule_doctor_start_unique UNIQUE (doctor_profile_id, work_date, start_time) DEFERRABLE INITIALLY IMMEDIATE,
     CONSTRAINT schedule_room_start_unique UNIQUE (room_id, work_date, start_time)
@@ -421,10 +425,10 @@ INSERT INTO system_configuration(config_key,config_value,description) VALUES
 ('CHECKIN_EARLY_MINUTES','30','Online check-in ít nhất 30 phút trước giờ hẹn'),
 ('CHECKIN_LATE_MINUTES','0','Không check-in sau hạn đã chốt'),
 ('NO_SHOW_GRACE_MINUTES','15','No-show sau kết thúc ca 15 phút'),
-('CANCEL_HOURS_LIMIT','12','Hủy từ 12 giờ trước giờ hẹn được hoàn 50% cọc'),
-('CANCEL_REFUND_PERCENT','50','Bệnh nhân hủy đúng hạn hoàn 50%; lỗi bệnh viện hoàn toàn bộ'),
+('CANCEL_HOURS_LIMIT','12','Hủy từ 12 đến dưới 48 giờ trước hẹn hoàn 50% cọc'),
+('CANCEL_REFUND_PERCENT','50','Hủy từ 48 giờ hoàn 100% cọc; từ 12 đến dưới 48 giờ hoàn 50%; lỗi bệnh viện hoàn toàn bộ'),
 ('MAX_REVIEW_RATING','5','Điểm đánh giá từ 1 đến 5'),
-('REMINDER_BEFORE_HOURS','24','Nhắc lịch trong khoảng bao nhiêu giờ trước hẹn'),
+('REMINDER_BEFORE_HOURS','12','Nhắc lịch trong khoảng bao nhiêu giờ trước hẹn'),
 ('HOSPITAL_NAME','Bệnh viện NEU Medical','Tên cơ sở khám bệnh'),
 ('SUPPORT_PHONE','19001234','Số hỗ trợ'),
 ('SUPPORT_EMAIL','neumedical@gmail.com','Email liên hệ của bệnh viện'),
@@ -753,9 +757,15 @@ CREATE TABLE IF NOT EXISTS reception_assignment (
  revoked_by_id BIGINT REFERENCES users(user_id),
  revoke_reason VARCHAR(1000),
  version INTEGER NOT NULL DEFAULT 1,
- CHECK (start_time < end_time)
+    CHECK (start_time < end_time),
+    CONSTRAINT reception_assignment_standard_shift CHECK (
+        (start_time = TIME '08:00' AND end_time = TIME '11:30')
+        OR (start_time = TIME '13:30' AND end_time = TIME '17:00')
+    )
 );
 CREATE INDEX IF NOT EXISTS reception_assignment_staff_day ON reception_assignment(receptionist_id,work_date) WHERE revoked_at IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS reception_assignment_staff_shift_active
+    ON reception_assignment(receptionist_id, work_date, start_time) WHERE revoked_at IS NULL;
 CREATE INDEX IF NOT EXISTS reception_assignment_station_day ON reception_assignment(workstation_id,work_date) WHERE revoked_at IS NULL;
 CREATE TABLE IF NOT EXISTS reception_assignment_change (
  change_id BIGSERIAL PRIMARY KEY,
@@ -824,3 +834,62 @@ WHERE d.user_id = u.user_id
   AND NULLIF(trim(u.avatar_url), '') IS NULL
   AND NULLIF(trim(to_jsonb(d)->>'avatar_url'), '') IS NOT NULL;
 -- END MERGED_LEGACY_PROFILE_UPGRADES
+
+-- Durable SMTP notification queue.
+CREATE TABLE IF NOT EXISTS email_outbox (
+    email_id BIGSERIAL PRIMARY KEY,
+    event_key TEXT NOT NULL UNIQUE,
+    user_id INTEGER NOT NULL REFERENCES users(user_id),
+    encounter_id INTEGER NOT NULL REFERENCES encounter(encounter_id),
+    kind TEXT NOT NULL CHECK (kind IN ('REMINDER', 'RESULT_READY')),
+    status TEXT NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING','SENT','FAILED','CANCELLED')),
+    attempts INTEGER NOT NULL DEFAULT 0 CHECK (attempts >= 0),
+    next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sent_at TIMESTAMPTZ,
+    last_error TEXT
+);
+CREATE INDEX IF NOT EXISTS email_outbox_pending_idx ON email_outbox(next_attempt_at,email_id) WHERE status='PENDING';
+-- Upgrade the previous 24-hour reminder setting without reloading sample records.
+UPDATE system_configuration SET config_value='12'
+WHERE config_key='REMINDER_BEFORE_HOURS' AND config_value='24';
+
+-- Additional full-deposit refund tier; preserve all previously recorded refunds.
+INSERT INTO system_configuration(config_key,config_value,description)
+VALUES ('CANCEL_FULL_REFUND_HOURS','48','Hủy trước ít nhất 48 giờ hoàn 100% cọc; từ 12 đến dưới 48 giờ hoàn 50% cọc')
+ON CONFLICT(config_key) DO NOTHING;
+
+UPDATE system_configuration SET description='Hủy từ 12 đến dưới 48 giờ trước hẹn hoàn 50% cọc' WHERE config_key='CANCEL_HOURS_LIMIT';
+UPDATE system_configuration SET description='Hủy từ 48 giờ hoàn 100% cọc; từ 12 đến dưới 48 giờ hoàn 50%; lỗi bệnh viện hoàn 100%' WHERE config_key='CANCEL_REFUND_PERCENT';
+
+-- Treatment appointments are separate from examination bookings and their payments.
+CREATE TABLE IF NOT EXISTS treatment_appointment (
+    treatment_id BIGSERIAL PRIMARY KEY,
+    request_key UUID NOT NULL,
+    batch_index INTEGER NOT NULL CHECK (batch_index BETWEEN 0 AND 29),
+    encounter_id INTEGER NOT NULL REFERENCES encounter(encounter_id),
+    doctor_user_id INTEGER NOT NULL REFERENCES users(user_id),
+    starts_at TIMESTAMPTZ NOT NULL,
+    ends_at TIMESTAMPTZ NOT NULL,
+    content TEXT NOT NULL CHECK (length(trim(content)) BETWEEN 1 AND 2000),
+    notes TEXT CHECK (length(notes)<=2000),
+    location VARCHAR(255) NOT NULL CHECK (length(trim(location))>0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(request_key,batch_index),
+    CHECK (ends_at>starts_at AND ends_at<=starts_at+INTERVAL '24 hours')
+);
+CREATE INDEX IF NOT EXISTS treatment_appointment_encounter_idx ON treatment_appointment(encounter_id,starts_at);
+CREATE INDEX IF NOT EXISTS treatment_appointment_doctor_idx ON treatment_appointment(doctor_user_id,starts_at);
+
+-- Follow-up reminders reuse the existing SMTP queue and retry lifecycle.
+ALTER TABLE email_outbox ADD COLUMN IF NOT EXISTS treatment_id BIGINT REFERENCES treatment_appointment(treatment_id);
+ALTER TABLE email_outbox DROP CONSTRAINT IF EXISTS email_outbox_kind_check;
+ALTER TABLE email_outbox ADD CONSTRAINT email_outbox_kind_check
+    CHECK (kind IN ('REMINDER','RESULT_READY','TREATMENT_REMINDER'));
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid='email_outbox'::regclass
+                   AND conname='email_outbox_treatment_reference') THEN
+        ALTER TABLE email_outbox ADD CONSTRAINT email_outbox_treatment_reference
+            CHECK ((kind='TREATMENT_REMINDER') = (treatment_id IS NOT NULL));
+    END IF;
+END $$;

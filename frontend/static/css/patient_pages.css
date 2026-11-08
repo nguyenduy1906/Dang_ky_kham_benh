@@ -216,8 +216,11 @@ body:has(> .patient-header) > .skip-link { position: fixed; z-index: 30; }
 .appointments-toolbar select { width: 100%; background: white; padding: 12px; border: 1px solid #cbd9cf; }
 .appointments-toolbar > button, .appointments-toolbar > a { margin: 0; }
 .appointments-notice { margin: 24px; line-height: 1.6; color: var(--muted); }
-.appointments-list { padding: 0 24px 24px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+.appointments-list { padding: 0 24px 24px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
 .appointment-card { border: 1px solid #dce5df; padding: 24px; }
+#treatment-list .appointment-card { min-width: 0; overflow-wrap: anywhere; }
+#treatment-list .treatment-nowrap { white-space: nowrap; overflow-wrap: normal; }
+#treatment-list .appointment-card h3 { white-space: pre-wrap; }
 .appointment-card-heading { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 .appointment-card-doctor { flex: 1 1 180px; }
 .appointment-card-doctor h2 { font-size: 20px; }
@@ -244,6 +247,7 @@ body:has(> .patient-header) > .skip-link { position: fixed; z-index: 30; }
 #appointment-detail-content textarea { display: block; width: 100%; margin-top: 8px; padding: 12px; border: 1px solid #cbd9cf; border-radius: 0; font: inherit; resize: vertical; }
 .appointments-pagination { display: flex; justify-content: center; align-items: center; gap: 18px; padding: 0 24px 24px; }
 #appointments-retry { margin: 0 24px 24px; }
+@media (max-width: 1200px) { .appointments-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .appointments-list { grid-template-columns: 1fr; } }
 @media (max-width: 480px) {
   .booking-review-list { grid-template-columns: 1fr; gap: 6px; }

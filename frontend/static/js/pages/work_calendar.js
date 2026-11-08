@@ -6,6 +6,7 @@ import { hasSession } from "../core/session.js";
 import * as api from "../api/staff_leave.js";
 import { enhanceDialogDismiss } from "../core/dialog_dismiss.js";
 import { staffLeavePayload } from "../core/staff_leave_form.js";
+import { isCompletedShift, calendarShiftState } from "../core/work_calendar_state.js";
 
 const $ = selector => document.querySelector(selector);
 const escape = value => String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -29,6 +30,7 @@ export async function initWorkCalendar(user) {
   let weekStart = mondayOf(currentDate), calendar = [], shifts = [], requestPage = 1;
   let active = true, weekVersion = 0, listVersion = 0, detailVersion = 0, selectedShift, selectedRequest;
   let weekRequest, listRequest, detailRequest, createRequest, cancelRequest, cancelling = false;
+  let stateTimer;
   const dialog = $("#calendar-dialog"), form = $("#leave-form"), feedback = $("#leave-feedback");
   const submitButton = $("#leave-submit"), cancelButton = $("#dialog-cancel-request");
   enhanceDialogDismiss(dialog, { closeButtons: [$("#calendar-dialog-close")], canClose: () => !cancelling });
@@ -51,6 +53,7 @@ export async function initWorkCalendar(user) {
   function suspend() {
     if (!active) return;
     active = false; weekVersion++; listVersion++; detailVersion++;
+    clearInterval(stateTimer);
     for (const request of [weekRequest, listRequest, detailRequest, createRequest, cancelRequest]) request?.abort();
     $("#main-content").inert = true; document.body.classList.add("staff-auth-pending");
     $("#calendar-grid").innerHTML = ""; $("#leave-requests").innerHTML = "";
@@ -79,15 +82,16 @@ export async function initWorkCalendar(user) {
         <header class="calendar-day-heading"><span>${day}</span><time datetime="${date}"${date === currentDate ? ' aria-current="date"' : ""}>${shortDate(date)}</time></header>
         ${["MORNING", "AFTERNOON"].map(period => {
           const shift = visible.find(s => s.date === date && s.period === period);
-          const state = shift?.status === "ON_LEAVE" ? "Đã duyệt nghỉ" : shift?.pending_leave ? "Đang xin nghỉ · Vẫn làm việc" : "Làm việc";
+          const state = shift ? calendarShiftState(shift) : null;
           const rooms = shift?.workstation_name ? shift.workstation_name : shift ? [...new Set(shift.clinical.map(s => s.room_name || `Phòng ${code("PH", s.room_id)}`))].join(", ") : "";
           return `<div class="calendar-slot"><span class="calendar-slot-label">${periods[period]}</span>${shift
-            ? `<button type="button" class="calendar-shift${period === "AFTERNOON" ? " is-afternoon" : ""}${shift.status === "ON_LEAVE" ? " is-leave" : shift.pending_leave ? " is-pending" : ""}" data-shift="${escape(shift.id)}"><strong>${escape(shortTime(shift.start_time))} – ${escape(shortTime(shift.end_time))}</strong><span>${state}</span><span class="calendar-shift-place">${escape(rooms || (shift.status === "ON_LEAVE" ? "Nghỉ theo đơn đã duyệt" : user.role_name === "RECEPTIONIST" ? "Theo lịch làm việc" : "Chưa có phân công phòng"))}</span></button>`
+            ? `<button type="button" class="calendar-shift${period === "AFTERNOON" ? " is-afternoon" : ""}${state.className ? ` ${state.className}` : ""}" data-shift="${escape(shift.id)}"><strong>${escape(shortTime(shift.start_time))} – ${escape(shortTime(shift.end_time))}</strong><span>${state.label}</span><span class="calendar-shift-place">${escape(rooms || (shift.status === "ON_LEAVE" ? "Nghỉ theo đơn đã duyệt" : user.role_name === "RECEPTIONIST" ? "Theo lịch làm việc" : "Chưa có phân công phòng"))}</span></button>`
             : `<p class="calendar-free">${filter !== "all" && periodValues[filter] !== period ? "Đã ẩn theo bộ lọc" : "Không có ca"}</p>`}</div>`;
         }).join("")}</section>`;
     }).join("");
-    const working = visible.filter(s => s.status !== "ON_LEAVE").length;
-    message($("#calendar-announcement"), `Từ ${formatDate(weekStart)} đến ${formatDate(addDays(weekStart, 6))}: ${working} ca làm việc, ${visible.length - working} ca đã duyệt nghỉ.`);
+    const completed = visible.filter(s => isCompletedShift(s)).length;
+    const working = visible.filter(s => !isCompletedShift(s) && s.status !== "ON_LEAVE").length;
+    message($("#calendar-announcement"), `Từ ${formatDate(weekStart)} đến ${formatDate(addDays(weekStart, 6))}: ${working} ca làm việc, ${visible.length - working - completed} ca đã duyệt nghỉ, ${completed} ca đã hoàn thành.`);
   }
   async function loadWeek() {
     const version = ++weekVersion;
@@ -98,8 +102,11 @@ export async function initWorkCalendar(user) {
       const result = await api.getWorkSchedules({ from_date: weekStart, to_date: addDays(weekStart, 6) }, { signal: weekRequest.signal });
       if (!active || version !== weekVersion) return;
       if (result?.user_id !== user.user_id || result?.role_name !== user.role_name || !Array.isArray(result.items)) throw new Error("Không nhận được lịch hợp lệ của tài khoản hiện tại.");
-      calendar = user.role_name === "DOCTOR" ? result.items.map(day => {
-        const assigned = (day.clinical_schedules || []).filter(s => ["OPEN", "FULL"].includes(s.schedule_status));
+      calendar = ["DOCTOR", "NURSE"].includes(user.role_name) ? result.items.map(day => {
+        const assigned = (day.clinical_schedules || []).filter(s => ["OPEN", "FULL"].includes(s.schedule_status)
+          || (["CLOSED", "UNAVAILABLE"].includes(s.schedule_status) && isCompletedShift({date:day.work_date,end_time:s.end_time}))
+          || (s.schedule_status === "UNAVAILABLE" && (day.shifts || []).some(shift => shift.status === "ON_LEAVE"
+            && (shift.period === "MORNING" ? shortTime(s.start_time) < "12:00" : shortTime(s.end_time) > "12:00"))));
         const actualShifts = ["MORNING", "AFTERNOON"].flatMap(period => {
           const matching = assigned.filter(s => period === "MORNING"
             ? shortTime(s.start_time) < "12:00" : shortTime(s.end_time) > "12:00");
@@ -123,7 +130,7 @@ export async function initWorkCalendar(user) {
     if (!dialog.open) dialog.showModal();
   }
   function canRequestShiftLeave(shift) {
-    if (!shift || shift.status === "ON_LEAVE" || shift.pending_leave) return false;
+    if (!shift || isCompletedShift(shift) || shift.status === "ON_LEAVE" || shift.pending_leave) return false;
     const start = Date.parse(`${shift.date}T${shortTime(shift.start_time)}:00+07:00`);
     return Number.isFinite(start) && Date.now() < start;
   }
@@ -133,17 +140,19 @@ export async function initWorkCalendar(user) {
     detailVersion++; detailRequest?.abort(); selectedRequest = null;
     selectedShift = shifts.find(s => s.id === button.dataset.shift);
     if (!selectedShift) return;
-    const s = selectedShift;
+    showShiftDialog(selectedShift);
+  });
+  function showShiftDialog(s) {
     const assigned = s.clinical.map(c => `${c.room_name || `Phòng ${code("PH", c.room_id)}`} · ${shortTime(c.start_time)}–${shortTime(c.end_time)} · ${clinicalStatuses[c.schedule_status] || c.schedule_status}`).join("\n");
     showDialog("Chi tiết ca làm việc", [["Ngày làm việc", formatDate(s.date)], ["Ca", periods[s.period]],
       ["Thời gian", `${shortTime(s.start_time)} – ${shortTime(s.end_time)}`],
-      ["Trạng thái", s.status === "ON_LEAVE" ? "Đã duyệt nghỉ" : s.pending_leave ? "Đang xin nghỉ; lịch làm việc giữ nguyên" : "Làm việc"],
+      ["Trạng thái", calendarShiftState(s).label],
       [user.role_name === "RECEPTIONIST" ? "Khu vực" : "Phân công phòng khám", s.workstation_name ? s.workstation_name : assigned || "Chưa có phân công phòng khám"],
       ...(user.role_name === "RECEPTIONIST" ? [["Ghi chú phân công", s.note || "—"]] : []),
       ["Mã đơn nghỉ liên quan", (s.leave_request_ids || []).map(id=>code("NP", id)).join(", ") || "Không có"]],
-      user.role_name === "RECEPTIONIST" ? "Lịch làm việc theo phân công thực tế của quản trị viên." : "Lịch làm việc được cập nhật theo phân công của quản trị viên.",
+      isCompletedShift(s) ? "Ca đã kết thúc, không thể xin nghỉ ca này. Kết quả xử lý đơn xin nghỉ được giữ trong lịch sử." : user.role_name === "RECEPTIONIST" ? "Lịch làm việc theo phân công thực tế của quản trị viên." : "Lịch làm việc được cập nhật theo phân công của quản trị viên.",
       canRequestShiftLeave(s));
-  });
+  }
   $("#dialog-use-date").addEventListener("click", () => {
     if (!active || !canRequestShiftLeave(selectedShift)) { $("#dialog-use-date").hidden = true; return; }
     form.elements.start_date.value = selectedShift.date; form.elements.end_date.value = selectedShift.date;
@@ -271,5 +280,13 @@ export async function initWorkCalendar(user) {
   $("#shift-filter").addEventListener("change", renderWeek);
   submitButton.disabled = false;
   await Promise.all([loadWeek(), loadRequests()]);
+  if (active) {
+    stateTimer = setInterval(() => {
+      if (!active) return;
+      renderWeek();
+      if (dialog.open && selectedShift && !selectedRequest && $("#calendar-dialog-title").textContent === "Chi tiết ca làm việc") showShiftDialog(selectedShift);
+    }, 30_000);
+    stateTimer.unref?.();
+  }
   startAutoRefresh(() => Promise.all([loadWeek(), loadRequests(requestPage)]), { canRefresh: () => active });
 }

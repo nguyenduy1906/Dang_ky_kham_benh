@@ -10,12 +10,18 @@ MANUAL_STATUSES = ('OPEN', 'CLOSED')
 MAX_QUOTA = 1000
 
 
+def validate_shift_hours(start, end):
+    if (str(start), str(end)) not in (('08:00:00', '11:30:00'), ('13:30:00', '17:00:00')):
+        raise bad_request('Ca phải là 08:00–11:30 hoặc 13:30–17:00')
+
+
 def validate_create(data):
     data = ensure_object(data)
     start = parse_time(data.get('start_time'), 'start_time')
     end = parse_time(data.get('end_time'), 'end_time')
     if end <= start:
         raise bad_request('end_time phải sau start_time')
+    validate_shift_hours(start, end)
     return {'doctor_profile_id': int_field(data, 'doctor_profile_id', required=True, minimum=1),
             'room_id': int_field(data, 'room_id', required=True, minimum=1),
             'work_date': parse_date(data.get('work_date'), 'work_date'),

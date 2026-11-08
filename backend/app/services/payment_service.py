@@ -180,9 +180,13 @@ def refund(actor, payment_id, reason):
             reference = encounter['refund_reference_at'] or encounter['estimated_exam_at']
             if reference is None or encounter['cancelled_at'] is None:
                 raise conflict('Thiếu thời điểm hủy/giờ hẹn để xác định chính sách', 'REFUND_REFERENCE_MISSING')
-            if reference - encounter['cancelled_at'] < timedelta(hours=policy['CANCEL_HOURS_LIMIT']):
+            advance = reference - encounter['cancelled_at']
+            if advance >= timedelta(hours=policy['CANCEL_FULL_REFUND_HOURS']):
+                amount = payment['amount']
+            elif advance < timedelta(hours=policy['CANCEL_HOURS_LIMIT']):
                 raise conflict('Thời điểm hủy không đủ điều kiện hoàn cọc của lượt khám', 'REFUND_NOT_ELIGIBLE')
-            amount = payment['amount'] * policy['CANCEL_REFUND_PERCENT'] // 100
+            else:
+                amount = payment['amount'] * policy['CANCEL_REFUND_PERCENT'] // 100
         if amount == 0:
             return {**_response(db, payment, actor), 'refund': None, 'amount_refunded': 0,
                     'message': 'Số tiền hoàn sau làm tròn là 0 đồng'}
